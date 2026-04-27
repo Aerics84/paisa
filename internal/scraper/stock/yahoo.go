@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -69,6 +70,10 @@ type Result struct {
 
 type Chart struct {
 	Result []Result
+	Error  *struct {
+		Code        string
+		Description string
+	}
 }
 type Response struct {
 	Chart Chart
@@ -78,6 +83,8 @@ type ExchangePrice struct {
 	Timestamp int64
 	Close     float64
 }
+
+var yahooHTTPClient = http.DefaultClient
 
 func (p ExchangePrice) Less(o btree.Item) bool {
 	return p.Timestamp < (o.(ExchangePrice).Timestamp)
@@ -91,7 +98,10 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 	}
 
 	var prices []*price.Price
-	result := response.Chart.Result[0]
+	result, err := firstYahooResult(ticker, response)
+	if err != nil {
+		return nil, err
+	}
 	needExchangePrice := false
 	var exchangePrice *btree.BTree
 
@@ -102,26 +112,56 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 			return nil, err
 		}
 
-		exchangeResult := exchangeResponse.Chart.Result[0]
+		exchangeResult, err := firstYahooResult(fmt.Sprintf("%s%s=X", result.Meta.Currency, config.DefaultCurrency()), exchangeResponse)
+		if err != nil {
+			return nil, err
+		}
 
 		exchangePrice = btree.New(2)
 		for i, t := range exchangeResult.Timestamp {
-			exchangePrice.ReplaceOrInsert(ExchangePrice{Timestamp: t, Close: exchangeResult.Indicators.Quote[0].Close[i]})
+			if i >= len(exchangeResult.Indicators.Quote[0].Close) {
+				break
+			}
+
+			close := exchangeResult.Indicators.Quote[0].Close[i]
+			if math.IsNaN(close) || close == 0 {
+				continue
+			}
+
+			exchangePrice.ReplaceOrInsert(ExchangePrice{Timestamp: t, Close: close})
+		}
+
+		if exchangePrice.Len() == 0 {
+			return nil, fmt.Errorf("missing yahoo exchange rate data for %s", result.Meta.Currency)
 		}
 	}
 
 	for i, timestamp := range result.Timestamp {
+		if i >= len(result.Indicators.Quote[0].Close) {
+			break
+		}
+
 		date := time.Unix(timestamp, 0)
 		value := result.Indicators.Quote[0].Close[i]
+		if math.IsNaN(value) || value == 0 {
+			continue
+		}
 
 		if needExchangePrice {
-			exchangePrice := utils.BTreeDescendFirstLessOrEqual(exchangePrice, ExchangePrice{Timestamp: timestamp})
-			value = value * exchangePrice.Close
+			fxPrice := utils.BTreeDescendFirstLessOrEqual(exchangePrice, ExchangePrice{Timestamp: timestamp})
+			if fxPrice.Close == 0 {
+				return nil, fmt.Errorf("missing yahoo exchange rate near %s for %s", date.Format("2006-01-02"), result.Meta.Currency)
+			}
+			value = value * fxPrice.Close
 		}
 
 		price := price.Price{Date: date, CommodityType: config.Stock, CommodityID: ticker, CommodityName: commodityName, Value: decimal.NewFromFloat(value)}
 
 		prices = append(prices, &price)
+	}
+
+	if len(prices) == 0 {
+		return nil, fmt.Errorf("empty yahoo price history for %s", ticker)
 	}
 	return prices, nil
 }
@@ -136,7 +176,7 @@ func getTicker(ticker string) (*Response, error) {
 	agent.Do(func() { selectAgent() })
 	req.Header.Add("User-Agent", agent.name)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := yahooHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +194,27 @@ func getTicker(ticker string) (*Response, error) {
 	}
 
 	return &response, nil
+}
+
+func firstYahooResult(ticker string, response *Response) (Result, error) {
+	if response == nil {
+		return Result{}, fmt.Errorf("empty yahoo response for %s", ticker)
+	}
+
+	if response.Chart.Error != nil {
+		return Result{}, fmt.Errorf("yahoo error for %s: %s", ticker, response.Chart.Error.Description)
+	}
+
+	if len(response.Chart.Result) == 0 {
+		return Result{}, fmt.Errorf("empty yahoo result for %s", ticker)
+	}
+
+	result := response.Chart.Result[0]
+	if len(result.Indicators.Quote) == 0 {
+		return Result{}, fmt.Errorf("missing yahoo quote data for %s", ticker)
+	}
+
+	return result, nil
 }
 
 type YahooPriceProvider struct {

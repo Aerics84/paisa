@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
@@ -134,7 +135,14 @@ type yahooChartResponse struct {
 }
 
 func getYahooChart(ticker string) (*yahooChartResponse, error) {
-	resp, err := metalHTTPClient.Get(fmt.Sprintf(yahooChartURLFormat, ticker))
+	req, err := http.NewRequest("GET", fmt.Sprintf(yahooChartURLFormat, ticker), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36")
+
+	resp, err := metalHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +160,14 @@ func getYahooChart(ticker string) (*yahooChartResponse, error) {
 	var response yahooChartResponse
 	if err := json.Unmarshal(respBytes, &response); err != nil {
 		return nil, err
+	}
+
+	if len(response.Chart.Result) == 0 {
+		return nil, fmt.Errorf("empty yahoo metal response for %s", ticker)
+	}
+
+	if len(response.Chart.Result[0].Indicators.Quote) == 0 {
+		return nil, fmt.Errorf("missing yahoo metal quote data for %s", ticker)
 	}
 
 	return &response, nil
