@@ -543,13 +543,66 @@ func parseAmount(amount string) (string, decimal.Decimal, error) {
 	}
 
 	if match[1] != "" {
-		value, err := decimal.NewFromString(strings.ReplaceAll(match[1], ",", ""))
+		value, err := decimal.NewFromString(normalizeNumericToken(match[1]))
 		return utils.UnQuote(strings.Trim(match[2], " ")), value, err
 
 	}
-	value, err := decimal.NewFromString(strings.ReplaceAll(match[4], ",", ""))
+	value, err := decimal.NewFromString(normalizeNumericToken(match[4]))
 	return utils.UnQuote(strings.Trim(match[3], " ")), value, err
 
+}
+
+func normalizeNumericToken(token string) string {
+	token = strings.TrimSpace(token)
+
+	exponentIndex := strings.IndexAny(token[1:], "Ee")
+	exponent := ""
+	if exponentIndex >= 0 {
+		exponentIndex++
+		exponent = token[exponentIndex:]
+		token = token[:exponentIndex]
+	}
+
+	switch {
+	case strings.Contains(token, ",") && strings.Contains(token, "."):
+		if strings.LastIndex(token, ",") > strings.LastIndex(token, ".") {
+			return normalizeWithDecimalSeparator(token, ",") + exponent
+		}
+		return normalizeWithDecimalSeparator(token, ".") + exponent
+	case strings.Contains(token, ","):
+		if hasOnlyThousandsGrouping(strings.Split(token, ",")) {
+			return strings.ReplaceAll(token, ",", "") + exponent
+		}
+		return normalizeWithDecimalSeparator(token, ",") + exponent
+	case strings.Count(token, ".") > 1:
+		if hasOnlyThousandsGrouping(strings.Split(token, ".")) {
+			return strings.ReplaceAll(token, ".", "") + exponent
+		}
+		return normalizeWithDecimalSeparator(token, ".") + exponent
+	default:
+		return token + exponent
+	}
+}
+
+func normalizeWithDecimalSeparator(token string, separator string) string {
+	index := strings.LastIndex(token, separator)
+	integerPart := strings.NewReplacer(",", "", ".", "").Replace(token[:index])
+	fractionPart := strings.NewReplacer(",", "", ".", "").Replace(token[index+1:])
+	return integerPart + "." + fractionPart
+}
+
+func hasOnlyThousandsGrouping(groups []string) bool {
+	if len(groups) <= 1 {
+		return false
+	}
+
+	for _, group := range groups[1:] {
+		if len(group) != 3 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, error) {

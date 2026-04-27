@@ -86,6 +86,18 @@ func TestParseAmount(t *testing.T) {
 	assert.Equal(t, "EUR", commodity)
 	assert.Equal(t, 100000.0, amount.InexactFloat64())
 
+	commodity, amount, _ = parseAmount("92,33 EUR")
+	assert.Equal(t, "EUR", commodity)
+	assert.Equal(t, 92.33, amount.InexactFloat64())
+
+	commodity, amount, _ = parseAmount("2,707819 \"EWG2LD\"")
+	assert.Equal(t, "EWG2LD", commodity)
+	assert.Equal(t, 2.707819, amount.InexactFloat64())
+
+	commodity, amount, _ = parseAmount("10.005,05 EUR")
+	assert.Equal(t, "EUR", commodity)
+	assert.Equal(t, 10005.05, amount.InexactFloat64())
+
 	commodity, amount, _ = parseAmount("100,000.00 \"EUR0-0\"")
 	assert.Equal(t, "EUR0-0", commodity)
 	assert.Equal(t, 100000.0, amount.InexactFloat64())

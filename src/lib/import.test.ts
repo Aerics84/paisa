@@ -68,4 +68,11 @@ describe("template helpers", () => {
     expect(helpers.acronym("Motital S & P 500")).toBe("MSP");
     expect(helpers.acronym("Axis Liquid Growth Direct Plan")).toBe("AL");
   });
+
+  test("amount helper normalizes comma decimals", () => {
+    expect(helpers.amount("92,33", { hash: {} })).toBe("92.33");
+    expect(helpers.amount("2,707819", { hash: {} })).toBe("2.707819");
+    expect(helpers.amount("10.005,05 EUR", { hash: {} })).toBe("10005.05");
+    expect(helpers.amount("100,000", { hash: {} })).toBe("100000");
+  });
 });

@@ -77,11 +77,58 @@ function findMatch(query: string) {
 function scrubAmount(str: string) {
   const amount = _.trim(str)
     .replace(/\((.+)\)/, "-$1")
-    .replace(/[^0-9.-]/g, "");
+    .replace(/[^0-9,.-]/g, "");
 
-  if (!isNaN(amount as any) && !isNaN(parseFloat(amount))) {
-    return amount;
+  const normalized = normalizeNumericToken(amount);
+
+  if (!isNaN(normalized as any) && !isNaN(parseFloat(normalized))) {
+    return normalized;
   }
+}
+
+function normalizeNumericToken(token: string) {
+  if (!token) {
+    return token;
+  }
+
+  if (token.includes(",") && token.includes(".")) {
+    return token.lastIndexOf(",") > token.lastIndexOf(".")
+      ? normalizeWithDecimalSeparator(token, ",")
+      : normalizeWithDecimalSeparator(token, ".");
+  }
+
+  if (token.includes(",")) {
+    if (hasOnlyThousandsGrouping(token.split(","))) {
+      return token.replaceAll(",", "");
+    }
+    return normalizeWithDecimalSeparator(token, ",");
+  }
+
+  if ((token.match(/\./g) || []).length > 1) {
+    if (hasOnlyThousandsGrouping(token.split("."))) {
+      return token.replaceAll(".", "");
+    }
+    return normalizeWithDecimalSeparator(token, ".");
+  }
+
+  return token;
+}
+
+function normalizeWithDecimalSeparator(token: string, separator: "," | ".") {
+  const index = token.lastIndexOf(separator);
+  const integerPart = token
+    .slice(0, index)
+    .replaceAll(",", "")
+    .replaceAll(".", "");
+  const fractionPart = token
+    .slice(index + 1)
+    .replaceAll(",", "")
+    .replaceAll(".", "");
+  return `${integerPart}.${fractionPart}`;
+}
+
+function hasOnlyThousandsGrouping(groups: string[]) {
+  return groups.length > 1 && groups.slice(1).every((group) => group.length === 3);
 }
 
 function parseAmount(str: string | number) {
