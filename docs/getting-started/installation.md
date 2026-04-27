@@ -135,23 +135,23 @@ more.
 
 ## Docker
 
-Paisa CLI is available on [dockerhub](https://hub.docker.com/r/ananthakumaran/paisa). The default image only
-supports ledger. `paisa:<version>-hledger`,
-`paisa:<version>-beancount` or `paisa:<version>-all` image variants
+Paisa CLI is available on GitHub Container Registry as `ghcr.io/aerics84/paisa`.
+The default image only supports ledger. `ghcr.io/aerics84/paisa:<version>-hledger`,
+`ghcr.io/aerics84/paisa:<version>-beancount` or `ghcr.io/aerics84/paisa:<version>-all` image variants
 can be used if you want to use paisa with others.
 
 === "Linux"
 
     ```console
     # mkdir -p /home/john/Documents/paisa/
-    # docker run -p 7500:7500 -v /home/john/Documents/paisa/:/root/Documents/paisa/ ananthakumaran/paisa:latest
+    # docker run -p 7500:7500 -v /home/john/Documents/paisa/:/root/Documents/paisa/ ghcr.io/aerics84/paisa:latest
     ```
 
 === "Mac"
 
     ```console
     # mkdir -p /Users/john/Documents/paisa/
-    # docker run -p 7500:7500 -v /Users/john/Documents/paisa/:/root/Documents/paisa/ ananthakumaran/paisa:latest
+    # docker run -p 7500:7500 -v /Users/john/Documents/paisa/:/root/Documents/paisa/ ghcr.io/aerics84/paisa:latest
     ```
 
 ## Nix Flake
