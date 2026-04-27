@@ -177,6 +177,7 @@
                     "com-yahoo",
                     "com-purifiedbytes-nps",
                     "com-purifiedbytes-metal",
+                    "com-yahoo-eu-metal",
                     "co-alphavantage"
                   ],
                   "type": "string"
