@@ -26,3 +26,6 @@ fonts/*
 !fonts/*.scss
 /result
 brand/*.png
+
+# Local graphify artifacts
+/graphify-out/
