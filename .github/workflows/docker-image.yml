@@ -34,5 +34,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/paisa:latest
-            ghcr.io/${{ github.repository_owner }}/paisa:${{ github.sha }}
+            ghcr.io/aerics84/paisa:latest
+            ghcr.io/aerics84/paisa:${{ github.sha }}
