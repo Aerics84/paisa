@@ -13,9 +13,9 @@ function tokenize(s: string) {
         .split(/[ .()/:]+/)
         .map((s) => s.toLowerCase())
         .filter((s) => s.trim() !== ""),
-      _.identity,
+      _.identity
     ),
-    (v) => v.length,
+    (v) => v.length
   );
 }
 
@@ -46,7 +46,7 @@ function tfidf(query: string) {
       const idf =
         Math.log(
           Object.keys(index.docs).length /
-            (1 + Object.keys(index.tokens[token] || []).length),
+            (1 + Object.keys(index.tokens[token] || []).length)
         ) + 1;
       return [token, tf * idf];
     })
@@ -64,9 +64,7 @@ function findMatch(query: string) {
   const accounts = Object.keys(index.docs);
   return _.chain(accounts)
     .map((account) => {
-      const tokens = _.uniq(
-        _.concat(Object.keys(queryVector), Object.keys(tf_idf[account])),
-      );
+      const tokens = _.uniq(_.concat(Object.keys(queryVector), Object.keys(tf_idf[account])));
       const q = tokens.map((token) => queryVector[token] || 0);
       const a = tokens.map((token) => tf_idf[account][token] || 0);
       return [account, similarity(q, a)];
@@ -131,9 +129,7 @@ function normalizeWithDecimalSeparator(token: string, separator: "," | ".") {
 }
 
 function hasOnlyThousandsGrouping(groups: string[]) {
-  return (
-    groups.length > 1 && groups.slice(1).every((group) => group.length === 3)
-  );
+  return groups.length > 1 && groups.slice(1).every((group) => group.length === 3);
 }
 
 function parseAmount(str: string | number) {
@@ -151,23 +147,16 @@ export default {
   eq: (a: any, b: any) => a === b,
   ne: (a: any, b: any) => a !== b,
   not: (value: any) => !value,
-  gte: (a: string | number, b: string | number) =>
-    parseAmount(a) >= parseAmount(b),
-  gt: (a: string | number, b: string | number) =>
-    parseAmount(a) > parseAmount(b),
-  lte: (a: string | number, b: string | number) =>
-    parseAmount(a) <= parseAmount(b),
-  lt: (a: string | number, b: string | number) =>
-    parseAmount(a) < parseAmount(b),
+  gte: (a: string | number, b: string | number) => parseAmount(a) >= parseAmount(b),
+  gt: (a: string | number, b: string | number) => parseAmount(a) > parseAmount(b),
+  lte: (a: string | number, b: string | number) => parseAmount(a) <= parseAmount(b),
+  lt: (a: string | number, b: string | number) => parseAmount(a) < parseAmount(b),
   negate: (value: string) => parseAmount(value) * -1,
   round(str: string, options: any) {
     return _.round(parseAmount(str), options.hash.precision || 0);
   },
   and(...args: any[]) {
-    return Array.prototype.every.call(
-      Array.prototype.slice.call(args, 0, -1),
-      Boolean,
-    );
+    return Array.prototype.every.call(Array.prototype.slice.call(args, 0, -1), Boolean);
   },
   or(...args: any[]) {
     for (const arg of Array.prototype.slice.call(args, 0, -1)) {
@@ -203,9 +192,7 @@ export default {
 
     const prefix: string = options.hash.prefix || "";
     const matches = findMatch(query);
-    const match = _.find(matches, ([account]) =>
-      account.toString().startsWith(prefix),
-    );
+    const match = _.find(matches, ([account]) => account.toString().startsWith(prefix));
     if (match) {
       return match[0];
     }
@@ -269,9 +256,7 @@ export default {
     }
   },
   match(str: string, options: any) {
-    for (const [value, regexp] of Object.entries(
-      options.hash as Record<string, string>,
-    )) {
+    for (const [value, regexp] of Object.entries(options.hash as Record<string, string>)) {
       if (new RegExp(regexp).test(str)) {
         return value;
       }
@@ -329,5 +314,5 @@ export default {
   },
   capitalize(str: string) {
     return _.capitalize(str);
-  },
+  }
 };
