@@ -6,6 +6,28 @@
 top of the [ledger](https://www.ledger-cli.org/) double entry accounting tool. Checkout
 [documentation](https://paisa.fyi) to get started.
 
+## Docker Images
+
+Ready to use Docker images are published at `ghcr.io/aerics84/paisa`.
+
+- `ghcr.io/aerics84/paisa:latest` includes Paisa with `ledger`
+- `ghcr.io/aerics84/paisa:latest-hledger` adds `hledger`
+- `ghcr.io/aerics84/paisa:latest-beancount` adds `beancount`
+- `ghcr.io/aerics84/paisa:latest-all` adds both `hledger` and `beancount`
+- `ghcr.io/aerics84/paisa:latest-demo` starts a read-only demo dataset
+
+Example:
+
+```bash
+docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest
+```
+
+For the demo image:
+
+```bash
+docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
+```
+
 # Demo
 
 A demo of the Web UI can be found at [https://demo.paisa.fyi](https://demo.paisa.fyi)
