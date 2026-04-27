@@ -16,6 +16,7 @@ func GetAllProviders() []price.PriceProvider {
 		&stock.AlphaVantagePriceProvider{},
 		&nps.PriceProvider{},
 		&metal.PriceProvider{},
+		&metal.EuPriceProvider{},
 	}
 
 }
@@ -28,6 +29,8 @@ func GetProviderByCode(code string) price.PriceProvider {
 		return &nps.PriceProvider{}
 	case "com-purifiedbytes-metal":
 		return &metal.PriceProvider{}
+	case "com-yahoo-eu-metal":
+		return &metal.EuPriceProvider{}
 	case "com-yahoo":
 		return &stock.YahooPriceProvider{}
 	case "co-alphavantage":

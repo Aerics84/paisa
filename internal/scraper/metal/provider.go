@@ -3,16 +3,19 @@ package metal
 import (
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/price"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
+
+var metalHTTPClient = http.DefaultClient
 
 type PriceProvider struct {
 }
@@ -26,7 +29,7 @@ func (p *PriceProvider) Label() string {
 }
 
 func (p *PriceProvider) Description() string {
-	return "Supports IBJA (India) gold and silver prices at various level of purity."
+	return "Supports India-market IBJA metal prices and normalizes them to INR per gram. Gold codes are sourced in 10g market units and silver is sourced in kg market units."
 }
 
 func (p *PriceProvider) AutoCompleteFields() []price.AutoCompleteField {
@@ -52,7 +55,7 @@ func (p *PriceProvider) ClearCache(db *gorm.DB) {
 func (p *PriceProvider) GetPrices(code string, commodityName string) ([]*price.Price, error) {
 	log.Info("Fetching Metal price history from Purified Bytes")
 	url := fmt.Sprintf("https://india.finbodhi.com/api/metal/%s/price.json", code)
-	resp, err := http.Get(url)
+	resp, err := metalHTTPClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +88,22 @@ func (p *PriceProvider) GetPrices(code string, commodityName string) ([]*price.P
 			return nil, err
 		}
 
-		price := price.Price{Date: date, CommodityType: config.Metal, CommodityID: code, CommodityName: commodityName, Value: data.Close.Div(decimal.NewFromInt(10))}
+		price := price.Price{
+			Date:          date,
+			CommodityType: config.Metal,
+			CommodityID:   code,
+			CommodityName: commodityName,
+			Value:         normalizeIndiaMetalPrice(code, data.Close),
+		}
 		prices = append(prices, &price)
 	}
 	return prices, nil
+}
+
+func normalizeIndiaMetalPrice(code string, value decimal.Decimal) decimal.Decimal {
+	if strings.HasPrefix(code, "silver-") {
+		return value.Div(decimal.NewFromInt(1000))
+	}
+
+	return value.Div(decimal.NewFromInt(10))
 }

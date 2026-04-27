@@ -140,11 +140,16 @@ commodities:
 The example configuration above links NPS fund commodity with their
 respective NPS fund scheme code.
 
-## Purified Bytes Metals <sub>:flag_in:</sub>
+## Purified Bytes Metals India <sub>:flag_in:</sub>
 
-To automatically track the latest price of gold or silver at various
+To automatically track India-market prices of gold or silver at various
 level of purity, you need to link the commodity and the metal
-code. The price is for 1 gram of the metal.
+code. Paisa stores the normalized price as INR for 1 gram of the metal.
+
+Internally this provider normalizes:
+
+- Gold rates from India 10 gram market units to INR per gram
+- Silver rates from India kilogram market units to INR per gram
 
 ```yaml
 commodities:
@@ -171,6 +176,35 @@ The following metals and purity combinations are supported.
 | Gold   | 750    | gold-750   |
 | Gold   | 585    | gold-585   |
 | Silver | 999    | silver-999 |
+
+## Yahoo Metals Europe <sub>:flag_eu:</sub>
+
+To track European metal prices in EUR, configure the dedicated EU metal
+provider. Paisa stores the normalized price as EUR for 1 gram of the
+metal.
+
+This provider uses Yahoo Finance metal futures in USD per troy ounce and
+converts them to EUR per gram using ECB reference exchange rates.
+
+```yaml
+commodities:
+  - name: GOLD
+    type: metal
+    price:
+        provider: com-yahoo-eu-metal
+        code: gold-999
+```
+
+The following metal codes are currently supported.
+
+| Metal  | Purity | Code       |
+|--------|--------|------------|
+| Gold   | 999    | gold-999   |
+| Silver | 999    | silver-999 |
+
+All metal providers in Paisa are expected to persist normalized unit
+prices as `currency per gram`. Downstream valuation uses the stored unit
+price directly and computes market value as `quantity * unitPrice`.
 
 
 ## RealEstate
