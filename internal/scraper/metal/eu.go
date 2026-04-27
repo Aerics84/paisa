@@ -24,6 +24,7 @@ const (
 )
 
 var troyOunceInGrams = decimal.RequireFromString("31.1034768")
+var yahooMetalNow = time.Now
 
 type EuPriceProvider struct {
 }
@@ -92,6 +93,10 @@ func (p *EuPriceProvider) GetPrices(code string, commodityName string) ([]*price
 			break
 		}
 
+		if shouldSkipYahooCurrentDayBar(result, i) {
+			continue
+		}
+
 		close := result.Indicators.Quote[0].Close[i]
 		if math.IsNaN(close) || close == 0 {
 			continue
@@ -120,18 +125,52 @@ func (p *EuPriceProvider) GetPrices(code string, commodityName string) ([]*price
 
 type yahooChartResponse struct {
 	Chart struct {
-		Result []struct {
-			Timestamp  []int64 `json:"timestamp"`
-			Indicators struct {
-				Quote []struct {
-					Close []float64 `json:"close"`
-				} `json:"quote"`
-			} `json:"indicators"`
-			Meta struct {
-				Currency string `json:"currency"`
-			} `json:"meta"`
-		} `json:"result"`
+		Result []yahooChartResult `json:"result"`
 	} `json:"chart"`
+}
+
+type yahooChartResult struct {
+	Timestamp  []int64 `json:"timestamp"`
+	Indicators struct {
+		Quote []struct {
+			Close []float64 `json:"close"`
+		} `json:"quote"`
+	} `json:"indicators"`
+	Meta struct {
+		Currency             string                   `json:"currency"`
+		CurrentTradingPeriod yahooTradingPeriodRange `json:"currentTradingPeriod"`
+	} `json:"meta"`
+}
+
+type yahooTradingPeriodRange struct {
+	Regular yahooTradingPeriod `json:"regular"`
+}
+
+type yahooTradingPeriod struct {
+	Start     int64 `json:"start"`
+	End       int64 `json:"end"`
+	GMTOffset int   `json:"gmtoffset"`
+}
+
+func shouldSkipYahooCurrentDayBar(result yahooChartResult, index int) bool {
+	if index != len(result.Timestamp)-1 {
+		return false
+	}
+
+	regular := result.Meta.CurrentTradingPeriod.Regular
+	if regular.Start == 0 || regular.End == 0 {
+		return false
+	}
+
+	if yahooMetalNow().UTC().Unix() >= regular.End {
+		return false
+	}
+
+	return exchangeDay(result.Timestamp[index], regular.GMTOffset) == exchangeDay(regular.Start, regular.GMTOffset)
+}
+
+func exchangeDay(timestamp int64, gmtOffset int) string {
+	return time.Unix(timestamp+int64(gmtOffset), 0).UTC().Format("2006-01-02")
 }
 
 func getYahooChart(ticker string) (*yahooChartResponse, error) {

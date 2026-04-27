@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/shopspring/decimal"
@@ -28,6 +29,26 @@ default_currency: EUR
 time_zone: Europe/Berlin
 `), "")
 	require.NoError(t, err)
+}
+
+func stubYahooMetalNow(t *testing.T, now string) {
+	t.Helper()
+
+	previousNow := yahooMetalNow
+	yahooMetalNow = func() time.Time {
+		return mustParseMetalTestTime(t, now)
+	}
+	t.Cleanup(func() {
+		yahooMetalNow = previousNow
+	})
+}
+
+func mustParseMetalTestTime(t *testing.T, value string) time.Time {
+	t.Helper()
+
+	parsed, err := time.Parse(time.RFC3339, value)
+	require.NoError(t, err)
+	return parsed
 }
 
 func TestNormalizeIndiaMetalPrice(t *testing.T) {
@@ -132,4 +153,118 @@ func TestEuPriceProviderSilverNormalization(t *testing.T) {
 	require.Len(t, prices, 1)
 	assert.Equal(t, "2024-01-02", prices[0].Date.Format("2006-01-02"))
 	assert.True(t, prices[0].Value.Round(6).Equal(decimal.RequireFromString("1.000000")))
+}
+
+func TestEuPriceProviderSkipsInProgressCurrentDayBar(t *testing.T) {
+	loadMetalTestConfig(t)
+	stubYahooMetalNow(t, "2024-01-02T06:00:00Z")
+
+	previousClient := metalHTTPClient
+	t.Cleanup(func() {
+		metalHTTPClient = previousClient
+	})
+
+	metalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case strings.Contains(req.URL.String(), "GC=F"):
+			return &http.Response{
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`{
+					"chart": {
+						"result": [{
+							"timestamp": [1704067200, 1704153600],
+							"indicators": { "quote": [{ "close": [3110.34768, 6220.69536] }] },
+							"meta": {
+								"currency": "USD",
+								"currentTradingPeriod": {
+									"regular": { "start": 1704153600, "end": 1704196800, "gmtoffset": 0 }
+								}
+							}
+						}]
+					}
+				}`)),
+			}, nil
+		case strings.Contains(req.URL.String(), "eurofxref-hist.xml"):
+			return &http.Response{
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`
+<Envelope>
+  <Cube>
+    <Cube time="2024-01-01">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+    <Cube time="2024-01-02">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+  </Cube>
+</Envelope>`)),
+			}, nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	prices, err := (&EuPriceProvider{}).GetPrices("gold-999", "GOLD")
+	require.NoError(t, err)
+	require.Len(t, prices, 1)
+	assert.Equal(t, "2024-01-01", prices[0].Date.Format("2006-01-02"))
+	assert.True(t, prices[0].Value.Round(6).Equal(decimal.RequireFromString("100.000000")))
+}
+
+func TestEuPriceProviderKeepsCurrentDayBarAfterSessionEnd(t *testing.T) {
+	loadMetalTestConfig(t)
+	stubYahooMetalNow(t, "2024-01-02T13:00:00Z")
+
+	previousClient := metalHTTPClient
+	t.Cleanup(func() {
+		metalHTTPClient = previousClient
+	})
+
+	metalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case strings.Contains(req.URL.String(), "SI=F"):
+			return &http.Response{
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`{
+					"chart": {
+						"result": [{
+							"timestamp": [1704067200, 1704153600],
+							"indicators": { "quote": [{ "close": [31.1034768, 62.2069536] }] },
+							"meta": {
+								"currency": "USD",
+								"currentTradingPeriod": {
+									"regular": { "start": 1704153600, "end": 1704196800, "gmtoffset": 0 }
+								}
+							}
+						}]
+					}
+				}`)),
+			}, nil
+		case strings.Contains(req.URL.String(), "eurofxref-hist.xml"):
+			return &http.Response{
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`
+<Envelope>
+  <Cube>
+    <Cube time="2024-01-01">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+    <Cube time="2024-01-02">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+  </Cube>
+</Envelope>`)),
+			}, nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	prices, err := (&EuPriceProvider{}).GetPrices("silver-999", "SILVER")
+	require.NoError(t, err)
+	require.Len(t, prices, 2)
+	assert.Equal(t, "2024-01-02", prices[1].Date.Format("2006-01-02"))
+	assert.True(t, prices[1].Value.Round(6).Equal(decimal.RequireFromString("2.000000")))
 }
