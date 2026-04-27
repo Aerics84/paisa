@@ -137,7 +137,7 @@ type yahooChartResult struct {
 		} `json:"quote"`
 	} `json:"indicators"`
 	Meta struct {
-		Currency             string                   `json:"currency"`
+		Currency             string                  `json:"currency"`
 		CurrentTradingPeriod yahooTradingPeriodRange `json:"currentTradingPeriod"`
 	} `json:"meta"`
 }
