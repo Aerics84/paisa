@@ -45,8 +45,7 @@ function tfidf(query: string) {
       const tf = freq / Object.keys(tokens).length;
       const idf =
         Math.log(
-          Object.keys(index.docs).length /
-            (1 + Object.keys(index.tokens[token] || []).length)
+          Object.keys(index.docs).length / (1 + Object.keys(index.tokens[token] || []).length)
         ) + 1;
       return [token, tf * idf];
     })
@@ -117,10 +116,7 @@ function normalizeNumericToken(token: string) {
 
 function normalizeWithDecimalSeparator(token: string, separator: "," | ".") {
   const index = token.lastIndexOf(separator);
-  const integerPart = token
-    .slice(0, index)
-    .replaceAll(",", "")
-    .replaceAll(".", "");
+  const integerPart = token.slice(0, index).replaceAll(",", "").replaceAll(".", "");
   const fractionPart = token
     .slice(index + 1)
     .replaceAll(",", "")
