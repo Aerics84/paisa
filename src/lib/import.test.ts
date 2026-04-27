@@ -74,5 +74,6 @@ describe("template helpers", () => {
     expect(helpers.amount("2,707819", { hash: {} })).toBe("2.707819");
     expect(helpers.amount("10.005,05 EUR", { hash: {} })).toBe("10005.05");
     expect(helpers.amount("100,000", { hash: {} })).toBe("100000");
+    expect(helpers.amount("1,00,000", { hash: {} })).toBe("100000");
   });
 });

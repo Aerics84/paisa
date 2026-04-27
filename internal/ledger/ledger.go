@@ -570,12 +570,12 @@ func normalizeNumericToken(token string) string {
 		}
 		return normalizeWithDecimalSeparator(token, ".") + exponent
 	case strings.Contains(token, ","):
-		if hasOnlyThousandsGrouping(strings.Split(token, ",")) {
+		if hasThousandsGrouping(strings.Split(token, ",")) {
 			return strings.ReplaceAll(token, ",", "") + exponent
 		}
 		return normalizeWithDecimalSeparator(token, ",") + exponent
 	case strings.Count(token, ".") > 1:
-		if hasOnlyThousandsGrouping(strings.Split(token, ".")) {
+		if hasThousandsGrouping(strings.Split(token, ".")) {
 			return strings.ReplaceAll(token, ".", "") + exponent
 		}
 		return normalizeWithDecimalSeparator(token, ".") + exponent
@@ -591,13 +591,28 @@ func normalizeWithDecimalSeparator(token string, separator string) string {
 	return integerPart + "." + fractionPart
 }
 
-func hasOnlyThousandsGrouping(groups []string) bool {
+func hasThousandsGrouping(groups []string) bool {
 	if len(groups) <= 1 {
 		return false
 	}
 
+	western := true
 	for _, group := range groups[1:] {
 		if len(group) != 3 {
+			western = false
+			break
+		}
+	}
+	if western {
+		return true
+	}
+
+	if len(groups[len(groups)-1]) != 3 {
+		return false
+	}
+
+	for _, group := range groups[1 : len(groups)-1] {
+		if len(group) != 2 {
 			return false
 		}
 	}

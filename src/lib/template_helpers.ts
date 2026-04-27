@@ -98,14 +98,14 @@ function normalizeNumericToken(token: string) {
   }
 
   if (token.includes(",")) {
-    if (hasOnlyThousandsGrouping(token.split(","))) {
+    if (hasThousandsGrouping(token.split(","))) {
       return token.replaceAll(",", "");
     }
     return normalizeWithDecimalSeparator(token, ",");
   }
 
   if ((token.match(/\./g) || []).length > 1) {
-    if (hasOnlyThousandsGrouping(token.split("."))) {
+    if (hasThousandsGrouping(token.split("."))) {
       return token.replaceAll(".", "");
     }
     return normalizeWithDecimalSeparator(token, ".");
@@ -124,8 +124,21 @@ function normalizeWithDecimalSeparator(token: string, separator: "," | ".") {
   return `${integerPart}.${fractionPart}`;
 }
 
-function hasOnlyThousandsGrouping(groups: string[]) {
-  return groups.length > 1 && groups.slice(1).every((group) => group.length === 3);
+function hasThousandsGrouping(groups: string[]) {
+  if (groups.length <= 1) {
+    return false;
+  }
+
+  const western = groups.slice(1).every((group) => group.length === 3);
+  if (western) {
+    return true;
+  }
+
+  if (groups[groups.length - 1].length !== 3) {
+    return false;
+  }
+
+  return groups.slice(1, -1).every((group) => group.length === 2);
 }
 
 function parseAmount(str: string | number) {
