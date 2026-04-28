@@ -6,6 +6,7 @@
     formatFloat,
     isMobile,
     type AssetBreakdown,
+    type Forecast,
     type Point,
     type Posting
   } from "$lib/utils";
@@ -38,6 +39,8 @@
     progressPercent = 0,
     savingsX = 0,
     targetX = 0,
+    forecastUnavailable = false,
+    predictedTargetDate = "",
     breakPoints: Point[] = [],
     savingsTimeline: Point[] = [],
     postings: Posting[] = [],
@@ -82,7 +85,9 @@
     }
 
     const ARIMA = await ARIMAPromise;
-    const predictionsTimeline = forecast(savingsTimeline, targetSavings, ARIMA);
+    const predictionsTimeline: Forecast[] = forecast(savingsTimeline, targetSavings, ARIMA);
+    forecastUnavailable = _.isEmpty(predictionsTimeline) && savingsTotal < targetSavings;
+    predictedTargetDate = _.last(predictionsTimeline)?.date.format("DD MMM YYYY") || "";
     await tick();
     breakPoints = findBreakPoints(savingsTimeline.concat(predictionsTimeline), targetSavings);
     destroyCallback = renderProgress(savingsTimeline, predictionsTimeline, breakPoints, svg, {
@@ -122,7 +127,13 @@
         title="Target Savings"
         value={formatCurrency(targetSavings)}
         color={COLORS.primary}
-        subtitle="{formatFloat(targetX, 0)}x times Yearly Expenses"
+        subtitle={`${formatFloat(targetX, 0)}x times Yearly Expenses${
+          predictedTargetDate
+            ? `<br/>Expected <b>${predictedTargetDate}</b>`
+            : savingsTotal >= targetSavings
+              ? "<br/>Target achieved"
+              : ""
+        }`}
       />
       <LevelItem title="SWR" value={formatFloat(swr)} />
     </nav>
@@ -132,6 +143,12 @@
 <section class="section">
   <div class="container is-fluid">
     <ProgressWithBreakpoints {progressPercent} {breakPoints} />
+    {#if forecastUnavailable}
+      <div class="notification is-light mt-4 has-text-grey">
+        Paisa could not estimate when this retirement goal will be reached from the current
+        savings history.
+      </div>
+    {/if}
   </div>
 </section>
 
