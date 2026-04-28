@@ -22,6 +22,12 @@ import * as financial from "financial";
 import { iconify } from "./icon";
 
 const WHEN = financial.PaymentDueTime.Begin;
+export type ForecastMode = "arima" | "fallback" | "none";
+
+export interface ForecastResult {
+  forecastMode: ForecastMode;
+  predictionsTimeline: Forecast[];
+}
 
 export function solvePMTOrNper(
   fv: number,
@@ -102,6 +108,72 @@ export function forecast(points: Point[], target: number, ARIMA: typeof Arima): 
     }
   }
   return [];
+}
+
+export function estimateTargetDate(
+  targetSavings: number,
+  savingsTotal: number,
+  monthlyContribution: number,
+  rate: number
+): dayjs.Dayjs | null {
+  if (targetSavings <= savingsTotal || monthlyContribution <= 0) {
+    return null;
+  }
+
+  const today = now().startOf("month");
+  const monthlyRate = rate / (100 * 12);
+  let periods = 0;
+
+  if (monthlyRate === 0) {
+    periods = (targetSavings - savingsTotal) / monthlyContribution;
+  } else {
+    periods = financial.nper(monthlyRate, monthlyContribution, savingsTotal, -targetSavings, WHEN);
+  }
+
+  if (!Number.isFinite(periods) || periods <= 0) {
+    return null;
+  }
+
+  return today.add(Math.ceil(periods), "months");
+}
+
+export function fallbackForecast(
+  targetSavings: number,
+  savingsTotal: number,
+  monthlyContribution: number,
+  rate = 0
+): Forecast[] {
+  const targetDate = estimateTargetDate(targetSavings, savingsTotal, monthlyContribution, rate);
+  if (!targetDate) {
+    return [];
+  }
+
+  return project(targetSavings, rate, targetDate, monthlyContribution, savingsTotal);
+}
+
+export function forecastRetirement(
+  points: Point[],
+  targetSavings: number,
+  savingsTotal: number,
+  monthlyContribution: number,
+  ARIMA: typeof Arima,
+  rate = 0
+): ForecastResult {
+  if (savingsTotal >= targetSavings) {
+    return { forecastMode: "none", predictionsTimeline: [] };
+  }
+
+  const predictionsTimeline = forecast(points, targetSavings, ARIMA);
+  if (!_.isEmpty(predictionsTimeline)) {
+    return { forecastMode: "arima", predictionsTimeline };
+  }
+
+  const fallbackTimeline = fallbackForecast(targetSavings, savingsTotal, monthlyContribution, rate);
+  if (!_.isEmpty(fallbackTimeline)) {
+    return { forecastMode: "fallback", predictionsTimeline: fallbackTimeline };
+  }
+
+  return { forecastMode: "none", predictionsTimeline: [] };
 }
 
 function doForecast(

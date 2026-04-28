@@ -6,13 +6,18 @@
     formatFloat,
     isMobile,
     type AssetBreakdown,
-    type Forecast,
     type Point,
     type Posting
   } from "$lib/utils";
   import { onMount, tick, onDestroy } from "svelte";
   import ARIMAPromise from "arima/async";
-  import { forecast, renderProgress, findBreakPoints, renderInvestmentTimeline } from "$lib/goals";
+  import {
+    forecastRetirement,
+    renderProgress,
+    findBreakPoints,
+    renderInvestmentTimeline,
+    type ForecastMode
+  } from "$lib/goals";
   import LevelItem from "$lib/components/LevelItem.svelte";
   import type { PageData } from "./$types";
   import { iconGlyph } from "$lib/icon";
@@ -33,6 +38,8 @@
     icon = "",
     name = "",
     targetSavings = 0,
+    monthlyContribution = 0,
+    forecastRate = 0,
     swr = 0,
     xirr = 0,
     yearlyExpense = 0,
@@ -40,6 +47,7 @@
     savingsX = 0,
     targetX = 0,
     forecastUnavailable = false,
+    forecastMode: ForecastMode = "none",
     predictedTargetDate = "",
     breakPoints: Point[] = [],
     savingsTimeline: Point[] = [],
@@ -58,6 +66,9 @@
       investmentTotal,
       gainTotal,
       savingsTimeline,
+      targetSavings,
+      monthlyContribution,
+      forecastRate,
       yearlyExpense,
       swr,
       xirr,
@@ -66,7 +77,6 @@
       postings,
       balances
     } = await ajax("/api/goals/retirement/:name", null, data));
-    targetSavings = yearlyExpense * (100 / swr);
 
     latestPostings = _.chain(postings)
       .sortBy((p) => p.date)
@@ -85,8 +95,16 @@
     }
 
     const ARIMA = await ARIMAPromise;
-    const predictionsTimeline: Forecast[] = forecast(savingsTimeline, targetSavings, ARIMA);
-    forecastUnavailable = _.isEmpty(predictionsTimeline) && savingsTotal < targetSavings;
+    const { predictionsTimeline, forecastMode: mode } = forecastRetirement(
+      savingsTimeline,
+      targetSavings,
+      savingsTotal,
+      monthlyContribution,
+      ARIMA,
+      forecastRate
+    );
+    forecastMode = mode;
+    forecastUnavailable = forecastMode === "none" && savingsTotal < targetSavings;
     predictedTargetDate = _.last(predictionsTimeline)?.date.format("DD MMM YYYY") || "";
     await tick();
     breakPoints = findBreakPoints(savingsTimeline.concat(predictionsTimeline), targetSavings);
@@ -129,7 +147,9 @@
         color={COLORS.primary}
         subtitle={`${formatFloat(targetX, 0)}x times Yearly Expenses${
           predictedTargetDate
-            ? `<br/>Expected <b>${predictedTargetDate}</b>`
+            ? `<br/>${
+                forecastMode === "fallback" ? "Estimated" : "Expected"
+              } <b>${predictedTargetDate}</b>`
             : savingsTotal >= targetSavings
               ? "<br/>Target achieved"
               : ""

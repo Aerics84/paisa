@@ -7,7 +7,6 @@ import type { JSONSchema7 } from "json-schema";
 import { get } from "svelte/store";
 import { obscure } from "../persisted_store";
 import { error } from "@sveltejs/kit";
-import { goto } from "$app/navigation";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 
@@ -366,6 +365,9 @@ export interface RetirementGoalProgress {
   investmentTotal: number;
   gainTotal: number;
   savingsTimeline: Point[];
+  targetSavings: number;
+  monthlyContribution: number;
+  forecastRate: number;
   swr: number;
   yearlyExpense: number;
   xirr: number;
@@ -806,7 +808,7 @@ export async function ajax(
 
   if (response.status == 401 && route != "/api/ping") {
     logout();
-    await goto("/login");
+    await redirectToLogin();
     error(401, "Unauthorized");
   }
 
@@ -835,6 +837,18 @@ export function isLoggedIn() {
 
 export function logout() {
   localStorage.removeItem(tokenKey);
+}
+
+async function redirectToLogin() {
+  try {
+    const { goto } = await import("$app/navigation");
+    await goto("/login");
+    return;
+  } catch {}
+
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
 }
 
 function normalize(value: number) {

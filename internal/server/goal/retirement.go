@@ -1,6 +1,8 @@
 package goal
 
 import (
+	"time"
+
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -9,9 +11,12 @@ import (
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
+
+const retirementContributionWindowMonths = 12
 
 func getRetirementSummary(db *gorm.DB, ps []posting.Posting, conf config.RetirementGoal) GoalSummary {
 	savings := accounting.FilterByGlob(ps, conf.Savings)
@@ -43,6 +48,23 @@ func calculateAverageExpense(db *gorm.DB, conf config.RetirementGoal) decimal.De
 	return utils.SumBy(expenses, func(p posting.Posting) decimal.Decimal { return p.Amount }).Div(decimal.NewFromInt(2))
 }
 
+func calculateMonthlyContribution(postings []posting.Posting, current time.Time) decimal.Decimal {
+	end := utils.BeginningOfMonth(current)
+	start := end.AddDate(0, -retirementContributionWindowMonths, 0)
+
+	windowPostings := lo.Filter(postings, func(p posting.Posting, _ int) bool {
+		return (p.Date.Equal(start) || p.Date.After(start)) &&
+			p.Date.Before(end) &&
+			p.Amount.GreaterThan(decimal.Zero)
+	})
+
+	total := utils.SumBy(windowPostings, func(p posting.Posting) decimal.Decimal {
+		return p.Amount
+	})
+
+	return total.Div(decimal.NewFromInt(retirementContributionWindowMonths))
+}
+
 func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
 	savings := accounting.FilterByGlob(query.Init(db).Like("Assets:%").All(), conf.Savings)
 	savings = service.PopulateMarketPrice(db, savings)
@@ -57,20 +79,26 @@ func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
 		yearlyExpenses = calculateAverageExpense(db, conf)
 	}
 
+	targetSavings := yearlyExpenses.Div(decimal.NewFromFloat(conf.SWR)).Mul(decimal.NewFromFloat(100))
+	monthlyContribution := calculateMonthlyContribution(savings, utils.Now())
+	forecastRate := 0.0
 	balances := assets.ComputeBreakdowns(db, savingsWithCapitalGains, false)
 
 	return gin.H{
-		"type":            "retirement",
-		"name":            conf.Name,
-		"icon":            conf.Icon,
-		"savingsTimeline": accounting.RunningBalance(db, savings),
-		"savingsTotal":    savingsTotal,
-		"investmentTotal": investmentTotal,
-		"gainTotal":       gainsTotal,
-		"swr":             conf.SWR,
-		"yearlyExpense":   yearlyExpenses,
-		"xirr":            service.XIRR(db, savingsWithCapitalGains),
-		"postings":        savingsWithCapitalGains,
-		"balances":        balances,
+		"type":                "retirement",
+		"name":                conf.Name,
+		"icon":                conf.Icon,
+		"savingsTimeline":     accounting.RunningBalance(db, savings),
+		"savingsTotal":        savingsTotal,
+		"investmentTotal":     investmentTotal,
+		"gainTotal":           gainsTotal,
+		"targetSavings":       targetSavings,
+		"monthlyContribution": monthlyContribution,
+		"forecastRate":        forecastRate,
+		"swr":                 conf.SWR,
+		"yearlyExpense":       yearlyExpenses,
+		"xirr":                service.XIRR(db, savingsWithCapitalGains),
+		"postings":            savingsWithCapitalGains,
+		"balances":            balances,
 	}
 }
