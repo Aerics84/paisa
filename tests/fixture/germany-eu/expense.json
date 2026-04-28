@@ -1,0 +1,36 @@
+{
+    "expenses":  [
+
+                 ],
+    "graph":  {
+
+              },
+    "month_wise":  {
+                       "expenses":  {
+
+                                    },
+                       "incomes":  {
+
+                                   },
+                       "investments":  {
+
+                                       },
+                       "taxes":  {
+
+                                 }
+                   },
+    "year_wise":  {
+                      "expenses":  {
+
+                                   },
+                      "incomes":  {
+
+                                  },
+                      "investments":  {
+
+                                      },
+                      "taxes":  {
+
+                                }
+                  }
+}

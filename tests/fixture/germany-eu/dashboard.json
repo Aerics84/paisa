@@ -1,0 +1,60 @@
+{
+    "budget":  {
+                   "availableForBudgeting":  0,
+                   "budgetsByMonth":  {
+
+                                      },
+                   "checkingBalance":  0
+               },
+    "cashFlows":  [
+
+                  ],
+    "checkingBalances":  {
+                             "asset_breakdowns":  {
+
+                                                  }
+                         },
+    "expenses":  {
+
+                 },
+    "goalSummaries":  [
+                          {
+                              "type":  "retirement",
+                              "name":  "Early Retirement",
+                              "id":  "retirement-Early Retirement",
+                              "icon":  "mdi:beach",
+                              "current":  0,
+                              "target":  0,
+                              "targetDate":  "",
+                              "priority":  0
+                          },
+                          {
+                              "type":  "savings",
+                              "name":  "Emergency Fund",
+                              "id":  "savings-Emergency Fund",
+                              "icon":  "mdi:shield-check",
+                              "current":  0,
+                              "target":  18000,
+                              "targetDate":  "",
+                              "priority":  0
+                          }
+                      ],
+    "networth":  {
+                     "networth":  {
+                                      "date":  "0001-01-01T00:00:00Z",
+                                      "investmentAmount":  0,
+                                      "withdrawalAmount":  0,
+                                      "gainAmount":  0,
+                                      "balanceAmount":  0,
+                                      "balanceUnits":  0,
+                                      "netInvestmentAmount":  0
+                                  },
+                     "xirr":  0
+                 },
+    "transactionSequences":  [
+
+                             ],
+    "transactions":  [
+
+                     ]
+}
