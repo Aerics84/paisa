@@ -1,33 +1,54 @@
 ---
-description: "How to import CSV, TXT, XLS, XLSX or PDF files into Paisa"
+description: "How to import CSV, TXT, STA, MT940, XLS, XLSX, PDF or XML files into Paisa"
 ---
 
 # Import
 
-Paisa provides ability to convert **CSV**, **TXT**, **XLS**, **XLSX**
-or **PDF** files to Ledger file format. The import page is made of
-three components.
+Paisa provides ability to convert **CSV**, **TXT**, **STA**, **MT940**,
+**XLS**, **XLSX**, **PDF** or **XML** files to Ledger file format. The import
+page is made of three components.
+
+Germany/EU workflows are supported alongside the existing
+India-oriented templates. The built-in catalog now includes explicit
+bank-statement templates for:
+
+- `CAMT.053 Account Statement` for ISO 20022 XML account statements
+- `MT940 Account Statement` for SWIFT MT940 text exports
+
+The built-in catalog also includes baseline broker templates for
+Germany/EU-style CSV exports:
+
+- `Germany Broker Trades CSV` for buy/sell transaction exports with
+  date, type, symbol, quantity, price, fee and tax columns
+- `Germany Broker Cash CSV` for dividends, interest, deposits,
+  withdrawals, fees and tax cash movements
+
+These broker templates are intentionally generic. They are meant to
+cover common CSV export structures used by Europe-oriented brokers and
+portfolio tools, and they can be copied into custom templates when a
+broker uses different column order or labels.
 
 !!! example "Experimental"
-    PDF support is in an experimental stage and may not accurately detect rows.
+PDF support is in an experimental stage and may not accurately detect rows.
 
+1. File Preview - You can drag and drop files here to preview the
+   contents.
 
-1) File Preview - You can drag and drop files here to preview the
-contents.
+2. Ledger Preview - This is where the converted ledger file will be
+   shown.
 
-2) Ledger Preview - This is where the converted ledger file will be
-shown.
+3. Template Editor - This is where you can edit the template.
 
-3) Template Editor - This is where you can edit the template.
-
-Each row in the CSV file is converted to a transaction in the
-ledger. This conversion is controlled by the template.
+Each row in the imported document is converted to a transaction in
+the ledger. This conversion is controlled by the template.
 
 ```handlebars
 {{#if (and (isDate ROW.A "DD/MM/YYYY") (isBlank ROW.G))}}
- {{date ROW.A "DD/MM/YYYY"}} {{ROW.C}}
-    {{predictAccount prefix="Expenses"}}		{{ROW.F}} INR
-    Assets:Checking
+  {{date ROW.A "DD/MM/YYYY"}}
+  {{ROW.C}}
+  {{predictAccount prefix="Expenses"}}
+  {{ROW.F}}
+  INR Assets:Checking
 {{/if}}
 ```
 
@@ -57,18 +78,26 @@ own. To create a new template, edit the template and click on the
 configuration file.
 
 !!! tip
-    The import system is designed to be extensible and might not be
-    intuitive if you are not accustomed to coding. If you are unable
-    to create a template suitable for your file, please open an issue
-    with a sample file, and we will provide assistance, possibly
-    adding it to the built-in templates.
+The import system is designed to be extensible and might not be
+intuitive if you are not accustomed to coding. If you are unable
+to create a template suitable for your file, please open an issue
+with a sample file, and we will provide assistance, possibly
+adding it to the built-in templates.
 
 #### Template Data
 
 1. **ROW** - This is the current row being processed. You can refer to
-    any column using their alphabets. For example, `ROW.A` refers to
-    the first column, `ROW.B` refers to the second column and so
-    on. The current row index is available as `ROW.index`.
+   any column using their alphabets. For example, `ROW.A` refers to
+   the first column, `ROW.B` refers to the second column and so
+   on. The current row index is available as `ROW.index`.
+
+   Structured import paths can also expose semantic fields in
+   addition to preview columns. For example, the built-in
+   `CAMT.053 Account Statement` template can use keys such as
+   `ROW.bookingDate`, `ROW.valueDate`, `ROW.amount`,
+   `ROW.currency`, `ROW.creditDebitIndicator`,
+   `ROW.counterpartyName`, `ROW.remittanceInformation` and
+   `ROW.reference`.
 
 <details>
   <summary>Example</summary>
@@ -85,6 +114,7 @@ configuration file.
   "index": 6
 }
 ```
+
 </details>
 
 2. **SHEET** - This is the entire sheet. It is an array of rows. You
@@ -95,61 +125,62 @@ configuration file.
 
 ```json
 [
-    {
-        "A": "Accountno:",
-        "B": "49493xxx003030",
-        "index": 0
-    },
-    {
-        "A": "Customer Name:",
-        "B": "MR John Doe",
-        "index": 1
-    },
-    {
-        "A": "Address:",
-        "B": "1234, ABC Street, XYZ City, 123456",
-        "index": 2
-    },
-    {
-        "A": "Transaction Details:",
-        "index": 3
-    },
-    {
-        "A": "Date",
-        "B": "Sr.No.",
-        "C": "Transaction Details",
-        "D": "Reward Point Header",
-        "E": "Intl.Amount",
-        "F": "Amount(in Rs)",
-        "G": "BillingAmountSign",
-        "index": 4
-    },
-    {
-        "A": "49493xxx003030",
-        "index": 5
-    },
-    {
-        "A": "28/03/2023",
-        "B": "7357680821",
-        "C": "AMAZON HTTP://WWW.AM IN",
-        "D": "12",
-        "E": "0",
-        "F": "249.00",
-        "G": "",
-        "index": 6
-    },
-    {
-        "A": "28/03/2023",
-        "B": "7357821997",
-        "C": "AMAZON HTTP://WWW.AM IN",
-        "D": "28",
-        "E": "0",
-        "F": "575.00",
-        "G": "",
-        "index": 7
-    }
+  {
+    "A": "Accountno:",
+    "B": "49493xxx003030",
+    "index": 0
+  },
+  {
+    "A": "Customer Name:",
+    "B": "MR John Doe",
+    "index": 1
+  },
+  {
+    "A": "Address:",
+    "B": "1234, ABC Street, XYZ City, 123456",
+    "index": 2
+  },
+  {
+    "A": "Transaction Details:",
+    "index": 3
+  },
+  {
+    "A": "Date",
+    "B": "Sr.No.",
+    "C": "Transaction Details",
+    "D": "Reward Point Header",
+    "E": "Intl.Amount",
+    "F": "Amount(in Rs)",
+    "G": "BillingAmountSign",
+    "index": 4
+  },
+  {
+    "A": "49493xxx003030",
+    "index": 5
+  },
+  {
+    "A": "28/03/2023",
+    "B": "7357680821",
+    "C": "AMAZON HTTP://WWW.AM IN",
+    "D": "12",
+    "E": "0",
+    "F": "249.00",
+    "G": "",
+    "index": 6
+  },
+  {
+    "A": "28/03/2023",
+    "B": "7357821997",
+    "C": "AMAZON HTTP://WWW.AM IN",
+    "D": "28",
+    "E": "0",
+    "F": "575.00",
+    "G": "",
+    "index": 7
+  }
 ]
 ```
+
 </details>
 
 #### Template Helpers
@@ -194,8 +225,8 @@ Negates the given value. For example, `negate("123.45")` will return
 #### `#!typescript amount(str: string, {default?: string}): string`
 
 Converts the given string to a valid amount. If the string is blank,
-the default value is used. Examples `(0.9534)` to `-0.9534`, `₹
-1,234.56` to `1234.56`
+the default value is used. Examples `(0.9534)` to `-0.9534`,
+`1,234.56` to `1234.56` and `1.234,56` to `1234.56`
 
 #### `#!typescript round(str: string, {precision?: number}): number`
 
@@ -241,7 +272,8 @@ Checks if the given string is blank.
 
 Parses the given string as a date in the given format and returns the
 date in the format `YYYY/MM/DD`. Refer [Day.js](https://day.js.org/docs/en/parse/string-format#list-of-all-available-parsing-tokens) for the full list
-of supported formats.
+of supported formats. This is suitable for day-first European dates
+such as `28.04.2026` as well as ISO dates from CAMT statements.
 
 #### `#!typescript findAbove(column: string, {regexp?: string}): string`
 
@@ -279,14 +311,12 @@ Replace the given search string with the given replace string.
 
 Tests the given string against the given regular expression.
 
-
 #### `#!typescript regexpMatch(str: string, regexp: string, {group?: number}): string`
 
 Extract part of a string. Let's say you have `Axis Long Term
   Equity Growth Direct Plan` and you want to extract `Axis Long Term
   Equity`, you can use `#!handlebars {{regexpMatch ROW.C "(.*) Growth Direct Plan" group=1}}` assuming the string is in the column
-  `C`. `group` is optional and defaults to `0`.
-
+`C`. `group` is optional and defaults to `0`.
 
 #### `#!typescript textRange(fromColumn: string, toColumn: string, {separator?: number}): string`
 
@@ -326,6 +356,8 @@ In case of no match `null` will be returned. You can combine this
 with `or` helper to return a default account.
 
 ```handlebars
-{{or (match ROW.C Expenses:Shopping="Amazon|Flipkart" Expenses:Groceries="BigBasket")
-     "Expenses:Unknown"}}
+{{or
+  (match ROW.C Expenses:Shopping="Amazon|Flipkart" Expenses:Groceries="BigBasket")
+  "Expenses:Unknown"
+}}
 ```

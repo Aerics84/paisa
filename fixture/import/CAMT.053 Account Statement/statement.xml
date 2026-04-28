@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <Stmt>
+      <Id>STATEMENT-202604</Id>
+      <Ntry>
+        <Amt Ccy="EUR">1234.56</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-04-22</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-04-22</Dt>
+        </ValDt>
+        <AcctSvcrRef>SEPA-SALARY-001</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties>
+              <Dbtr>
+                <Nm>Acme GmbH</Nm>
+              </Dbtr>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Salary April 2026</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>SEPA Credit Transfer</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">89.70</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt>
+          <Dt>2026-04-23</Dt>
+        </BookgDt>
+        <ValDt>
+          <Dt>2026-04-23</Dt>
+        </ValDt>
+        <AcctSvcrRef>CARD-REWE-998</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties>
+              <Cdtr>
+                <Nm>REWE Markt Berlin</Nm>
+              </Cdtr>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Groceries weekly shop</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>Card payment</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

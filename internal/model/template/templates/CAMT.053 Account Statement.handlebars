@@ -1,0 +1,17 @@
+{{#if (and ROW.bookingDate ROW.amount)}}
+  {{date ROW.bookingDate "YYYY-MM-DD"}}
+  {{or ROW.counterpartyName ROW.remittanceInformation "Bank transaction"}}{{#if ROW.reference}}
+    |
+    {{ROW.reference}}{{/if}}
+  {{#if (eq ROW.creditDebitIndicator "DBIT")}}
+    {{predictAccount ROW.counterpartyName ROW.remittanceInformation prefix="Expenses"}}
+    {{amount ROW.amount}}
+    {{or ROW.currency "EUR"}}
+    Assets:Checking
+  {{else}}
+    Assets:Checking
+    {{amount ROW.amount}}
+    {{or ROW.currency "EUR"}}
+    {{predictAccount ROW.counterpartyName ROW.remittanceInformation prefix="Income"}}
+  {{/if}}
+{{/if}}

@@ -1,3 +1,4 @@
+import "../happydom";
 import { describe, expect, test } from "bun:test";
 
 import { parse, render, asRows } from "./spreadsheet";
@@ -72,8 +73,13 @@ describe("template helpers", () => {
   test("amount helper normalizes comma decimals", () => {
     expect(helpers.amount("92,33", { hash: {} })).toBe("92.33");
     expect(helpers.amount("2,707819", { hash: {} })).toBe("2.707819");
+    expect(helpers.amount("1.234,56", { hash: {} })).toBe("1234.56");
     expect(helpers.amount("10.005,05 EUR", { hash: {} })).toBe("10005.05");
     expect(helpers.amount("100,000", { hash: {} })).toBe("100000");
     expect(helpers.amount("1,00,000", { hash: {} })).toBe("100000");
+  });
+
+  test("date helper normalizes day-first dates", () => {
+    expect(helpers.date("28.04.2026", "DD.MM.YYYY")).toBe("2026/04/28");
   });
 });

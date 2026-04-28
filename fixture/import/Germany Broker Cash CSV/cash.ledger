@@ -1,0 +1,23 @@
+2026/04/30 Vanguard FTSE All-World distribution
+    Assets:Broker:Cash                              45.67 EUR
+    Income:Dividend:VWCE
+
+2026/04/30 Cash interest April
+    Assets:Broker:Cash                               0.75 EUR
+    Income:Interest:Broker
+
+2026/04/30 Broker account top-up
+    Assets:Broker:Cash                             500.00 EUR
+    Assets:Checking
+
+2026/04/30 Depot fee April
+    Expenses:Broker:Fees                             1.99 EUR
+    Assets:Broker:Cash
+
+2026/04/30 Dividend withholding tax
+    Expenses:Broker:Taxes                           11.42 EUR
+    Assets:Broker:Cash
+
+2026/04/30 Cash payout to checking
+    Assets:Checking                                100.00 EUR
+    Assets:Broker:Cash

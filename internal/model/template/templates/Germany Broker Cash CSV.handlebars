@@ -1,0 +1,131 @@
+{{#if
+  (and
+    (isDate ROW.A "DD.MM.YYYY")
+    (match
+      (toLowerCase ROW.B)
+      dividend="^(dividend|dividende)$"
+      interest="^(interest|zinsen)$"
+      deposit="^(deposit|einzahlung)$"
+      withdrawal="^(withdrawal|auszahlung)$"
+      fee="^(fee|geb[uü]hr)$"
+      tax="^(tax|steuer)$"
+    )
+  )
+}}
+  {{date ROW.A "DD.MM.YYYY"}}
+  {{ROW.C}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "dividend"
+    )
+  }}
+    Assets:Broker:Cash
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Income:Dividend:{{or ROW.F (acronym ROW.C)}}
+  {{/if}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "interest"
+    )
+  }}
+    Assets:Broker:Cash
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Income:Interest:Broker
+  {{/if}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "deposit"
+    )
+  }}
+    Assets:Broker:Cash
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Assets:Checking
+  {{/if}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "withdrawal"
+    )
+  }}
+    Assets:Checking
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Assets:Broker:Cash
+  {{/if}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "fee"
+    )
+  }}
+    Expenses:Broker:Fees
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Assets:Broker:Cash
+  {{/if}}
+  {{#if
+    (eq
+      (match
+        (toLowerCase ROW.B)
+        dividend="^(dividend|dividende)$"
+        interest="^(interest|zinsen)$"
+        deposit="^(deposit|einzahlung)$"
+        withdrawal="^(withdrawal|auszahlung)$"
+        fee="^(fee|geb[uü]hr)$"
+        tax="^(tax|steuer)$"
+      )
+      "tax"
+    )
+  }}
+    Expenses:Broker:Taxes
+    {{amount ROW.D}}
+    {{or ROW.E "EUR"}}
+    Assets:Broker:Cash
+  {{/if}}
+{{/if}}
