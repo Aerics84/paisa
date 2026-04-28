@@ -497,8 +497,7 @@ export function renderCurrentExpensesBreakdown(
 
     const points = _.map(_.values(categories), (point) => ({
       ...point,
-      expandable:
-        scope === ROOT_EXPENSE_SCOPE && hasExpenseChildGroups(postings, point.scope)
+      expandable: scope === ROOT_EXPENSE_SCOPE && hasExpenseChildGroups(postings, point.scope)
     }));
     const total = _.sumBy(points, (p) => p.total);
 

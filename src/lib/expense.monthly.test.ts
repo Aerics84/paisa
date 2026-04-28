@@ -156,7 +156,8 @@ describe("monthly expense breakdown drilldown", () => {
   test("subcategory detail bars cannot drill deeper", () => {
     const drilldowns: string[] = [];
     const renderer = renderCurrentExpensesBreakdown(
-      d3.scaleOrdinal<string, string>()
+      d3
+        .scaleOrdinal<string, string>()
         .domain(["Groceries", "Restaurants"])
         .range(["#0f0", "#f0f"]),
       {
