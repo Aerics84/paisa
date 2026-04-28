@@ -104,6 +104,7 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 	}
 	needExchangePrice := false
 	var exchangePrice *btree.BTree
+	var earliestExchangeTimestamp int64
 
 	if !utils.IsCurrency(result.Meta.Currency) {
 		needExchangePrice = true
@@ -134,8 +135,11 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 		if exchangePrice.Len() == 0 {
 			return nil, fmt.Errorf("missing yahoo exchange rate data for %s", result.Meta.Currency)
 		}
+
+		earliestExchangeTimestamp = exchangePrice.Min().(ExchangePrice).Timestamp
 	}
 
+	skippedForMissingExchangeHistory := 0
 	for i, timestamp := range result.Timestamp {
 		if i >= len(result.Indicators.Quote[0].Close) {
 			break
@@ -148,6 +152,11 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 		}
 
 		if needExchangePrice {
+			if timestamp < earliestExchangeTimestamp {
+				skippedForMissingExchangeHistory++
+				continue
+			}
+
 			fxPrice := utils.BTreeDescendFirstLessOrEqual(exchangePrice, ExchangePrice{Timestamp: timestamp})
 			if fxPrice.Close == 0 {
 				return nil, fmt.Errorf("missing yahoo exchange rate near %s for %s", date.Format("2006-01-02"), result.Meta.Currency)
@@ -160,7 +169,16 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 		prices = append(prices, &price)
 	}
 
+	if skippedForMissingExchangeHistory > 0 {
+		firstExchangeDate := time.Unix(earliestExchangeTimestamp, 0).Format("2006-01-02")
+		log.Infof("Skipped %d yahoo price rows for %s before first %s/%s exchange rate on %s", skippedForMissingExchangeHistory, ticker, result.Meta.Currency, config.DefaultCurrency(), firstExchangeDate)
+	}
+
 	if len(prices) == 0 {
+		if needExchangePrice {
+			firstExchangeDate := time.Unix(earliestExchangeTimestamp, 0).Format("2006-01-02")
+			return nil, fmt.Errorf("no importable yahoo price history for %s after trimming prices before first %s/%s exchange rate on %s", ticker, result.Meta.Currency, config.DefaultCurrency(), firstExchangeDate)
+		}
 		return nil, fmt.Errorf("empty yahoo price history for %s", ticker)
 	}
 	return prices, nil
