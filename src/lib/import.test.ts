@@ -62,6 +62,67 @@ describe("import", () => {
   });
 });
 
+describe("broker csv normalization", () => {
+  test("trade republic trades expose normalized semantic fields", async () => {
+    const input = fs.readFileSync("fixture/import/Trade Republic Trades CSV/trades.csv");
+    const result = await parse(new File([input], "trades.csv"));
+    const rows = asRows(result);
+
+    expect(rows[0].broker).toBe("Trade Republic");
+    expect(rows[0].importType).toBe("broker-trade");
+    expect(rows[0].transactionKind).toBe("buy");
+    expect(rows[0].tradeDate).toBe("28.04.2026");
+    expect(rows[0].settlementDate).toBe("30.04.2026");
+    expect(rows[0].symbol).toBe("VWCE");
+    expect(rows[0].principal).toBe("191,00");
+    expect(rows[0].feeAmount).toBe("1,00");
+    expect(rows[0].taxAmount).toBe("0,00");
+    expect(rows[0].netCashAmount).toBe("-190");
+  });
+
+  test("trade republic cash exposes normalized cash-flow fields", async () => {
+    const input = fs.readFileSync("fixture/import/Trade Republic Cash CSV/cash.csv");
+    const result = await parse(new File([input], "cash.csv"));
+    const rows = asRows(result);
+
+    expect(rows[0].broker).toBe("Trade Republic");
+    expect(rows[0].importType).toBe("broker-cash");
+    expect(rows[0].transactionKind).toBe("dividend");
+    expect(rows[0].cashDate).toBe("30.04.2026");
+    expect(rows[0].cashAmount).toBe("45,67");
+    expect(rows[0].symbol).toBe("VWCE");
+  });
+
+  test("scalable capital trades expose normalized semantic fields", async () => {
+    const input = fs.readFileSync("fixture/import/Scalable Capital Trades CSV/trades.csv");
+    const result = await parse(new File([input], "trades.csv"));
+    const rows = asRows(result);
+
+    expect(rows[0].broker).toBe("Scalable Capital");
+    expect(rows[0].importType).toBe("broker-trade");
+    expect(rows[0].transactionKind).toBe("buy");
+    expect(rows[0].tradeDate).toBe("2026-04-28");
+    expect(rows[0].settlementDate).toBe("2026-04-30");
+    expect(rows[0].principal).toBe("191.00");
+    expect(rows[1].netCashAmount).toBe("148.03");
+  });
+
+  test("unsupported broker csv stays unnormalized", async () => {
+    const csv = [
+      "Booked At,Action,Amount",
+      "2026-04-30,Dividend,45.67"
+    ].join("\n");
+
+    const result = await parse(new File([csv], "unsupported.csv"));
+    const rows = asRows(result);
+
+    expect(rows[0].broker).toBeUndefined();
+    expect(rows[0].transactionKind).toBeUndefined();
+    expect(rows[0].A).toBe("Booked At");
+    expect(rows[1].A).toBe("2026-04-30");
+  });
+});
+
 describe("template helpers", () => {
   test("acronym", () => {
     expect(helpers.acronym("Foo Bar baz")).toBe("FBB");

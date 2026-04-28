@@ -11,6 +11,13 @@ interface Result {
   error?: string;
 }
 
+interface ParsedCSVResult {
+  data: string[][];
+  errors?: Papa.ParseError[];
+}
+
+type CSVRow = Record<string, string>;
+
 export function parse(file: File): Promise<Result> {
   let extension = file.name.split(".").pop();
   extension = extension?.toLowerCase();
@@ -91,6 +98,11 @@ function parseCSV(file: File): Promise<Result> {
     Papa.parse<string[]>(file, {
       skipEmptyLines: true,
       complete: function (results) {
+        const normalized = normalizeBrokerCSV(results as ParsedCSVResult);
+        if (normalized) {
+          resolve(normalized);
+          return;
+        }
         resolve(results);
       },
       error: function (error) {
@@ -99,6 +111,255 @@ function parseCSV(file: File): Promise<Result> {
       delimitersToGuess: [",", "\t", "|", ";", Papa.RECORD_SEP, Papa.UNIT_SEP, "^"]
     });
   });
+}
+
+function normalizeBrokerCSV(results: ParsedCSVResult): Result | null {
+  const data = results.data || [];
+  if (data.length < 2) {
+    return null;
+  }
+
+  const headers = data[0].map((cell) => cell.trim());
+  const body = data.slice(1);
+
+  if (matchesHeaders(headers, TRADE_REPUBLIC_TRADE_HEADERS)) {
+    return normalizeTradeRows(data, body, headers, "Trade Republic");
+  }
+  if (matchesHeaders(headers, TRADE_REPUBLIC_CASH_HEADERS)) {
+    return normalizeCashRows(data, body, headers, "Trade Republic");
+  }
+  if (matchesHeaders(headers, SCALABLE_TRADE_HEADERS)) {
+    return normalizeTradeRows(data, body, headers, "Scalable Capital");
+  }
+  if (matchesHeaders(headers, SCALABLE_CASH_HEADERS)) {
+    return normalizeCashRows(data, body, headers, "Scalable Capital");
+  }
+
+  return null;
+}
+
+const TRADE_REPUBLIC_TRADE_HEADERS = [
+  "Datum",
+  "Typ",
+  "ISIN",
+  "Ticker",
+  "Wertpapier",
+  "Anzahl",
+  "Preis",
+  "Währung",
+  "Bruttobetrag",
+  "Gebühren",
+  "Steuern",
+  "Abrechnungstag"
+] as const;
+
+const TRADE_REPUBLIC_CASH_HEADERS = [
+  "Datum",
+  "Typ",
+  "Beschreibung",
+  "Betrag",
+  "Währung",
+  "ISIN",
+  "Ticker",
+  "Wertpapier"
+] as const;
+
+const SCALABLE_TRADE_HEADERS = [
+  "Date",
+  "Transaction",
+  "ISIN",
+  "Symbol",
+  "Security",
+  "Quantity",
+  "Price",
+  "Currency",
+  "Gross Amount",
+  "Fees",
+  "Taxes",
+  "Settlement Date"
+] as const;
+
+const SCALABLE_CASH_HEADERS = [
+  "Date",
+  "Transaction",
+  "Description",
+  "Amount",
+  "Currency",
+  "ISIN",
+  "Symbol",
+  "Security"
+] as const;
+
+function matchesHeaders(headers: string[], expected: readonly string[]) {
+  return expected.every((header, index) => headers[index] === header);
+}
+
+function normalizeTradeRows(
+  data: string[][],
+  body: string[][],
+  headers: string[],
+  broker: string
+): Result {
+  const rows = body.map((cells) => {
+    const row = toCSVRow(headers, cells);
+    const mappedType = normalizeTradeType(row["Typ"] || row["Transaction"] || "");
+    const grossAmount = row["Bruttobetrag"] || row["Gross Amount"] || "";
+    const fees = row["Gebühren"] || row["Fees"] || "";
+    const taxes = row["Steuern"] || row["Taxes"] || "";
+    const settlementDate = row["Abrechnungstag"] || row["Settlement Date"] || "";
+    const symbol = row["Ticker"] || row["Symbol"] || "";
+    const securityName = row["Wertpapier"] || row["Security"] || "";
+
+    return {
+      broker,
+      importType: "broker-trade",
+      transactionKind: mappedType,
+      tradeDate: row["Datum"] || row["Date"] || "",
+      settlementDate,
+      isin: row["ISIN"] || "",
+      symbol,
+      securityName,
+      quantity: row["Anzahl"] || row["Quantity"] || "",
+      unitPrice: row["Preis"] || row["Price"] || "",
+      currency: row["Währung"] || row["Currency"] || "",
+      principal: grossAmount,
+      feeAmount: fees,
+      taxAmount: taxes,
+      netCashAmount: computeNetCashAmount(mappedType, grossAmount, fees, taxes),
+      description: compactJoin([mappedType ? capitalizeWord(mappedType) : "", securityName], " "),
+      rawType: row["Typ"] || row["Transaction"] || ""
+    };
+  });
+
+  return { data, rows };
+}
+
+function normalizeCashRows(
+  data: string[][],
+  body: string[][],
+  headers: string[],
+  broker: string
+): Result {
+  const rows = body.map((cells) => {
+    const row = toCSVRow(headers, cells);
+    const mappedType = normalizeCashType(row["Typ"] || row["Transaction"] || "");
+    const symbol = row["Ticker"] || row["Symbol"] || "";
+    const securityName = row["Wertpapier"] || row["Security"] || "";
+
+    return {
+      broker,
+      importType: "broker-cash",
+      transactionKind: mappedType,
+      cashDate: row["Datum"] || row["Date"] || "",
+      isin: row["ISIN"] || "",
+      symbol,
+      securityName,
+      currency: row["Währung"] || row["Currency"] || "",
+      cashAmount: row["Betrag"] || row["Amount"] || "",
+      description: row["Beschreibung"] || row["Description"] || "",
+      rawType: row["Typ"] || row["Transaction"] || ""
+    };
+  });
+
+  return { data, rows };
+}
+
+function toCSVRow(headers: string[], cells: string[]): CSVRow {
+  return _.zipObject(
+    headers,
+    headers.map((_, index) => (cells[index] || "").trim())
+  );
+}
+
+function normalizeTradeType(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (["buy", "kauf"].includes(normalized)) {
+    return "buy";
+  }
+  if (["sell", "verkauf"].includes(normalized)) {
+    return "sell";
+  }
+  return normalized;
+}
+
+function normalizeCashType(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (["dividend", "dividende"].includes(normalized)) {
+    return "dividend";
+  }
+  if (["interest", "zinsen"].includes(normalized)) {
+    return "interest";
+  }
+  if (["deposit", "einzahlung"].includes(normalized)) {
+    return "deposit";
+  }
+  if (["withdrawal", "auszahlung"].includes(normalized)) {
+    return "withdrawal";
+  }
+  if (["fee", "gebühr", "gebuehr"].includes(normalized)) {
+    return "fee";
+  }
+  if (["tax", "steuer"].includes(normalized)) {
+    return "tax";
+  }
+  return normalized;
+}
+
+function computeNetCashAmount(
+  transactionKind: string,
+  principal: string,
+  fees: string,
+  taxes: string
+) {
+  if (!["buy", "sell"].includes(transactionKind)) {
+    return "";
+  }
+
+  const principalValue = parseEuropeanNumber(principal);
+  const feeValue = parseEuropeanNumber(fees);
+  const taxValue = parseEuropeanNumber(taxes);
+  if (principalValue === null || feeValue === null || taxValue === null) {
+    return "";
+  }
+
+  const sign = transactionKind === "buy" ? -1 : 1;
+  return String(sign * (principalValue - feeValue - taxValue));
+}
+
+function parseEuropeanNumber(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 0;
+  }
+
+  const normalized = trimmed.replace(/\s/g, "");
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+  let decimalSeparator = "";
+  if (lastComma > lastDot) {
+    decimalSeparator = ",";
+  } else if (lastDot > lastComma) {
+    decimalSeparator = ".";
+  }
+
+  let normalizedDigits = normalized;
+  if (decimalSeparator === ",") {
+    normalizedDigits = normalizedDigits.replace(/\./g, "").replace(",", ".");
+  } else if (decimalSeparator === ".") {
+    normalizedDigits = normalizedDigits.replace(/,/g, "");
+  } else {
+    normalizedDigits = normalizedDigits.replace(/[.,]/g, "");
+  }
+
+  const parsed = Number(normalizedDigits);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function capitalizeWord(value: string) {
+  if (!value) {
+    return value;
+  }
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 async function parseTextLines(file: File): Promise<Result> {

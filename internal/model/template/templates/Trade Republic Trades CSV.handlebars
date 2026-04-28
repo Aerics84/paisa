@@ -1,0 +1,15 @@
+{{#if (and (isDate ROW.tradeDate "DD.MM.YYYY") (match ROW.transactionKind buy="^buy$" sell="^sell$"))}}
+{{date ROW.tradeDate "DD.MM.YYYY"}} {{capitalize ROW.transactionKind}} {{amount ROW.quantity}} Shares of {{or ROW.symbol (acronym ROW.securityName)}}
+{{#if (eq ROW.transactionKind "buy")}}
+    Assets:Brokerage:{{or ROW.symbol (acronym ROW.securityName)}} {{amount ROW.quantity}} "{{or ROW.symbol (acronym ROW.securityName)}}" @ {{amount ROW.unitPrice}} {{or ROW.currency "EUR"}}
+{{else}}
+    Assets:Brokerage:{{or ROW.symbol (acronym ROW.securityName)}} -{{amount ROW.quantity}} "{{or ROW.symbol (acronym ROW.securityName)}}" @ {{amount ROW.unitPrice}} {{or ROW.currency "EUR"}}
+{{/if}}
+{{#if (gt ROW.feeAmount 0)}}
+    Expenses:Broker:Fees {{amount ROW.feeAmount}} {{or ROW.currency "EUR"}}
+{{/if}}
+{{#if (gt ROW.taxAmount 0)}}
+    Expenses:Broker:Taxes {{amount ROW.taxAmount}} {{or ROW.currency "EUR"}}
+{{/if}}
+    Assets:Broker:Cash
+{{/if}}

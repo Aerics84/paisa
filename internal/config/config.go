@@ -94,11 +94,12 @@ type Price struct {
 }
 
 type Commodity struct {
-	Name        string          `json:"name" yaml:"name"`
-	Type        CommodityType   `json:"type" yaml:"type"`
-	Price       Price           `json:"price" yaml:"price"`
-	Harvest     int             `json:"harvest" yaml:"harvest"`
-	TaxCategory TaxCategoryType `json:"tax_category" yaml:"tax_category"`
+	Name                        string          `json:"name" yaml:"name"`
+	Type                        CommodityType   `json:"type" yaml:"type"`
+	Price                       Price           `json:"price" yaml:"price"`
+	Harvest                     int             `json:"harvest" yaml:"harvest"`
+	TaxCategory                 TaxCategoryType `json:"tax_category" yaml:"tax_category"`
+	GermanyPartialExemptionRate *float64        `json:"germany_partial_exemption_rate,omitempty" yaml:"germany_partial_exemption_rate,omitempty"`
 }
 
 type Account struct {

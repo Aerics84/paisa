@@ -28,6 +28,19 @@ cover common CSV export structures used by Europe-oriented brokers and
 portfolio tools, and they can be copied into custom templates when a
 broker uses different column order or labels.
 
+Paisa also ships explicit broker-specific built-in templates for the
+first Germany-focused support path:
+
+- `Trade Republic Trades CSV`
+- `Trade Republic Cash CSV`
+- `Scalable Capital Trades CSV`
+- `Scalable Capital Cash CSV`
+
+These templates are fixture-backed and currently target the exact CSV
+header layouts shipped with the supported exports. When a file does not
+match one of those supported layouts, the generic Germany/EU broker
+templates remain available as the fallback path.
+
 !!! example "Experimental"
 PDF support is in an experimental stage and may not accurately detect rows.
 
@@ -98,6 +111,20 @@ adding it to the built-in templates.
    `ROW.currency`, `ROW.creditDebitIndicator`,
    `ROW.counterpartyName`, `ROW.remittanceInformation` and
    `ROW.reference`.
+
+   Supported broker-specific CSV imports can also expose normalized
+   semantic keys in addition to preview columns. For example,
+   `Trade Republic Trades CSV` and `Scalable Capital Trades CSV` expose
+   keys such as `ROW.broker`, `ROW.importType`,
+   `ROW.transactionKind`, `ROW.tradeDate`, `ROW.settlementDate`,
+   `ROW.isin`, `ROW.symbol`, `ROW.securityName`, `ROW.quantity`,
+   `ROW.unitPrice`, `ROW.principal`, `ROW.feeAmount`,
+   `ROW.taxAmount`, and `ROW.netCashAmount`.
+
+   Supported broker cash exports can expose keys such as
+   `ROW.broker`, `ROW.importType`, `ROW.transactionKind`,
+   `ROW.cashDate`, `ROW.isin`, `ROW.symbol`, `ROW.securityName`,
+   `ROW.cashAmount`, and `ROW.description`.
 
 <details>
   <summary>Example</summary>

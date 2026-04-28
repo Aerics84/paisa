@@ -1,0 +1,7 @@
+Datum;Typ;Beschreibung;Betrag;Währung;ISIN;Ticker;Wertpapier
+30.04.2026;Dividende;Vanguard FTSE All-World distribution;45,67;EUR;IE00BK5BQT80;VWCE;Vanguard FTSE All-World UCITS ETF
+30.04.2026;Zinsen;Cash interest April;0,75;EUR;;;
+30.04.2026;Einzahlung;Broker account top-up;500,00;EUR;;;
+30.04.2026;Gebühr;Depot fee April;1,99;EUR;;;
+30.04.2026;Steuer;Dividend withholding tax;11,42;EUR;IE00BK5BQT80;VWCE;Vanguard FTSE All-World UCITS ETF
+30.04.2026;Auszahlung;Cash payout to checking;100,00;EUR;;;

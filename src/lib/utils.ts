@@ -342,25 +342,46 @@ export interface GermanyTaxPostingPair {
   purchase: Posting;
   sell: Posting;
   realized_gain: number;
+  partial_exemption_rate?: number | null;
+  partial_exemption_amount: number;
+  taxable_gain: number;
 }
 
 export interface GermanyTaxAccount {
   account: string;
+  commodity: string;
+  commodity_type: string;
+  partial_exemption_rate?: number | null;
   units: number;
   purchase_price: number;
   sell_price: number;
   realized_gain: number;
+  partial_exemption_amount: number;
+  taxable_gain: number;
   posting_pairs: GermanyTaxPostingPair[];
 }
 
 export interface GermanyTaxSummary {
+  gross_realized_gain: number;
+  realized_loss: number;
   realized_gain: number;
+  partial_exemption_amount: number;
+  taxable_amount_before_allowance: number;
   allowance_used: number;
   taxable_amount: number;
   capital_income_tax: number;
   solidarity_surcharge: number;
   church_tax: number;
   total_tax: number;
+  withholding_tax_paid: number;
+  tax_credit_used: number;
+  net_tax_due: number;
+}
+
+export interface GermanyTaxDiagnostic {
+  level: string;
+  summary: string;
+  details: string;
 }
 
 export interface GermanyTaxYear {
@@ -368,6 +389,7 @@ export interface GermanyTaxYear {
   settings: UserConfig["germany_tax"];
   summary: GermanyTaxSummary;
   accounts: GermanyTaxAccount[];
+  diagnostics: GermanyTaxDiagnostic[];
 }
 
 export interface Issue {

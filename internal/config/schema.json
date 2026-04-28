@@ -1041,6 +1041,12 @@
           "tax_category": {
             "type": "string",
             "enum": ["", "debt", "equity", "equity65", "equity35", "unlisted_equity"]
+          },
+          "germany_partial_exemption_rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Optional Germany-specific partial exemption rate for eligible funds or ETFs. Set to 0 for assets that are explicitly not eligible."
           }
         },
         "required": ["name", "type", "price"],

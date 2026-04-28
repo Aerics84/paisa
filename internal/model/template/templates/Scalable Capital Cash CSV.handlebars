@@ -1,0 +1,27 @@
+{{#if (and (isDate ROW.cashDate "YYYY-MM-DD") (match ROW.transactionKind dividend="^dividend$" interest="^interest$" deposit="^deposit$" withdrawal="^withdrawal$" fee="^fee$" tax="^tax$"))}}
+{{date ROW.cashDate "YYYY-MM-DD"}} {{ROW.description}}
+{{#if (eq ROW.transactionKind "dividend")}}
+    Assets:Broker:Cash {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Income:Dividend:{{or ROW.symbol (acronym ROW.securityName)}}
+{{/if}}
+{{#if (eq ROW.transactionKind "interest")}}
+    Assets:Broker:Cash {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Income:Interest:Broker
+{{/if}}
+{{#if (eq ROW.transactionKind "deposit")}}
+    Assets:Broker:Cash {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Assets:Checking
+{{/if}}
+{{#if (eq ROW.transactionKind "withdrawal")}}
+    Assets:Checking {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Assets:Broker:Cash
+{{/if}}
+{{#if (eq ROW.transactionKind "fee")}}
+    Expenses:Broker:Fees {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Assets:Broker:Cash
+{{/if}}
+{{#if (eq ROW.transactionKind "tax")}}
+    Expenses:Broker:Taxes {{amount ROW.cashAmount}} {{or ROW.currency "EUR"}}
+    Assets:Broker:Cash
+{{/if}}
+{{/if}}
