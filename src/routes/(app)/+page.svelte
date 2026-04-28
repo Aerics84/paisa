@@ -117,8 +117,8 @@
               <p class="is-size-4">I want to get started</p>
               <ol class="ml-5 mt-2 mb-4">
                 <li>
-                  Go to <a href="/more/config">configuration</a> page and set your default currency and
-                  locale.
+                  Go to <a href="/more/config">configuration</a> page and set your regional
+                  profile, default currency and locale.
                 </li>
                 <li>
                   Go to <a href="/ledger/editor">editor</a> page and start adding transactions to your

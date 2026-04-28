@@ -26,9 +26,12 @@ interface GoalSummary {
 }
 
 interface UserConfig {
+  regional_profile: string;
+  tax_regime: string;
   default_currency: string;
   readonly: boolean;
   locale: string;
+  time_zone: string;
   journal_path: string;
   display_precision: number;
   db_path: string;

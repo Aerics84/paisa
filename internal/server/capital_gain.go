@@ -34,6 +34,10 @@ type CapitalGain struct {
 }
 
 func GetCapitalGains(db *gorm.DB) gin.H {
+	if !config.SupportsTaxFeatures() {
+		return gin.H{"capital_gains": map[string]CapitalGain{}}
+	}
+
 	commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
 		return (c.Type == config.MutualFund || c.Type == config.Stock) &&
 			(c.TaxCategory == config.Debt || c.TaxCategory == config.Equity || c.TaxCategory == config.Equity65 || c.TaxCategory == config.Equity35 || c.TaxCategory == config.UnlistedEquity)

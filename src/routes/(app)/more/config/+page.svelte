@@ -15,9 +15,33 @@
   let isLoading = false;
   let error: string = null;
   let accounts: string[] = [];
+  let lastAppliedRegionalProfile: string = null;
+
+  const regionalProfileDefaults: Record<string, Partial<UserConfig>> = {
+    india: {
+      tax_regime: "india",
+      default_currency: "INR",
+      display_precision: 0,
+      locale: "en-IN",
+      time_zone: "",
+      financial_year_starting_month: 4,
+      week_starting_day: 0
+    },
+    "germany-eu": {
+      tax_regime: "germany",
+      default_currency: "EUR",
+      display_precision: 2,
+      locale: "de-DE",
+      time_zone: "Europe/Berlin",
+      financial_year_starting_month: 1,
+      week_starting_day: 1
+    }
+  };
+
   onMount(async () => {
     ({ config, schema, accounts } = await ajax("/api/config"));
     lastConfig = _.cloneDeep(config);
+    lastAppliedRegionalProfile = config?.regional_profile || null;
   });
 
   async function resetToDefault() {
@@ -62,6 +86,14 @@
   }
 
   $: hasChanges = !_.isEqual(config, lastConfig);
+
+  $: if (config?.regional_profile && config.regional_profile !== lastAppliedRegionalProfile) {
+    const defaults = regionalProfileDefaults[config.regional_profile];
+    if (defaults) {
+      config = { ...config, ...defaults };
+    }
+    lastAppliedRegionalProfile = config.regional_profile;
+  }
 </script>
 
 <div class="section">

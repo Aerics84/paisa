@@ -46,6 +46,20 @@ const (
 	No  BoolType = "no"
 )
 
+type RegionalProfileType string
+
+const (
+	RegionalProfileIndia     RegionalProfileType = "india"
+	RegionalProfileGermanyEU RegionalProfileType = "germany-eu"
+)
+
+type TaxRegimeType string
+
+const (
+	TaxRegimeIndia   TaxRegimeType = "india"
+	TaxRegimeGermany TaxRegimeType = "germany"
+)
+
 type ImportTemplate struct {
 	Name    string `json:"name" yaml:"name"`
 	Content string `json:"content" yaml:"content"`
@@ -126,19 +140,21 @@ type CreditCard struct {
 }
 
 type Config struct {
-	JournalPath                string       `json:"journal_path" yaml:"journal_path"`
-	DBPath                     string       `json:"db_path" yaml:"db_path"`
-	SheetsDirectory            string       `json:"sheets_directory" yaml:"sheets_directory"`
-	Readonly                   bool         `json:"readonly" yaml:"readonly"`
-	LedgerCli                  string       `json:"ledger_cli" yaml:"ledger_cli"`
-	DefaultCurrency            string       `json:"default_currency" yaml:"default_currency"`
-	DisplayPrecision           int          `json:"display_precision" yaml:"display_precision"`
-	AmountAlignmentColumn      int          `json:"amount_alignment_column" yaml:"amount_alignment_column"`
-	Locale                     string       `json:"locale" yaml:"locale"`
-	TimeZone                   string       `json:"time_zone" yaml:"time_zone"`
-	FinancialYearStartingMonth time.Month   `json:"financial_year_starting_month" yaml:"financial_year_starting_month"`
-	WeekStartingDay            time.Weekday `json:"week_starting_day" yaml:"week_starting_day"`
-	Strict                     BoolType     `json:"strict" yaml:"strict"`
+	JournalPath                string              `json:"journal_path" yaml:"journal_path"`
+	DBPath                     string              `json:"db_path" yaml:"db_path"`
+	SheetsDirectory            string              `json:"sheets_directory" yaml:"sheets_directory"`
+	Readonly                   bool                `json:"readonly" yaml:"readonly"`
+	LedgerCli                  string              `json:"ledger_cli" yaml:"ledger_cli"`
+	RegionalProfile            RegionalProfileType `json:"regional_profile" yaml:"regional_profile"`
+	TaxRegime                  TaxRegimeType       `json:"tax_regime" yaml:"tax_regime"`
+	DefaultCurrency            string              `json:"default_currency" yaml:"default_currency"`
+	DisplayPrecision           int                 `json:"display_precision" yaml:"display_precision"`
+	AmountAlignmentColumn      int                 `json:"amount_alignment_column" yaml:"amount_alignment_column"`
+	Locale                     string              `json:"locale" yaml:"locale"`
+	TimeZone                   string              `json:"time_zone" yaml:"time_zone"`
+	FinancialYearStartingMonth time.Month          `json:"financial_year_starting_month" yaml:"financial_year_starting_month"`
+	WeekStartingDay            time.Weekday        `json:"week_starting_day" yaml:"week_starting_day"`
+	Strict                     BoolType            `json:"strict" yaml:"strict"`
 
 	Budget Budget `json:"budget" yaml:"budget"`
 
@@ -166,6 +182,8 @@ var location *time.Location
 var defaultConfig = Config{
 	Readonly:                   false,
 	LedgerCli:                  "ledger",
+	RegionalProfile:            RegionalProfileIndia,
+	TaxRegime:                  TaxRegimeIndia,
 	DefaultCurrency:            "INR",
 	DisplayPrecision:           0,
 	AmountAlignmentColumn:      52,
@@ -183,6 +201,57 @@ var defaultConfig = Config{
 	Goals:                      Goals{Retirement: []RetirementGoal{}, Savings: []SavingsGoal{}},
 	UserAccounts:               []UserAccount{},
 	CreditCards:                []CreditCard{},
+}
+
+func regionalProfileDefaults(profile RegionalProfileType) Config {
+	switch profile {
+	case RegionalProfileGermanyEU:
+		return Config{
+			TaxRegime:                  TaxRegimeGermany,
+			DefaultCurrency:            "EUR",
+			DisplayPrecision:           2,
+			Locale:                     "de-DE",
+			TimeZone:                   "Europe/Berlin",
+			FinancialYearStartingMonth: 1,
+			WeekStartingDay:            1,
+		}
+	default:
+		return Config{
+			TaxRegime:                  TaxRegimeIndia,
+			DefaultCurrency:            "INR",
+			DisplayPrecision:           0,
+			Locale:                     "en-IN",
+			TimeZone:                   "",
+			FinancialYearStartingMonth: 4,
+			WeekStartingDay:            0,
+		}
+	}
+}
+
+func applyRegionalProfileDefaults(raw map[string]interface{}, cfg *Config) {
+	profileDefaults := regionalProfileDefaults(cfg.RegionalProfile)
+
+	if _, ok := raw["tax_regime"]; !ok {
+		cfg.TaxRegime = profileDefaults.TaxRegime
+	}
+	if _, ok := raw["default_currency"]; !ok {
+		cfg.DefaultCurrency = profileDefaults.DefaultCurrency
+	}
+	if _, ok := raw["display_precision"]; !ok {
+		cfg.DisplayPrecision = profileDefaults.DisplayPrecision
+	}
+	if _, ok := raw["locale"]; !ok {
+		cfg.Locale = profileDefaults.Locale
+	}
+	if _, ok := raw["time_zone"]; !ok {
+		cfg.TimeZone = profileDefaults.TimeZone
+	}
+	if _, ok := raw["financial_year_starting_month"]; !ok {
+		cfg.FinancialYearStartingMonth = profileDefaults.FinancialYearStartingMonth
+	}
+	if _, ok := raw["week_starting_day"]; !ok {
+		cfg.WeekStartingDay = profileDefaults.WeekStartingDay
+	}
 }
 
 var itemsUniquePropertiesMeta = jsonschema.MustCompileString("itemsUniqueProperties.json", `{
@@ -303,6 +372,12 @@ func LoadConfig(content []byte, cp string) error {
 		return err
 	}
 
+	rawConfig := map[string]interface{}{}
+	err = yaml.Unmarshal(content, &rawConfig)
+	if err != nil {
+		return err
+	}
+
 	err = schema.Validate(configJson)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Invalid configuration\n%#v", err))
@@ -319,6 +394,8 @@ func LoadConfig(content []byte, cp string) error {
 	if err != nil {
 		return err
 	}
+
+	applyRegionalProfileDefaults(rawConfig, &config)
 
 	if cp != "" && configPath == "" {
 		configPath = cp
@@ -428,4 +505,12 @@ func TimeZone() *time.Location {
 	}
 
 	return time.Local
+}
+
+func SupportsTaxFeatures() bool {
+	return config.TaxRegime == TaxRegimeIndia
+}
+
+func SupportsScheduleAL() bool {
+	return config.TaxRegime == TaxRegimeIndia
 }

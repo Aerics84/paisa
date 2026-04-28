@@ -70,6 +70,8 @@ func generateConfigFile(cwd string) {
 journal_path: '%s'
 db_path: '%s'
 ledger_cli: ledger
+regional_profile: india
+tax_regime: india
 default_currency: INR
 goals:
   retirement:

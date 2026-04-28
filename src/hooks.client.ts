@@ -44,6 +44,7 @@ import * as toast from "bulma-toast";
 import _ from "lodash";
 
 import "@formatjs/intl-numberformat/polyfill";
+import "@formatjs/intl-numberformat/locale-data/de";
 import "@formatjs/intl-numberformat/locale-data/en";
 
 Handlebars.registerHelper(

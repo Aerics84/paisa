@@ -11,9 +11,12 @@ import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
+  regional_profile: "india",
+  tax_regime: "india",
   default_currency: "",
   readonly: false,
   locale: "en",
+  time_zone: "",
   journal_path: "",
   display_precision: 2,
   db_path: "",
@@ -896,6 +899,14 @@ export function configUpdated() {
   dayjs.updateLocale("en", {
     weekStart: config.week_starting_day
   });
+}
+
+export function supportsTaxFeatures(config: UserConfig = getUserConfig()) {
+  return config.tax_regime === "india";
+}
+
+export function supportsScheduleAL(config: UserConfig = getUserConfig()) {
+  return config.tax_regime === "india";
 }
 
 export function setNow(value: dayjs.Dayjs) {

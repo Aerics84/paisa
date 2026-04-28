@@ -21,7 +21,7 @@ comes with an embedded **ledger** and you are not required to use
 
     Even though the tutorial focuses on Indian users, Paisa is
     capable of handling any currency. You can change the default
-    currency, locale and financial year starting month etc. Check the
+    regional profile, currency, locale and financial year starting month etc. Check the
     [configuration](../reference/config.md) reference for more details.
 
 
@@ -199,8 +199,9 @@ sequence in which it looks for the file is described below
 If it can't find the configuration file, it will create a default
 configuration file named `paisa/paisa.yaml` inside User Documents
 folder. The default configuration is tuned for Indians, users from
-other countries would have to change the `default_currency` and
-`locale`. Check the [configuration](../reference/config.md) reference for details.
+other countries can switch the `regional_profile` and then fine tune
+`default_currency`, `locale`, and calendar settings. Check the
+[configuration](../reference/config.md) reference for details.
 
 ## Update
 

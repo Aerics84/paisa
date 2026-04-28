@@ -10,7 +10,15 @@
     obscure
   } from "../../persisted_store";
   import _ from "lodash";
-  import { financialYear, forEachFinancialYear, helpUrl, isMobile, now } from "$lib/utils";
+  import {
+    financialYear,
+    forEachFinancialYear,
+    helpUrl,
+    isMobile,
+    now,
+    supportsScheduleAL,
+    supportsTaxFeatures
+  } from "$lib/utils";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import DateRange from "./DateRange.svelte";
@@ -127,23 +135,26 @@
     }
   ];
 
-  const tax = {
+  const tax: Link = {
     label: "Tax",
     href: "/tax",
     help: "tax",
     children: [
       { label: "Harvest", href: "/harvest", help: "tax-harvesting" },
-      { label: "Capital Gains", href: "/capital_gains", help: "capital-gains" },
-      {
-        label: "Schedule AL",
-        href: "/schedule_al",
-        help: "schedule-al",
-        financialYearPicker: true
-      }
+      { label: "Capital Gains", href: "/capital_gains", help: "capital-gains" }
     ]
   };
 
-  if (USER_CONFIG.default_currency == "INR") {
+  if (supportsScheduleAL(USER_CONFIG)) {
+    tax.children.push({
+      label: "Schedule AL",
+      href: "/schedule_al",
+      help: "schedule-al",
+      financialYearPicker: true
+    });
+  }
+
+  if (supportsTaxFeatures(USER_CONFIG)) {
     _.last(links).children.push(tax);
   }
 

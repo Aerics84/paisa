@@ -39,6 +39,10 @@ type Harvestable struct {
 }
 
 func GetHarvest(db *gorm.DB) gin.H {
+	if !config.SupportsTaxFeatures() {
+		return gin.H{"harvestables": map[string]Harvestable{}}
+	}
+
 	commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
 		return c.Harvest > 0
 	})

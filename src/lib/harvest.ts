@@ -7,6 +7,7 @@ import { formatCurrency, formatFloat, restName, tooltip, type Harvestable } from
 export function renderHarvestables(harvestables: Harvestable[]) {
   const id = "#d3-harvestables";
   const root = d3.select(id);
+  const currencyCode = USER_CONFIG.default_currency || "";
 
   const card = root
     .selectAll("div.column")
@@ -35,7 +36,7 @@ export function renderHarvestables(harvestables: Harvestable[]) {
       const [units, amount, taxableGain] = unitsRequiredFromGain(h, 100000);
       self.append("span").html("If you redeem&nbsp;");
       const unitsSpan = self.append("span").text(formatFloat(units));
-      self.append("span").html("&nbsp;units you will get ₹");
+      self.append("span").html("&nbsp;units you will get&nbsp;");
       const amountInput = self
         .append("input")
         .attr("class", "input is-small adjustable-input")
@@ -52,7 +53,12 @@ export function renderHarvestables(harvestables: Harvestable[]) {
           (taxableGainInput.node() as HTMLInputElement).value = round(taxableGain).toString();
           event.srcElement.value = round(amount);
         });
-      self.append("span").html("&nbsp; and your <b>taxable</b> gain would be ₹");
+
+      if (currencyCode) {
+        self.append("span").html(`&nbsp;${currencyCode}`);
+      }
+
+      self.append("span").html("&nbsp; and your <b>taxable</b> gain would be&nbsp;");
       const taxableGainInput = self
         .append("input")
         .attr("class", "input is-small adjustable-input")
@@ -68,6 +74,10 @@ export function renderHarvestables(harvestables: Harvestable[]) {
           event.srcElement.value = round(taxableGain);
           (amountInput.node() as HTMLInputElement).value = round(amount).toString();
         });
+
+      if (currencyCode) {
+        self.append("span").html(`&nbsp;${currencyCode}`);
+      }
     });
 
   header

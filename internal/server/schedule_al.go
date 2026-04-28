@@ -48,6 +48,10 @@ type ScheduleAL struct {
 }
 
 func GetScheduleAL(db *gorm.DB) gin.H {
+	if !config.SupportsScheduleAL() {
+		return gin.H{"schedule_als": map[string]ScheduleAL{}}
+	}
+
 	postings := query.Init(db).Like("Assets:%", "Liabilities:%").All()
 	var scheduleALs map[string]ScheduleAL = make(map[string]ScheduleAL)
 

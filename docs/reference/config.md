@@ -16,8 +16,9 @@ below
 
 If it can't find the configuration file, it will create a default
 configuration file named `paisa/paisa.yaml` inside User Documents folder. The
-default configuration is tuned for Indians, users from other countries
-would have to change the `default_currency` and `locale`.
+default configuration is India-oriented. You can keep that profile, or
+switch to a regional profile such as Germany/EU and then fine tune the
+individual fields if needed.
 
 ### Accounts
 
@@ -51,6 +52,19 @@ sheets_directory: sheets
 # The ledger client to use
 # OPTIONAL, DEFAULT: ledger, ENUM: ledger, hledger, beancount
 ledger_cli: ledger
+
+# Optional regional profile. This applies sensible defaults for
+# currency, locale, calendar, and tax regime when those fields are not
+# explicitly set.
+#
+# OPTIONAL, DEFAULT: india, ENUM: india, germany-eu
+regional_profile: india
+
+# Tax regime controls tax-specific UI and calculations. This is
+# independent of the default currency.
+#
+# OPTIONAL, DEFAULT: india, ENUM: india, germany
+tax_regime: india
 
 # The default currency to use. NOTE: Paisa tries to convert other
 # currencies to default currency, so make sure it's possible to
