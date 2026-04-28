@@ -29,6 +29,15 @@ export function childExpenseScope(scope: string, child: string) {
   return `${scope}:${child}`;
 }
 
+export function normalizeExpenseDetailScope(scope: string = ROOT_EXPENSE_SCOPE) {
+  if (scope === ROOT_EXPENSE_SCOPE) {
+    return ROOT_EXPENSE_SCOPE;
+  }
+
+  const topLevelGroup = expenseTopLevelGroup(scope);
+  return topLevelGroup ? childExpenseScope(ROOT_EXPENSE_SCOPE, topLevelGroup) : ROOT_EXPENSE_SCOPE;
+}
+
 export function expenseBreadcrumb(scope: string) {
   const parts = scopeParts(scope);
   return parts.map((_part, index) => {
@@ -90,4 +99,11 @@ export function byExpenseGroup(expenses: Posting[], scope: string = ROOT_EXPENSE
       };
     })
     .value();
+}
+
+export function hasExpenseChildGroups(
+  expenses: Posting[],
+  scope: string = ROOT_EXPENSE_SCOPE
+): boolean {
+  return !_.isEmpty(byExpenseGroup(expenses, scope));
 }

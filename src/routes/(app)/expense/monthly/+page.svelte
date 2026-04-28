@@ -20,6 +20,7 @@
     expenseBreadcrumb,
     expenseColorKey,
     filterExpenseScope,
+    normalizeExpenseDetailScope,
     ROOT_EXPENSE_SCOPE
   } from "$lib/expense";
 
@@ -118,7 +119,7 @@
       dateRange
     ));
     renderer = renderCurrentExpensesBreakdown(z, {
-      onDrilldown: (scope) => detailScope.set(scope)
+      onDrilldown: (scope) => detailScope.set(normalizeExpenseDetailScope(scope))
     });
   });
 
@@ -220,7 +221,14 @@
             </div>
           </div>
           <div class="column is-8">
-            <div class="px-3 box" style="height: 100%">
+            <div class="px-3 box current-month-breakdown-box" style="height: 100%">
+              {#if $detailScope !== ROOT_EXPENSE_SCOPE}
+                <button
+                  type="button"
+                  class="button is-ghost is-small current-month-breakdown-reset"
+                  on:click={() => detailScope.set(ROOT_EXPENSE_SCOPE)}>← Alle Kategorien</button
+                >
+              {/if}
               <ZeroState item={current_month_expenses}>
                 {#if monthHasExpenses && $detailScope !== ROOT_EXPENSE_SCOPE}
                   <strong>No expenses for {detailScopeLabel}</strong> in {dayjs($month).format(
@@ -251,3 +259,17 @@
     </div>
   </div>
 </section>
+
+<style lang="scss">
+  .current-month-breakdown-box {
+    position: relative;
+  }
+
+  .current-month-breakdown-reset {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 1;
+    color: var(--bulma-link-text, inherit);
+  }
+</style>

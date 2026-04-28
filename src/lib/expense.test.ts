@@ -6,6 +6,8 @@ import {
   expenseBreadcrumb,
   expenseColorKey,
   filterExpenseScope,
+  hasExpenseChildGroups,
+  normalizeExpenseDetailScope,
   ROOT_EXPENSE_SCOPE
 } from "./expense";
 import type { Posting } from "./utils";
@@ -77,6 +79,19 @@ describe("expense drilldown helpers", () => {
         byExpenseGroup([posting("Expenses:Food:Restaurants", 40)], "Expenses:Food:Restaurants")
       )
     ).toEqual([]);
+  });
+
+  test("normalizes detail scope to root or one top-level category", () => {
+    expect(normalizeExpenseDetailScope(ROOT_EXPENSE_SCOPE)).toBe(ROOT_EXPENSE_SCOPE);
+    expect(normalizeExpenseDetailScope("Expenses:Food")).toBe("Expenses:Food");
+    expect(normalizeExpenseDetailScope("Expenses:Food:Restaurants")).toBe("Expenses:Food");
+    expect(normalizeExpenseDetailScope("Assets:Cash")).toBe(ROOT_EXPENSE_SCOPE);
+  });
+
+  test("detects whether a category has deeper child groups", () => {
+    expect(hasExpenseChildGroups(postings, "Expenses:Food")).toBe(true);
+    expect(hasExpenseChildGroups(postings, "Expenses:Insurance")).toBe(false);
+    expect(hasExpenseChildGroups([posting("Expenses:Food", 20)], "Expenses:Food")).toBe(false);
   });
 
   test("builds breadcrumb paths and stable color keys for nested scopes", () => {

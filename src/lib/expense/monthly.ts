@@ -24,6 +24,7 @@ import {
   expenseColorKey,
   expenseColorKeys,
   expenseGroup,
+  hasExpenseChildGroups,
   pieData,
   ROOT_EXPENSE_SCOPE
 } from "$lib/expense";
@@ -485,6 +486,7 @@ export function renderCurrentExpensesBreakdown(
       scope: string;
       postings: Posting[];
       total: number;
+      expandable: boolean;
     }
 
     const categories = byExpenseGroup(postings, scope);
@@ -493,7 +495,11 @@ export function renderCurrentExpensesBreakdown(
       .map((c) => c.category)
       .value();
 
-    const points = _.values(categories);
+    const points = _.map(_.values(categories), (point) => ({
+      ...point,
+      expandable:
+        scope === ROOT_EXPENSE_SCOPE && hasExpenseChildGroups(postings, point.scope)
+    }));
     const total = _.sumBy(points, (p) => p.total);
 
     const height = BAR_HEIGHT * keys.length;
@@ -546,9 +552,13 @@ export function renderCurrentExpensesBreakdown(
             .attr("fill", function (d) {
               return z(d.category);
             })
-            .attr("class", options.onDrilldown ? "zoomable" : null)
+            .attr("class", (d) => (options.onDrilldown && d.expandable ? "zoomable" : null))
             .attr("data-tippy-content", tooltipContent)
-            .on("click", (_event, d) => options.onDrilldown?.(d.scope))
+            .on("click", (_event, d) => {
+              if (d.expandable) {
+                options.onDrilldown?.(d.scope);
+              }
+            })
             .attr("x", x(0))
             .attr("y", function (d) {
               return y(d.category) + (y.bandwidth() - Math.min(y.bandwidth(), BAR_HEIGHT)) / 2;
@@ -563,9 +573,13 @@ export function renderCurrentExpensesBreakdown(
             .attr("fill", function (d) {
               return z(d.category);
             })
-            .attr("class", options.onDrilldown ? "zoomable" : null)
+            .attr("class", (d) => (options.onDrilldown && d.expandable ? "zoomable" : null))
             .attr("data-tippy-content", tooltipContent)
-            .on("click", (_event, d) => options.onDrilldown?.(d.scope))
+            .on("click", (_event, d) => {
+              if (d.expandable) {
+                options.onDrilldown?.(d.scope);
+              }
+            })
             .transition(t)
             .attr("x", x(0))
             .attr("y", function (d) {
