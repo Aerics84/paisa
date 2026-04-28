@@ -1,13 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import _ from "lodash";
-  import {
-    ajax,
-    type Posting,
-    formatCurrency,
-    formatPercentage,
-    type Legend
-  } from "$lib/utils";
+  import { ajax, type Posting, formatCurrency, formatPercentage, type Legend } from "$lib/utils";
   import {
     renderMonthlyExpensesTimeline,
     renderCurrentExpensesBreakdown,
@@ -54,7 +48,9 @@
   let breadcrumbs = expenseBreadcrumb(ROOT_EXPENSE_SCOPE);
 
   $: {
-    current_month_expenses = _.chain(filterExpenseScope(grouped_expenses?.[$month] || [], $expenseScope))
+    current_month_expenses = _.chain(
+      filterExpenseScope(grouped_expenses?.[$month] || [], $expenseScope)
+    )
       .sortBy((e) => e.date)
       .reverse()
       .value();
@@ -110,7 +106,12 @@
     } = await ajax("/api/expense"));
 
     setAllowedDateRange(_.map(expenses, (e) => e.date));
-    ({ z, destroy, legends } = renderMonthlyExpensesTimeline(expenses, expenseScope, month, dateRange));
+    ({ z, destroy, legends } = renderMonthlyExpensesTimeline(
+      expenses,
+      expenseScope,
+      month,
+      dateRange
+    ));
     renderer = renderCurrentExpensesBreakdown(z, {
       onDrilldown: (scope) => expenseScope.set(scope)
     });
@@ -179,7 +180,9 @@
                     {#if crumb.scope === $expenseScope}
                       <a class="is-inactive">{crumb.label}</a>
                     {:else}
-                      <a href={crumb.scope} on:click|preventDefault={() => expenseScope.set(crumb.scope)}
+                      <a
+                        href={crumb.scope}
+                        on:click|preventDefault={() => expenseScope.set(crumb.scope)}
                         >{crumb.label}</a
                       >
                     {/if}

@@ -69,11 +69,13 @@ describe("expense drilldown helpers", () => {
   });
 
   test("returns no child groups for leaf scopes", () => {
-    expect(Object.keys(byExpenseGroup([posting("Expenses:Insurance", 90)], "Expenses:Insurance"))).toEqual(
-      []
-    );
     expect(
-      Object.keys(byExpenseGroup([posting("Expenses:Food:Restaurants", 40)], "Expenses:Food:Restaurants"))
+      Object.keys(byExpenseGroup([posting("Expenses:Insurance", 90)], "Expenses:Insurance"))
+    ).toEqual([]);
+    expect(
+      Object.keys(
+        byExpenseGroup([posting("Expenses:Food:Restaurants", 40)], "Expenses:Food:Restaurants")
+      )
     ).toEqual([]);
   });
 

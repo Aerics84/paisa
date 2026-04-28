@@ -72,7 +72,9 @@ export function pieData(expenses: Posting[], scope: string = ROOT_EXPENSE_SCOPE)
   return d3
     .pie<{ category: string; total: number }>()
     .value((g) => g.total)
-    .sort((a, b) => a.category.localeCompare(b.category))(_.values(byExpenseGroup(expenses, scope)));
+    .sort((a, b) => a.category.localeCompare(b.category))(
+    _.values(byExpenseGroup(expenses, scope))
+  );
 }
 
 export function byExpenseGroup(expenses: Posting[], scope: string = ROOT_EXPENSE_SCOPE) {
