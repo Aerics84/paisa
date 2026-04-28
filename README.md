@@ -14,7 +14,6 @@ Ready to use Docker images are published at `ghcr.io/aerics84/paisa`.
 - `ghcr.io/aerics84/paisa:latest-hledger` adds `hledger`
 - `ghcr.io/aerics84/paisa:latest-beancount` adds `beancount`
 - `ghcr.io/aerics84/paisa:latest-all` adds both `hledger` and `beancount`
-- `ghcr.io/aerics84/paisa:latest-demo` starts a read-only demo dataset
 
 Example:
 
