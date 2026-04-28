@@ -1,36 +1,15 @@
-{{#if
-  (and
-    (isDate ROW.A "DD.MM.YYYY")
-    (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$")
-  )
-}}
-  {{date ROW.A "DD.MM.YYYY"}}
-  {{capitalize (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$")}}
-  {{amount ROW.F}}
-  Shares of
-  {{or ROW.D (acronym ROW.E)}}
-  {{#if (eq (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$") "buy")}}
-    Assets:Brokerage:{{or ROW.D (acronym ROW.E)}}
-    {{amount ROW.F}}
-    "{{or ROW.D (acronym ROW.E)}}" @
-    {{amount ROW.G}}
-    {{or ROW.H "EUR"}}
-  {{else}}
-    Assets:Brokerage:{{or ROW.D (acronym ROW.E)}}
-    -{{amount ROW.F}}
-    "{{or ROW.D (acronym ROW.E)}}" @
-    {{amount ROW.G}}
-    {{or ROW.H "EUR"}}
-  {{/if}}
-  {{#if (gt ROW.J 0)}}
-    Expenses:Broker:Fees
-    {{amount ROW.J}}
-    {{or ROW.H "EUR"}}
-  {{/if}}
-  {{#if (gt ROW.K 0)}}
-    Expenses:Broker:Taxes
-    {{amount ROW.K}}
-    {{or ROW.H "EUR"}}
-  {{/if}}
-  Assets:Broker:Cash
+{{#if (and (isDate ROW.A "DD.MM.YYYY") (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$"))}}
+{{date ROW.A "DD.MM.YYYY"}} {{capitalize (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$")}} {{amount ROW.F}} Shares of {{or ROW.D (acronym ROW.E)}}
+{{#if (eq (match (toLowerCase ROW.B) buy="^(buy|kauf)$" sell="^(sell|verkauf)$") "buy")}}
+    Assets:Brokerage:{{or ROW.D (acronym ROW.E)}} {{amount ROW.F}} "{{or ROW.D (acronym ROW.E)}}" @ {{amount ROW.G}} {{or ROW.H "EUR"}}
+{{else}}
+    Assets:Brokerage:{{or ROW.D (acronym ROW.E)}} -{{amount ROW.F}} "{{or ROW.D (acronym ROW.E)}}" @ {{amount ROW.G}} {{or ROW.H "EUR"}}
+{{/if}}
+{{#if (gt ROW.J 0)}}
+    Expenses:Broker:Fees {{amount ROW.J}} {{or ROW.H "EUR"}}
+{{/if}}
+{{#if (gt ROW.K 0)}}
+    Expenses:Broker:Taxes {{amount ROW.K}} {{or ROW.H "EUR"}}
+{{/if}}
+    Assets:Broker:Cash
 {{/if}}

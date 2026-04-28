@@ -1,14 +1,10 @@
 {{#if (regexpTest ROW.A "^:61:")}}
-  {{date (regexpMatch ROW.A "^:61:(\\d{6})" group=1) "YYMMDD"}}
-  {{or (regexpMatch (findBelow "A" regexp="^:86:(.+)" group=1) "(.+)" group=1) "MT940 transaction"}}
-  {{#if (eq (regexpMatch ROW.A "^:61:\\d{6}\\d{0,4}(R?[CD])" group=1) "C")}}
-    Assets:Checking
-    {{amount (regexpMatch ROW.A "^:61:\\d{6}\\d{0,4}R?[CD]([0-9,]+)" group=1)}}
-    EUR
+{{date (regexpMatch ROW.A "^:61:(\d{6})" group=1) "YYMMDD"}} {{or (findBelow "A" regexp="^:86:(.+)" group=1) "MT940 transaction"}}
+{{#if (eq (regexpMatch ROW.A "^:61:\d{6}\d{0,4}(R?[CD])" group=1) "C")}}
+    Assets:Checking {{amount (regexpMatch ROW.A "^:61:\d{6}\d{0,4}R?[CD]([0-9,]+)" group=1)}} EUR
     {{predictAccount (findBelow "A" regexp="^:86:(.+)" group=1) prefix="Income"}}
-  {{else}}
-    {{predictAccount (findBelow "A" regexp="^:86:(.+)" group=1) prefix="Expenses"}}
-    {{amount (regexpMatch ROW.A "^:61:\\d{6}\\d{0,4}R?[CD]([0-9,]+)" group=1)}}
-    EUR Assets:Checking
-  {{/if}}
+{{else}}
+    {{predictAccount (findBelow "A" regexp="^:86:(.+)" group=1) prefix="Expenses"}} {{amount (regexpMatch ROW.A "^:61:\d{6}\d{0,4}R?[CD]([0-9,]+)" group=1)}} EUR
+    Assets:Checking
+{{/if}}
 {{/if}}

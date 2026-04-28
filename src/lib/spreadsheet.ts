@@ -172,7 +172,7 @@ async function parseXML(file: File): Promise<Result> {
     return { data: [], error: "Unable to parse XML document" };
   }
 
-  if (document.querySelector("BkToCstmrStmt")) {
+  if (document.getElementsByTagNameNS("*", "BkToCstmrStmt").length > 0) {
     return parseCAMTDocument(document);
   }
 
