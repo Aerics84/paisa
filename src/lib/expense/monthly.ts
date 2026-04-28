@@ -19,13 +19,22 @@ import {
 import COLORS, { generateColorScheme, white } from "$lib/colors";
 import { get, type Readable, type Unsubscriber, type Writable } from "svelte/store";
 import { iconify } from "$lib/icon";
-import { byExpenseGroup, expenseGroup, pieData } from "$lib/expense";
+import {
+  byExpenseGroup,
+  expenseColorKey,
+  expenseColorKeys,
+  expenseGroup,
+  expenseTopLevelGroup,
+  pieData,
+  ROOT_EXPENSE_SCOPE,
+  childExpenseScope
+} from "$lib/expense";
 
 export function renderCalendar(
   month: string,
   expenses: Posting[],
   z: d3.ScaleOrdinal<string, string, never>,
-  groups: string[]
+  scope: string = ROOT_EXPENSE_SCOPE
 ) {
   const id = "#d3-current-month-expense-calendar";
 
@@ -35,7 +44,7 @@ export function renderCalendar(
   _.each(days, (d) => {
     expensesByDay[d.format("YYYY-MM-DD")] = _.filter(
       expenses,
-      (e) => e.date.isSame(d, "day") && _.includes(groups, expenseGroup(e))
+      (e) => e.date.isSame(d, "day") && !!expenseColorKey(e, scope)
     );
   });
 
@@ -113,7 +122,7 @@ export function renderCalendar(
     .attr("viewBox", [-width / 2, -height / 2, width, height])
     .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
     .selectAll("path")
-    .data((d) => pieData(expensesByDay[d.format("YYYY-MM-DD")]))
+    .data((d) => pieData(expensesByDay[d.format("YYYY-MM-DD")], scope))
     .join("path")
     .attr("fill", function (d) {
       return z(d.data.category);
@@ -124,13 +133,13 @@ export function renderCalendar(
 }
 
 export function colorScale(postings: Posting[]) {
-  const groups = _.chain(postings).map(expenseGroup).uniq().sort().value();
+  const groups = expenseColorKeys(postings);
   return generateColorScheme(groups);
 }
 
 export function renderMonthlyExpensesTimeline(
   postings: Posting[],
-  groupsStore: Writable<string[]>,
+  scopeStore: Writable<string>,
   monthStore: Writable<string>,
   dateRangeStore: Readable<{ from: Dayjs; to: Dayjs }>
 ): {
@@ -150,14 +159,19 @@ export function renderMonthlyExpensesTimeline(
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  const groups = _.chain(postings).map(expenseGroup).uniq().sort().value();
+  const groups = _.chain(postings)
+    .map((posting) => expenseGroup(posting, ROOT_EXPENSE_SCOPE))
+    .compact()
+    .uniq()
+    .sort()
+    .value();
 
   const defaultValues = _.zipObject(
     groups,
     _.map(groups, () => 0)
   );
 
-  const z = generateColorScheme(groups);
+  const z = colorScale(postings);
 
   const [start, end] = d3.extent(_.map(postings, (p) => p.date));
 
@@ -176,7 +190,7 @@ export function renderMonthlyExpensesTimeline(
     .groupBy((p) => p.date.format("YYYY"))
     .map((ps, k) => {
       const trend = _.chain(ps)
-        .groupBy(expenseGroup)
+        .groupBy((posting) => expenseGroup(posting, ROOT_EXPENSE_SCOPE))
         .map((ps, g) => {
           let months = 12;
           if (start.format("YYYY") == k) {
@@ -208,7 +222,7 @@ export function renderMonthlyExpensesTimeline(
   forEachMonth(start, end, (month) => {
     const postings = ms[month.format(timeFormat)] || [];
     const values = _.chain(postings)
-      .groupBy(expenseGroup)
+      .groupBy((posting) => expenseGroup(posting, ROOT_EXPENSE_SCOPE))
       .map((postings, key) => [key, _.sum(_.map(postings, (p) => p.amount))])
       .fromPairs()
       .value();
@@ -273,8 +287,9 @@ export function renderMonthlyExpensesTimeline(
 
   let firstRender = true;
 
-  const render = (allowedGroups: string[], dateRange: { from: Dayjs; to: Dayjs }) => {
-    groupsStore.set(allowedGroups);
+  const render = (scope: string, dateRange: { from: Dayjs; to: Dayjs }) => {
+    const topLevelGroup = expenseTopLevelGroup(scope);
+    const allowedGroups = topLevelGroup ? [topLevelGroup] : groups;
     const allowedPoints = _.filter(
       points,
       (p) => p.timestamp.isSameOrBefore(dateRange.to) && p.timestamp.isSameOrAfter(dateRange.from)
@@ -388,10 +403,12 @@ export function renderMonthlyExpensesTimeline(
       );
   };
 
-  let selectedGroups = groups;
-  render(selectedGroups, get(dateRangeStore));
+  render(get(scopeStore), get(dateRangeStore));
 
-  const destroy = dateRangeStore.subscribe((dateRange) => render(get(groupsStore), dateRange));
+  const dateRangeUnsubscribe = dateRangeStore.subscribe((dateRange) =>
+    render(get(scopeStore), dateRange)
+  );
+  const scopeUnsubscribe = scopeStore.subscribe((scope) => render(scope, get(dateRangeStore)));
 
   const legends = groups.map(
     (group) =>
@@ -400,21 +417,30 @@ export function renderMonthlyExpensesTimeline(
         color: z(group),
         shape: "square",
         onClick: () => {
-          if (selectedGroups.length == 1 && selectedGroups[0] == group) {
-            selectedGroups = groups;
+          const nextScope = childExpenseScope(ROOT_EXPENSE_SCOPE, group);
+          if (get(scopeStore) === nextScope) {
+            scopeStore.set(ROOT_EXPENSE_SCOPE);
           } else {
-            selectedGroups = [group];
+            scopeStore.set(nextScope);
           }
-
-          render(selectedGroups, get(dateRangeStore));
         }
       }) as Legend
   );
 
-  return { z: z, destroy: destroy, legends };
+  return {
+    z: z,
+    destroy: () => {
+      dateRangeUnsubscribe();
+      scopeUnsubscribe();
+    },
+    legends
+  };
 }
 
-export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string, never>) {
+export function renderCurrentExpensesBreakdown(
+  z: d3.ScaleOrdinal<string, string, never>,
+  options: { onDrilldown?: (scope: string) => void } = {}
+) {
   const id = "#d3-current-month-breakdown";
   const BAR_HEIGHT = rem(20);
   const TEXT_WIDTH = rem(135);
@@ -434,14 +460,15 @@ export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string
 
   const bar = g.append("g");
 
-  return (postings: Posting[]) => {
+  return (postings: Posting[], scope: string = ROOT_EXPENSE_SCOPE) => {
     interface Point {
       category: string;
+      scope: string;
       postings: Posting[];
       total: number;
     }
 
-    const categories = byExpenseGroup(postings);
+    const categories = byExpenseGroup(postings, scope);
     const keys = _.chain(categories)
       .sortBy((c) => c.total)
       .map((c) => c.category)
@@ -454,7 +481,7 @@ export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string
     svg.attr("height", height + margin.top + margin.bottom);
 
     y.domain(keys);
-    x.domain([0, d3.max(points, (p) => p.total)]);
+    x.domain([0, d3.max(points, (p) => p.total) || 0]);
     y.range([height, 0]);
 
     const t = svg.transition().duration(750);
@@ -485,7 +512,7 @@ export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string
         }),
         {
           total: formatCurrency(total),
-          header: `${d.postings[0].date.format("MMM YYYY")} ${d.category}`
+          header: `${d.postings[0].date.format("MMM YYYY")} ${d.scope}`
         }
       );
     };
@@ -500,7 +527,9 @@ export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string
             .attr("fill", function (d) {
               return z(d.category);
             })
+            .attr("class", options.onDrilldown ? "zoomable" : null)
             .attr("data-tippy-content", tooltipContent)
+            .on("click", (_event, d) => options.onDrilldown?.(d.scope))
             .attr("x", x(0))
             .attr("y", function (d) {
               return y(d.category) + (y.bandwidth() - Math.min(y.bandwidth(), BAR_HEIGHT)) / 2;
@@ -515,7 +544,9 @@ export function renderCurrentExpensesBreakdown(z: d3.ScaleOrdinal<string, string
             .attr("fill", function (d) {
               return z(d.category);
             })
+            .attr("class", options.onDrilldown ? "zoomable" : null)
             .attr("data-tippy-content", tooltipContent)
+            .on("click", (_event, d) => options.onDrilldown?.(d.scope))
             .transition(t)
             .attr("x", x(0))
             .attr("y", function (d) {

@@ -3,7 +3,6 @@
   import _ from "lodash";
   import {
     ajax,
-    secondName,
     type Posting,
     formatCurrency,
     formatPercentage,
@@ -23,10 +22,16 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import dayjs from "dayjs";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import {
+    expenseBreadcrumb,
+    expenseColorKey,
+    filterExpenseScope,
+    ROOT_EXPENSE_SCOPE
+  } from "$lib/expense";
 
-  let groups = writable([]);
+  let expenseScope = writable(ROOT_EXPENSE_SCOPE);
   let z: d3.ScaleOrdinal<string, string, never>,
-    renderer: (ps: Posting[]) => void,
+    renderer: (ps: Posting[], scope?: string) => void,
     expenses: Posting[],
     grouped_expenses: Record<string, Posting[]>,
     grouped_incomes: Record<string, Posting[]>,
@@ -46,19 +51,19 @@
     income = "";
 
   let current_month_expenses: Posting[] = [];
+  let breadcrumbs = expenseBreadcrumb(ROOT_EXPENSE_SCOPE);
 
   $: {
-    current_month_expenses = _.chain((grouped_expenses && grouped_expenses[$month]) || [])
-      .filter((e) => _.includes($groups, secondName(e.account)))
+    current_month_expenses = _.chain(filterExpenseScope(grouped_expenses?.[$month] || [], $expenseScope))
       .sortBy((e) => e.date)
       .reverse()
       .value();
   }
 
   $: if (grouped_expenses) {
-    renderCalendar($month, grouped_expenses[$month], z, $groups);
+    renderCalendar($month, grouped_expenses[$month] || [], z, $expenseScope);
 
-    const expenses = grouped_expenses[$month] || [];
+    const expenses = filterExpenseScope(grouped_expenses[$month] || [], $expenseScope);
     const incomes = grouped_incomes[$month] || [];
     const taxes = grouped_taxes[$month] || [];
     const investments = grouped_investments[$month] || [];
@@ -82,8 +87,10 @@
         formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
     }
 
-    renderer(expenses);
+    renderer(expenses, $expenseScope);
   }
+
+  $: breadcrumbs = expenseBreadcrumb($expenseScope);
 
   onDestroy(async () => {
     if (destroy) {
@@ -103,8 +110,10 @@
     } = await ajax("/api/expense"));
 
     setAllowedDateRange(_.map(expenses, (e) => e.date));
-    ({ z, destroy, legends } = renderMonthlyExpensesTimeline(expenses, groups, month, dateRange));
-    renderer = renderCurrentExpensesBreakdown(z);
+    ({ z, destroy, legends } = renderMonthlyExpensesTimeline(expenses, expenseScope, month, dateRange));
+    renderer = renderCurrentExpensesBreakdown(z, {
+      onDrilldown: (scope) => expenseScope.set(scope)
+    });
   });
 
   function sum(postings: Posting[], sign = 1) {
@@ -163,8 +172,27 @@
             </div>
           </div>
           <div class="column is-full">
+            <nav class="breadcrumb has-chevron-separator mb-2 is-small" aria-label="expense scope">
+              <ul>
+                {#each breadcrumbs as crumb}
+                  <li>
+                    {#if crumb.scope === $expenseScope}
+                      <a class="is-inactive">{crumb.label}</a>
+                    {:else}
+                      <a href={crumb.scope} on:click|preventDefault={() => expenseScope.set(crumb.scope)}
+                        >{crumb.label}</a
+                      >
+                    {/if}
+                  </li>
+                {/each}
+              </ul>
+            </nav>
             {#each current_month_expenses as expense}
-              <PostingCard posting={expense} color={z(secondName(expense.account))} icon={true} />
+              <PostingCard
+                posting={expense}
+                color={z(expenseColorKey(expense, $expenseScope))}
+                icon={true}
+              />
             {/each}
           </div>
         </div>
@@ -185,7 +213,7 @@
           </div>
           <div class="column is-8">
             <div class="px-3 box" style="height: 100%">
-              <ZeroState item={grouped_expenses?.[$month]}>
+              <ZeroState item={current_month_expenses}>
                 <strong>Hurray!</strong> You have no expenses this month.
               </ZeroState>
               <svg id="d3-current-month-breakdown" width="100%" />

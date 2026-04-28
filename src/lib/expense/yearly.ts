@@ -170,7 +170,14 @@ export function renderYearlyExpensesTimeline(
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  const groups = _.chain(postings).map(expenseGroup).uniq().sort().value();
+  const groups = Array.from(
+    new Set(
+      postings
+        .map((posting) => expenseGroup(posting))
+        .filter((group): group is string => typeof group === "string")
+        .sort()
+    )
+  );
 
   const defaultValues = _.zipObject(
     groups,
@@ -193,6 +200,7 @@ export function renderYearlyExpensesTimeline(
     const postings = ms[financialYear(year)] || [];
     const values = _.chain(postings)
       .groupBy(expenseGroup)
+      .omitBy((_ps, key) => key === "null" || key === "undefined")
       .map((postings, key) => [key, _.sum(_.map(postings, (p) => p.amount))])
       .fromPairs()
       .value();
