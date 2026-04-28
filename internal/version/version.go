@@ -15,6 +15,7 @@ func String() string {
 	}
 
 	if version, ok := readVersionFile(); ok {
+		current = version
 		return version
 	}
 
@@ -38,17 +39,38 @@ func readVersionFile() (string, bool) {
 }
 
 func versionFileCandidates() []string {
-	candidates := []string{"VERSION"}
+	seen := map[string]struct{}{}
+	candidates := make([]string, 0, 8)
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return candidates
+	addCandidate := func(path string) {
+		if path == "" {
+			return
+		}
+
+		cleaned := filepath.Clean(path)
+		if _, ok := seen[cleaned]; ok {
+			return
+		}
+
+		seen[cleaned] = struct{}{}
+		candidates = append(candidates, cleaned)
 	}
 
-	dir := filepath.Dir(filename)
+	addCandidate("VERSION")
 
-	return append(candidates,
-		filepath.Join(dir, "..", "..", "VERSION"),
-		filepath.Join(dir, "..", "..", "..", "VERSION"),
-	)
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		dir := filepath.Dir(filename)
+		addCandidate(filepath.Join(dir, "..", "..", "VERSION"))
+		addCandidate(filepath.Join(dir, "..", "..", "..", "VERSION"))
+	}
+
+	if executable, err := os.Executable(); err == nil {
+		dir := filepath.Dir(executable)
+		addCandidate(filepath.Join(dir, "VERSION"))
+		addCandidate(filepath.Join(dir, "..", "VERSION"))
+		addCandidate(filepath.Join(dir, "..", "..", "VERSION"))
+	}
+
+	return candidates
 }
