@@ -75,7 +75,7 @@ export function project(
     return [];
   }
 
-  if (targetDate.isSameOrBefore(today, "day")) {
+  if (targetDate.diff(today, "day") <= 0) {
     return [];
   }
 
@@ -86,7 +86,7 @@ export function project(
 
   const points: Forecast[] = [];
   let current = today.add(1, "month");
-  while (current.isSameOrBefore(targetDate, "day")) {
+  while (current.diff(targetDate, "day") <= 0) {
     const value = financial.fv(rate, current.diff(today, "months"), -pmt, -pv, WHEN);
     points.push({ date: current, value, error: 0 });
     current = current.add(1, "month");
