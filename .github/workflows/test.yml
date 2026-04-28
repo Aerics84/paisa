@@ -10,8 +10,12 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PRETTIER_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
     - uses: nixbuild/nix-quick-install-action@v31
     - uses: nix-community/cache-nix-action@v7
       with:

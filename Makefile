@@ -32,7 +32,7 @@ parser:
 	npm run parser-build-debug
 
 lint:
-	./node_modules/.bin/prettier --check src
+	bash ./scripts/prettier-changed.sh
 	npm run check
 	test -z $$(gofmt -l .)
 
