@@ -68,9 +68,6 @@ jobs:
           - name: all
             file: ./Dockerfile.all
             tag_suffix: -all
-          - name: demo
-            file: ./Dockerfile.demo
-            tag_suffix: -demo
 
     steps:
       - name: Checkout repository
