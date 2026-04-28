@@ -1,10 +1,10 @@
 2026/04/28 Buy 2 Shares of VWCE
-    Assets:Brokerage:VWCE                    2 "VWCE" @ 95.50 EUR
-    Expenses:Broker:Fees                           1.00 EUR
+    Assets:Brokerage:VWCE 2 "VWCE" @           95.50 EUR
+    Expenses:Broker:Fees                        1.00 EUR
     Assets:Broker:Cash
 
 2026/04/29 Sell 1 Shares of AAPL
-    Assets:Brokerage:AAPL                   -1 "AAPL" @ 175.40 EUR
-    Expenses:Broker:Fees                           1.50 EUR
-    Expenses:Broker:Taxes                         26.38 EUR
+    Assets:Brokerage:AAPL -1 "AAPL" @         175.40 EUR
+    Expenses:Broker:Fees                        1.50 EUR
+    Expenses:Broker:Taxes                      26.38 EUR
     Assets:Broker:Cash

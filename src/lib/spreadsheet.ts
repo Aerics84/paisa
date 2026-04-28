@@ -172,7 +172,7 @@ async function parseXML(file: File): Promise<Result> {
     return { data: [], error: "Unable to parse XML document" };
   }
 
-  if (document.getElementsByTagNameNS("*", "BkToCstmrStmt").length > 0) {
+  if (findElements(document, "BkToCstmrStmt").length > 0) {
     return parseCAMTDocument(document);
   }
 
@@ -180,7 +180,7 @@ async function parseXML(file: File): Promise<Result> {
 }
 
 function parseCAMTDocument(document: Document): Result {
-  const entries = Array.from(document.getElementsByTagNameNS("*", "Ntry"));
+  const entries = findElements(document, "Ntry");
   const rows = entries.map((entry) => {
     const bookingDate = firstChildText(entry, "BookgDt", "Dt") || firstDateTime(entry, "BookgDt");
     const valueDate = firstChildText(entry, "ValDt", "Dt") || firstDateTime(entry, "ValDt");
@@ -197,7 +197,7 @@ function parseCAMTDocument(document: Document): Result {
     const counterpartyIban =
       firstText(entry, "CdtrAcct", "IBAN") || firstText(entry, "DbtrAcct", "IBAN") || "";
     const remittanceInformation = compactJoin(
-      Array.from(entry.getElementsByTagNameNS("*", "Ustrd")).map((node) => node.textContent || ""),
+      findElements(entry, "Ustrd").map((node) => node.textContent || ""),
       " | "
     );
     const additionalInformation = firstText(entry, "AddtlNtryInf");
@@ -238,13 +238,13 @@ function parseCAMTDocument(document: Document): Result {
 }
 
 function firstElement(parent: Element | Document, localName: string) {
-  return parent.getElementsByTagNameNS("*", localName).item(0);
+  return findElements(parent, localName)[0];
 }
 
 function firstText(parent: Element | Document, ...path: string[]) {
   let current: Element | null = parent as Element;
   for (const localName of path) {
-    current = current?.getElementsByTagNameNS("*", localName).item(0);
+    current = current ? firstElement(current, localName) || null : null;
     if (!current) {
       return "";
     }
@@ -273,6 +273,13 @@ function compactJoin(values: string[], separator = " / ") {
     .map((value) => value.trim())
     .filter(Boolean)
     .join(separator);
+}
+
+function findElements(parent: Element | Document, localName: string): Element[] {
+  return Array.from(parent.getElementsByTagName("*")).filter((element) => {
+    const tagName = element.tagName?.split(":").pop();
+    return element.localName === localName || tagName === localName;
+  });
 }
 
 function readFile(file: File): Promise<ArrayBuffer> {
