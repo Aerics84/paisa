@@ -1,11 +1,112 @@
 {
     "income_timeline":  [
-
+                            {
+                                "date":  "2022-01-01T00:00:00+01:00",
+                                "postings":  [
+                                                 {
+                                                     "id":  1,
+                                                     "transaction_id":  "f502bd91-bd24-5e69-940f-438a82fbc9aa",
+                                                     "date":  "2022-01-03T00:00:00+01:00",
+                                                     "payee":  "Salary",
+                                                     "account":  "Income:Salary:Acme GmbH",
+                                                     "commodity":  "EUR",
+                                                     "quantity":  -4800,
+                                                     "amount":  -4800,
+                                                     "status":  "unmarked",
+                                                     "tag_recurring":  "",
+                                                     "tag_period":  "",
+                                                     "transaction_begin_line":  7,
+                                                     "transaction_end_line":  9,
+                                                     "file_name":  "main.ledger",
+                                                     "forecast":  false,
+                                                     "note":  "",
+                                                     "transaction_note":  "",
+                                                     "market_amount":  0,
+                                                     "balance":  0
+                                                 }
+                                             ]
+                            },
+                            {
+                                "date":  "2022-02-01T00:00:00+01:00",
+                                "postings":  [
+                                                 {
+                                                     "id":  19,
+                                                     "transaction_id":  "8e7ccf90-b545-5236-908e-a0d1480f3b33",
+                                                     "date":  "2022-02-03T00:00:00+01:00",
+                                                     "payee":  "Salary",
+                                                     "account":  "Income:Salary:Acme GmbH",
+                                                     "commodity":  "EUR",
+                                                     "quantity":  -4800,
+                                                     "amount":  -4800,
+                                                     "status":  "unmarked",
+                                                     "tag_recurring":  "",
+                                                     "tag_period":  "",
+                                                     "transaction_begin_line":  43,
+                                                     "transaction_end_line":  45,
+                                                     "file_name":  "main.ledger",
+                                                     "forecast":  false,
+                                                     "note":  "",
+                                                     "transaction_note":  "",
+                                                     "market_amount":  0,
+                                                     "balance":  0
+                                                 }
+                                             ]
+                            }
                         ],
     "tax_timeline":  [
 
                      ],
     "yearly_cards":  [
-
+                         {
+                             "start_date":  "2022-01-01T00:00:00+01:00",
+                             "end_date":  "2022-12-31T23:59:59.999999999+01:00",
+                             "postings":  [
+                                              {
+                                                  "id":  1,
+                                                  "transaction_id":  "f502bd91-bd24-5e69-940f-438a82fbc9aa",
+                                                  "date":  "2022-01-03T00:00:00+01:00",
+                                                  "payee":  "Salary",
+                                                  "account":  "Income:Salary:Acme GmbH",
+                                                  "commodity":  "EUR",
+                                                  "quantity":  -4800,
+                                                  "amount":  -4800,
+                                                  "status":  "unmarked",
+                                                  "tag_recurring":  "",
+                                                  "tag_period":  "",
+                                                  "transaction_begin_line":  7,
+                                                  "transaction_end_line":  9,
+                                                  "file_name":  "main.ledger",
+                                                  "forecast":  false,
+                                                  "note":  "",
+                                                  "transaction_note":  "",
+                                                  "market_amount":  0,
+                                                  "balance":  0
+                                              },
+                                              {
+                                                  "id":  19,
+                                                  "transaction_id":  "8e7ccf90-b545-5236-908e-a0d1480f3b33",
+                                                  "date":  "2022-02-03T00:00:00+01:00",
+                                                  "payee":  "Salary",
+                                                  "account":  "Income:Salary:Acme GmbH",
+                                                  "commodity":  "EUR",
+                                                  "quantity":  -4800,
+                                                  "amount":  -4800,
+                                                  "status":  "unmarked",
+                                                  "tag_recurring":  "",
+                                                  "tag_period":  "",
+                                                  "transaction_begin_line":  43,
+                                                  "transaction_end_line":  45,
+                                                  "file_name":  "main.ledger",
+                                                  "forecast":  false,
+                                                  "note":  "",
+                                                  "transaction_note":  "",
+                                                  "market_amount":  0,
+                                                  "balance":  0
+                                              }
+                                          ],
+                             "gross_income":  9600,
+                             "net_tax":  0,
+                             "net_income":  9600
+                         }
                      ]
 }

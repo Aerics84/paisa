@@ -1,9 +1,19 @@
 {
     "accounts":  [
-
+                     "Income:Salary:Acme GmbH",
+                     "Assets:Checking:ING",
+                     "Assets:Savings:Tagesgeld",
+                     "Expenses:Rent",
+                     "Expenses:Utilities",
+                     "Assets:Equity:VWCE",
+                     "Expenses:Food",
+                     "Liabilities:CreditCard:Visa",
+                     "Expenses:Transport",
+                     "Expenses:Leisure"
                  ],
     "commodities":  [
-
+                        "EUR",
+                        "VWCE"
                     ],
     "files":  [
                   {
@@ -16,6 +26,14 @@
                   }
               ],
     "payees":  [
-
+                   "Salary",
+                   "Transfer to Tagesgeld",
+                   "Rent",
+                   "Utilities",
+                   "ETF Purchase",
+                   "Groceries",
+                   "Deutschlandticket",
+                   "Weekend Trip",
+                   "Pay Credit Card Bill"
                ]
 }

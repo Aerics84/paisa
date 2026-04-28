@@ -1,19 +1,569 @@
 {
     "expenses":  [
-
+                     {
+                         "id":  5,
+                         "transaction_id":  "70e0dd44-5ffd-5cd8-8c29-3eae2ac61451",
+                         "date":  "2022-01-05T00:00:00+01:00",
+                         "payee":  "Rent",
+                         "account":  "Expenses:Rent",
+                         "commodity":  "EUR",
+                         "quantity":  1450,
+                         "amount":  1450,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  15,
+                         "transaction_end_line":  17,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  7,
+                         "transaction_id":  "d19246f3-cfd0-5dcb-a6eb-c863b6921cc0",
+                         "date":  "2022-01-06T00:00:00+01:00",
+                         "payee":  "Utilities",
+                         "account":  "Expenses:Utilities",
+                         "commodity":  "EUR",
+                         "quantity":  210,
+                         "amount":  210,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  19,
+                         "transaction_end_line":  21,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  11,
+                         "transaction_id":  "28b141fc-c04c-5c31-9ee1-539504c99ece",
+                         "date":  "2022-01-12T00:00:00+01:00",
+                         "payee":  "Groceries",
+                         "account":  "Expenses:Food",
+                         "commodity":  "EUR",
+                         "quantity":  260,
+                         "amount":  260,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  27,
+                         "transaction_end_line":  29,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  13,
+                         "transaction_id":  "a83c4c2e-e417-5286-abef-ce48ca4d9ab2",
+                         "date":  "2022-01-16T00:00:00+01:00",
+                         "payee":  "Deutschlandticket",
+                         "account":  "Expenses:Transport",
+                         "commodity":  "EUR",
+                         "quantity":  95,
+                         "amount":  95,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  31,
+                         "transaction_end_line":  33,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  15,
+                         "transaction_id":  "6d788671-a67e-5fe2-83ab-22f2304b1cd7",
+                         "date":  "2022-01-20T00:00:00+01:00",
+                         "payee":  "Weekend Trip",
+                         "account":  "Expenses:Leisure",
+                         "commodity":  "EUR",
+                         "quantity":  140,
+                         "amount":  140,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  35,
+                         "transaction_end_line":  37,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  23,
+                         "transaction_id":  "e7b6ba98-6b8f-50d3-baa5-d7f98e3cc66f",
+                         "date":  "2022-02-05T00:00:00+01:00",
+                         "payee":  "Rent",
+                         "account":  "Expenses:Rent",
+                         "commodity":  "EUR",
+                         "quantity":  1450,
+                         "amount":  1450,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  51,
+                         "transaction_end_line":  53,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     },
+                     {
+                         "id":  25,
+                         "transaction_id":  "f2b19151-3c5c-5799-910e-14fa468b7e44",
+                         "date":  "2022-02-06T00:00:00+01:00",
+                         "payee":  "Utilities",
+                         "account":  "Expenses:Utilities",
+                         "commodity":  "EUR",
+                         "quantity":  210,
+                         "amount":  210,
+                         "status":  "unmarked",
+                         "tag_recurring":  "",
+                         "tag_period":  "",
+                         "transaction_begin_line":  55,
+                         "transaction_end_line":  57,
+                         "file_name":  "main.ledger",
+                         "forecast":  false,
+                         "note":  "",
+                         "transaction_note":  "",
+                         "market_amount":  0,
+                         "balance":  0
+                     }
                  ],
     "graph":  {
-
+                  "2022":  {
+                               "nodes":  [
+                                             {
+                                                 "id":  1,
+                                                 "name":  "Assets:Checking:ING"
+                                             },
+                                             {
+                                                 "id":  9,
+                                                 "name":  "Assets:Equity:VWCE"
+                                             },
+                                             {
+                                                 "id":  5,
+                                                 "name":  "Assets:Savings:Tagesgeld"
+                                             },
+                                             {
+                                                 "id":  6,
+                                                 "name":  "Expenses"
+                                             },
+                                             {
+                                                 "id":  10,
+                                                 "name":  "Expenses:Food"
+                                             },
+                                             {
+                                                 "id":  13,
+                                                 "name":  "Expenses:Leisure"
+                                             },
+                                             {
+                                                 "id":  7,
+                                                 "name":  "Expenses:Rent"
+                                             },
+                                             {
+                                                 "id":  12,
+                                                 "name":  "Expenses:Transport"
+                                             },
+                                             {
+                                                 "id":  8,
+                                                 "name":  "Expenses:Utilities"
+                                             },
+                                             {
+                                                 "id":  2,
+                                                 "name":  "Income"
+                                             },
+                                             {
+                                                 "id":  3,
+                                                 "name":  "Income:Salary"
+                                             },
+                                             {
+                                                 "id":  4,
+                                                 "name":  "Income:Salary:Acme GmbH"
+                                             },
+                                             {
+                                                 "id":  11,
+                                                 "name":  "Liabilities:CreditCard:Visa"
+                                             }
+                                         ],
+                               "links":  [
+                                             {
+                                                 "source":  1,
+                                                 "target":  5,
+                                                 "value":  1200
+                                             },
+                                             {
+                                                 "source":  1,
+                                                 "target":  6,
+                                                 "value":  3320
+                                             },
+                                             {
+                                                 "source":  1,
+                                                 "target":  9,
+                                                 "value":  1079.5
+                                             },
+                                             {
+                                                 "source":  1,
+                                                 "target":  11,
+                                                 "value":  495
+                                             },
+                                             {
+                                                 "source":  2,
+                                                 "target":  1,
+                                                 "value":  9600
+                                             },
+                                             {
+                                                 "source":  3,
+                                                 "target":  2,
+                                                 "value":  9600
+                                             },
+                                             {
+                                                 "source":  4,
+                                                 "target":  3,
+                                                 "value":  9600
+                                             },
+                                             {
+                                                 "source":  6,
+                                                 "target":  7,
+                                                 "value":  2900
+                                             },
+                                             {
+                                                 "source":  6,
+                                                 "target":  8,
+                                                 "value":  420
+                                             },
+                                             {
+                                                 "source":  6,
+                                                 "target":  10,
+                                                 "value":  260
+                                             },
+                                             {
+                                                 "source":  6,
+                                                 "target":  12,
+                                                 "value":  95
+                                             },
+                                             {
+                                                 "source":  6,
+                                                 "target":  13,
+                                                 "value":  140
+                                             },
+                                             {
+                                                 "source":  11,
+                                                 "target":  6,
+                                                 "value":  495
+                                             }
+                                         ]
+                           }
               },
     "month_wise":  {
                        "expenses":  {
-
+                                        "2022-01":  [
+                                                        {
+                                                            "id":  5,
+                                                            "transaction_id":  "70e0dd44-5ffd-5cd8-8c29-3eae2ac61451",
+                                                            "date":  "2022-01-05T00:00:00+01:00",
+                                                            "payee":  "Rent",
+                                                            "account":  "Expenses:Rent",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  1450,
+                                                            "amount":  1450,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  15,
+                                                            "transaction_end_line":  17,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        },
+                                                        {
+                                                            "id":  7,
+                                                            "transaction_id":  "d19246f3-cfd0-5dcb-a6eb-c863b6921cc0",
+                                                            "date":  "2022-01-06T00:00:00+01:00",
+                                                            "payee":  "Utilities",
+                                                            "account":  "Expenses:Utilities",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  210,
+                                                            "amount":  210,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  19,
+                                                            "transaction_end_line":  21,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        },
+                                                        {
+                                                            "id":  11,
+                                                            "transaction_id":  "28b141fc-c04c-5c31-9ee1-539504c99ece",
+                                                            "date":  "2022-01-12T00:00:00+01:00",
+                                                            "payee":  "Groceries",
+                                                            "account":  "Expenses:Food",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  260,
+                                                            "amount":  260,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  27,
+                                                            "transaction_end_line":  29,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        },
+                                                        {
+                                                            "id":  13,
+                                                            "transaction_id":  "a83c4c2e-e417-5286-abef-ce48ca4d9ab2",
+                                                            "date":  "2022-01-16T00:00:00+01:00",
+                                                            "payee":  "Deutschlandticket",
+                                                            "account":  "Expenses:Transport",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  95,
+                                                            "amount":  95,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  31,
+                                                            "transaction_end_line":  33,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        },
+                                                        {
+                                                            "id":  15,
+                                                            "transaction_id":  "6d788671-a67e-5fe2-83ab-22f2304b1cd7",
+                                                            "date":  "2022-01-20T00:00:00+01:00",
+                                                            "payee":  "Weekend Trip",
+                                                            "account":  "Expenses:Leisure",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  140,
+                                                            "amount":  140,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  35,
+                                                            "transaction_end_line":  37,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        }
+                                                    ],
+                                        "2022-02":  [
+                                                        {
+                                                            "id":  23,
+                                                            "transaction_id":  "e7b6ba98-6b8f-50d3-baa5-d7f98e3cc66f",
+                                                            "date":  "2022-02-05T00:00:00+01:00",
+                                                            "payee":  "Rent",
+                                                            "account":  "Expenses:Rent",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  1450,
+                                                            "amount":  1450,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  51,
+                                                            "transaction_end_line":  53,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        },
+                                                        {
+                                                            "id":  25,
+                                                            "transaction_id":  "f2b19151-3c5c-5799-910e-14fa468b7e44",
+                                                            "date":  "2022-02-06T00:00:00+01:00",
+                                                            "payee":  "Utilities",
+                                                            "account":  "Expenses:Utilities",
+                                                            "commodity":  "EUR",
+                                                            "quantity":  210,
+                                                            "amount":  210,
+                                                            "status":  "unmarked",
+                                                            "tag_recurring":  "",
+                                                            "tag_period":  "",
+                                                            "transaction_begin_line":  55,
+                                                            "transaction_end_line":  57,
+                                                            "file_name":  "main.ledger",
+                                                            "forecast":  false,
+                                                            "note":  "",
+                                                            "transaction_note":  "",
+                                                            "market_amount":  0,
+                                                            "balance":  0
+                                                        }
+                                                    ]
                                     },
                        "incomes":  {
-
+                                       "2022-01":  [
+                                                       {
+                                                           "id":  1,
+                                                           "transaction_id":  "f502bd91-bd24-5e69-940f-438a82fbc9aa",
+                                                           "date":  "2022-01-03T00:00:00+01:00",
+                                                           "payee":  "Salary",
+                                                           "account":  "Income:Salary:Acme GmbH",
+                                                           "commodity":  "EUR",
+                                                           "quantity":  -4800,
+                                                           "amount":  -4800,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  7,
+                                                           "transaction_end_line":  9,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       }
+                                                   ],
+                                       "2022-02":  [
+                                                       {
+                                                           "id":  19,
+                                                           "transaction_id":  "8e7ccf90-b545-5236-908e-a0d1480f3b33",
+                                                           "date":  "2022-02-03T00:00:00+01:00",
+                                                           "payee":  "Salary",
+                                                           "account":  "Income:Salary:Acme GmbH",
+                                                           "commodity":  "EUR",
+                                                           "quantity":  -4800,
+                                                           "amount":  -4800,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  43,
+                                                           "transaction_end_line":  45,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       }
+                                                   ]
                                    },
                        "investments":  {
-
+                                           "2022-01":  [
+                                                           {
+                                                               "id":  3,
+                                                               "transaction_id":  "084ce9a4-b6e6-51fa-8f4e-8a05d70d4669",
+                                                               "date":  "2022-01-04T00:00:00+01:00",
+                                                               "payee":  "Transfer to Tagesgeld",
+                                                               "account":  "Assets:Savings:Tagesgeld",
+                                                               "commodity":  "EUR",
+                                                               "quantity":  600,
+                                                               "amount":  600,
+                                                               "status":  "unmarked",
+                                                               "tag_recurring":  "",
+                                                               "tag_period":  "",
+                                                               "transaction_begin_line":  11,
+                                                               "transaction_end_line":  13,
+                                                               "file_name":  "main.ledger",
+                                                               "forecast":  false,
+                                                               "note":  "",
+                                                               "transaction_note":  "",
+                                                               "market_amount":  0,
+                                                               "balance":  0
+                                                           },
+                                                           {
+                                                               "id":  9,
+                                                               "transaction_id":  "013e55fd-7d95-5346-af69-d4f7aad679ac",
+                                                               "date":  "2022-01-10T00:00:00+01:00",
+                                                               "payee":  "ETF Purchase",
+                                                               "account":  "Assets:Equity:VWCE",
+                                                               "commodity":  "VWCE",
+                                                               "quantity":  4,
+                                                               "amount":  472,
+                                                               "status":  "unmarked",
+                                                               "tag_recurring":  "",
+                                                               "tag_period":  "",
+                                                               "transaction_begin_line":  23,
+                                                               "transaction_end_line":  25,
+                                                               "file_name":  "main.ledger",
+                                                               "forecast":  false,
+                                                               "note":  "",
+                                                               "transaction_note":  "",
+                                                               "market_amount":  0,
+                                                               "balance":  0
+                                                           }
+                                                       ],
+                                           "2022-02":  [
+                                                           {
+                                                               "id":  21,
+                                                               "transaction_id":  "5a976f71-2fa0-58e0-99cd-68f0f96b4dbd",
+                                                               "date":  "2022-02-04T00:00:00+01:00",
+                                                               "payee":  "Transfer to Tagesgeld",
+                                                               "account":  "Assets:Savings:Tagesgeld",
+                                                               "commodity":  "EUR",
+                                                               "quantity":  600,
+                                                               "amount":  600,
+                                                               "status":  "unmarked",
+                                                               "tag_recurring":  "",
+                                                               "tag_period":  "",
+                                                               "transaction_begin_line":  47,
+                                                               "transaction_end_line":  49,
+                                                               "file_name":  "main.ledger",
+                                                               "forecast":  false,
+                                                               "note":  "",
+                                                               "transaction_note":  "",
+                                                               "market_amount":  0,
+                                                               "balance":  0
+                                                           },
+                                                           {
+                                                               "id":  27,
+                                                               "transaction_id":  "cef1bc13-7ef3-50b7-ae54-cdd60b9fe340",
+                                                               "date":  "2022-02-07T00:00:00+01:00",
+                                                               "payee":  "ETF Purchase",
+                                                               "account":  "Assets:Equity:VWCE",
+                                                               "commodity":  "VWCE",
+                                                               "quantity":  5,
+                                                               "amount":  607.5,
+                                                               "status":  "unmarked",
+                                                               "tag_recurring":  "",
+                                                               "tag_period":  "",
+                                                               "transaction_begin_line":  59,
+                                                               "transaction_end_line":  61,
+                                                               "file_name":  "main.ledger",
+                                                               "forecast":  false,
+                                                               "note":  "",
+                                                               "transaction_note":  "",
+                                                               "market_amount":  0,
+                                                               "balance":  0
+                                                           }
+                                                       ]
                                        },
                        "taxes":  {
 
@@ -21,13 +571,289 @@
                    },
     "year_wise":  {
                       "expenses":  {
-
+                                       "2022":  [
+                                                    {
+                                                        "id":  5,
+                                                        "transaction_id":  "70e0dd44-5ffd-5cd8-8c29-3eae2ac61451",
+                                                        "date":  "2022-01-05T00:00:00+01:00",
+                                                        "payee":  "Rent",
+                                                        "account":  "Expenses:Rent",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  1450,
+                                                        "amount":  1450,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  15,
+                                                        "transaction_end_line":  17,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  7,
+                                                        "transaction_id":  "d19246f3-cfd0-5dcb-a6eb-c863b6921cc0",
+                                                        "date":  "2022-01-06T00:00:00+01:00",
+                                                        "payee":  "Utilities",
+                                                        "account":  "Expenses:Utilities",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  210,
+                                                        "amount":  210,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  19,
+                                                        "transaction_end_line":  21,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  11,
+                                                        "transaction_id":  "28b141fc-c04c-5c31-9ee1-539504c99ece",
+                                                        "date":  "2022-01-12T00:00:00+01:00",
+                                                        "payee":  "Groceries",
+                                                        "account":  "Expenses:Food",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  260,
+                                                        "amount":  260,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  27,
+                                                        "transaction_end_line":  29,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  13,
+                                                        "transaction_id":  "a83c4c2e-e417-5286-abef-ce48ca4d9ab2",
+                                                        "date":  "2022-01-16T00:00:00+01:00",
+                                                        "payee":  "Deutschlandticket",
+                                                        "account":  "Expenses:Transport",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  95,
+                                                        "amount":  95,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  31,
+                                                        "transaction_end_line":  33,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  15,
+                                                        "transaction_id":  "6d788671-a67e-5fe2-83ab-22f2304b1cd7",
+                                                        "date":  "2022-01-20T00:00:00+01:00",
+                                                        "payee":  "Weekend Trip",
+                                                        "account":  "Expenses:Leisure",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  140,
+                                                        "amount":  140,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  35,
+                                                        "transaction_end_line":  37,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  23,
+                                                        "transaction_id":  "e7b6ba98-6b8f-50d3-baa5-d7f98e3cc66f",
+                                                        "date":  "2022-02-05T00:00:00+01:00",
+                                                        "payee":  "Rent",
+                                                        "account":  "Expenses:Rent",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  1450,
+                                                        "amount":  1450,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  51,
+                                                        "transaction_end_line":  53,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    },
+                                                    {
+                                                        "id":  25,
+                                                        "transaction_id":  "f2b19151-3c5c-5799-910e-14fa468b7e44",
+                                                        "date":  "2022-02-06T00:00:00+01:00",
+                                                        "payee":  "Utilities",
+                                                        "account":  "Expenses:Utilities",
+                                                        "commodity":  "EUR",
+                                                        "quantity":  210,
+                                                        "amount":  210,
+                                                        "status":  "unmarked",
+                                                        "tag_recurring":  "",
+                                                        "tag_period":  "",
+                                                        "transaction_begin_line":  55,
+                                                        "transaction_end_line":  57,
+                                                        "file_name":  "main.ledger",
+                                                        "forecast":  false,
+                                                        "note":  "",
+                                                        "transaction_note":  "",
+                                                        "market_amount":  0,
+                                                        "balance":  0
+                                                    }
+                                                ]
                                    },
                       "incomes":  {
-
+                                      "2022":  [
+                                                   {
+                                                       "id":  1,
+                                                       "transaction_id":  "f502bd91-bd24-5e69-940f-438a82fbc9aa",
+                                                       "date":  "2022-01-03T00:00:00+01:00",
+                                                       "payee":  "Salary",
+                                                       "account":  "Income:Salary:Acme GmbH",
+                                                       "commodity":  "EUR",
+                                                       "quantity":  -4800,
+                                                       "amount":  -4800,
+                                                       "status":  "unmarked",
+                                                       "tag_recurring":  "",
+                                                       "tag_period":  "",
+                                                       "transaction_begin_line":  7,
+                                                       "transaction_end_line":  9,
+                                                       "file_name":  "main.ledger",
+                                                       "forecast":  false,
+                                                       "note":  "",
+                                                       "transaction_note":  "",
+                                                       "market_amount":  0,
+                                                       "balance":  0
+                                                   },
+                                                   {
+                                                       "id":  19,
+                                                       "transaction_id":  "8e7ccf90-b545-5236-908e-a0d1480f3b33",
+                                                       "date":  "2022-02-03T00:00:00+01:00",
+                                                       "payee":  "Salary",
+                                                       "account":  "Income:Salary:Acme GmbH",
+                                                       "commodity":  "EUR",
+                                                       "quantity":  -4800,
+                                                       "amount":  -4800,
+                                                       "status":  "unmarked",
+                                                       "tag_recurring":  "",
+                                                       "tag_period":  "",
+                                                       "transaction_begin_line":  43,
+                                                       "transaction_end_line":  45,
+                                                       "file_name":  "main.ledger",
+                                                       "forecast":  false,
+                                                       "note":  "",
+                                                       "transaction_note":  "",
+                                                       "market_amount":  0,
+                                                       "balance":  0
+                                                   }
+                                               ]
                                   },
                       "investments":  {
-
+                                          "2022":  [
+                                                       {
+                                                           "id":  3,
+                                                           "transaction_id":  "084ce9a4-b6e6-51fa-8f4e-8a05d70d4669",
+                                                           "date":  "2022-01-04T00:00:00+01:00",
+                                                           "payee":  "Transfer to Tagesgeld",
+                                                           "account":  "Assets:Savings:Tagesgeld",
+                                                           "commodity":  "EUR",
+                                                           "quantity":  600,
+                                                           "amount":  600,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  11,
+                                                           "transaction_end_line":  13,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       },
+                                                       {
+                                                           "id":  9,
+                                                           "transaction_id":  "013e55fd-7d95-5346-af69-d4f7aad679ac",
+                                                           "date":  "2022-01-10T00:00:00+01:00",
+                                                           "payee":  "ETF Purchase",
+                                                           "account":  "Assets:Equity:VWCE",
+                                                           "commodity":  "VWCE",
+                                                           "quantity":  4,
+                                                           "amount":  472,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  23,
+                                                           "transaction_end_line":  25,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       },
+                                                       {
+                                                           "id":  21,
+                                                           "transaction_id":  "5a976f71-2fa0-58e0-99cd-68f0f96b4dbd",
+                                                           "date":  "2022-02-04T00:00:00+01:00",
+                                                           "payee":  "Transfer to Tagesgeld",
+                                                           "account":  "Assets:Savings:Tagesgeld",
+                                                           "commodity":  "EUR",
+                                                           "quantity":  600,
+                                                           "amount":  600,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  47,
+                                                           "transaction_end_line":  49,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       },
+                                                       {
+                                                           "id":  27,
+                                                           "transaction_id":  "cef1bc13-7ef3-50b7-ae54-cdd60b9fe340",
+                                                           "date":  "2022-02-07T00:00:00+01:00",
+                                                           "payee":  "ETF Purchase",
+                                                           "account":  "Assets:Equity:VWCE",
+                                                           "commodity":  "VWCE",
+                                                           "quantity":  5,
+                                                           "amount":  607.5,
+                                                           "status":  "unmarked",
+                                                           "tag_recurring":  "",
+                                                           "tag_period":  "",
+                                                           "transaction_begin_line":  59,
+                                                           "transaction_end_line":  61,
+                                                           "file_name":  "main.ledger",
+                                                           "forecast":  false,
+                                                           "note":  "",
+                                                           "transaction_note":  "",
+                                                           "market_amount":  0,
+                                                           "balance":  0
+                                                       }
+                                                   ]
                                       },
                       "taxes":  {
 

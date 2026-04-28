@@ -1,6 +1,15 @@
 {
     "accounts":  [
-
+                     "Income:Salary:Acme GmbH",
+                     "Assets:Checking:ING",
+                     "Assets:Savings:Tagesgeld",
+                     "Expenses:Rent",
+                     "Expenses:Utilities",
+                     "Assets:Equity:VWCE",
+                     "Expenses:Food",
+                     "Liabilities:CreditCard:Visa",
+                     "Expenses:Transport",
+                     "Expenses:Leisure"
                  ],
     "config":  {
                    "journal_path":  "main.ledger",
