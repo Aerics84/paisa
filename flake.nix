@@ -11,7 +11,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         hledger = hledger-pkgs.legacyPackages.${system};
         nodeDependencies = (pkgs.callPackage ./flake/override.nix {
-          nodejs = pkgs.nodejs_22;
+          nodejs = pkgs.nodejs_24;
         }).nodeDependencies;
       in {
         devShells.default = import ./shell.nix {
@@ -26,7 +26,7 @@
 
           src = ./.;
 
-          nativeBuildInputs = [ pkgs.nodejs_22 ];
+          nativeBuildInputs = [ pkgs.nodejs_24 ];
 
           vendorHash = "sha256-5jrxI+zSKbopGs5GmGVyqQcMHNZJbCsiFEH/LPXWxpk=";
 
