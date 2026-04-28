@@ -14,8 +14,20 @@ func String() string {
 		return current
 	}
 
-	if version, ok := readVersionFile(); ok {
-		current = version
+	resolved := resolveVersion("", versionFileCandidates())
+	if resolved != "dev" {
+		current = resolved
+	}
+
+	return resolved
+}
+
+func resolveVersion(injected string, candidates []string) string {
+	if injected != "" {
+		return injected
+	}
+
+	if version, ok := lookupVersion(candidates); ok {
 		return version
 	}
 
@@ -23,7 +35,11 @@ func String() string {
 }
 
 func readVersionFile() (string, bool) {
-	for _, candidate := range versionFileCandidates() {
+	return lookupVersion(versionFileCandidates())
+}
+
+func lookupVersion(candidates []string) (string, bool) {
+	for _, candidate := range candidates {
 		content, err := os.ReadFile(candidate)
 		if err != nil {
 			continue

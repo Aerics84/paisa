@@ -12,7 +12,8 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY . .
 COPY --from=web /usr/src/paisa/web/static ./web/static
-RUN CGO_ENABLED=1 go build
+RUN VERSION="$(cat VERSION)" && \
+    CGO_ENABLED=1 go build -ldflags "-X github.com/ananthakumaran/paisa/internal/version.current=${VERSION}"
 
 FROM alpine:3.21
 RUN apk --no-cache add ca-certificates ledger tzdata
