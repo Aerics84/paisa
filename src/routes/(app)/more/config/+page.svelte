@@ -52,7 +52,8 @@
     ) {
       save({
         journal_path: lastConfig.journal_path,
-        db_path: lastConfig.db_path
+        db_path: lastConfig.db_path,
+        regional_profile: lastConfig.regional_profile
       } as any);
     }
   }

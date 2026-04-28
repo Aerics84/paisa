@@ -60,6 +60,22 @@ const (
 	TaxRegimeGermany TaxRegimeType = "germany"
 )
 
+func IsSupportedRegionalProfile(profile RegionalProfileType) bool {
+	switch profile {
+	case RegionalProfileIndia, RegionalProfileGermanyEU:
+		return true
+	default:
+		return false
+	}
+}
+
+func NormalizeRegionalProfile(profile RegionalProfileType) RegionalProfileType {
+	if IsSupportedRegionalProfile(profile) {
+		return profile
+	}
+	return RegionalProfileIndia
+}
+
 type ImportTemplate struct {
 	Name    string `json:"name" yaml:"name"`
 	Content string `json:"content" yaml:"content"`

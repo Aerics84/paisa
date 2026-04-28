@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -38,33 +39,55 @@ type GeneratorState struct {
 var pricesTree map[string]*btree.BTree
 
 func MinimalConfig(cwd string) {
+	MinimalConfigForProfile(cwd, config.RegionalProfileIndia)
+}
+
+func MinimalConfigForProfile(cwd string, profile config.RegionalProfileType) {
 	configFilePath := filepath.Join(cwd, "paisa.yaml")
-	config := `
+	configTemplate := `
 journal_path: '%s'
 db_path: '%s'
+regional_profile: %s
 `
 	log.Info("Generating config file: ", configFilePath)
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
-	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(config, filepath.Base(journalFilePath), filepath.Base(dbFilePath))), 0644)
+	profile = config.NormalizeRegionalProfile(profile)
+	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile)), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Info("Generating journal file: ", journalFilePath)
-	_, err = os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	journalFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		if err := journalFile.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 }
 
 func Demo(cwd string) {
-	generateConfigFile(cwd)
-	generateJournalFile(cwd)
-	generateSheetFile(cwd)
+	DemoForProfile(cwd, config.RegionalProfileIndia)
 }
 
-func generateConfigFile(cwd string) {
+func DemoForProfile(cwd string, profile config.RegionalProfileType) {
+	switch config.NormalizeRegionalProfile(profile) {
+	case config.RegionalProfileGermanyEU:
+		generateGermanyEUConfigFile(cwd)
+		generateGermanyEUJournalFile(cwd)
+		removeSheetFile(cwd)
+	default:
+		generateIndiaConfigFile(cwd)
+		generateIndiaJournalFile(cwd)
+		generateIndiaSheetFile(cwd)
+	}
+}
+
+func generateIndiaConfigFile(cwd string) {
 	configFilePath := filepath.Join(cwd, "paisa.yaml")
 	config := `
 journal_path: '%s'
@@ -172,6 +195,78 @@ credit_cards:
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
 	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(config, filepath.Base(journalFilePath), filepath.Base(dbFilePath))), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateGermanyEUConfigFile(cwd string) {
+	configFilePath := filepath.Join(cwd, "paisa.yaml")
+	configContent := `
+journal_path: '%s'
+db_path: '%s'
+ledger_cli: ledger
+regional_profile: germany-eu
+tax_regime: germany
+default_currency: EUR
+locale: de-DE
+time_zone: Europe/Berlin
+financial_year_starting_month: 1
+week_starting_day: 1
+display_precision: 2
+goals:
+  retirement:
+    - name: Early Retirement
+      icon: mdi:beach
+      swr: 4
+      savings:
+        - Assets:Savings:*
+        - Assets:Equity:*
+      expenses:
+        - Expenses:Rent
+        - Expenses:Utilities
+        - Expenses:Food
+        - Expenses:Transport
+        - Expenses:Leisure
+  savings:
+    - name: Emergency Fund
+      icon: mdi:shield-check
+      target: 18000
+      accounts:
+        - Assets:Checking:*
+        - Assets:Savings:*
+allocation_targets:
+  - name: Cash
+    target: 25
+    accounts:
+      - Assets:Checking:*
+      - Assets:Savings:*
+  - name: Equity
+    target: 75
+    accounts:
+      - Assets:Equity:*
+accounts:
+  - name: Assets:Checking:ING
+    icon: mdi:bank
+  - name: Assets:Savings:Tagesgeld
+    icon: mdi:piggy-bank
+  - name: Assets:Equity:VWCE
+    icon: mdi:chart-line
+  - name: Liabilities:CreditCard:Visa
+    icon: mdi:credit-card-outline
+credit_cards:
+  - account: Liabilities:CreditCard:Visa
+    credit_limit: 5000
+    statement_end_day: 28
+    due_day: 15
+    network: visa
+    number: "4242"
+    expiration_date: "2029-12-01"
+`
+	log.Info("Generating config file: ", configFilePath)
+	journalFilePath := filepath.Join(cwd, "main.ledger")
+	dbFilePath := filepath.Join(cwd, "paisa.db")
+	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(configContent, filepath.Base(journalFilePath), filepath.Base(dbFilePath))), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -418,13 +513,18 @@ func emitInvestment(state *GeneratorState, start time.Time) {
 	}
 }
 
-func generateJournalFile(cwd string) {
+func generateIndiaJournalFile(cwd string) {
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	log.Info("Generating journal file: ", journalFilePath)
 	ledgerFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		if err := ledgerFile.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	startMonth := utils.BeginningOfMonth(utils.EndOfToday())
 	endMonth := startMonth.AddDate(0, 2, 0)
@@ -492,7 +592,130 @@ func generateJournalFile(cwd string) {
 	emitChitFund(&state)
 }
 
-func generateSheetFile(cwd string) {
+func formatEuroAmount(amount float64) string {
+	sign := ""
+	if amount < 0 {
+		sign = "-"
+		amount = -amount
+	}
+
+	s := fmt.Sprintf("%.2f", amount)
+	parts := strings.Split(s, ".")
+	whole := parts[0]
+	fraction := parts[1]
+
+	chunks := make([]string, 0, len(whole)/3+1)
+	for len(whole) > 3 {
+		chunks = append([]string{whole[len(whole)-3:]}, chunks...)
+		whole = whole[:len(whole)-3]
+	}
+	chunks = append([]string{whole}, chunks...)
+
+	return sign + strings.Join(chunks, ".") + "," + fraction
+}
+
+func emitGermanyEUTransaction(writer io.StringWriter, date time.Time, payee string, lines ...string) {
+	_, err := writer.WriteString(fmt.Sprintf("%s %s\n", date.Format("2006/01/02"), payee))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, line := range lines {
+		_, err = writer.WriteString("    " + line + "\n")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	_, err = writer.WriteString("\n")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateGermanyEUJournalFile(cwd string) {
+	journalFilePath := filepath.Join(cwd, "main.ledger")
+	log.Info("Generating journal file: ", journalFilePath)
+
+	startMonth := utils.BeginningOfMonth(utils.EndOfToday()).AddDate(0, -2, 0)
+	endMonth := utils.BeginningOfMonth(utils.EndOfToday())
+
+	var journal strings.Builder
+	journal.WriteString("commodity EUR\n")
+	journal.WriteString("\tformat 1.000,00 EUR\n\n")
+
+	priceDates := []time.Time{
+		startMonth.AddDate(0, 0, 10),
+		startMonth.AddDate(0, 1, 10),
+		endMonth.AddDate(0, 0, 10),
+		utils.EndOfToday(),
+	}
+	priceValues := []string{"118,00 EUR", "119,50 EUR", "121,00 EUR", "123,40 EUR"}
+	for index, date := range priceDates {
+		journal.WriteString(fmt.Sprintf("P %s 00:00:00 VWCE %s\n", date.Format("2006/01/02"), priceValues[index]))
+	}
+	journal.WriteString("\n")
+
+	for offset := 0; offset < 3; offset++ {
+		month := startMonth.AddDate(0, offset, 0)
+
+		salary := 4800.0
+		tagesgeld := 600.0
+		rent := 1450.0
+		utilities := 210.0
+		groceries := 260.0
+		transport := 95.0
+		leisure := 140.0
+		cardBill := groceries + transport + leisure
+		etfUnits := 4 + offset
+		etfPrice := 118.0 + float64(offset)*1.5
+		etfAmount := float64(etfUnits) * etfPrice
+
+		emitGermanyEUTransaction(&journal, month, "Salary",
+			fmt.Sprintf("Income:Salary:Acme GmbH                -%s EUR", formatEuroAmount(salary)),
+			fmt.Sprintf("Assets:Checking:ING                      %s EUR", formatEuroAmount(salary)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 1), "Transfer to Tagesgeld",
+			fmt.Sprintf("Assets:Savings:Tagesgeld                  %s EUR", formatEuroAmount(tagesgeld)),
+			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(tagesgeld)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 3), "Rent",
+			fmt.Sprintf("Expenses:Rent                             %s EUR", formatEuroAmount(rent)),
+			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(rent)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 5), "Utilities",
+			fmt.Sprintf("Expenses:Utilities                        %s EUR", formatEuroAmount(utilities)),
+			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(utilities)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 10), "ETF Purchase",
+			fmt.Sprintf("Assets:Equity:VWCE                        %d VWCE @ %s EUR", etfUnits, formatEuroAmount(etfPrice)),
+			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(etfAmount)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 12), "Groceries",
+			fmt.Sprintf("Expenses:Food                             %s EUR", formatEuroAmount(groceries)),
+			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(groceries)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 16), "Deutschlandticket",
+			fmt.Sprintf("Expenses:Transport                        %s EUR", formatEuroAmount(transport)),
+			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(transport)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 20), "Weekend Trip",
+			fmt.Sprintf("Expenses:Leisure                          %s EUR", formatEuroAmount(leisure)),
+			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(leisure)),
+		)
+		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 27), "Pay Credit Card Bill",
+			fmt.Sprintf("Liabilities:CreditCard:Visa               %s EUR", formatEuroAmount(cardBill)),
+			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(cardBill)),
+		)
+	}
+
+	err := os.WriteFile(journalFilePath, []byte(journal.String()), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateIndiaSheetFile(cwd string) {
 	sheetFilePath := filepath.Join(cwd, "Schedule AL.paisa")
 	sheet := `
 date_query = {date <= [2023-03-31]}
@@ -522,6 +745,13 @@ total = immovable + metal + art + vehicle + bank + share + insurance + loan + ca
 	log.Info("Generating sheet file: ", sheetFilePath)
 	err := os.WriteFile(sheetFilePath, []byte(sheet), 0644)
 	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func removeSheetFile(cwd string) {
+	sheetFilePath := filepath.Join(cwd, "Schedule AL.paisa")
+	if err := os.Remove(sheetFilePath); err != nil && !os.IsNotExist(err) {
 		log.Fatal(err)
 	}
 }

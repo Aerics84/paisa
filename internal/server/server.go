@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/subtle"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -93,7 +94,32 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 			return
 		}
 
-		generator.Demo(config.GetConfigDir())
+		type initRequest struct {
+			RegionalProfile config.RegionalProfileType `json:"regional_profile"`
+		}
+
+		profile := config.NormalizeRegionalProfile(config.GetConfig().RegionalProfile)
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
+			return
+		}
+		if len(strings.TrimSpace(string(body))) > 0 {
+			var request initRequest
+			if err := json.Unmarshal(body, &request); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
+				return
+			}
+			if request.RegionalProfile != "" {
+				if !config.IsSupportedRegionalProfile(request.RegionalProfile) {
+					c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": fmt.Sprintf("unsupported regional profile: %s", request.RegionalProfile)})
+					return
+				}
+				profile = request.RegionalProfile
+			}
+		}
+
+		generator.DemoForProfile(config.GetConfigDir(), profile)
 		config.LoadConfigFile(config.GetConfigPath())
 		Sync(db, SyncRequest{Journal: true, Prices: true, Portfolios: true})
 		c.JSON(200, gin.H{"success": true})

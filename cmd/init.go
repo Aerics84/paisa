@@ -3,10 +3,13 @@ package cmd
 import (
 	"os"
 
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var initRegionalProfile string
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -17,10 +20,16 @@ var initCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		generator.Demo(cwd)
+		profile := config.RegionalProfileType(initRegionalProfile)
+		if !config.IsSupportedRegionalProfile(profile) {
+			log.Fatalf("Unsupported regional profile: %s", initRegionalProfile)
+		}
+
+		generator.DemoForProfile(cwd, profile)
 	},
 }
 
 func init() {
+	initCmd.Flags().StringVar(&initRegionalProfile, "regional-profile", string(config.RegionalProfileIndia), "Regional profile for generated starter content")
 	rootCmd.AddCommand(initCmd)
 }

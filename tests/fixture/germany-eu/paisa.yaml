@@ -1,0 +1,59 @@
+journal_path: main.ledger
+db_path: paisa.db
+ledger_cli: ledger
+regional_profile: germany-eu
+tax_regime: germany
+default_currency: EUR
+locale: de-DE
+time_zone: Europe/Berlin
+financial_year_starting_month: 1
+week_starting_day: 1
+display_precision: 2
+goals:
+  retirement:
+    - name: Early Retirement
+      icon: mdi:beach
+      swr: 4
+      savings:
+        - Assets:Savings:*
+        - Assets:Equity:*
+      expenses:
+        - Expenses:Rent
+        - Expenses:Utilities
+        - Expenses:Food
+        - Expenses:Transport
+        - Expenses:Leisure
+  savings:
+    - name: Emergency Fund
+      icon: mdi:shield-check
+      target: 18000
+      accounts:
+        - Assets:Checking:*
+        - Assets:Savings:*
+allocation_targets:
+  - name: Cash
+    target: 25
+    accounts:
+      - Assets:Checking:*
+      - Assets:Savings:*
+  - name: Equity
+    target: 75
+    accounts:
+      - Assets:Equity:*
+accounts:
+  - name: Assets:Checking:ING
+    icon: mdi:bank
+  - name: Assets:Savings:Tagesgeld
+    icon: mdi:piggy-bank
+  - name: Assets:Equity:VWCE
+    icon: mdi:chart-line
+  - name: Liabilities:CreditCard:Visa
+    icon: mdi:credit-card-outline
+credit_cards:
+  - account: Liabilities:CreditCard:Visa
+    credit_limit: 5000
+    statement_end_day: 28
+    due_day: 15
+    network: visa
+    number: "4242"
+    expiration_date: "2029-12-01"

@@ -1,0 +1,61 @@
+commodity EUR
+    format 1.000,00 EUR
+
+P 2022/01/10 00:00:00 VWCE 118,00 EUR
+P 2022/02/07 00:00:00 VWCE 121,50 EUR
+
+2022/01/03 Salary
+    Income:Salary:Acme GmbH                -4.800,00 EUR
+    Assets:Checking:ING                     4.800,00 EUR
+
+2022/01/04 Transfer to Tagesgeld
+    Assets:Savings:Tagesgeld                  600,00 EUR
+    Assets:Checking:ING                      -600,00 EUR
+
+2022/01/05 Rent
+    Expenses:Rent                           1.450,00 EUR
+    Assets:Checking:ING                    -1.450,00 EUR
+
+2022/01/06 Utilities
+    Expenses:Utilities                        210,00 EUR
+    Assets:Checking:ING                      -210,00 EUR
+
+2022/01/10 ETF Purchase
+    Assets:Equity:VWCE                        4 VWCE @ 118,00 EUR
+    Assets:Checking:ING                      -472,00 EUR
+
+2022/01/12 Groceries
+    Expenses:Food                             260,00 EUR
+    Liabilities:CreditCard:Visa
+
+2022/01/16 Deutschlandticket
+    Expenses:Transport                         95,00 EUR
+    Liabilities:CreditCard:Visa
+
+2022/01/20 Weekend Trip
+    Expenses:Leisure                          140,00 EUR
+    Liabilities:CreditCard:Visa
+
+2022/01/27 Pay Credit Card Bill
+    Liabilities:CreditCard:Visa               495,00 EUR
+    Assets:Checking:ING                      -495,00 EUR
+
+2022/02/03 Salary
+    Income:Salary:Acme GmbH                -4.800,00 EUR
+    Assets:Checking:ING                     4.800,00 EUR
+
+2022/02/04 Transfer to Tagesgeld
+    Assets:Savings:Tagesgeld                  600,00 EUR
+    Assets:Checking:ING                      -600,00 EUR
+
+2022/02/05 Rent
+    Expenses:Rent                           1.450,00 EUR
+    Assets:Checking:ING                    -1.450,00 EUR
+
+2022/02/06 Utilities
+    Expenses:Utilities                        210,00 EUR
+    Assets:Checking:ING                      -210,00 EUR
+
+2022/02/07 ETF Purchase
+    Assets:Equity:VWCE                        5 VWCE @ 121,50 EUR
+    Assets:Checking:ING                      -607,50 EUR

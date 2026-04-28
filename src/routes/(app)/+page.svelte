@@ -59,7 +59,12 @@
   }
 
   async function initDemo() {
-    await ajax("/api/init", { method: "POST" });
+    await ajax("/api/init", {
+      method: "POST",
+      body: JSON.stringify({
+        regional_profile: USER_CONFIG?.regional_profile || "india"
+      })
+    });
     refresh();
   }
 
@@ -129,8 +134,8 @@
               <p class="ml-3"></p>
               <ol class="ml-5 mt-2 mb-4">
                 <li>
-                  Click the button below to load a demo setup. This will load a demo journal with
-                  relevant config.
+                  Click the button below to load a demo setup. This will load a demo journal and
+                  starter config matching your current regional profile.
                 </li>
                 <li>
                   Once you are done playing around, you can go to <a href="/ledger/editor">editor</a
