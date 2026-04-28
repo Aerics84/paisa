@@ -40,7 +40,13 @@
     "user_accounts": [],
     "credit_cards": [],
     "regional_profile": "india",
-    "tax_regime": "india"
+    "tax_regime": "india",
+    "germany_tax": {
+      "annual_allowance": 1000,
+      "capital_income_tax_rate": 0.25,
+      "solidarity_surcharge_rate": 0.055,
+      "church_tax_rate": 0
+    }
   },
   "now": "2022-02-07T00:00:00Z",
   "schema": {
@@ -1308,6 +1314,35 @@
           "germany"
         ],
         "default": "india"
+      },
+      "germany_tax": {
+        "description": "Configuration for Germany-focused capital-income tax reporting.",
+        "properties": {
+          "annual_allowance": {
+            "description": "Annual tax-free allowance applied against realized capital income before Germany tax is calculated.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "capital_income_tax_rate": {
+            "description": "Capital income tax rate applied to taxable capital income.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "church_tax_rate": {
+            "description": "Optional church tax rate applied on top of the capital income tax.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "solidarity_surcharge_rate": {
+            "description": "Solidarity surcharge rate applied on top of the capital income tax.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "type": "object"
       }
     },
     "required": [
