@@ -145,8 +145,8 @@
     <ProgressWithBreakpoints {progressPercent} {breakPoints} />
     {#if forecastUnavailable}
       <div class="notification is-light mt-4 has-text-grey">
-        Paisa could not estimate when this retirement goal will be reached from the current
-        savings history.
+        Paisa could not estimate when this retirement goal will be reached from the current savings
+        history.
       </div>
     {/if}
   </div>
