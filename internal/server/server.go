@@ -61,7 +61,7 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	router.GET("/api/config", func(c *gin.Context) {
 		var now *time.Time
 		if utils.IsNowDefined() {
-			n := utils.Now()
+			n := utils.Now().UTC()
 			now = &n
 		}
 		c.JSON(200, gin.H{"config": config.GetConfig(), "accounts": accounting.AllAccounts(db), "now": now, "schema": config.GetSchema()})
