@@ -29,3 +29,6 @@ brand/*.png
 
 # Local graphify artifacts
 /graphify-out/
+
+# Keep local OpenSpec data out of Git
+/openspec/
