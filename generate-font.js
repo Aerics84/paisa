@@ -1,57 +1,86 @@
 import _ from "lodash";
-import { writeFileSync } from "fs";
+import { createReadStream, mkdirSync, readdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import { createSVG, createTTF, createWOFF2 } from "svgtofont/lib/utils";
+import svg2ttf from "svg2ttf";
+import ttf2woff2 from "ttf2woff2";
+import { SVGIcons2SVGFontStream } from "svgicons2svgfont";
+
+const outputDir = "fonts";
 
 let infoData = {};
-
 let lastUnicode = 0xf0000;
 
-const options = {
-  src: "svg",
-  dist: "fonts",
-  emptyDist: true,
-  fontName: "paisa",
-  svg2ttf: {},
-  svgicons2svgfont: {
-    normalize: true,
-    fontWeight: 900,
-    fontHeight: 1000,
-    fontStyle: "normal",
-    fixedWidth: true,
-    centerHorizontally: true,
-    centerVertically: true
-  },
-  useNameAsUnicode: false,
-  symbolNameDelimiter: "-",
-  css: false,
-  getIconUnicode: (name, _unicode, startUnicode) => {
-    startUnicode++;
-    lastUnicode = startUnicode;
-    infoData[name] = startUnicode;
-    return [String.fromCodePoint(startUnicode), startUnicode];
-  },
-  startUnicode: 0xf0000,
-  outSVGReact: false,
-  generateInfoData: true
-};
+function svgFiles(dir) {
+  return readdirSync(dir)
+    .filter((entry) => entry.endsWith(".svg"))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function createSvgFont(font, dir, startUnicode) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const fontStream = new SVGIcons2SVGFontStream({
+      fontName: font,
+      fontId: font,
+      normalize: true,
+      fontWeight: 900,
+      fontHeight: 1000,
+      fontStyle: "normal",
+      fixedWidth: true,
+      centerHorizontally: true,
+      centerVertically: true
+    });
+
+    let nextCodePoint = startUnicode;
+
+    fontStream.on("data", (chunk) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    fontStream.on("error", reject);
+    fontStream.on("finish", () => {
+      lastUnicode = nextCodePoint;
+      resolve(Buffer.concat(chunks).toString("utf8"));
+    });
+
+    for (const file of svgFiles(dir)) {
+      const name = file.slice(0, -4);
+      nextCodePoint += 1;
+      infoData[name] = nextCodePoint;
+
+      const glyph = createReadStream(join(dir, file));
+      glyph.metadata = {
+        name,
+        unicode: [String.fromCodePoint(nextCodePoint)]
+      };
+      glyph.on("error", reject);
+      fontStream.write(glyph);
+    }
+
+    fontStream.end();
+  });
+}
 
 async function createFont(font) {
   infoData = {};
-  options.src = join("svg", font);
-  options.fontName = font;
-  options.startUnicode = lastUnicode++;
-  await createSVG(options);
-  const ttf = await createTTF(options);
-  await createWOFF2(options, ttf);
 
-  if (options.generateInfoData) {
-    writeFileSync(`fonts/${font}-info.json`, JSON.stringify({ codepoints: infoData }), "utf8");
+  const sourceDir = join("svg", font);
+  const svgFont = await createSvgFont(font, sourceDir, lastUnicode);
+  const ttf = svg2ttf(svgFont, {
+    id: font,
+    familyname: font,
+    fullname: font,
+    version: "1.0"
+  });
+  const ttfBuffer = Buffer.from(ttf.buffer);
+  const woff2 = ttf2woff2(ttfBuffer);
 
-    const min = _.min(Object.values(infoData));
-    const max = _.max(Object.values(infoData));
+  writeFileSync(join(outputDir, `${font}.svg`), svgFont, "utf8");
+  writeFileSync(join(outputDir, `${font}.woff2`), woff2);
+  writeFileSync(join(outputDir, `${font}-info.json`), JSON.stringify({ codepoints: infoData }), "utf8");
 
-    const scss = `
+  const min = _.min(Object.values(infoData));
+  const max = _.max(Object.values(infoData));
+  const scss = `
 @font-face {
   font-family: "${font}";
   font-style: normal;
@@ -62,11 +91,12 @@ async function createFont(font) {
 }
 `;
 
-    writeFileSync(`fonts/${font}.scss`, scss, "utf8");
-  }
+  writeFileSync(join(outputDir, `${font}.scss`), scss, "utf8");
 }
 
 async function createFonts(fonts) {
+  mkdirSync(outputDir, { recursive: true });
+
   for (const font of fonts) {
     await createFont(font);
   }
