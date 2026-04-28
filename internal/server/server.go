@@ -240,6 +240,10 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, GetCapitalGains(db))
 	})
 
+	router.GET("/api/capital_income_tax", func(c *gin.Context) {
+		c.JSON(200, GetGermanyTax(db))
+	})
+
 	router.GET("/api/schedule_al", func(c *gin.Context) {
 		c.JSON(200, GetScheduleAL(db))
 	})

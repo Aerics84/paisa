@@ -1,5 +1,7 @@
 # Schedule AL
 
+This page is available for the `india` tax regime.
+
 As per the Indian Income tax law, citizens are obligated to report
 their entire Assets and Liabilities if the total income exceeds ₹50
 lakh. Paisa helps with the computation of the amount.

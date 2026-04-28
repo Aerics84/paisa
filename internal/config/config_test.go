@@ -24,6 +24,10 @@ regional_profile: germany-eu
 	assert.Equal(t, "Europe/Berlin", cfg.TimeZone)
 	assert.EqualValues(t, 1, cfg.FinancialYearStartingMonth)
 	assert.EqualValues(t, 1, cfg.WeekStartingDay)
+	assert.Equal(t, 1000.0, cfg.GermanyTax.AnnualAllowance)
+	assert.Equal(t, 0.25, cfg.GermanyTax.CapitalIncomeTaxRate)
+	assert.Equal(t, 0.055, cfg.GermanyTax.SolidaritySurchargeRate)
+	assert.Equal(t, 0.0, cfg.GermanyTax.ChurchTaxRate)
 }
 
 func TestRegionalProfileRespectsExplicitOverrides(t *testing.T) {
@@ -59,7 +63,9 @@ tax_regime: india
 	require.NoError(t, err)
 
 	assert.True(t, SupportsTaxFeatures())
+	assert.True(t, SupportsIndiaTaxFeatures())
 	assert.True(t, SupportsScheduleAL())
+	assert.False(t, SupportsGermanyTaxFeatures())
 }
 
 func TestGermanyTaxRegimeDisablesIndiaOnlyTaxFeatures(t *testing.T) {
@@ -70,6 +76,8 @@ tax_regime: germany
 `), "")
 	require.NoError(t, err)
 
-	assert.False(t, SupportsTaxFeatures())
+	assert.True(t, SupportsTaxFeatures())
+	assert.False(t, SupportsIndiaTaxFeatures())
 	assert.False(t, SupportsScheduleAL())
+	assert.True(t, SupportsGermanyTaxFeatures())
 }

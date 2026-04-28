@@ -34,7 +34,7 @@ type CapitalGain struct {
 }
 
 func GetCapitalGains(db *gorm.DB) gin.H {
-	if !config.SupportsTaxFeatures() {
+	if !config.SupportsIndiaTaxFeatures() {
 		return gin.H{"capital_gains": map[string]CapitalGain{}}
 	}
 

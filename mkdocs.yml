@@ -31,6 +31,7 @@ nav:
     - reference/analysis.md
     - 'Tax':
       - reference/tax/index.md
+      - reference/tax/capital-income.md
       - reference/tax/tax-harvesting.md
       - reference/tax/capital-gains.md
       - reference/tax/schedule-al.md

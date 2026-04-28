@@ -39,7 +39,7 @@ type Harvestable struct {
 }
 
 func GetHarvest(db *gorm.DB) gin.H {
-	if !config.SupportsTaxFeatures() {
+	if !config.SupportsIndiaTaxFeatures() {
 		return gin.H{"harvestables": map[string]Harvestable{}}
 	}
 

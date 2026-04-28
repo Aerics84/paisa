@@ -3,6 +3,12 @@
 Paisa provides few features to help with tax filing and tax
 optimization.
 
+## Supported paths
+
+- `india` tax regime: tax harvesting, capital gains, and Schedule AL.
+- `germany` tax regime: capital income reporting with annual allowance,
+  capital income tax, solidarity surcharge, and optional church tax.
+
 ## Disclaimer
 
 The author of this tool is not an accountant, the calculations are

@@ -13,6 +13,12 @@ import { iconGlyph } from "./icon";
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
   tax_regime: "india",
+  germany_tax: {
+    annual_allowance: 1000,
+    capital_income_tax_rate: 0.25,
+    solidarity_surcharge_rate: 0.055,
+    church_tax_rate: 0
+  },
   default_currency: "",
   readonly: false,
   locale: "en",
@@ -332,6 +338,38 @@ export interface CapitalGain {
   fy: { [key: string]: FYCapitalGain };
 }
 
+export interface GermanyTaxPostingPair {
+  purchase: Posting;
+  sell: Posting;
+  realized_gain: number;
+}
+
+export interface GermanyTaxAccount {
+  account: string;
+  units: number;
+  purchase_price: number;
+  sell_price: number;
+  realized_gain: number;
+  posting_pairs: GermanyTaxPostingPair[];
+}
+
+export interface GermanyTaxSummary {
+  realized_gain: number;
+  allowance_used: number;
+  taxable_amount: number;
+  capital_income_tax: number;
+  solidarity_surcharge: number;
+  church_tax: number;
+  total_tax: number;
+}
+
+export interface GermanyTaxYear {
+  tax_year: string;
+  settings: UserConfig["germany_tax"];
+  summary: GermanyTaxSummary;
+  accounts: GermanyTaxAccount[];
+}
+
 export interface Issue {
   level: string;
   summary: string;
@@ -577,6 +615,9 @@ export function ajax(route: "/api/harvest"): Promise<{ harvestables: Record<stri
 export function ajax(
   route: "/api/capital_gains"
 ): Promise<{ capital_gains: Record<string, CapitalGain> }>;
+export function ajax(
+  route: "/api/capital_income_tax"
+): Promise<{ tax_years: Record<string, GermanyTaxYear> }>;
 export function ajax(route: "/api/schedule_al"): Promise<{
   schedule_als: Record<string, ScheduleAL>;
 }>;
@@ -902,7 +943,15 @@ export function configUpdated() {
 }
 
 export function supportsTaxFeatures(config: UserConfig = getUserConfig()) {
+  return config.tax_regime === "india" || config.tax_regime === "germany";
+}
+
+export function supportsIndiaTaxFeatures(config: UserConfig = getUserConfig()) {
   return config.tax_regime === "india";
+}
+
+export function supportsGermanyTaxFeatures(config: UserConfig = getUserConfig()) {
+  return config.tax_regime === "germany";
 }
 
 export function supportsScheduleAL(config: UserConfig = getUserConfig()) {

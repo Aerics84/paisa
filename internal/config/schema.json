@@ -39,6 +39,35 @@
       "enum": ["", "india", "germany"],
       "default": "india"
     },
+    "germany_tax": {
+      "type": "object",
+      "description": "Configuration for Germany-focused capital-income tax reporting.",
+      "properties": {
+        "annual_allowance": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Annual tax-free allowance applied against realized capital income before Germany tax is calculated."
+        },
+        "capital_income_tax_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Capital income tax rate applied to taxable capital income."
+        },
+        "solidarity_surcharge_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Solidarity surcharge rate applied on top of the capital income tax."
+        },
+        "church_tax_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional church tax rate applied on top of the capital income tax."
+        }
+      }
+    },
     "default_currency": {
       "type": "string",
       "description": "The default currency to use. NOTE: Paisa tries to convert other currencies to default currency, so make sure it's possible to convert to default currency by specifying the exchange rate."

@@ -1,5 +1,7 @@
 # Tax Harvesting
 
+This page is available for the `india` tax regime.
+
 Gains from asset types like Mutual Fund, Stock are subject to capital
 gains tax. The taxation rate itself differs based on how long you hold
 your investment, whether it's debt or equity, whether you have more

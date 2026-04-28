@@ -66,6 +66,22 @@ regional_profile: india
 # OPTIONAL, DEFAULT: india, ENUM: india, germany
 tax_regime: india
 
+## Germany tax
+germany_tax:
+  # Annual tax-free allowance applied before Germany capital income
+  # tax is calculated.
+  # OPTIONAL, DEFAULT: 1000
+  annual_allowance: 1000
+  # Capital income tax rate.
+  # OPTIONAL, DEFAULT: 0.25
+  capital_income_tax_rate: 0.25
+  # Solidarity surcharge rate applied on top of the capital income tax.
+  # OPTIONAL, DEFAULT: 0.055
+  solidarity_surcharge_rate: 0.055
+  # Optional church tax rate applied on top of the capital income tax.
+  # OPTIONAL, DEFAULT: 0
+  church_tax_rate: 0
+
 # The default currency to use. NOTE: Paisa tries to convert other
 # currencies to default currency, so make sure it's possible to
 # convert to default currency by specifying the exchange rate.
@@ -182,6 +198,7 @@ goals:
       accounts:
         - Assets:Equity:**
 ## Schedule AL
+# This is only applicable to India-oriented tax regimes.
 # OPTIONAL, DEFAULT: []
 schedule_al:
   # Code

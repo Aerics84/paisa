@@ -17,7 +17,9 @@
     isMobile,
     now,
     supportsScheduleAL,
-    supportsTaxFeatures
+    supportsTaxFeatures,
+    supportsGermanyTaxFeatures,
+    supportsIndiaTaxFeatures
   } from "$lib/utils";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
@@ -139,11 +141,23 @@
     label: "Tax",
     href: "/tax",
     help: "tax",
-    children: [
+    children: []
+  };
+
+  if (supportsIndiaTaxFeatures(USER_CONFIG)) {
+    tax.children.push(
       { label: "Harvest", href: "/harvest", help: "tax-harvesting" },
       { label: "Capital Gains", href: "/capital_gains", help: "capital-gains" }
-    ]
-  };
+    );
+  }
+
+  if (supportsGermanyTaxFeatures(USER_CONFIG)) {
+    tax.children.push({
+      label: "Capital Income",
+      href: "/capital_income",
+      help: "tax"
+    });
+  }
 
   if (supportsScheduleAL(USER_CONFIG)) {
     tax.children.push({

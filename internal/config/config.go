@@ -81,6 +81,13 @@ type ImportTemplate struct {
 	Content string `json:"content" yaml:"content"`
 }
 
+type GermanyTaxConfig struct {
+	AnnualAllowance         float64 `json:"annual_allowance" yaml:"annual_allowance"`
+	CapitalIncomeTaxRate    float64 `json:"capital_income_tax_rate" yaml:"capital_income_tax_rate"`
+	SolidaritySurchargeRate float64 `json:"solidarity_surcharge_rate" yaml:"solidarity_surcharge_rate"`
+	ChurchTaxRate           float64 `json:"church_tax_rate" yaml:"church_tax_rate"`
+}
+
 type Price struct {
 	Provider string `json:"provider" yaml:"provider"`
 	Code     string `json:"code" yaml:"code"`
@@ -174,6 +181,8 @@ type Config struct {
 
 	Budget Budget `json:"budget" yaml:"budget"`
 
+	GermanyTax GermanyTaxConfig `json:"germany_tax" yaml:"germany_tax"`
+
 	ScheduleALs []ScheduleAL `json:"schedule_al" yaml:"schedule_al"`
 
 	AllocationTargets []AllocationTarget `json:"allocation_targets" yaml:"allocation_targets"`
@@ -196,16 +205,22 @@ var configPath string
 var location *time.Location
 
 var defaultConfig = Config{
-	Readonly:                   false,
-	LedgerCli:                  "ledger",
-	RegionalProfile:            RegionalProfileIndia,
-	TaxRegime:                  TaxRegimeIndia,
-	DefaultCurrency:            "INR",
-	DisplayPrecision:           0,
-	AmountAlignmentColumn:      52,
-	Locale:                     "en-IN",
-	TimeZone:                   "",
-	Budget:                     Budget{Rollover: Yes},
+	Readonly:              false,
+	LedgerCli:             "ledger",
+	RegionalProfile:       RegionalProfileIndia,
+	TaxRegime:             TaxRegimeIndia,
+	DefaultCurrency:       "INR",
+	DisplayPrecision:      0,
+	AmountAlignmentColumn: 52,
+	Locale:                "en-IN",
+	TimeZone:              "",
+	Budget:                Budget{Rollover: Yes},
+	GermanyTax: GermanyTaxConfig{
+		AnnualAllowance:         1000,
+		CapitalIncomeTaxRate:    0.25,
+		SolidaritySurchargeRate: 0.055,
+		ChurchTaxRate:           0,
+	},
 	FinancialYearStartingMonth: 4,
 	Strict:                     No,
 	WeekStartingDay:            0,
@@ -524,9 +539,17 @@ func TimeZone() *time.Location {
 }
 
 func SupportsTaxFeatures() bool {
+	return config.TaxRegime == TaxRegimeIndia || config.TaxRegime == TaxRegimeGermany
+}
+
+func SupportsIndiaTaxFeatures() bool {
 	return config.TaxRegime == TaxRegimeIndia
 }
 
 func SupportsScheduleAL() bool {
 	return config.TaxRegime == TaxRegimeIndia
+}
+
+func SupportsGermanyTaxFeatures() bool {
+	return config.TaxRegime == TaxRegimeGermany
 }

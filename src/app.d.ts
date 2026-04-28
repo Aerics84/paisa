@@ -28,6 +28,12 @@ interface GoalSummary {
 interface UserConfig {
   regional_profile: string;
   tax_regime: string;
+  germany_tax: {
+    annual_allowance: number;
+    capital_income_tax_rate: number;
+    solidarity_surcharge_rate: number;
+    church_tax_rate: number;
+  };
   default_currency: string;
   readonly: boolean;
   locale: string;
