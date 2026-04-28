@@ -18,6 +18,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/server/goal"
 	"github.com/ananthakumaran/paisa/internal/server/liabilities"
 	"github.com/ananthakumaran/paisa/internal/utils"
+	"github.com/ananthakumaran/paisa/internal/version"
 	"github.com/ananthakumaran/paisa/web"
 
 	"github.com/gin-contrib/gzip"
@@ -50,6 +51,10 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 
 	router.GET("/api/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": true})
+	})
+
+	router.GET("/api/version", func(c *gin.Context) {
+		c.JSON(200, gin.H{"version": version.String()})
 	})
 
 	router.GET("/api/config", func(c *gin.Context) {

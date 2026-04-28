@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"gorm.io/gorm"
-
 	"github.com/ananthakumaran/paisa/cmd"
 	"github.com/ananthakumaran/paisa/internal/model"
 	"github.com/ananthakumaran/paisa/internal/utils"
+	"github.com/ananthakumaran/paisa/internal/version"
 	log "github.com/sirupsen/logrus"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"gorm.io/gorm"
 )
 
 // App struct
@@ -38,4 +38,8 @@ func (a *App) startup(ctx context.Context) {
 	model.AutoMigrate(db)
 
 	a.db = *db
+}
+
+func (a *App) Version() string {
+	return version.String()
 }

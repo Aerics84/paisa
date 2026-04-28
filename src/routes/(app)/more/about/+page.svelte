@@ -1,5 +1,8 @@
 <script lang="ts">
   import Logo from "$lib/components/Logo.svelte";
+  import { ajax } from "$lib/utils";
+  import { onMount } from "svelte";
+
   const links = [
     { name: "Chat", href: "https://matrix.to/#/#paisa:matrix.org", icon: "fa-solid fa-headset" },
     { name: "Issue", href: "https://github.com/ananthakumaran/paisa/issues", icon: "fas fa-bug" },
@@ -26,6 +29,8 @@
     }
   ];
 
+  let version = "";
+
   function externalLink(url: string) {
     if (window.runtime) {
       window.runtime.BrowserOpenURL(url);
@@ -33,6 +38,10 @@
       window.open(url, "_blank");
     }
   }
+
+  onMount(async () => {
+    ({ version } = await ajax("/api/version"));
+  });
 </script>
 
 <section class="section">
@@ -43,7 +52,7 @@
           <div><Logo size={128} /></div>
           <div class="is-size-3 is-primary-color">Paisa</div>
           <div>
-            Version: <b>0.7.4</b>
+            Version: <b>{version}</b>
           </div>
         </div>
 

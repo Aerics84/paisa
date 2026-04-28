@@ -1,6 +1,9 @@
 .PHONY: docs
 .PHONY: fixture/main.transactions.json
 
+VERSION := $(shell cat VERSION)
+GO_VERSION_LDFLAGS := -ldflags "-X github.com/ananthakumaran/paisa/internal/version.current=$(VERSION)"
+
 develop:
 	./node_modules/.bin/concurrently --names "GO,JS" -c "auto" "make serve" "npm run dev"
 
@@ -20,7 +23,7 @@ docs:
 	mkdocs serve -a 0.0.0.0:8000
 
 sample:
-	go build && ./paisa init && ./paisa update
+	go build $(GO_VERSION_LDFLAGS) && ./paisa init && ./paisa update
 
 publish:
 	nix develop --command bash -c 'mkdocs build'
@@ -34,12 +37,12 @@ lint:
 	test -z $$(gofmt -l .)
 
 regen:
-	go build
+	go build $(GO_VERSION_LDFLAGS)
 	unset PAISA_CONFIG && REGENERATE=true TZ=UTC bun test tests
 
 jstest:
 	bun test --preload ./src/happydom.ts src
-	go build
+	go build $(GO_VERSION_LDFLAGS)
 	unset PAISA_CONFIG && TZ=UTC bun test tests
 
 jsbuild:
@@ -49,7 +52,7 @@ test: jsbuild jstest
 	go test ./...
 
 windows:
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc go build
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc go build $(GO_VERSION_LDFLAGS)
 
 
 deploy:
@@ -60,8 +63,8 @@ deploy:
 
 install:
 	npm run build
-	go build
-	go install
+	go build $(GO_VERSION_LDFLAGS)
+	go install $(GO_VERSION_LDFLAGS)
 
 fixture/main.transactions.json:
 	cd /tmp && paisa init

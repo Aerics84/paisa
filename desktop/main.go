@@ -2,11 +2,13 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 
 	"github.com/ananthakumaran/paisa/cmd"
 	"github.com/ananthakumaran/paisa/desktop/logger"
 	"github.com/ananthakumaran/paisa/internal/server"
+	"github.com/ananthakumaran/paisa/internal/version"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2"
@@ -61,7 +63,7 @@ func main() {
 		Mac: &mac.Options{
 			About: &mac.AboutInfo{
 				Title:   "Paisa",
-				Message: "Version 0.7.4 \nCopyright © 2022 - 2025 \nAnantha Kumaran",
+				Message: fmt.Sprintf("Version %s \nCopyright © 2022 - 2025 \nAnantha Kumaran", version.String()),
 				Icon:    icon,
 			},
 		},

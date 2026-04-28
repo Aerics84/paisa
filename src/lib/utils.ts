@@ -767,6 +767,8 @@ export function ajax(
   options?: RequestOptions
 ): Promise<{ success: boolean; error?: string }>;
 
+export function ajax(route: "/api/version"): Promise<{ version: string }>;
+
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 
 export async function ajax(

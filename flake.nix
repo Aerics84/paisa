@@ -10,6 +10,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         hledger = hledger-pkgs.legacyPackages.${system};
+        version = builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile ./VERSION);
         nodeDependencies = (pkgs.callPackage ./flake/override.nix {
           nodejs = pkgs.nodejs_24;
         }).nodeDependencies;
@@ -22,7 +23,8 @@
         packages.default = pkgs.buildGoModule {
           pname = "paisa-cli";
           meta.mainProgram = "paisa";
-          version = "0.7.4";
+          inherit version;
+          ldflags = [ "-X github.com/ananthakumaran/paisa/internal/version.current=${version}" ];
 
           src = ./.;
 

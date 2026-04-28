@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "sync-version": "node scripts/sync-version.mjs",
     "parser-build": "lezer-generator src/lib/sheet/language.grammar -o src/lib/sheet/parser && lezer-generator src/lib/search/parser/query.grammar -o src/lib/search/parser/parser",
     "parser-build-debug": "lezer-generator src/lib/sheet/language.grammar --names -o src/lib/sheet/parser && lezer-generator src/lib/search/parser/query.grammar --names -o src/lib/search/parser/parser",
     "dev": "vite dev --host 0.0.0.0",
