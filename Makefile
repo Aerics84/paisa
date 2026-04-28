@@ -1,5 +1,7 @@
 .PHONY: docs
 .PHONY: fixture/main.transactions.json
+.PHONY: preflight-critical
+.PHONY: prepush
 
 VERSION := $(shell cat VERSION)
 GO_VERSION_LDFLAGS := -ldflags "-X github.com/ananthakumaran/paisa/internal/version.current=$(VERSION)"
@@ -35,6 +37,11 @@ lint:
 	bash ./scripts/prettier-changed.sh
 	npm run check
 	test -z $$(gofmt -l .)
+
+preflight-critical:
+	GO_VERSION_LDFLAGS='$(GO_VERSION_LDFLAGS)' bash ./scripts/preflight-critical.sh
+
+prepush: preflight-critical
 
 regen:
 	go build $(GO_VERSION_LDFLAGS)
