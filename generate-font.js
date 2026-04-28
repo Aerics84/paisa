@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { createSVG, createTTF, createWOFF2 } from "svgtofont/lib/utils.js";
+import { createSVG, createTTF, createWOFF2 } from "svgtofont/lib/utils";
 
 let infoData = {};
 
