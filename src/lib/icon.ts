@@ -73,7 +73,9 @@ export function iconText(account: string): string {
     return "";
   }
 
-  const accountConfig = (USER_CONFIG.accounts || []).find((a) => a.name == account);
+  const accounts =
+    typeof USER_CONFIG !== "undefined" && USER_CONFIG ? USER_CONFIG.accounts || [] : [];
+  const accountConfig = accounts.find((a) => a.name == account);
   if (!_.isEmpty(accountConfig?.icon)) {
     return iconGlyph(accountConfig.icon);
   }
