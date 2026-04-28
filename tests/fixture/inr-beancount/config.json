@@ -40,7 +40,9 @@
       "savings": []
     },
     "user_accounts": [],
-    "credit_cards": []
+    "credit_cards": [],
+    "regional_profile": "india",
+    "tax_regime": "india"
   },
   "now": "2022-02-07T00:00:00Z",
   "schema": {
@@ -1288,6 +1290,26 @@
         "maximum": 6,
         "minimum": 0,
         "type": "integer"
+      },
+      "regional_profile": {
+        "type": "string",
+        "description": "Optional regional profile that applies sensible defaults for locale, currency, calendar, and related settings when those fields are not explicitly set.",
+        "enum": [
+          "",
+          "india",
+          "germany-eu"
+        ],
+        "default": "india"
+      },
+      "tax_regime": {
+        "type": "string",
+        "description": "Selects the tax ruleset and region-specific tax UI. This is independent of default currency.",
+        "enum": [
+          "",
+          "india",
+          "germany"
+        ],
+        "default": "india"
       }
     },
     "required": [
