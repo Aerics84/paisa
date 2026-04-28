@@ -10,6 +10,28 @@ import { error } from "@sveltejs/kit";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 
+const DEFAULT_USER_CONFIG: UserConfig = {
+  default_currency: "",
+  readonly: false,
+  locale: "en",
+  journal_path: "",
+  display_precision: 2,
+  db_path: "",
+  financial_year_starting_month: 1,
+  amount_alignment_column: 52,
+  week_starting_day: 0,
+  goals: {},
+  accounts: []
+};
+
+function getUserConfig(): UserConfig {
+  if (typeof USER_CONFIG !== "undefined" && USER_CONFIG) {
+    return USER_CONFIG;
+  }
+
+  return DEFAULT_USER_CONFIG;
+}
+
 export interface AutoCompleteItem {
   label: string;
   id: string;
@@ -869,9 +891,10 @@ function normalize(value: number) {
 }
 
 export function configUpdated() {
+  const config = getUserConfig();
   dayjs.locale("en");
   dayjs.updateLocale("en", {
-    weekStart: USER_CONFIG.week_starting_day
+    weekStart: config.week_starting_day
   });
 }
 
@@ -893,14 +916,15 @@ function unicodeMinus(value: string) {
 }
 
 export function formatCurrency(value: number, precision: number = null) {
+  const config = getUserConfig();
   value = normalize(value);
 
   if (precision == null) {
-    precision = USER_CONFIG.display_precision;
+    precision = config.display_precision;
   }
 
   return unicodeMinus(
-    value.toLocaleString(USER_CONFIG.locale, {
+    value.toLocaleString(config.locale, {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -912,6 +936,7 @@ export function formatCurrencyCrude(value: number) {
 }
 
 export function formatCurrencyCrudeWithPrecision(value: number, precision: number) {
+  const config = getUserConfig();
   value = normalize(value);
 
   const options: Intl.NumberFormatOptions = {
@@ -925,14 +950,15 @@ export function formatCurrencyCrudeWithPrecision(value: number, precision: numbe
     options.minimumFractionDigits = precision;
   }
 
-  return unicodeMinus(value.toLocaleString(USER_CONFIG.locale, options));
+  return unicodeMinus(value.toLocaleString(config.locale, options));
 }
 
 export function formatFloat(value: number, precision = 2) {
+  const config = getUserConfig();
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(USER_CONFIG.locale, {
+    value.toLocaleString(config.locale, {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -940,20 +966,22 @@ export function formatFloat(value: number, precision = 2) {
 }
 
 export function formatFloatUptoPrecision(value: number, precision = 2) {
+  const config = getUserConfig();
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(USER_CONFIG.locale, {
+    value.toLocaleString(config.locale, {
       maximumFractionDigits: precision
     })
   );
 }
 
 export function formatPercentage(value: number, precision = 0) {
+  const config = getUserConfig();
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(USER_CONFIG.locale, {
+    value.toLocaleString(config.locale, {
       style: "percent",
       minimumFractionDigits: precision
     })
@@ -961,10 +989,11 @@ export function formatPercentage(value: number, precision = 0) {
 }
 
 export function formatFixedWidthFloat(value: number, width: number, precision = 2) {
+  const config = getUserConfig();
   value = normalize(value);
 
   const formatted = unicodeMinus(
-    value.toLocaleString(USER_CONFIG.locale, {
+    value.toLocaleString(config.locale, {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -1018,13 +1047,14 @@ export function forEachFinancialYear(
 }
 
 function beginningOfFinancialYear(date: dayjs.Dayjs) {
+  const config = getUserConfig();
   date = date.startOf("month");
-  if (date.month() + 1 < USER_CONFIG.financial_year_starting_month) {
+  if (date.month() + 1 < config.financial_year_starting_month) {
     return date
       .add(-1, "year")
-      .add(USER_CONFIG.financial_year_starting_month - date.month() - 1, "month");
+      .add(config.financial_year_starting_month - date.month() - 1, "month");
   } else {
-    return date.add(-(date.month() + 1 - USER_CONFIG.financial_year_starting_month), "month");
+    return date.add(-(date.month() + 1 - config.financial_year_starting_month), "month");
   }
 }
 
@@ -1153,11 +1183,12 @@ export function rem(value: number) {
 }
 
 export function financialYear(date: dayjs.Dayjs) {
-  if (USER_CONFIG.financial_year_starting_month == 1) {
+  const config = getUserConfig();
+  if (config.financial_year_starting_month == 1) {
     return date.year().toString();
   }
 
-  if (date.month() < USER_CONFIG.financial_year_starting_month - 1) {
+  if (date.month() < config.financial_year_starting_month - 1) {
     return `${date.year() - 1} - ${(date.year() % 100).toLocaleString("en-US", {
       minimumIntegerDigits: 2
     })}`;

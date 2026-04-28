@@ -284,6 +284,10 @@ export function renderMonthlyExpensesTimeline(
     .attr("stroke-dasharray", "4 6");
 
   let firstRender = true;
+  const supportsSvgTransformTransitions =
+    typeof document !== "undefined" &&
+    typeof (document.createElementNS("http://www.w3.org/2000/svg", "g") as SVGGElement).transform
+      ?.baseVal?.consolidate === "function";
 
   const render = (selectedGroup: string | null, dateRange: { from: Dayjs; to: Dayjs }) => {
     const allowedGroups = selectedGroup ? [selectedGroup] : groups;
@@ -295,17 +299,19 @@ export function renderMonthlyExpensesTimeline(
     x.domain(allowedPoints.map((p) => p.month));
     y.domain([0, d3.max(allowedPoints, sum)]);
 
-    const t = svg.transition().duration(firstRender ? 0 : 750);
+    const animate = !firstRender && supportsSvgTransformTransitions;
+    const t = animate ? svg.transition().duration(750) : null;
     firstRender = false;
+
+    const xAxisSelection = xAxis.attr("transform", "translate(0," + height + ")");
+    const xAxisTarget: any = t ? xAxisSelection.transition(t) : xAxisSelection;
+    xAxisTarget.call(
+      d3
+        .axisBottom(x)
+        .ticks(5)
+        .tickFormat(skipTicks(30, x, (d) => d.toString()))
+    );
     xAxis
-      .attr("transform", "translate(0," + height + ")")
-      .transition(t)
-      .call(
-        d3
-          .axisBottom(x)
-          .ticks(5)
-          .tickFormat(skipTicks(30, x, (d) => d.toString()))
-      )
       .selectAll("text")
       .attr("y", 10)
       .attr("x", -8)
@@ -313,7 +319,8 @@ export function renderMonthlyExpensesTimeline(
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    yAxis.transition(t).call(d3.axisLeft(y).tickSize(-width).tickFormat(formatCurrencyCrude));
+    const yAxisTarget: any = t ? yAxis.transition(t) : yAxis;
+    yAxisTarget.call(d3.axisLeft(y).tickSize(-width).tickFormat(formatCurrencyCrude));
 
     const path = d3
       .line<Point>()
@@ -345,9 +352,19 @@ export function renderMonthlyExpensesTimeline(
           enter.append("g").attr("fill", function (d) {
             return z(d.key);
           }),
-        (update) => update.transition(t),
+        (update) => {
+          const target: any = t ? update.transition(t) : update;
+          return target;
+        },
         (exit) =>
-          exit.selectAll("rect").transition(t).attr("y", y.range()[0]).attr("height", 0).remove()
+          t
+            ? exit
+                .selectAll("rect")
+                .transition(t)
+                .attr("y", y.range()[0])
+                .attr("height", 0)
+                .remove()
+            : exit.remove()
       )
       .selectAll("rect")
       .data(
@@ -355,8 +372,8 @@ export function renderMonthlyExpensesTimeline(
         (d: any) => d.data.timestamp.format("YYYY-MM")
       )
       .join(
-        (enter) =>
-          enter
+        (enter) => {
+          const rects = enter
             .append("rect")
             .attr("class", "zoomable")
             .on("click", (_event, data) => {
@@ -371,31 +388,35 @@ export function renderMonthlyExpensesTimeline(
               );
             })
             .attr("width", Math.min(x.bandwidth(), MAX_BAR_WIDTH))
-            .attr("y", y.range()[0])
-            .transition(t)
-            .attr("y", function (d) {
+            .attr("y", y.range()[0]);
+
+          const target: any = t ? rects.transition(t) : rects;
+          return target
+            .attr("y", function (d: any) {
               return y(d[1]);
             })
-            .attr("height", function (d) {
+            .attr("height", function (d: any) {
               return y(d[0]) - y(d[1]);
-            }),
-        (update) =>
-          update
+            });
+        },
+        (update) => {
+          const target: any = t ? update.transition(t) : update;
+          return target
             .attr("data-tippy-content", tooltipContent(allowedGroups))
-            .transition(t)
             .attr("width", Math.min(x.bandwidth(), MAX_BAR_WIDTH))
-            .attr("x", function (d) {
+            .attr("x", function (d: any) {
               return (
                 x((d.data as any).month) +
                 (x.bandwidth() - Math.min(x.bandwidth(), MAX_BAR_WIDTH)) / 2
               );
             })
-            .attr("y", function (d) {
+            .attr("y", function (d: any) {
               return y(d[1]);
             })
-            .attr("height", function (d) {
+            .attr("height", function (d: any) {
               return y(d[0]) - y(d[1]);
-            }),
+            });
+        },
         (exit) => exit.remove()
       );
   };
