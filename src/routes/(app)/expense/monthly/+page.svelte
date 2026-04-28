@@ -23,7 +23,8 @@
     ROOT_EXPENSE_SCOPE
   } from "$lib/expense";
 
-  let expenseScope = writable(ROOT_EXPENSE_SCOPE);
+  let detailScope = writable(ROOT_EXPENSE_SCOPE);
+  let timelineGroup = writable<string | null>(null);
   let z: d3.ScaleOrdinal<string, string, never>,
     renderer: (ps: Posting[], scope?: string) => void,
     expenses: Posting[],
@@ -46,10 +47,12 @@
 
   let current_month_expenses: Posting[] = [];
   let breadcrumbs = expenseBreadcrumb(ROOT_EXPENSE_SCOPE);
+  let monthHasExpenses = false;
+  let detailScopeLabel = "Expenses";
 
   $: {
     current_month_expenses = _.chain(
-      filterExpenseScope(grouped_expenses?.[$month] || [], $expenseScope)
+      filterExpenseScope(grouped_expenses?.[$month] || [], $detailScope)
     )
       .sortBy((e) => e.date)
       .reverse()
@@ -57,9 +60,9 @@
   }
 
   $: if (grouped_expenses) {
-    renderCalendar($month, grouped_expenses[$month] || [], z, $expenseScope);
+    renderCalendar($month, grouped_expenses[$month] || [], z, $detailScope);
 
-    const expenses = filterExpenseScope(grouped_expenses[$month] || [], $expenseScope);
+    const expenses = filterExpenseScope(grouped_expenses[$month] || [], $detailScope);
     const incomes = grouped_incomes[$month] || [];
     const taxes = grouped_taxes[$month] || [];
     const investments = grouped_investments[$month] || [];
@@ -83,10 +86,12 @@
         formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
     }
 
-    renderer(expenses, $expenseScope);
+    renderer(expenses, $detailScope);
   }
 
-  $: breadcrumbs = expenseBreadcrumb($expenseScope);
+  $: breadcrumbs = expenseBreadcrumb($detailScope);
+  $: monthHasExpenses = (grouped_expenses?.[$month] || []).length > 0;
+  $: detailScopeLabel = _.last(breadcrumbs)?.label || ROOT_EXPENSE_SCOPE;
 
   onDestroy(async () => {
     if (destroy) {
@@ -108,12 +113,12 @@
     setAllowedDateRange(_.map(expenses, (e) => e.date));
     ({ z, destroy, legends } = renderMonthlyExpensesTimeline(
       expenses,
-      expenseScope,
+      timelineGroup,
       month,
       dateRange
     ));
     renderer = renderCurrentExpensesBreakdown(z, {
-      onDrilldown: (scope) => expenseScope.set(scope)
+      onDrilldown: (scope) => detailScope.set(scope)
     });
   });
 
@@ -177,12 +182,12 @@
               <ul>
                 {#each breadcrumbs as crumb}
                   <li>
-                    {#if crumb.scope === $expenseScope}
+                    {#if crumb.scope === $detailScope}
                       <a class="is-inactive">{crumb.label}</a>
                     {:else}
                       <a
                         href={crumb.scope}
-                        on:click|preventDefault={() => expenseScope.set(crumb.scope)}
+                        on:click|preventDefault={() => detailScope.set(crumb.scope)}
                         >{crumb.label}</a
                       >
                     {/if}
@@ -193,7 +198,7 @@
             {#each current_month_expenses as expense}
               <PostingCard
                 posting={expense}
-                color={z(expenseColorKey(expense, $expenseScope))}
+                color={z(expenseColorKey(expense, $detailScope))}
                 icon={true}
               />
             {/each}
@@ -217,7 +222,13 @@
           <div class="column is-8">
             <div class="px-3 box" style="height: 100%">
               <ZeroState item={current_month_expenses}>
-                <strong>Hurray!</strong> You have no expenses this month.
+                {#if monthHasExpenses && $detailScope !== ROOT_EXPENSE_SCOPE}
+                  <strong>No expenses for {detailScopeLabel}</strong> in {dayjs($month).format(
+                    "MMM YYYY"
+                  )}.
+                {:else}
+                  <strong>Hurray!</strong> You have no expenses this month.
+                {/if}
               </ZeroState>
               <svg id="d3-current-month-breakdown" width="100%" />
             </div>
@@ -227,6 +238,9 @@
               <ZeroState item={expenses}>
                 <strong>Oops!</strong> You have no expenses.
               </ZeroState>
+              <div class="px-4 pb-1 is-size-7 has-text-grey">
+                Trend filter only affects this 12-month chart.
+              </div>
               <LegendCard {legends} clazz="ml-4 overflow-x-auto" />
               <svg id="d3-monthly-expense-timeline" width="100%" height="400" />
             </div>

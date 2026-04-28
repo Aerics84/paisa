@@ -24,10 +24,8 @@ import {
   expenseColorKey,
   expenseColorKeys,
   expenseGroup,
-  expenseTopLevelGroup,
   pieData,
-  ROOT_EXPENSE_SCOPE,
-  childExpenseScope
+  ROOT_EXPENSE_SCOPE
 } from "$lib/expense";
 
 export function renderCalendar(
@@ -139,7 +137,7 @@ export function colorScale(postings: Posting[]) {
 
 export function renderMonthlyExpensesTimeline(
   postings: Posting[],
-  scopeStore: Writable<string>,
+  selectedGroupStore: Writable<string | null>,
   monthStore: Writable<string>,
   dateRangeStore: Readable<{ from: Dayjs; to: Dayjs }>
 ): {
@@ -287,9 +285,8 @@ export function renderMonthlyExpensesTimeline(
 
   let firstRender = true;
 
-  const render = (scope: string, dateRange: { from: Dayjs; to: Dayjs }) => {
-    const topLevelGroup = expenseTopLevelGroup(scope);
-    const allowedGroups = topLevelGroup ? [topLevelGroup] : groups;
+  const render = (selectedGroup: string | null, dateRange: { from: Dayjs; to: Dayjs }) => {
+    const allowedGroups = selectedGroup ? [selectedGroup] : groups;
     const allowedPoints = _.filter(
       points,
       (p) => p.timestamp.isSameOrBefore(dateRange.to) && p.timestamp.isSameOrAfter(dateRange.from)
@@ -403,12 +400,14 @@ export function renderMonthlyExpensesTimeline(
       );
   };
 
-  render(get(scopeStore), get(dateRangeStore));
+  render(get(selectedGroupStore), get(dateRangeStore));
 
   const dateRangeUnsubscribe = dateRangeStore.subscribe((dateRange) =>
-    render(get(scopeStore), dateRange)
+    render(get(selectedGroupStore), dateRange)
   );
-  const scopeUnsubscribe = scopeStore.subscribe((scope) => render(scope, get(dateRangeStore)));
+  const selectedGroupUnsubscribe = selectedGroupStore.subscribe((selectedGroup) =>
+    render(selectedGroup, get(dateRangeStore))
+  );
 
   const legends = groups.map(
     (group) =>
@@ -417,11 +416,10 @@ export function renderMonthlyExpensesTimeline(
         color: z(group),
         shape: "square",
         onClick: () => {
-          const nextScope = childExpenseScope(ROOT_EXPENSE_SCOPE, group);
-          if (get(scopeStore) === nextScope) {
-            scopeStore.set(ROOT_EXPENSE_SCOPE);
+          if (get(selectedGroupStore) === group) {
+            selectedGroupStore.set(null);
           } else {
-            scopeStore.set(nextScope);
+            selectedGroupStore.set(group);
           }
         }
       }) as Legend
@@ -431,7 +429,7 @@ export function renderMonthlyExpensesTimeline(
     z: z,
     destroy: () => {
       dateRangeUnsubscribe();
-      scopeUnsubscribe();
+      selectedGroupUnsubscribe();
     },
     legends
   };
