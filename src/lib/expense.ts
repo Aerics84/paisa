@@ -30,7 +30,7 @@ export function childExpenseScope(scope: string, child: string) {
 }
 
 export function normalizeExpenseDetailScope(scope: string = ROOT_EXPENSE_SCOPE) {
-  if (scope === ROOT_EXPENSE_SCOPE) {
+  if (scope === ROOT_EXPENSE_SCOPE || !isInExpenseScope(scope, ROOT_EXPENSE_SCOPE)) {
     return ROOT_EXPENSE_SCOPE;
   }
 
