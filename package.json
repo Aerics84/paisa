@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "prepare": "node ./scripts/setup-git-hooks.mjs",
+    "prepare": "node --input-type=module -e \"import { existsSync } from 'node:fs'; if (existsSync('./scripts/setup-git-hooks.mjs')) await import('./scripts/setup-git-hooks.mjs');\"",
     "sync-version": "node scripts/sync-version.mjs",
     "test:imports": "bun test --preload ./src/happydom.ts src/lib/import.test.ts",
     "test:regression": "bun test tests/regression.test.ts",
