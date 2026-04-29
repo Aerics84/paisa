@@ -82,8 +82,8 @@ fixture/main.transactions.json:
 	pkill -f 'paisa serve -p 6500'
 
 generate-fonts:
-	bun download-svgs.js
-	node generate-font.js
+	npm --prefix tools/fontgen install
+	npm --prefix tools/fontgen run generate-fonts
 
 node2nix:
 	npm install --lockfile-version 2

@@ -1,9 +1,13 @@
 import _ from "lodash";
 import { createReadStream, mkdirSync, readdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import svg2ttf from "svg2ttf";
 import ttf2woff2 from "ttf2woff2";
 import { SVGIcons2SVGFontStream } from "svgicons2svgfont";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+process.chdir(repoRoot);
 
 const outputDir = "fonts";
 

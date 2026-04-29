@@ -174,11 +174,14 @@ export default {
       }
     }
   },
-  isDate(str: string, format: string) {
-    if (!_.isString(str)) {
+  isDate(value: any, format: string) {
+    if (_.isDate(value)) {
+      return dayjs(value).isValid();
+    }
+    if (!_.isString(value)) {
       return false;
     }
-    return dayjs(_.trim(str), format, true).isValid();
+    return dayjs(_.trim(value), format, true).isValid();
   },
   predictAccount(...args: any) {
     const options = args.pop();
@@ -212,14 +215,23 @@ export default {
     }
   },
   isBlank(str: string) {
+    if (_.isNumber(str) || _.isDate(str)) {
+      return false;
+    }
+    if (!_.isString(str)) {
+      return _.isNil(str);
+    }
     return _.isEmpty(str) || _.trim(str) === "";
   },
-  amount(str: string, options: any) {
-    const amount = scrubAmount(str);
+  amount(str: any, options: any) {
+    const amount = _.isNumber(str) ? String(str) : scrubAmount(str);
     return amount || options.hash.default || "";
   },
-  date(str: string, format: string) {
-    return dayjs(_.trim(str), format, true).format("YYYY/MM/DD");
+  date(value: any, format: string) {
+    if (_.isDate(value)) {
+      return dayjs(value).format("YYYY/MM/DD");
+    }
+    return dayjs(_.trim(value), format, true).format("YYYY/MM/DD");
   },
   trim(str: string) {
     return _.trim(str);

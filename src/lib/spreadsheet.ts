@@ -1,11 +1,11 @@
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
 import _ from "lodash";
+import { readSheet } from "read-excel-file/browser";
 import { format } from "./journal";
 import { pdf2array } from "./pdf";
 
 interface Result {
-  data: string[][];
+  data: any[][];
   rows?: Array<Record<string, any>>;
   error?: string;
 }
@@ -24,8 +24,10 @@ export function parse(file: File): Promise<Result> {
     return parseCSV(file);
   } else if (extension === "sta" || extension === "mt940") {
     return parseTextLines(file);
-  } else if (extension === "xlsx" || extension === "xls") {
+  } else if (extension === "xlsx") {
     return parseXLSX(file);
+  } else if (extension === "xls") {
+    return parseLegacyXLS();
   } else if (extension === "pdf") {
     return parsePDF(file);
   } else if (extension === "xml") {
@@ -391,49 +393,18 @@ async function parseTextLines(file: File): Promise<Result> {
 }
 
 async function parseXLSX(file: File): Promise<Result> {
-  const buffer = await readFile(file);
   try {
-    const sheet = XLSX.read(buffer, { type: "binary" });
-    const json = XLSX.utils.sheet_to_json<string[]>(sheet.Sheets[sheet.SheetNames[0]], {
-      header: 1,
-      blankrows: false,
-      rawNumbers: false
-    });
-    return { data: json };
-  } catch (e) {
-    if (/password-protected/.test(e.message)) {
-      const password = prompt(
-        "Please enter the password to open this XLSX file. Press cancel to exit."
-      );
-      if (password === null) {
-        return { data: [], error: "Password required." };
-      }
-
-      try {
-        const XlsxPopulate = await import("xlsx-populate/browser/xlsx-populate.js");
-        const workbook = await XlsxPopulate.fromDataAsync(buffer, { password });
-        const sheet = workbook.sheet(0);
-        if (sheet) {
-          let json = sheet.usedRange().value();
-          json = _.map(json, (row) => {
-            return _.map(row, (cell) => {
-              if (cell) {
-                return cell.toString();
-              }
-              return "";
-            });
-          });
-
-          return { data: json };
-        }
-      } catch (e) {
-        // follow through to the error below
-      }
-
-      return { data: [], error: "Unable to parse Password protected XLSX" };
-    }
-    throw e;
+    return { data: (await readSheet(file)) as any[][] };
+  } catch {
+    return { data: [], error: "Unable to parse XLSX document" };
   }
+}
+
+function parseLegacyXLS(): Promise<Result> {
+  return Promise.resolve({
+    data: [],
+    error: "Legacy .xls files are no longer supported. Please re-save the file as .xlsx or CSV."
+  });
 }
 
 async function parsePDF(file: File): Promise<Result> {

@@ -1,10 +1,14 @@
-import { spawnSync } from "bun";
-import { join } from "path";
-import { mkdirSync, readFileSync, rmdirSync, writeFileSync } from "fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { spawnSync } from "child_process";
 import { locate } from "@iconify/json";
 import { IconSet } from "@iconify/tools";
 import { cleanupSVG } from "@iconify/tools/lib/svg/cleanup";
 import { runSVGO } from "@iconify/tools/lib/optimise/svgo";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+process.chdir(repoRoot);
 
 const outputDir = "svg";
 
@@ -18,19 +22,19 @@ async function downloadSVGs(sets) {
     iconSet.forEach((name) => {
       const svg = iconSet.toSVG(name);
       if (!svg) {
-        console.log("Missing ${name}");
+        console.log(`Missing ${name}`);
         return;
       }
       cleanupSVG(svg);
       runSVGO(svg);
-      if (svg.viewBox.width != svg.viewBox.height) {
+      if (svg.viewBox.width !== svg.viewBox.height) {
         const max = Math.max(svg.viewBox.width, svg.viewBox.height);
         svg.viewBox.width = max;
         svg.viewBox.height = max;
       }
 
       let svgString = svg.toString({ width: 48, height: 48 });
-      if (set == "arcticons") {
+      if (set === "arcticons") {
         svgString = svgString.replaceAll(
           'stroke="currentColor"',
           'stroke-width="3px" stroke="currentColor"'
@@ -43,17 +47,25 @@ async function downloadSVGs(sets) {
 }
 
 async function main() {
-  rmdirSync(outputDir, { force: true, recursive: true });
+  rmSync(outputDir, { force: true, recursive: true });
   mkdirSync(outputDir, { recursive: true });
   console.log("downloading arcticons");
-  downloadSVGs(["arcticons"]);
+  await downloadSVGs(["arcticons"]);
   try {
-    spawnSync(["npx", "oslllo-svg-fixer", "-s", "svg/arcticons", "-d", "svg/arcticons"]);
-  } catch (e) {
+    spawnSync("npx", ["oslllo-svg-fixer", "-s", "svg/arcticons", "-d", "svg/arcticons"], {
+      stdio: "inherit"
+    });
+  } catch {
     // ignore
   }
   console.log("downloading others");
-  downloadSVGs(["fa6-solid", "fa6-regular", "fa6-brands", "mdi", "fluent-emoji-high-contrast"]);
+  await downloadSVGs([
+    "fa6-solid",
+    "fa6-regular",
+    "fa6-brands",
+    "mdi",
+    "fluent-emoji-high-contrast"
+  ]);
 }
 
 main();

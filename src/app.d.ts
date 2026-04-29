@@ -80,14 +80,6 @@ declare module "textures" {
   export default textures;
 }
 
-declare module "xlsx-populate" {
-  export function fromDataAsync(data: ArrayBuffer, options: { password?: string }): any;
-}
-
-declare module "xlsx-populate/browser/xlsx-populate.js" {
-  export function fromDataAsync(data: ArrayBuffer, options: { password?: string }): any;
-}
-
 declare module "arima/async" {
   export class Arima {
     constructor(options: object);

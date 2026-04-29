@@ -59,6 +59,12 @@ describe("import", () => {
 
           const compiled = Handlebars.compile(template);
           const result = await parse(new File([toBlobPart(input)], inputFile));
+          if (inputFile.endsWith(".xls")) {
+            expect(result.error).toBe(
+              "Legacy .xls files are no longer supported. Please re-save the file as .xlsx or CSV."
+            );
+            return;
+          }
           const rows = asRows(result);
 
           const actual = render(rows, compiled, { trim: true });
