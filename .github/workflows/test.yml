@@ -25,5 +25,5 @@ jobs:
           nix develop --command npm ci
           nix develop --command npm run check:format:changed
           nix develop --command npm run check
-          nix develop --command bash ./scripts/gofmt-changed.sh
+          nix develop --command node ./scripts/gofmt-changed.mjs
           nix develop --command make test

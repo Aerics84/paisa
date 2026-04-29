@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-npm run check:format:changed
-bash ./scripts/gofmt-changed.sh
-bun test --preload ./src/happydom.ts src/lib/import.test.ts
-go build ${GO_VERSION_LDFLAGS:-}
-unset PAISA_CONFIG
-TZ=UTC bun test tests/regression.test.ts

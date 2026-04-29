@@ -110,10 +110,7 @@ describe("broker csv normalization", () => {
   });
 
   test("unsupported broker csv stays unnormalized", async () => {
-    const csv = [
-      "Booked At,Action,Amount",
-      "2026-04-30,Dividend,45.67"
-    ].join("\n");
+    const csv = ["Booked At,Action,Amount", "2026-04-30,Dividend,45.67"].join("\n");
 
     const result = await parse(new File([csv], "unsupported.csv"));
     const rows = asRows(result);
