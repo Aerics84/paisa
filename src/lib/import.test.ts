@@ -20,6 +20,10 @@ dayjs.extend(localeData);
 import updateLocale from "dayjs/plugin/updateLocale";
 dayjs.extend(updateLocale);
 
+function normalizeLineEndings(value: string) {
+  return value.replace(/\r\n/g, "\n");
+}
+
 Handlebars.registerHelper(
   _.mapValues(helpers, (helper, name) => {
     return function (...args: any[]) {
@@ -55,7 +59,7 @@ describe("import", () => {
 
           const actual = render(rows, compiled, { trim: true });
 
-          expect(actual).toBe(_.trim(output));
+          expect(normalizeLineEndings(actual)).toBe(normalizeLineEndings(_.trim(output)));
         }
       }
     });

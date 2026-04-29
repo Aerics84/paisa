@@ -8,7 +8,7 @@ interface State {
 export function format(text: string) {
   const state: State = { inTransaction: false, lines: [] };
   return text
-    .split("\n")
+    .split(/\r?\n/)
     .reduce((state: State, line: string) => {
       state.lines.push(formatLine(line, state));
       return state;
@@ -46,12 +46,15 @@ function formatLine(line: string, state: State) {
   );
   if (fullMatch) {
     const { account, prefix, amount, suffix } = fullMatch.groups;
-    if (account.length + prefix.length + amount.length <= amountAlignmentColumn - 6) {
+    const normalizedPrefix = prefix.replace(/^\s+/, "");
+    if (account.length + normalizedPrefix.length + amount.length <= amountAlignmentColumn - 6) {
       return (
         space(4) +
         account +
-        space(amountAlignmentColumn - 4 - account.length - prefix.length - amount.length) +
-        prefix +
+        space(
+          amountAlignmentColumn - 4 - account.length - normalizedPrefix.length - amount.length
+        ) +
+        normalizedPrefix +
         amount +
         suffix
       );
