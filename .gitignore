@@ -34,3 +34,9 @@ brand/*.png
 
 # Keep local OpenSpec data out of Git
 /openspec/
+
+# Keep local agent/config files out of Git
+/.codex/
+/.githooks/
+/.github/
+/AGENTS.md
