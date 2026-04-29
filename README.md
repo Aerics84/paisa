@@ -27,6 +27,16 @@ For the demo image:
 docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
 ```
 
+## Development Workflow
+
+`npm install` configures repo-local Git hooks automatically.
+
+- `git commit` formats staged Prettier-supported files and re-stages them.
+- `git push` runs the critical pre-push checks from `scripts/preflight-critical.sh`.
+- `npm run format:changed` formats locally changed files on demand.
+
+If a staged file also has unstaged edits, the commit hook stops instead of silently staging extra hunks. In that case, format the file first and stage it again.
+
 # Demo
 
 A demo of the Web UI can be found at [https://demo.paisa.fyi](https://demo.paisa.fyi)

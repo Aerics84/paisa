@@ -13,15 +13,17 @@ jobs:
     env:
       PRETTIER_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - uses: nixbuild/nix-quick-install-action@v31
-    - uses: nix-community/cache-nix-action@v7
-      with:
-        primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-        restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}
-    - run: |
-        nix develop --command npm ci
-        nix develop --command make lint
-        nix develop --command make test
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: nixbuild/nix-quick-install-action@v31
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}
+      - run: |
+          nix develop --command npm ci
+          nix develop --command npm run check:format:changed
+          nix develop --command npm run check
+          nix develop --command test -z $$(gofmt -l .)
+          nix develop --command make test

@@ -34,7 +34,7 @@ parser:
 	npm run parser-build-debug
 
 lint:
-	bash ./scripts/prettier-changed.sh
+	npm run check:format:changed
 	npm run check
 	test -z $$(gofmt -l .)
 
