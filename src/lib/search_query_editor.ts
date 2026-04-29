@@ -589,10 +589,10 @@ export function parseDate(value: string, reference = new Date()): DateRange {
 
 function adjustInterval(text: string, parsed: chrono.ParsedComponents, direction: "start" | "end") {
   let interval: dayjs.OpUnitType = "day";
-  if (parsed.isCertain("day")) {
-    interval = "day";
-  } else if (/week/i.test(text) || parsed.isCertain("weekday")) {
+  if (/week/i.test(text) || parsed.isCertain("weekday")) {
     interval = "week";
+  } else if (parsed.isCertain("day")) {
+    interval = "day";
   } else if (parsed.isCertain("month")) {
     interval = "month";
   } else if (parsed.isCertain("year")) {
