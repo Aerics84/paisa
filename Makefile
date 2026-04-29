@@ -36,7 +36,7 @@ parser:
 lint:
 	npm run check:format:changed
 	npm run check
-	test -z $$(gofmt -l .)
+	bash ./scripts/gofmt-changed.sh
 
 preflight-critical:
 	GO_VERSION_LDFLAGS='$(GO_VERSION_LDFLAGS)' bash ./scripts/preflight-critical.sh
