@@ -219,7 +219,7 @@ function normalizeTradeRows(
       isin: row["ISIN"] || "",
       symbol,
       securityName,
-      quantity: row["Anzahl"] || row["Quantity"] || "",
+      quantity: normalizeQuantity(row["Anzahl"] || row["Quantity"] || ""),
       unitPrice: row["Preis"] || row["Price"] || "",
       currency: row["Währung"] || row["Currency"] || "",
       principal: grossAmount,
@@ -353,6 +353,24 @@ function parseEuropeanNumber(value: string) {
 
   const parsed = Number(normalizedDigits);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeQuantity(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const parsed = parseEuropeanNumber(trimmed);
+  if (parsed === null) {
+    return trimmed;
+  }
+
+  return parsed.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 12,
+    useGrouping: false
+  });
 }
 
 function capitalizeWord(value: string) {

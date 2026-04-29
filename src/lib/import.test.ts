@@ -103,7 +103,9 @@ describe("broker csv normalization", () => {
     expect(rows[0].transactionKind).toBe("buy");
     expect(rows[0].tradeDate).toBe("2026-04-28");
     expect(rows[0].settlementDate).toBe("2026-04-30");
+    expect(rows[0].quantity).toBe("2");
     expect(rows[0].principal).toBe("191.00");
+    expect(rows[1].quantity).toBe("1");
     expect(rows[1].netCashAmount).toBe("148.03");
   });
 
