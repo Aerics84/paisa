@@ -110,6 +110,7 @@
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.1",
     "sass": "^1.99.0",
+    "sass-embedded": "^1.93.2",
     "svelte": "^5.55.5",
     "svelte-check": "^4.4.6",
     "svelte-dnd-action": "^0.9.69",
