@@ -3,8 +3,9 @@
 $body-size: 14px;
 
 $family-sans-serif: "Roboto Flex Variable", sans-serif;
-$family-sans-serif-icon: "Roboto Flex Variable", sans-serif, "arcticons", "fa6-brands",
-  "fa6-regular", "fa6-solid", "fluent-emoji-high-contrast", "mdi";
+$family-sans-serif-icon:
+  "Roboto Flex Variable", sans-serif, "arcticons", "fa6-brands", "fa6-regular", "fa6-solid",
+  "fluent-emoji-high-contrast", "mdi";
 $family-monospace: "Roboto Mono Variable", monospace;
 
 $box-radius: 4px;
@@ -13,23 +14,25 @@ $box-padding: 1.25rem 0;
 
 $card-shadow: none;
 $danger-light: hsl(347, 90%, 96%);
-
-$switch-focus: none;
+$shadow:
+  0 0.5em 1em -0.125em rgba(0, 0, 0, 0.1),
+  0 0 0 1px rgba(0, 0, 0, 0.02) !default;
 
 $yellow: $amber-500;
 
-@import "bulma/sass/utilities/_all.sass";
+@import "bulma/sass/utilities";
+@import "bulma/sass/utilities/mixins";
 @import "@fortawesome/fontawesome-free/scss/fontawesome.scss";
 
-$menu-item-hover-background-color: $link-light;
-$menu-item-active-color: $link-dark;
-$menu-item-active-background-color: $link-light;
+$menu-item-hover-background-color: rgba($link, 0.12);
+$menu-item-active-color: $link;
+$menu-item-active-background-color: rgba($link, 0.16);
 
 $editor-full-height: calc(100vh - 45.5px - 7px - 15.75px - 21px - 57.75px - 10.5px - 10.5px);
 
-@import "bulma/bulma.sass";
-@import "bulma-switch/src/sass/index.sass";
-@import "@cityssm/bulma-sticky-table/sticky-table";
+@import "bulma/bulma.scss";
+@import "./switch";
+@import "./sticky-table";
 @import "./paisa-dashboard-overview";
 
 $backgroundColor: $white;
@@ -74,40 +77,19 @@ $footerActiveColor: #d00;
 // override message style
 
 .message {
-  @each $name, $components in $message-colors {
-    $color: nth($components, 1);
-    $color-invert: nth($components, 2);
-    $color-light: null;
-    $color-dark: null;
+  &.invertable.is-danger {
+    background-color: transparent;
+    border: 1px solid rgba($danger, 0.6);
 
-    @if length($components) >= 3 {
-      $color-light: nth($components, 3);
-      @if length($components) >= 4 {
-        $color-dark: nth($components, 4);
-      } @else {
-        $color-luminance: colorLuminance($color);
-        $darken-percentage: $color-luminance * 70%;
-        $desaturate-percentage: $color-luminance * 30%;
-        $color-dark: desaturate(darken($color, $darken-percentage), $desaturate-percentage);
-      }
-    } @else {
-      $color-lightning: max((100% - lightness($color)) - 2%, 0%);
-      $color-light: lighten($color, $color-lightning);
+    .message-header {
+      background-color: rgba($danger, 0.15);
+      color: $black-ter;
     }
 
-    &.invertable.is-#{$name} {
-      background-color: transparent;
-      border: 1px solid rgba($color, 0.6);
-
-      .message-header {
-        background-color: rgba($color, 0.15);
-        color: $black-ter;
-      }
-      .message-body {
-        color: $text;
-        background: $white-bis;
-        border: none;
-      }
+    .message-body {
+      color: $text;
+      background: $white-bis;
+      border: none;
     }
   }
 }
@@ -297,7 +279,7 @@ svg text {
 }
 
 .svg-text-warning-dark {
-  fill: $warning-dark;
+  fill: $warning;
 }
 
 .svg-grey-light {
@@ -1507,7 +1489,8 @@ div.is-hoverable:hover {
   --dashboard-stat-strip-columns: minmax(0, 0.82fr) minmax(0, 0.82fr) minmax(0, 0.88fr)
     minmax(0, 0.88fr) minmax(0, 0.92fr) minmax(0, 1.28fr);
   --dashboard-stat-strip-padding: 0.45rem 0 0.8rem;
-  background: radial-gradient(circle at 25% 0%, rgba(45, 212, 191, 0.06), transparent 28rem),
+  background:
+    radial-gradient(circle at 25% 0%, rgba(45, 212, 191, 0.06), transparent 28rem),
     linear-gradient(
       180deg,
       color-mix(in srgb, var(--app-canvas) 90%, transparent),

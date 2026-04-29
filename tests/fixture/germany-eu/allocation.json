@@ -1,669 +1,669 @@
 {
-    "aggregates":  {
-                       "Assets":  {
-                                      "date":  "0001-01-01T00:00:00Z",
-                                      "account":  "Assets",
-                                      "market_amount":  0
-                                  },
-                       "Assets:Checking":  {
-                                               "date":  "0001-01-01T00:00:00Z",
-                                               "account":  "Assets:Checking",
-                                               "market_amount":  0
-                                           },
-                       "Assets:Checking:ING":  {
-                                                   "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                   "account":  "Assets:Checking:ING",
-                                                   "market_amount":  3505.5
-                                               },
-                       "Assets:Equity":  {
-                                             "date":  "0001-01-01T00:00:00Z",
-                                             "account":  "Assets:Equity",
-                                             "market_amount":  0
-                                         },
-                       "Assets:Equity:VWCE":  {
-                                                  "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                  "account":  "Assets:Equity:VWCE",
-                                                  "market_amount":  1093.5
-                                              },
-                       "Assets:Savings":  {
-                                              "date":  "0001-01-01T00:00:00Z",
-                                              "account":  "Assets:Savings",
-                                              "market_amount":  0
-                                          },
-                       "Assets:Savings:Tagesgeld":  {
-                                                        "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                        "account":  "Assets:Savings:Tagesgeld",
-                                                        "market_amount":  1200
-                                                    }
-                   },
-    "aggregates_timeline":  [
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-03T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  4800
-                                                            }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-04T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  4200
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-04T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-05T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2750
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-05T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-06T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2540
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-06T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-07T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2540
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-07T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-08T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2540
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-08T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-09T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2540
-                                                            },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-09T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-10T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-10T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-10T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-11T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-11T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-11T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-12T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-12T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-12T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-13T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-13T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-13T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-14T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-14T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-14T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-15T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-15T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-15T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-16T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-16T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-16T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-17T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-17T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-17T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-18T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-18T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-18T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-19T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-19T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-19T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-20T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-20T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-20T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-21T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-21T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-21T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-22T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-22T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-22T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-23T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-23T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-23T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-24T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-24T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-24T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-25T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-25T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-25T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-26T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  2068
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-26T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-26T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-27T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-27T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-27T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-28T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-28T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-28T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-29T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-29T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-29T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-30T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-30T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-30T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-01-31T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-01-31T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-01-31T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-01T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-01T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-01T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-02T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  1573
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-02T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-02T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-03T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  6373
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-03T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-03T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  600
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-04T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  5773
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-04T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-04T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  1200
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-05T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  4323
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-05T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-05T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  1200
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-06T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  4113
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-06T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  472
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-06T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  1200
-                                                                 }
-                                },
-                                {
-                                    "Assets:Checking:ING":  {
-                                                                "date":  "2022-02-07T00:00:00+01:00",
-                                                                "account":  "Assets:Checking:ING",
-                                                                "market_amount":  3505.5
-                                                            },
-                                    "Assets:Equity:VWCE":  {
-                                                               "date":  "2022-02-07T00:00:00+01:00",
-                                                               "account":  "Assets:Equity:VWCE",
-                                                               "market_amount":  1093.5
-                                                           },
-                                    "Assets:Savings:Tagesgeld":  {
-                                                                     "date":  "2022-02-07T00:00:00+01:00",
-                                                                     "account":  "Assets:Savings:Tagesgeld",
-                                                                     "market_amount":  1200
-                                                                 }
-                                }
-                            ],
-    "allocation_targets":  [
-                               {
-                                   "name":  "Cash",
-                                   "target":  25,
-                                   "current":  81.14330056906363,
-                                   "aggregates":  {
-                                                      "Assets":  {
-                                                                     "date":  "0001-01-01T00:00:00Z",
-                                                                     "account":  "Assets",
-                                                                     "market_amount":  0
-                                                                 },
-                                                      "Assets:Checking":  {
-                                                                              "date":  "0001-01-01T00:00:00Z",
-                                                                              "account":  "Assets:Checking",
-                                                                              "market_amount":  0
-                                                                          },
-                                                      "Assets:Checking:ING":  {
-                                                                                  "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                                                  "account":  "Assets:Checking:ING",
-                                                                                  "market_amount":  3505.5
-                                                                              },
-                                                      "Assets:Savings":  {
-                                                                             "date":  "0001-01-01T00:00:00Z",
-                                                                             "account":  "Assets:Savings",
-                                                                             "market_amount":  0
-                                                                         },
-                                                      "Assets:Savings:Tagesgeld":  {
-                                                                                       "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                                                       "account":  "Assets:Savings:Tagesgeld",
-                                                                                       "market_amount":  1200
-                                                                                   }
-                                                  }
-                               },
-                               {
-                                   "name":  "Equity",
-                                   "target":  75,
-                                   "current":  18.85669943093637,
-                                   "aggregates":  {
-                                                      "Assets":  {
-                                                                     "date":  "0001-01-01T00:00:00Z",
-                                                                     "account":  "Assets",
-                                                                     "market_amount":  0
-                                                                 },
-                                                      "Assets:Equity":  {
-                                                                            "date":  "0001-01-01T00:00:00Z",
-                                                                            "account":  "Assets:Equity",
-                                                                            "market_amount":  0
-                                                                        },
-                                                      "Assets:Equity:VWCE":  {
-                                                                                 "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                                                 "account":  "Assets:Equity:VWCE",
-                                                                                 "market_amount":  1093.5
-                                                                             }
-                                                  }
-                               }
-                           ]
+  "aggregates": {
+    "Assets": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets",
+      "market_amount": 0
+    },
+    "Assets:Checking": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets:Checking",
+      "market_amount": 0
+    },
+    "Assets:Checking:ING": {
+      "date": "2022-02-07T23:59:59.999999999+01:00",
+      "account": "Assets:Checking:ING",
+      "market_amount": 3505.5
+    },
+    "Assets:Equity": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets:Equity",
+      "market_amount": 0
+    },
+    "Assets:Equity:VWCE": {
+      "date": "2022-02-07T23:59:59.999999999+01:00",
+      "account": "Assets:Equity:VWCE",
+      "market_amount": 1093.5
+    },
+    "Assets:Savings": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets:Savings",
+      "market_amount": 0
+    },
+    "Assets:Savings:Tagesgeld": {
+      "date": "2022-02-07T23:59:59.999999999+01:00",
+      "account": "Assets:Savings:Tagesgeld",
+      "market_amount": 1200
+    }
+  },
+  "aggregates_timeline": [
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-03T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 4800
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-04T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 4200
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-04T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-05T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2750
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-05T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-06T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2540
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-06T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-07T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2540
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-07T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-08T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2540
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-08T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-09T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2540
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-09T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-10T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-10T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-10T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-11T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-11T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-11T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-12T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-12T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-12T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-13T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-13T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-13T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-14T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-14T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-14T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-15T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-15T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-15T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-16T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-16T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-16T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-17T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-17T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-17T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-18T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-18T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-18T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-19T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-19T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-19T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-20T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-20T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-20T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-21T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-21T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-21T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-22T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-22T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-22T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-23T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-23T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-23T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-24T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-24T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-24T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-25T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-25T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-25T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-26T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 2068
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-26T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-26T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-27T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-27T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-27T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-28T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-28T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-28T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-29T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-29T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-29T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-30T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-30T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-30T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-01-31T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-01-31T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-01-31T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-01T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-01T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-01T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-02T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 1573
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-02T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-02T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-03T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 6373
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-03T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-03T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 600
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-04T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 5773
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-04T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-04T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 1200
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-05T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 4323
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-05T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-05T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 1200
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-06T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 4113
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-06T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 472
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-06T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 1200
+      }
+    },
+    {
+      "Assets:Checking:ING": {
+        "date": "2022-02-07T00:00:00+01:00",
+        "account": "Assets:Checking:ING",
+        "market_amount": 3505.5
+      },
+      "Assets:Equity:VWCE": {
+        "date": "2022-02-07T00:00:00+01:00",
+        "account": "Assets:Equity:VWCE",
+        "market_amount": 1093.5
+      },
+      "Assets:Savings:Tagesgeld": {
+        "date": "2022-02-07T00:00:00+01:00",
+        "account": "Assets:Savings:Tagesgeld",
+        "market_amount": 1200
+      }
+    }
+  ],
+  "allocation_targets": [
+    {
+      "name": "Cash",
+      "target": 25,
+      "current": 81.14330056906363,
+      "aggregates": {
+        "Assets": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets",
+          "market_amount": 0
+        },
+        "Assets:Checking": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets:Checking",
+          "market_amount": 0
+        },
+        "Assets:Checking:ING": {
+          "date": "2022-02-07T23:59:59.999999999+01:00",
+          "account": "Assets:Checking:ING",
+          "market_amount": 3505.5
+        },
+        "Assets:Savings": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets:Savings",
+          "market_amount": 0
+        },
+        "Assets:Savings:Tagesgeld": {
+          "date": "2022-02-07T23:59:59.999999999+01:00",
+          "account": "Assets:Savings:Tagesgeld",
+          "market_amount": 1200
+        }
+      }
+    },
+    {
+      "name": "Equity",
+      "target": 75,
+      "current": 18.85669943093637,
+      "aggregates": {
+        "Assets": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets",
+          "market_amount": 0
+        },
+        "Assets:Equity": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets:Equity",
+          "market_amount": 0
+        },
+        "Assets:Equity:VWCE": {
+          "date": "2022-02-07T23:59:59.999999999+01:00",
+          "account": "Assets:Equity:VWCE",
+          "market_amount": 1093.5
+        }
+      }
+    }
+  ]
 }

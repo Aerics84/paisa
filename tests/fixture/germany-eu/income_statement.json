@@ -1,34 +1,26 @@
 {
-    "yearly":  {
-                   "2022":  {
-                                "startingBalance":  0,
-                                "endingBalance":  5799,
-                                "date":  "2022-01-01T00:00:00+01:00",
-                                "income":  {
-                                               "Income:Salary:Acme GmbH":  -9600
-                                           },
-                                "interest":  {
-
-                                             },
-                                "equity":  {
-
-                                           },
-                                "pnl":  {
-                                            "Assets:Equity:VWCE":  14
-                                        },
-                                "liabilities":  {
-
-                                                },
-                                "tax":  {
-
-                                        },
-                                "expenses":  {
-                                                 "Expenses:Food":  260,
-                                                 "Expenses:Leisure":  140,
-                                                 "Expenses:Rent":  2900,
-                                                 "Expenses:Transport":  95,
-                                                 "Expenses:Utilities":  420
-                                             }
-                            }
-               }
+  "yearly": {
+    "2022": {
+      "startingBalance": 0,
+      "endingBalance": 5799,
+      "date": "2022-01-01T00:00:00+01:00",
+      "income": {
+        "Income:Salary:Acme GmbH": -9600
+      },
+      "interest": {},
+      "equity": {},
+      "pnl": {
+        "Assets:Equity:VWCE": 14
+      },
+      "liabilities": {},
+      "tax": {},
+      "expenses": {
+        "Expenses:Food": 260,
+        "Expenses:Leisure": 140,
+        "Expenses:Rent": 2900,
+        "Expenses:Transport": 95,
+        "Expenses:Utilities": 420
+      }
+    }
+  }
 }

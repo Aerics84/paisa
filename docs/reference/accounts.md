@@ -36,7 +36,7 @@ from `#!ledger Assets` to either `#!ledger Expenses`, `#!ledger
 Liabilities` or other `#!ledger Assets`, from `#!ledger Liabilities`
 to `#!ledger Expenses`.
 
-``` mermaid
+```mermaid
 graph LR
   I[Income] --> A[Assets];
   A --> E[Expenses];
@@ -50,7 +50,6 @@ level. The UI works best when you create less than or equal to 12
 second level accounts under each type. For example, you can have 12
 accounts under `#!ledger Expenses`. But if you want more, try to add them under
 3<sup>rd</sup> level, example `#!ledger Expenses:Food:Subway`.
-
 
 ## Assets
 
@@ -72,7 +71,6 @@ Assets:Checking:HDFC` and `#!ledger Assets:Checking:AXIS`.
 The distinction is necessary because Checking account is an asset, but
 not an investment. So you ideally you want to disregard them when you
 calculate your absolute returns etc.
-
 
 ## Income
 
@@ -98,8 +96,7 @@ Income:Interest` will be treated as interest. This convention allows
 paisa to calculate the returns of any debt instrument without
 explicitly specifying anything else.
 
-* `#!ledger Income:Interest:{name}` - interest debit account
-
+- `#!ledger Income:Interest:{name}` - interest debit account
 
 ### Capital Gains
 
@@ -151,7 +148,6 @@ balance, you can use Equity account to balance the transaction.
     Equity:OpeningBalance
 ```
 
-
 ## Icons
 
 Each account is associated with an icon and is shown along with the
@@ -161,16 +157,15 @@ go to the configuration page, add a new Account and specify the name
 of your account and then select icon of your choice. Paisa ships with
 four icon sets.
 
-* [Arcticons](https://arcticons.onnno.nl/)
-* [Font Awesome Regular, Solid and Brands](https://fontawesome.com/search?o=r&m=free&s=solid)
-* [Material Design Icons](https://materialdesignicons.com/)
-* [Fluent Emoji High Contrast](https://icon-sets.iconify.design/fluent-emoji-high-contrast/)
-
+- [Arcticons](https://arcticons.onnno.nl/)
+- [Font Awesome Regular, Solid and Brands](https://fontawesome.com/search?o=r&m=free&s=solid)
+- [Material Design Icons](https://materialdesignicons.com/)
+- [Fluent Emoji High Contrast](https://icon-sets.iconify.design/fluent-emoji-high-contrast/)
 
 !!! example "Experimental"
-    There is a wide range of free icons available, but adding each
-    icon set to Paisa would increase the app binary size. So a balance
-    has to be struck between the number of icons and the app
-    size. Feel free to start a discussion if you feel strongly about
-    any icon set. The current icon sets are not final, they may be
-    replaced if a better alternative is found.
+There is a wide range of free icons available, but adding each
+icon set to Paisa would increase the app binary size. So a balance
+has to be struck between the number of icons and the app
+size. Feel free to start a discussion if you feel strongly about
+any icon set. The current icon sets are not final, they may be
+replaced if a better alternative is found.

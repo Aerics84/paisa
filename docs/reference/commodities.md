@@ -56,8 +56,8 @@ commodities:
   - name: NIFTY # (1)!
     type: mutualfund # (2)!
     price:
-        provider: in-mfapi # (3)!
-        code: 120716 # (4)!
+      provider: in-mfapi # (3)!
+      code: 120716 # (4)!
 ```
 
 1. commodity name
@@ -78,8 +78,8 @@ commodities:
   - name: APPLE # (1)!
     type: stock # (2)!
     price:
-        provider: com-yahoo # (3)!
-        code: AAPL # (4)!
+      provider: com-yahoo # (3)!
+      code: AAPL # (4)!
 ```
 
 1. commodity name
@@ -103,8 +103,8 @@ commodities:
   - name: RELIANCE # (1)!
     type: stock # (2)!
     price:
-        provider: co-alphavantage # (3)!
-        code: 7GAURDT55LU7OQKK:RELIANCE.BSE:INR # (4)!
+      provider: co-alphavantage # (3)!
+      code: 7GAURDT55LU7OQKK:RELIANCE.BSE:INR # (4)!
 ```
 
 1. commodity name
@@ -128,8 +128,8 @@ commodities:
   - name: NPS_HDFC_E # (1)!
     type: nps # (2)!
     price:
-        provider: com-purifiedbytes-nps # (3)!
-        code: SM008002 # (4)!
+      provider: com-purifiedbytes-nps # (3)!
+      code: SM008002 # (4)!
 ```
 
 1. commodity name
@@ -156,8 +156,8 @@ commodities:
   - name: GOLD # (1)!
     type: metal # (2)!
     price:
-        provider: com-purifiedbytes-metal # (3)!
-        code: gold-999 # (4)!
+      provider: com-purifiedbytes-metal # (3)!
+      code: gold-999 # (4)!
 ```
 
 1. commodity name
@@ -165,11 +165,10 @@ commodities:
 1. price provider name
 1. metal name along with purity
 
-
 The following metals and purity combinations are supported.
 
 | Metal  | Purity | Code       |
-|--------|--------|------------|
+| ------ | ------ | ---------- |
 | Gold   | 999    | gold-999   |
 | Gold   | 995    | gold-995   |
 | Gold   | 916    | gold-916   |
@@ -191,21 +190,20 @@ commodities:
   - name: GOLD
     type: metal
     price:
-        provider: com-yahoo-eu-metal
-        code: gold-999
+      provider: com-yahoo-eu-metal
+      code: gold-999
 ```
 
 The following metal codes are currently supported.
 
 | Metal  | Purity | Code       |
-|--------|--------|------------|
+| ------ | ------ | ---------- |
 | Gold   | 999    | gold-999   |
 | Silver | 999    | silver-999 |
 
 All metal providers in Paisa are expected to persist normalized unit
 prices as `currency per gram`. Downstream valuation uses the stored unit
 price directly and computes market value as `quantity * unitPrice`.
-
 
 ## RealEstate
 
@@ -230,7 +228,7 @@ If you need to deal with multiple currencies, just treat them as you
 would treat any commodity. Since paisa is a reporting tool, it will
 always try to convert other currencies to the
 [default_currency](./config.md). As long as the exchange rate from a currency to
-default\_currency is available, paisa would work without issue
+default_currency is available, paisa would work without issue
 
 ```ledger
 P 2023/05/01 00:00:00 USD 81.75 INR

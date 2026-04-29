@@ -78,7 +78,6 @@ Ledger [docs](https://ledger-cli.org/doc/ledger3.html#Complex-expressions)
     file. Ledger will apply the rules only to transactions that
     follow the automated transactions.
 
-
 ## Period
 
 Paisa will try to infer the recurring period of the transactions
@@ -108,7 +107,7 @@ The syntax of the period is similar to [cron](https://en.wikipedia.org/wiki/Cron
 seconds and hours.
 
 | Field        | Allowed values      | Special characters |
-|--------------|---------------------|--------------------|
+| ------------ | ------------------- | ------------------ |
 | Day of month | `1–31`              | `* , - ? L W`      |
 | Month        | `1-12` or `JAN-DEC` | `* , -`            |
 | Day of week  | `0-6` or `SUN-SAT`  | `* , - ? L`        |
@@ -124,16 +123,13 @@ Multiple cron expressions can be specified by joining them using
 sure, just type it out and the editor will show you whether it is
 valid and the next 3 schedules if valid.
 
-
 ### Examples
 
-* Last day of every month `#!ledger ; Period: L * ?`
-* 5<sup>th</sup> every month `#!ledger ; Period: 5 * ?`
-* Every Sunday `#!ledger ; Period: ? * 0`
-* 1<sup>st</sup> of Jan and 7<sup>th</sup> of Feb `#!ledger ; Period: 1 JAN ? | 7 FEB ?`
-* Closest business day to the 15<sup>th</sup> day of every month. `#!ledger ; Period: 15W * ?`
-
-
+- Last day of every month `#!ledger ; Period: L * ?`
+- 5<sup>th</sup> every month `#!ledger ; Period: 5 * ?`
+- Every Sunday `#!ledger ; Period: ? * 0`
+- 1<sup>st</sup> of Jan and 7<sup>th</sup> of Feb `#!ledger ; Period: 1 JAN ? | 7 FEB ?`
+- Closest business day to the 15<sup>th</sup> day of every month. `#!ledger ; Period: 15W * ?`
 
 !!! warning
 

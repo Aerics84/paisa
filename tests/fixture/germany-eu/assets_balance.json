@@ -1,81 +1,81 @@
 {
-    "asset_breakdowns":  {
-                             "Assets":  {
-                                            "group":  "Assets",
-                                            "investmentAmount":  2279.5,
-                                            "withdrawalAmount":  0,
-                                            "marketAmount":  5799,
-                                            "balanceUnits":  0,
-                                            "latestPrice":  0,
-                                            "xirr":  4.01,
-                                            "gainAmount":  3519.5,
-                                            "absoluteReturn":  1.5439789427506032
-                                        },
-                             "Assets:Checking":  {
-                                                     "group":  "Assets:Checking",
-                                                     "investmentAmount":  0,
-                                                     "withdrawalAmount":  0,
-                                                     "marketAmount":  3505.5,
-                                                     "balanceUnits":  0,
-                                                     "latestPrice":  0,
-                                                     "xirr":  0,
-                                                     "gainAmount":  3505.5,
-                                                     "absoluteReturn":  0
-                                                 },
-                             "Assets:Checking:ING":  {
-                                                         "group":  "Assets:Checking:ING",
-                                                         "investmentAmount":  0,
-                                                         "withdrawalAmount":  0,
-                                                         "marketAmount":  3505.5,
-                                                         "balanceUnits":  0,
-                                                         "latestPrice":  0,
-                                                         "xirr":  0,
-                                                         "gainAmount":  3505.5,
-                                                         "absoluteReturn":  0
-                                                     },
-                             "Assets:Equity":  {
-                                                   "group":  "Assets:Equity",
-                                                   "investmentAmount":  1079.5,
-                                                   "withdrawalAmount":  0,
-                                                   "marketAmount":  1093.5,
-                                                   "balanceUnits":  0,
-                                                   "latestPrice":  0,
-                                                   "xirr":  42.29,
-                                                   "gainAmount":  14,
-                                                   "absoluteReturn":  0.0129689671144048
-                                               },
-                             "Assets:Equity:VWCE":  {
-                                                        "group":  "Assets:Equity:VWCE",
-                                                        "investmentAmount":  1079.5,
-                                                        "withdrawalAmount":  0,
-                                                        "marketAmount":  1093.5,
-                                                        "balanceUnits":  9,
-                                                        "latestPrice":  0,
-                                                        "xirr":  42.29,
-                                                        "gainAmount":  14,
-                                                        "absoluteReturn":  0.0129689671144048
-                                                    },
-                             "Assets:Savings":  {
-                                                    "group":  "Assets:Savings",
-                                                    "investmentAmount":  1200,
-                                                    "withdrawalAmount":  0,
-                                                    "marketAmount":  1200,
-                                                    "balanceUnits":  0,
-                                                    "latestPrice":  0,
-                                                    "xirr":  0,
-                                                    "gainAmount":  0,
-                                                    "absoluteReturn":  0
-                                                },
-                             "Assets:Savings:Tagesgeld":  {
-                                                              "group":  "Assets:Savings:Tagesgeld",
-                                                              "investmentAmount":  1200,
-                                                              "withdrawalAmount":  0,
-                                                              "marketAmount":  1200,
-                                                              "balanceUnits":  0,
-                                                              "latestPrice":  0,
-                                                              "xirr":  0,
-                                                              "gainAmount":  0,
-                                                              "absoluteReturn":  0
-                                                          }
-                         }
+  "asset_breakdowns": {
+    "Assets": {
+      "group": "Assets",
+      "investmentAmount": 2279.5,
+      "withdrawalAmount": 0,
+      "marketAmount": 5799,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 4.01,
+      "gainAmount": 3519.5,
+      "absoluteReturn": 1.5439789427506032
+    },
+    "Assets:Checking": {
+      "group": "Assets:Checking",
+      "investmentAmount": 0,
+      "withdrawalAmount": 0,
+      "marketAmount": 3505.5,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 0,
+      "gainAmount": 3505.5,
+      "absoluteReturn": 0
+    },
+    "Assets:Checking:ING": {
+      "group": "Assets:Checking:ING",
+      "investmentAmount": 0,
+      "withdrawalAmount": 0,
+      "marketAmount": 3505.5,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 0,
+      "gainAmount": 3505.5,
+      "absoluteReturn": 0
+    },
+    "Assets:Equity": {
+      "group": "Assets:Equity",
+      "investmentAmount": 1079.5,
+      "withdrawalAmount": 0,
+      "marketAmount": 1093.5,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 42.29,
+      "gainAmount": 14,
+      "absoluteReturn": 0.0129689671144048
+    },
+    "Assets:Equity:VWCE": {
+      "group": "Assets:Equity:VWCE",
+      "investmentAmount": 1079.5,
+      "withdrawalAmount": 0,
+      "marketAmount": 1093.5,
+      "balanceUnits": 9,
+      "latestPrice": 0,
+      "xirr": 42.29,
+      "gainAmount": 14,
+      "absoluteReturn": 0.0129689671144048
+    },
+    "Assets:Savings": {
+      "group": "Assets:Savings",
+      "investmentAmount": 1200,
+      "withdrawalAmount": 0,
+      "marketAmount": 1200,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 0,
+      "gainAmount": 0,
+      "absoluteReturn": 0
+    },
+    "Assets:Savings:Tagesgeld": {
+      "group": "Assets:Savings:Tagesgeld",
+      "investmentAmount": 1200,
+      "withdrawalAmount": 0,
+      "marketAmount": 1200,
+      "balanceUnits": 0,
+      "latestPrice": 0,
+      "xirr": 0,
+      "gainAmount": 0,
+      "absoluteReturn": 0
+    }
+  }
 }

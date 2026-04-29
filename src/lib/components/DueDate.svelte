@@ -10,7 +10,7 @@
 
 <span title="due on {dueDate.format('DD MMM YYYY')}">
   <span class="icon is-small {icon.color}">
-    <i class="fas {icon.icon}" />
+    <i class="fas {icon.icon}"></i>
   </span>
   {#if paidDate}
     <span>paid on {paidDate.format("DD MMM YYYY")}</span>

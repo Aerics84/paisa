@@ -13,14 +13,7 @@
     "Equity:OpeningBalances",
     "Income:Interest:Checking"
   ],
-  "commodities": [
-    "INR",
-    "NIFTY",
-    "ABNB",
-    "USD",
-    "AAPL",
-    "BTC"
-  ],
+  "commodities": ["INR", "NIFTY", "ABNB", "USD", "AAPL", "BTC"],
   "files": [
     {
       "name": "main.beancount",

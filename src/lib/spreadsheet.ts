@@ -3,7 +3,6 @@ import * as XLSX from "xlsx";
 import _ from "lodash";
 import { format } from "./journal";
 import { pdf2array } from "./pdf";
-import * as XlsxPopulate from "xlsx-populate";
 
 interface Result {
   data: string[][];
@@ -411,6 +410,7 @@ async function parseXLSX(file: File): Promise<Result> {
       }
 
       try {
+        const XlsxPopulate = await import("xlsx-populate/browser/xlsx-populate.js");
         const workbook = await XlsxPopulate.fromDataAsync(buffer, { password });
         const sheet = workbook.sheet(0);
         if (sheet) {

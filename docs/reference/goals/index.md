@@ -13,10 +13,8 @@ Paisa currently supports two types of goals:
 1. [Retirement](./retirement.md)
 2. [Savings](./savings.md)
 
-
 More goal types will be added in the future. Feel free to create a
 [discussion](https://github.com/ananthakumaran/paisa/discussions) if you have any suggestions.
-
 
 ### Create Goal
 
@@ -25,7 +23,6 @@ section. You would see a list of goal types. Expand the type you want
 to add and click on the :fontawesome-solid-circle-plus: icon to add a
 new goal. The configuration details are available in the respective
 goal type pages.
-
 
 !!! example "Under Development"
 

@@ -15,6 +15,6 @@ you own along with their amount and percentage. It also categorizes
 the securities by their industry and rating.
 
 !!! example "Experimental"
-    The data that powers this page comes from various sources and might
-    not be 100% accurate. Before you make any decision based on this
-    information, double check via different source.
+The data that powers this page comes from various sources and might
+not be 100% accurate. Before you make any decision based on this
+information, double check via different source.

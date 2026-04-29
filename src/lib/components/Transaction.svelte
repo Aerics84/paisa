@@ -59,8 +59,6 @@
 </div>
 
 <style lang="scss">
-  @import "bulma/sass/utilities/_all.sass";
-
   .description {
     display: inline-block;
     white-space: nowrap;

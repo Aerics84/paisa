@@ -31,51 +31,74 @@
 
 <div class="dropdown ml-2 is-hoverable {isMobile() ? 'is-left' : 'is-right'}">
   <div class="dropdown-trigger dropdown-icon">
-    <button class="button is-large" aria-haspopup="true">
+    <button class="button is-large" aria-haspopup="true" aria-label="Open actions" type="button">
       <span class="icon">
-        <i class="fas fa-ellipsis-vertical" />
+        <i class="fas fa-ellipsis-vertical"></i>
       </span>
     </button>
   </div>
   <div class="dropdown-menu" id="dropdown-menu4" role="menu">
     <div class="dropdown-content">
-      <a on:click={(_e) => syncWithLoader({ journal: true })} class="dropdown-item icon-text">
+      <button
+        on:click={(_e) => syncWithLoader({ journal: true })}
+        class="dropdown-item icon-text button-reset w-full has-text-left"
+        type="button"
+      >
         <span class="icon is-small">
-          <i class="fa-regular fa-file-lines" />
+          <i class="fa-regular fa-file-lines"></i>
         </span>
         <span>Sync Journal</span>
-      </a>
-      <a on:click={(_e) => syncWithLoader({ prices: true })} class="dropdown-item icon-text">
-        <span class="icon is-small">
-          <i class="fas fa-dollar-sign" />
-        </span>
-        <span>Update Prices</span></a
+      </button>
+      <button
+        on:click={(_e) => syncWithLoader({ prices: true })}
+        class="dropdown-item icon-text button-reset w-full has-text-left"
+        type="button"
       >
-      <a on:click={(_e) => syncWithLoader({ portfolios: true })} class="dropdown-item icon-text">
         <span class="icon is-small">
-          <i class="fas fa-layer-group" />
+          <i class="fas fa-dollar-sign"></i>
         </span>
-        <span>Update Mutual Fund Portfolios</span></a
+        <span>Update Prices</span>
+      </button>
+      <button
+        on:click={(_e) => syncWithLoader({ portfolios: true })}
+        class="dropdown-item icon-text button-reset w-full has-text-left"
+        type="button"
       >
+        <span class="icon is-small">
+          <i class="fas fa-layer-group"></i>
+        </span>
+        <span>Update Mutual Fund Portfolios</span>
+      </button>
       <hr class="dropdown-divider" />
-      <a class="dropdown-item icon-text">
+      <div class="dropdown-item icon-text">
         <label for={obscureId} class="cursor-pointer w-full inline-block">
           <input bind:checked={$obscure} id={obscureId} type="checkbox" class="is-hidden" />
           <span class="ml-0 icon is-small">
-            <i class="fas {$obscure ? 'fa-eye-slash' : 'fa-eye'}" />
+            <i class="fas {$obscure ? 'fa-eye-slash' : 'fa-eye'}"></i>
           </span>
           <span>{$obscure ? "Show" : "Hide"} numbers</span>
         </label>
-      </a>
+      </div>
       {#if showLogout}
         <hr class="dropdown-divider" />
-        <a on:click={(_e) => doLogout()} class="dropdown-item icon-text">
+        <button
+          on:click={(_e) => doLogout()}
+          class="dropdown-item icon-text button-reset w-full has-text-left"
+          type="button"
+        >
           <span class="icon is-small">
-            <i class="fas fa-arrow-right-from-bracket" />
+            <i class="fas fa-arrow-right-from-bracket"></i>
           </span>
           <span>Logout</span>
-        </a>
+        </button>
       {/if}
     </div>
   </div>
 </div>
+
+<style lang="scss">
+  .button-reset {
+    background: none;
+    border: none;
+  }
+</style>

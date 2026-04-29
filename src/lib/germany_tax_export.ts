@@ -3,7 +3,11 @@ import type { GermanyTaxYear } from "./utils";
 
 export function downloadGermanyTaxYear(taxYear: GermanyTaxYear) {
   const rows: Array<Record<string, string | number>> = [
-    { Section: "Summary", Label: "Gross Realized Gain", Value: taxYear.summary.gross_realized_gain },
+    {
+      Section: "Summary",
+      Label: "Gross Realized Gain",
+      Value: taxYear.summary.gross_realized_gain
+    },
     { Section: "Summary", Label: "Realized Loss", Value: taxYear.summary.realized_loss },
     { Section: "Summary", Label: "Net Realized Gain", Value: taxYear.summary.realized_gain },
     {
@@ -26,7 +30,11 @@ export function downloadGermanyTaxYear(taxYear: GermanyTaxYear) {
     },
     { Section: "Summary", Label: "Church Tax", Value: taxYear.summary.church_tax },
     { Section: "Summary", Label: "Gross Total Tax", Value: taxYear.summary.total_tax },
-    { Section: "Summary", Label: "Withholding Tax Paid", Value: taxYear.summary.withholding_tax_paid },
+    {
+      Section: "Summary",
+      Label: "Withholding Tax Paid",
+      Value: taxYear.summary.withholding_tax_paid
+    },
     { Section: "Summary", Label: "Tax Credit Used", Value: taxYear.summary.tax_credit_used },
     { Section: "Summary", Label: "Net Tax Due", Value: taxYear.summary.net_tax_due }
   ];

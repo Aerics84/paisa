@@ -18,14 +18,13 @@
       <p class="title has-text-grey-dark">{value}</p>
     {/if}
     {#if !_.isEmpty(subtitle)}
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
       <div class="sub-title">{@html subtitle}</div>
     {/if}
   </div>
 </div>
 
 <style lang="scss">
-  @import "bulma/sass/utilities/_all.sass";
-
   .level-item.small {
     .title {
       font-size: 1.25rem !important;
@@ -50,7 +49,7 @@
     margin-bottom: 0 !important;
   }
 
-  @include widescreen {
+  @media screen and (min-width: 1216px) {
     .title {
       font-size: 2.25rem !important;
       line-height: 2.5rem !important;

@@ -1,39 +1,34 @@
 {
-    "accounts":  [
-                     "Income:Salary:Acme GmbH",
-                     "Assets:Checking:ING",
-                     "Assets:Savings:Tagesgeld",
-                     "Expenses:Rent",
-                     "Expenses:Utilities",
-                     "Assets:Equity:VWCE",
-                     "Expenses:Food",
-                     "Liabilities:CreditCard:Visa",
-                     "Expenses:Transport",
-                     "Expenses:Leisure"
-                 ],
-    "commodities":  [
-                        "EUR",
-                        "VWCE"
-                    ],
-    "files":  [
-                  {
-                      "name":  "main.ledger",
-                      "content":  "commodity EUR\n    format 1.000,00 EUR\n\nP 2022/01/10 00:00:00 VWCE 118,00 EUR\nP 2022/02/07 00:00:00 VWCE 121,50 EUR\n\n2022/01/03 Salary\n    Income:Salary:Acme GmbH                -4.800,00 EUR\n    Assets:Checking:ING                     4.800,00 EUR\n\n2022/01/04 Transfer to Tagesgeld\n    Assets:Savings:Tagesgeld                  600,00 EUR\n    Assets:Checking:ING                      -600,00 EUR\n\n2022/01/05 Rent\n    Expenses:Rent                           1.450,00 EUR\n    Assets:Checking:ING                    -1.450,00 EUR\n\n2022/01/06 Utilities\n    Expenses:Utilities                        210,00 EUR\n    Assets:Checking:ING                      -210,00 EUR\n\n2022/01/10 ETF Purchase\n    Assets:Equity:VWCE                        4 VWCE @ 118,00 EUR\n    Assets:Checking:ING                      -472,00 EUR\n\n2022/01/12 Groceries\n    Expenses:Food                             260,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/16 Deutschlandticket\n    Expenses:Transport                         95,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/20 Weekend Trip\n    Expenses:Leisure                          140,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/27 Pay Credit Card Bill\n    Liabilities:CreditCard:Visa               495,00 EUR\n    Assets:Checking:ING                      -495,00 EUR\n\n2022/02/03 Salary\n    Income:Salary:Acme GmbH                -4.800,00 EUR\n    Assets:Checking:ING                     4.800,00 EUR\n\n2022/02/04 Transfer to Tagesgeld\n    Assets:Savings:Tagesgeld                  600,00 EUR\n    Assets:Checking:ING                      -600,00 EUR\n\n2022/02/05 Rent\n    Expenses:Rent                           1.450,00 EUR\n    Assets:Checking:ING                    -1.450,00 EUR\n\n2022/02/06 Utilities\n    Expenses:Utilities                        210,00 EUR\n    Assets:Checking:ING                      -210,00 EUR\n\n2022/02/07 ETF Purchase\n    Assets:Equity:VWCE                        5 VWCE @ 121,50 EUR\n    Assets:Checking:ING                      -607,50 EUR\n",
-                      "versions":  [
-
-                                   ],
-                      "operation":  ""
-                  }
-              ],
-    "payees":  [
-                   "Salary",
-                   "Transfer to Tagesgeld",
-                   "Rent",
-                   "Utilities",
-                   "ETF Purchase",
-                   "Groceries",
-                   "Deutschlandticket",
-                   "Weekend Trip",
-                   "Pay Credit Card Bill"
-               ]
+  "accounts": [
+    "Income:Salary:Acme GmbH",
+    "Assets:Checking:ING",
+    "Assets:Savings:Tagesgeld",
+    "Expenses:Rent",
+    "Expenses:Utilities",
+    "Assets:Equity:VWCE",
+    "Expenses:Food",
+    "Liabilities:CreditCard:Visa",
+    "Expenses:Transport",
+    "Expenses:Leisure"
+  ],
+  "commodities": ["EUR", "VWCE"],
+  "files": [
+    {
+      "name": "main.ledger",
+      "content": "commodity EUR\n    format 1.000,00 EUR\n\nP 2022/01/10 00:00:00 VWCE 118,00 EUR\nP 2022/02/07 00:00:00 VWCE 121,50 EUR\n\n2022/01/03 Salary\n    Income:Salary:Acme GmbH                -4.800,00 EUR\n    Assets:Checking:ING                     4.800,00 EUR\n\n2022/01/04 Transfer to Tagesgeld\n    Assets:Savings:Tagesgeld                  600,00 EUR\n    Assets:Checking:ING                      -600,00 EUR\n\n2022/01/05 Rent\n    Expenses:Rent                           1.450,00 EUR\n    Assets:Checking:ING                    -1.450,00 EUR\n\n2022/01/06 Utilities\n    Expenses:Utilities                        210,00 EUR\n    Assets:Checking:ING                      -210,00 EUR\n\n2022/01/10 ETF Purchase\n    Assets:Equity:VWCE                        4 VWCE @ 118,00 EUR\n    Assets:Checking:ING                      -472,00 EUR\n\n2022/01/12 Groceries\n    Expenses:Food                             260,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/16 Deutschlandticket\n    Expenses:Transport                         95,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/20 Weekend Trip\n    Expenses:Leisure                          140,00 EUR\n    Liabilities:CreditCard:Visa\n\n2022/01/27 Pay Credit Card Bill\n    Liabilities:CreditCard:Visa               495,00 EUR\n    Assets:Checking:ING                      -495,00 EUR\n\n2022/02/03 Salary\n    Income:Salary:Acme GmbH                -4.800,00 EUR\n    Assets:Checking:ING                     4.800,00 EUR\n\n2022/02/04 Transfer to Tagesgeld\n    Assets:Savings:Tagesgeld                  600,00 EUR\n    Assets:Checking:ING                      -600,00 EUR\n\n2022/02/05 Rent\n    Expenses:Rent                           1.450,00 EUR\n    Assets:Checking:ING                    -1.450,00 EUR\n\n2022/02/06 Utilities\n    Expenses:Utilities                        210,00 EUR\n    Assets:Checking:ING                      -210,00 EUR\n\n2022/02/07 ETF Purchase\n    Assets:Equity:VWCE                        5 VWCE @ 121,50 EUR\n    Assets:Checking:ING                      -607,50 EUR\n",
+      "versions": [],
+      "operation": ""
+    }
+  ],
+  "payees": [
+    "Salary",
+    "Transfer to Tagesgeld",
+    "Rent",
+    "Utilities",
+    "ETF Purchase",
+    "Groceries",
+    "Deutschlandticket",
+    "Weekend Trip",
+    "Pay Credit Card Bill"
+  ]
 }

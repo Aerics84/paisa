@@ -2,10 +2,10 @@
 date: 2024-01-26
 comments: true
 categories:
-    - sovereign-gold-bond
-    - gold
-    - sgb
-    - price
+  - sovereign-gold-bond
+  - gold
+  - sgb
+  - price
 hide:
   - feedback
 description: "How to track Sovereign Gold Bond price and calculate returns."
@@ -217,8 +217,8 @@ total returns, XIRR and the change of the bond value over time.
 
 ![Final Balance](../../images/sgb/balance-2.png)
 
-
-[^1]: The daily price history of IBJA gold price is available only
+[^1]:
+    The daily price history of IBJA gold price is available only
     from 2022. If you have access to the price history, you can ping
     me. Alternatively, you can manually add the [price history](../../reference/commodities.md#realestate) to the
     ledger file.

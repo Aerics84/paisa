@@ -13,7 +13,6 @@ wildcards `*` as well. Transactions are sourced **only** from the main
 journal file and other journal files included from the main journal
 file.
 
-
 ```ledger
 include investments.ledger
 include expenses/*.ledger
@@ -24,7 +23,6 @@ include expenses/*.ledger
 Paisa comes with a journal editor. It allows you to edit all the files
 with the same file extension as your main journal and in the same or
 sub directories as your main journal.
-
 
 ## Backup
 

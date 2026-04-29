@@ -35,14 +35,14 @@ and build a self contained app.
 > term. But rest assured, any decision that would be made related to
 > this will not override the first two points.
 
-
-[^1]: Paisa fetches commodity price information from third party
+[^1]:
+    Paisa fetches commodity price information from third party
     servers. Since Paisa will send the commodity identifier to the
     server, the third party server might be able to connect the
     commodity list with the user's IP address. This is an opt-in
     feature, as you have to explicitly configure Paisa to fetch
     price. VPN could be used if you want to avoid this.
 
-[^2]: This doesn't include the website paisa.fyi, which is hosted on
+[^2]:
+    This doesn't include the website paisa.fyi, which is hosted on
     third party servers and has consent based analytics.
-

@@ -1,25 +1,25 @@
 {
-    "repayments":  [
-                       {
-                           "id":  17,
-                           "transaction_id":  "52e0c3f4-e4ad-5591-8af6-632c4f4aa98e",
-                           "date":  "2022-01-27T00:00:00+01:00",
-                           "payee":  "Pay Credit Card Bill",
-                           "account":  "Liabilities:CreditCard:Visa",
-                           "commodity":  "EUR",
-                           "quantity":  495,
-                           "amount":  495,
-                           "status":  "unmarked",
-                           "tag_recurring":  "",
-                           "tag_period":  "",
-                           "transaction_begin_line":  39,
-                           "transaction_end_line":  41,
-                           "file_name":  "main.ledger",
-                           "forecast":  false,
-                           "note":  "",
-                           "transaction_note":  "",
-                           "market_amount":  495,
-                           "balance":  0
-                       }
-                   ]
+  "repayments": [
+    {
+      "id": 17,
+      "transaction_id": "52e0c3f4-e4ad-5591-8af6-632c4f4aa98e",
+      "date": "2022-01-27T00:00:00+01:00",
+      "payee": "Pay Credit Card Bill",
+      "account": "Liabilities:CreditCard:Visa",
+      "commodity": "EUR",
+      "quantity": 495,
+      "amount": 495,
+      "status": "unmarked",
+      "tag_recurring": "",
+      "tag_period": "",
+      "transaction_begin_line": 39,
+      "transaction_end_line": 41,
+      "file_name": "main.ledger",
+      "forecast": false,
+      "note": "",
+      "transaction_note": "",
+      "market_amount": 495,
+      "balance": 0
+    }
+  ]
 }

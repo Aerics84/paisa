@@ -100,7 +100,6 @@
   let liabilityBreakdowns: LiabilityBreakdown[] = [];
   let networthOverview: Networth;
   let networthTimeline: Networth[] = [];
-  let xirr = 0;
   let isEmpty = false;
   let loadError = false;
 
@@ -134,7 +133,6 @@
       );
       checkingBalances = dashboard.checkingBalances.asset_breakdowns;
       networthOverview = dashboard.networth.networth;
-      xirr = networthResponse.xirr || dashboard.networth.xirr;
       networthTimeline = networthResponse.networthTimeline;
       liabilityBreakdowns = liabilitiesResponse.liability_breakdowns;
       isEmpty =
@@ -299,13 +297,6 @@
       cashFlowLatest.tax -
       cashFlowLatest.investment
     : 0;
-  $: oneYearDelta = percentDelta(
-    currentNetworthValue,
-    networthTimeline.length > 12
-      ? networthValue(networthTimeline[networthTimeline.length - 13])
-      : previousNetworthValue
-  );
-
   $: checkingSeries = _.takeRight(
     cashFlows.map((point) => point.balance || point.checking),
     8
@@ -608,7 +599,9 @@
           <a href="/more/config" class="button is-light">Open Configuration</a>
           <a href="/ledger/editor" class="button is-light">Open Ledger Editor</a>
           {#if !loadError}
-            <a on:click={(_event) => initDemo()} class="button is-link">Load Demo</a>
+            <button on:click={(_event) => initDemo()} class="button is-link" type="button">
+              Load Demo
+            </button>
           {/if}
         </div>
       </div>
@@ -818,7 +811,7 @@
                   <div class="paisa-spending__item">
                     <div class="paisa-spending__item-label">
                       <span class="icon" style={`color: ${category.color};`}>
-                        <i class={"fas " + category.icon} />
+                        <i class={"fas " + category.icon}></i>
                       </span>
                       <span>{category.category}</span>
                     </div>
@@ -848,7 +841,7 @@
             <DashboardSectionHeader title="B. Insights">
               <svelte:fragment slot="right">
                 <a href="/expense/monthly" class="secondary-link paisa-link-with-arrow"
-                  >View all insights <i class="fas fa-arrow-right" /></a
+                  >View all insights <i class="fas fa-arrow-right"></i></a
                 >
               </svelte:fragment>
             </DashboardSectionHeader>
@@ -865,7 +858,7 @@
                             : insight.tone === "warning"
                               ? "fa-triangle-exclamation"
                               : "fa-arrow-trend-down")}
-                      />
+                      ></i>
                     </span>
                   </div>
                   <div class="paisa-insight__copy">
@@ -889,7 +882,7 @@
                   <div class="paisa-driver__row">
                     <span class="paisa-driver__label">
                       <span class="icon">
-                        <i class={"fas " + driver.icon} />
+                        <i class={"fas " + driver.icon}></i>
                       </span>
                       <span>{driver.label}</span>
                     </span>
@@ -905,7 +898,7 @@
                     <div
                       class={"paisa-driver__fill " + driver.tone}
                       style={`width: ${driver.widthPercent}%`}
-                    />
+                    ></div>
                   </div>
                 </div>
               {/each}
@@ -934,7 +927,7 @@
               <div
                 class="paisa-progress__fill"
                 style={`width: ${Math.min((reserveMonths / 9) * 100, 100)}%`}
-              />
+              ></div>
             </div>
             <div class="paisa-progress__ticks">
               <span>0</span>
@@ -954,7 +947,7 @@
                 <div class="paisa-mini-list__row">
                   <span class="paisa-mini-list__label">
                     <span class="icon" style={`color: ${budget.color};`}>
-                      <i class={"fas " + budget.icon} />
+                      <i class={"fas " + budget.icon}></i>
                     </span>
                     <span>{budget.label}</span>
                   </span>
@@ -963,7 +956,7 @@
                       <div
                         class={"paisa-mini-list__fill " + budget.tone}
                         style={`width: ${Math.min(budget.percent, 100)}%`}
-                      />
+                      ></div>
                     </div>
                     <strong>{budget.percent}%</strong>
                     {#if budget.warning}
@@ -988,7 +981,7 @@
                 <div class="paisa-mini-list__row paisa-mini-list__row--recurring">
                   <span class="is-flex is-align-items-center" style="gap: 0.55rem;">
                     <span class={"icon paisa-recurring-icon " + recurring.icon.color}>
-                      <i class={"fas " + recurring.icon.icon} />
+                      <i class={"fas " + recurring.icon.icon}></i>
                     </span>
                     <span>{recurring.label}</span>
                   </span>
@@ -1027,7 +1020,7 @@
                         goal.name,
                         index
                       )};`}
-                    />
+                    ></div>
                   </div>
                 </div>
               {/each}
@@ -1039,7 +1032,7 @@
       <div class="paisa-dashboard__section paisa-dashboard__footer">
         <span>Last updated: Today, {now().format("HH:mm")}</span>
         <span class="is-flex is-align-items-center" style="gap: 0.45rem;">
-          <span class="status-dot" /> All accounts connected
+          <span class="status-dot"></span> All accounts connected
         </span>
       </div>
     </div>

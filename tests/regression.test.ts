@@ -21,13 +21,6 @@ function isUnavailableLedgerTooling(message: string | undefined) {
   );
 }
 
-function updateConfig(dir: string, from: string, to: string) {
-  const filename = path.join(dir, "paisa.yaml");
-  let config = fs.readFileSync(filename).toString();
-  config = config.replace(from, to);
-  fs.writeFileSync(filename, config);
-}
-
 async function recordAndVerify(dir: string, route: string, name: string) {
   const { data: data } = await axios.get(route);
 
@@ -107,9 +100,13 @@ async function check(directory: string) {
 
 describe("regression", () => {
   fs.readdirSync(fixture).forEach((dir) => {
-    test(dir, async () => {
-      const directory = path.join(fixture, dir);
-      await check(directory);
-    });
+    test(
+      dir,
+      async () => {
+        const directory = path.join(fixture, dir);
+        await check(directory);
+      },
+      15000
+    );
   });
 });

@@ -11,10 +11,9 @@ which are listed below.
 ## Keyboard shortcuts
 
 | Linux            | Mac              | Windows          | Description       |
-|------------------|------------------|------------------|-------------------|
+| ---------------- | ---------------- | ---------------- | ----------------- |
 | ++ctrl+s++       | ++ctrl+s++       | ++ctrl+s++       | Save file         |
 | ++ctrl+shift+i++ | ++ctrl+shift+i++ | ++ctrl+shift+i++ | Prettify          |
 | ++ctrl+f++       | ++cmd+f++        | ++ctrl+f++       | Open search panel |
 | ++ctrl+z++       | ++cmd+z++        | ++ctrl+z++       | Undo              |
 | ++ctrl+y++       | ++cmd+y++        | ++ctrl+y++       | Redo              |
-

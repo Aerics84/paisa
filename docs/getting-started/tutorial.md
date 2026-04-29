@@ -24,7 +24,6 @@ comes with an embedded **ledger** and you are not required to use
     regional profile, currency, locale and financial year starting month etc. Check the
     [configuration](../reference/config.md) reference for more details.
 
-
 ## :fontawesome-regular-file-lines: Journal
 
 A [journal](../reference/journal.md) file captures all your financial transactions. A transaction
@@ -83,7 +82,6 @@ You would notice zero balance and a checking account with 3 lakhs and
 an income account with -3 lakhs. Double-entry accounting will always
 results in 0 balance since you have to always enter both the credit
 and debit side.
-
 
 Let's say your company deducts `#!ledger 12,000 INR` and contributes it to EPF,
 we could represent it as follows
@@ -206,10 +204,11 @@ other countries can switch the `regional_profile` and then fine tune
 ## Update
 
 Paisa fetches the latest price of the commodities only when
-*update* command is used. Make sure to run `paisa update` command
+_update_ command is used. Make sure to run `paisa update` command
 after you make any changes to your journal file or you want to fetch
 the latest value of the commodities. The update can be performed from
 the UI as well via the dropdown in the top right hand side corner.
 
-[^1]: [hledger](https://hledger.org) and [beancount](https://beancount.github.io/) are also supported, refer
+[^1]:
+    [hledger](https://hledger.org) and [beancount](https://beancount.github.io/) are also supported, refer
     [Ledger CLI](../reference/ledger-cli.md) for more information.

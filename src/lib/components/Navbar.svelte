@@ -296,7 +296,7 @@
   <a href="/" class="paisa-shell-sidebar__brand">
     {#if $obscure}
       <span class="icon is-medium">
-        <i class="fas fa-user-secret" />
+        <i class="fas fa-user-secret"></i>
       </span>
     {:else}
       <Logo size={22} />
@@ -313,7 +313,7 @@
         data-sveltekit-preload-data={link.disablePreload ? "tap" : "hover"}
       >
         <span class="paisa-shell-sidebar__icon icon">
-          <i class={"fas " + link.icon} />
+          <i class={"fas " + link.icon}></i>
         </span>
         <span>{link.label}</span>
       </a>
@@ -322,11 +322,11 @@
 
   <div class="paisa-shell-sidebar__utility">
     <a class="paisa-shell-sidebar__link" href="/more/config">
-      <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-gear" /></span>
+      <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-gear"></i></span>
       <span>Settings</span>
     </a>
     <a class="paisa-shell-sidebar__link" href="https://paisa.fyi" target="_blank" rel="noreferrer">
-      <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-circle-question" /></span>
+      <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-circle-question"></i></span>
       <span>Help</span>
     </a>
   </div>
@@ -346,8 +346,12 @@
     <div class="paisa-topbar__title-row">
       <h1 class="paisa-topbar__title">{contextTitle}</h1>
       {#if !isOverview && showHelp}
-        <a href={helpUrl(selectedSubLink?.help || selectedLink?.help)} class="icon has-text-grey">
-          <i class="fas fa-circle-question" />
+        <a
+          href={helpUrl(selectedSubLink?.help || selectedLink?.help)}
+          class="icon has-text-grey"
+          aria-label="Open help"
+        >
+          <i class="fas fa-circle-question"></i>
         </a>
       {/if}
     </div>
@@ -372,7 +376,7 @@
         aria-label="Notifications"
       >
         <span class="icon is-small">
-          <i class="far fa-bell" />
+          <i class="far fa-bell"></i>
         </span>
       </button>
       {#if !isOverview}
@@ -390,7 +394,7 @@
             {#each recurringIcons as icon}
               <div class="is-flex is-align-items-center" style="gap: 0.35rem;">
                 <span class="icon is-small" style={`color: ${icon.color};`}>
-                  <i class={"fas " + icon.icon} />
+                  <i class={"fas " + icon.icon}></i>
                 </span>
                 <span class="is-size-7">{icon.label}</span>
               </div>
@@ -401,9 +405,9 @@
         {#if selectedSubLink?.maxDepthSelector && ($cashflowExpenseDepthAllowed.max > 1 || $cashflowIncomeDepthAllowed.max > 1)}
           <div class="dropdown is-right is-hoverable">
             <div class="dropdown-trigger">
-              <button class="button is-small" aria-haspopup="true">
+              <button class="button is-small" aria-haspopup="true" aria-label="Open depth filters">
                 <span class="icon is-small">
-                  <i class="fas fa-sliders" />
+                  <i class="fas fa-sliders"></i>
                 </span>
               </button>
             </div>

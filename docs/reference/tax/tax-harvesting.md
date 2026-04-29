@@ -19,17 +19,15 @@ harvesting.
 2. tax_category - This defines how the taxes are calculated as the
    government usually tweaks the tax code regularly with various rules
    like grandfathering, cost inflation index adjustment, etc.
+   1. `equity65` - This is for 65% or more investment in Indian
+      equity.
 
-    1. `equity65` - This is for 65% or more investment in Indian
-       equity.
+   2. `equity35` - This if for 35% or more investment in India equity
+      but less than 65%
 
-    2. `equity35` - This if for 35% or more investment in India equity
-       but less than 65%
+   3. `debt` - This is for debt funds.
 
-    3. `debt` - This is for debt funds.
-
-    4. `unlisted_equity` - This is for unlisted foreign on Indian equity.
-
+   4. `unlisted_equity` - This is for unlisted foreign on Indian equity.
 
 ```yaml
 commodities:

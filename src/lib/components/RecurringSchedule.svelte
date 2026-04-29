@@ -30,7 +30,7 @@
 <div class="px-2 flex is-size-6 justify-between gap-2" data-tippy-content={tooltipHtml}>
   <div class="truncate" title={schedule.key}>
     <span class="icon is-small {icon.color}">
-      <i class="fas {icon.icon}" />
+      <i class="fas {icon.icon}"></i>
     </span>
     <span class="ml-1">
       {#if schedule.actual}

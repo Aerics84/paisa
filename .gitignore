@@ -11,6 +11,8 @@ node_modules
 /build
 /.svelte-kit
 /package
+/.cache/
+/paisa.exe
 .env
 .env.*
 !.env.example

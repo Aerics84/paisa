@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "noImplicitAny": true,
+    "verbatimModuleSyntax": true,
     "lib": ["ES2021"]
   }
 }

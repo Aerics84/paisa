@@ -184,7 +184,7 @@
                 {#each breadcrumbs as crumb}
                   <li>
                     {#if crumb.scope === $detailScope}
-                      <a class="is-inactive">{crumb.label}</a>
+                      <span class="is-inactive">{crumb.label}</span>
                     {:else}
                       <a
                         href={crumb.scope}
@@ -216,7 +216,7 @@
                     <div>{day}</div>
                   {/each}
                 </div>
-                <div class="days" />
+                <div class="days"></div>
               </div>
             </div>
           </div>

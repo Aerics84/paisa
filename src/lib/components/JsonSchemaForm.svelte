@@ -65,11 +65,16 @@
 </script>
 
 {#if deletable}
-  <a on:click={(_e) => deletable()} class="config-delete">
+  <button
+    on:click={(_e) => deletable()}
+    class="config-delete"
+    aria-label={`Delete ${title}`}
+    type="button"
+  >
     <span class="icon is-small">
       <i class="fas fa-circle-minus"></i>
     </span>
-  </a>
+  </button>
 {/if}
 
 {#if schema["ui:widget"] == "hidden"}
@@ -173,7 +178,7 @@
               bind:value
               spellcheck="false"
               data-enable-grammarly="false"
-            />
+            ></textarea>
           {:else}
             <input
               {disabled}
@@ -226,15 +231,20 @@
   </div>
 {:else if schema["ui:widget"] == "price"}
   <div class="config-header">
-    <a class="is-link" data-tippy-content={documentation(schema)}>
+    <span class="is-link" data-tippy-content={documentation(schema)}>
       <span>{title}</span>
-    </a>
+    </span>
 
-    <a on:click={(_e) => (modalOpen = true)} class="is-link">
+    <button
+      on:click={(_e) => (modalOpen = true)}
+      class="is-link"
+      aria-label={`Edit ${title}`}
+      type="button"
+    >
       <span class="icon is-small">
         <i class="fas fa-pen-to-square"></i>
       </span>
-    </a>
+    </button>
   </div>
 
   <PriceCodeSearchModal
@@ -260,16 +270,17 @@
   </div>
 {:else if schema.type == "object"}
   <div class="config-header">
-    <a
+    <button
       class="is-link is-light invertable"
       data-tippy-content={documentation(schema)}
+      type="button"
       on:click={(_e) => (open = !open)}
     >
       <span>{schema["ui:header"] ? value[schema["ui:header"]] || title : title}</span>
       <span class="icon is-small">
         <i class="fas {open ? 'fa-angle-up' : 'fa-angle-down'}"></i>
       </span>
-    </a>
+    </button>
   </div>
 
   {#if open}
@@ -288,22 +299,28 @@
   {/if}
 {:else if schema.type == "array"}
   <div class="config-header">
-    <a
+    <button
       class="is-link is-light invertable"
       data-tippy-content={documentation(schema)}
+      type="button"
       on:click={(_e) => (open = !open)}
     >
       <span>{title}</span>
       <span class="icon is-small">
         <i class="fas {open ? 'fa-angle-up' : 'fa-angle-down'}"></i>
       </span>
-    </a>
+    </button>
     {#if open}
-      <a on:click={(_e) => (value = [newItem(schema), ...value])} class="config-add">
+      <button
+        on:click={(_e) => (value = [newItem(schema), ...value])}
+        class="config-add"
+        aria-label={`Add ${title}`}
+        type="button"
+      >
         <span class="icon is-small">
           <i class="fas fa-circle-plus"></i>
         </span>
-      </a>
+      </button>
     {/if}
   </div>
 
@@ -327,3 +344,13 @@
 {:else}
   <div>{JSON.stringify(schema)}</div>
 {/if}
+
+<style lang="scss">
+  button.is-link,
+  .config-add,
+  .config-delete {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+</style>

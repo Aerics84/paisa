@@ -19,7 +19,6 @@ The difference between the purchase and sell price.
 
 The gain after applying Indexation or Grandfathering provision.
 
-
 Based on the duration between the purchase and sell date, an asset
 might be classified as Short Term or Long Term.
 

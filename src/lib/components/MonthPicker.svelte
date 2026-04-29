@@ -67,10 +67,11 @@
     <button
       class="button is-small border-left"
       disabled={!isAllowed(valueDate.add(-1, "month"), min, max)}
+      aria-label="Previous month"
       on:click={(_e) => select(valueDate.add(-1, "month"))}
     >
       <span class="icon">
-        <i class="fas fa-chevron-left" />
+        <i class="fas fa-chevron-left"></i>
       </span>
     </button>
   {/if}
@@ -96,10 +97,11 @@
             <button
               class="button is-small"
               disabled={selectedYear - 1 < min.year()}
+              aria-label="Previous year"
               on:click={(_e) => selectedYear--}
             >
               <span class="icon">
-                <i class="fas fa-chevron-left" />
+                <i class="fas fa-chevron-left"></i>
               </span>
             </button>
             <div class="select">
@@ -116,10 +118,11 @@
             <button
               class="button is-small"
               disabled={selectedYear + 1 > max.year()}
+              aria-label="Next year"
               on:click={(_e) => selectedYear++}
             >
               <span class="icon">
-                <i class="fas fa-chevron-right" />
+                <i class="fas fa-chevron-right"></i>
               </span>
             </button>
           </div>
@@ -130,11 +133,12 @@
             {#each MONTHS as month, i}
               <div class="month is-size-6 py-2">
                 {#if isAllowed(dayjs(`${selectedYear}-${i + 1}`, "YYYY-M"), min, max)}
-                  <a
+                  <button
                     class={valueDate.year() == selectedYear && valueDate.month() == i
-                      ? "is-link has-text-weight-bold"
-                      : "has-text-black-ter"}
-                    on:click={(_e) => selectMonth(i)}>{month}</a
+                      ? "month-button is-link has-text-weight-bold"
+                      : "month-button has-text-black-ter"}
+                    type="button"
+                    on:click={(_e) => selectMonth(i)}>{month}</button
                   >
                 {:else}
                   <span class="has-text-grey-light">{month}</span>
@@ -150,10 +154,11 @@
     <button
       class="button is-small border-right"
       disabled={!isAllowed(valueDate.add(1, "month"), min, max)}
+      aria-label="Next month"
       on:click={(_e) => select(valueDate.add(1, "month"))}
     >
       <span class="icon">
-        <i class="fas fa-chevron-right" />
+        <i class="fas fa-chevron-right"></i>
       </span>
     </button>
   {/if}
@@ -185,5 +190,12 @@
 
   .month-picker-shell {
     min-width: max-content;
+  }
+
+  .month-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
   }
 </style>

@@ -11,13 +11,7 @@
     "Assets:Dollar",
     "Income:Interest:Checking"
   ],
-  "commodities": [
-    "INR",
-    "NIFTY",
-    "ABNB",
-    "USD",
-    "AAPL"
-  ],
+  "commodities": ["INR", "NIFTY", "ABNB", "USD", "AAPL"],
   "files": [
     {
       "name": "main.ledger",

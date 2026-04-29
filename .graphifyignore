@@ -1,0 +1,26 @@
+# Keep the graph focused on maintainable code and operational config.
+# Hidden directories/files are skipped by graphify already; this file trims
+# large non-hidden areas that add noise or break the HTML visualization.
+
+brand
+desktop
+docs/blog
+docs/getting-started
+docs/javascripts
+docs/stylesheets
+docs/faq.md
+docs/index.md
+docs/manifesto.md
+docs/site.webmanifest
+fixture
+fonts
+graphify-out
+node_modules
+openspec
+overrides
+tests
+web
+
+# Generated artifacts and binary entrypoints.
+paisa.exe
+paisa.exe~

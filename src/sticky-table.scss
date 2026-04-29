@@ -1,0 +1,155 @@
+@use "bulma/sass/utilities/css-variables.scss" as cv;
+
+$bulma-sticky-table-zindex: 5 !default;
+
+$table-background-color: cv.getVar("scheme-main") !default;
+$table-cell-border-color: cv.getVar("border") !default;
+$table-cell-border-style: solid !default;
+$table-cell-border-width: 0 0 1px !default;
+$table-head-background-color: transparent !default;
+$table-body-background-color: transparent !default;
+$table-foot-background-color: transparent !default;
+$table-row-hover-background-color: cv.getVar("scheme-main-bis") !default;
+$table-row-active-background-color: cv.getVar("primary") !default;
+$table-striped-row-even-background-color: cv.getVar("scheme-main-bis") !default;
+$table-striped-row-even-hover-background-color: cv.getVar("scheme-main-ter") !default;
+$navbar-height: 3.25rem !default;
+
+@media screen {
+  .table.has-sticky-column,
+  .table.has-sticky-footer,
+  .table.has-sticky-header {
+    border-collapse: separate;
+
+    tbody,
+    thead {
+      td,
+      th {
+        border-top-width: 0;
+      }
+    }
+
+    &.is-bordered {
+      border-color: $table-cell-border-color;
+      border-style: $table-cell-border-style;
+      border-width: $table-cell-border-width;
+
+      td,
+      th {
+        border-left-width: 0;
+
+        &:last-child {
+          border-right-width: 0;
+        }
+      }
+
+      tbody tr:last-child,
+      tfoot tr:last-child {
+        td,
+        th {
+          border-bottom-width: 0;
+        }
+      }
+    }
+  }
+
+  .table.has-sticky-header {
+    thead th {
+      @if $table-head-background-color ==
+        "transparent" or
+        $table-head-background-color ==
+        rgba(0, 0, 0, 0)
+      {
+        background-color: $table-background-color;
+      }
+
+      position: sticky;
+      top: 0;
+      z-index: $bulma-sticky-table-zindex;
+    }
+  }
+
+  .has-navbar-fixed-top * .table.has-sticky-header thead th,
+  .has-navbar-fixed-top .table.has-sticky-header thead th {
+    top: $navbar-height;
+  }
+
+  .has-navbar-fixed-top * .modal .table.has-sticky-header thead th,
+  .has-navbar-fixed-top .modal .table.has-sticky-header thead th {
+    top: 0;
+  }
+
+  .table.has-sticky-footer {
+    tfoot th {
+      @if $table-foot-background-color ==
+        "transparent" or
+        $table-foot-background-color ==
+        rgba(0, 0, 0, 0)
+      {
+        background-color: $table-background-color;
+      }
+
+      position: sticky;
+      bottom: 0;
+      z-index: $bulma-sticky-table-zindex;
+    }
+  }
+
+  .has-navbar-fixed-bottom * .table.has-sticky-footer tfoot th,
+  .has-navbar-fixed-bottom .table.has-sticky-footer tfoot th {
+    bottom: $navbar-height;
+  }
+
+  .table.has-sticky-column {
+    th:first-child,
+    td:first-child {
+      @if $table-body-background-color ==
+        "transparent" or
+        $table-body-background-color ==
+        rgba(0, 0, 0, 0)
+      {
+        background-color: $table-background-color;
+      }
+
+      left: 0;
+      position: sticky;
+      z-index: $bulma-sticky-table-zindex;
+    }
+
+    &.is-hoverable tbody tr:not(.is-selected):hover {
+      td:first-child,
+      th:first-child {
+        background-color: $table-row-hover-background-color;
+      }
+    }
+
+    &.is-striped tbody tr:not(.is-selected):nth-child(even) {
+      td:first-child,
+      th:first-child {
+        background-color: $table-striped-row-even-background-color;
+      }
+
+      &:hover {
+        td:first-child,
+        th:first-child {
+          background-color: $table-striped-row-even-hover-background-color;
+        }
+      }
+    }
+
+    tr.is-selected {
+      td:first-child,
+      th:first-child {
+        background-color: $table-row-active-background-color;
+      }
+    }
+  }
+
+  .table.has-sticky-header.has-sticky-column thead th:first-child {
+    z-index: $bulma-sticky-table-zindex + 1;
+  }
+
+  .table.has-sticky-footer.has-sticky-column tfoot th:first-child {
+    z-index: $bulma-sticky-table-zindex + 1;
+  }
+}

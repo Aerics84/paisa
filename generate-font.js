@@ -76,7 +76,11 @@ async function createFont(font) {
 
   writeFileSync(join(outputDir, `${font}.svg`), svgFont, "utf8");
   writeFileSync(join(outputDir, `${font}.woff2`), woff2);
-  writeFileSync(join(outputDir, `${font}-info.json`), JSON.stringify({ codepoints: infoData }), "utf8");
+  writeFileSync(
+    join(outputDir, `${font}-info.json`),
+    JSON.stringify({ codepoints: infoData }),
+    "utf8"
+  );
 
   const min = _.min(Object.values(infoData));
   const max = _.max(Object.values(infoData));

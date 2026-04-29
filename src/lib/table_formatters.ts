@@ -2,10 +2,14 @@ import { type CellComponent } from "tabulator-tables";
 import { formatCurrency, formatFloat, formatPercentage, isZero, lastName } from "./utils";
 import { iconText } from "./icon";
 
+type TreeRow = {
+  _children?: unknown[];
+};
+
 export function indendedAssetAccountName(cell: CellComponent) {
   const account = cell.getValue();
   let children = "";
-  const data = cell.getData();
+  const data = cell.getData() as TreeRow;
   if ((data._children?.length || 0) > 0) {
     children = `(${data._children?.length})`;
   }
@@ -21,7 +25,7 @@ export function indendedAssetAccountName(cell: CellComponent) {
 export function indendedLiabilityAccountName(cell: CellComponent) {
   const account = cell.getValue();
   let children = "";
-  const data = cell.getData();
+  const data = cell.getData() as TreeRow;
   if ((data._children?.length || 0) > 0) {
     children = `(${data._children?.length})`;
   }

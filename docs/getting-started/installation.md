@@ -2,7 +2,6 @@
 description: "How to install Paisa, an open source personal finance manager"
 ---
 
-
 # Installation
 
 Paisa is available in two formats: a **Desktop Application** and a **CLI**
@@ -170,13 +169,15 @@ Paisa CLI is available as a nix flake.
     # nix profile install github:ananthakumaran/paisa
     ```
 
-[^1]: I offer Paisa as a free app, and I don't generate any revenue
-      from it. Code signing would require me to pay $99 for Mac and
-      approximately $300 for Windows each and every year to get the
-      necessary certificates. I can't justify spending that much for
-      an app that doesn't generate any income. Unfortunately, as a
-      result, you would have to jump through hoops to get it working.
+[^1]:
+    I offer Paisa as a free app, and I don't generate any revenue
+    from it. Code signing would require me to pay $99 for Mac and
+    approximately $300 for Windows each and every year to get the
+    necessary certificates. I can't justify spending that much for
+    an app that doesn't generate any income. Unfortunately, as a
+    result, you would have to jump through hoops to get it working.
 
-[^2]: As the name implies, these are third party hosting solutions
+[^2]:
+    As the name implies, these are third party hosting solutions
     operated by independent companies. I may receive affiliate
     compensation for linking to their websites.

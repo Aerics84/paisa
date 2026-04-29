@@ -11,7 +11,6 @@ import {
 import dayjs from "dayjs";
 import { parse, type CronExprs } from "@datasert/cronjs-parser";
 import { getFutureMatches } from "@datasert/cronjs-matcher";
-import { iconGlyph } from "./icon";
 
 const end = now().add(36, "month");
 

@@ -132,7 +132,7 @@ done. You can skip this section if you are not interested in the math.
 Where
 
 | Variable | Description        | Paisa                                            |
-|----------|--------------------|--------------------------------------------------|
+| -------- | ------------------ | ------------------------------------------------ |
 | FV       | Future Value       | `target`                                         |
 | PV       | Present Value      | Current Savings                                  |
 | PMT      | Payment per period | `payment_per_period` / Monthly Investment needed |

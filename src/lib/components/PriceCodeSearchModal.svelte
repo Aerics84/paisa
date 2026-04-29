@@ -81,7 +81,7 @@
 <Modal bind:active={open} footerClass="is-justify-content-space-between">
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">{label}</p>
-    <button class="delete" aria-label="close" on:click={(e) => close(e)} />
+    <button class="delete" aria-label="close" on:click={(e) => close(e)}></button>
   </svelte:fragment>
   <div style="min-height: 500px;" slot="body">
     {#if selectedProvider}
@@ -95,6 +95,7 @@
               {/each}
             </select>
           </div>
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           <div class="help">{@html selectedProvider.description}</div>
         </div>
       </div>
@@ -138,6 +139,7 @@
                   ></Select>
                 {/key}
               {/if}
+              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
               <p class="help">{@html field.help}</p>
             </div>
           </div>

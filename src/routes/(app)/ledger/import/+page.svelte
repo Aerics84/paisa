@@ -8,8 +8,7 @@
     createEditor as createPreviewEditor,
     updateContent as updatePreviewContent
   } from "$lib/editor";
-  import Dropzone from "svelte-file-dropzone/Dropzone.svelte";
-  import { parse, asRows, render as renderJournal } from "$lib/spreadsheet";
+  import Dropzone from "svelte-file-dropzone";
   import _ from "lodash";
   import type { EditorView } from "codemirror";
   import { onMount } from "svelte";
@@ -37,6 +36,12 @@
 
   let previewEditorDom: Element;
   let previewEditor: EditorView;
+  let spreadsheetModule: typeof import("$lib/spreadsheet") | null = null;
+
+  async function getSpreadsheetModule() {
+    spreadsheetModule ||= await import("$lib/spreadsheet");
+    return spreadsheetModule;
+  }
 
   onMount(async () => {
     accountTfIdf.set(await ajax("/api/account/tf_idf"));
@@ -45,6 +50,7 @@
     saveAsName = selectedTemplate.name;
     templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
     previewEditor = createPreviewEditor(preview, previewEditorDom, { readonly: true });
+    void getSpreadsheetModule();
   });
 
   $: saveAsNameDuplicate = !!_.find(templates, { name: saveAsName, template_type: "custom" });
@@ -115,14 +121,14 @@
 
   let input: any;
 
-  $: if (!_.isEmpty(data) && $templateEditorState.template) {
+  $: if (!_.isEmpty(data) && $templateEditorState.template && spreadsheetModule) {
     if (
       lastTemplate != $templateEditorState.template ||
       lastData != data ||
       lastOptions != options
     ) {
       try {
-        preview = renderJournal(rows, $templateEditorState.template, {
+        preview = spreadsheetModule.render(rows, $templateEditorState.template, {
           reverse: options.reverse,
           trim: options.trim
         });
@@ -146,6 +152,7 @@
   async function handleFilesSelect(e: { detail: { acceptedFiles: File[] } }) {
     const { acceptedFiles } = e.detail;
 
+    const { parse, asRows } = await getSpreadsheetModule();
     const results = await parse(acceptedFiles[0]);
     if (results.error) {
       parseErrorMessage = results.error;
@@ -222,7 +229,7 @@
 <Modal bind:active={templateCreateModalOpen}>
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">Create Template</p>
-    <button class="delete" aria-label="close" on:click={(e) => close(e)} />
+    <button class="delete" aria-label="close" on:click={(e) => close(e)}></button>
   </svelte:fragment>
   <div class="field" slot="body">
     <label class="label" for="save-filename">Template Name</label>
@@ -253,9 +260,13 @@
           <div class="field is-grouped mb-0">
             <p class="control">
               <span data-tippy-content="Create" data-tippy-followCursor="false">
-                <button class="button" on:click={(_e) => openTemplateCreateModal()}>
+                <button
+                  class="button"
+                  on:click={(_e) => openTemplateCreateModal()}
+                  aria-label="Create template"
+                >
                   <span class="icon">
-                    <i class="fas fa-file-circle-plus" />
+                    <i class="fas fa-file-circle-plus"></i>
                   </span>
                 </button>
               </span>
@@ -270,11 +281,12 @@
                 <button
                   class="button"
                   on:click={(_e) => save()}
+                  aria-label="Save template"
                   disabled={$templateEditorState.hasUnsavedChanges == false ||
                     selectedTemplate?.template_type == "builtin"}
                 >
                   <span class="icon">
-                    <i class="fas fa-floppy-disk" />
+                    <i class="fas fa-floppy-disk"></i>
                   </span>
                 </button>
               </span>
@@ -286,10 +298,11 @@
                 <button
                   class="button"
                   on:click={(_e) => remove()}
+                  aria-label="Delete template"
                   disabled={selectedTemplate?.template_type == "builtin"}
                 >
                   <span class="icon">
-                    <i class="fas fa-trash-can" />
+                    <i class="fas fa-trash-can"></i>
                   </span>
                 </button>
               </span>
@@ -326,7 +339,7 @@
         <div class="box py-0">
           <div class="field">
             <div class="control">
-              <div class="template-editor" bind:this={templateEditorDom} />
+              <div class="template-editor" bind:this={templateEditorDom}></div>
             </div>
           </div>
         </div>
@@ -337,25 +350,27 @@
                 data-tippy-followCursor="false"
                 data-tippy-content="Copy to Clipboard"
                 class="button clipboard"
+                aria-label="Copy preview to clipboard"
                 disabled={_.isEmpty(preview)}
                 on:click={copyToClipboard}
               >
                 <span class="icon">
-                  <i class="fas fa-copy" />
+                  <i class="fas fa-copy"></i>
                 </span>
               </button>
               <button
                 data-tippy-followCursor="false"
                 data-tippy-content="Save"
                 class="button save"
+                aria-label="Save preview"
                 disabled={_.isEmpty(preview)}
                 on:click={openSaveModal}
               >
                 <span class="icon">
-                  <i class="fas fa-floppy-disk" />
+                  <i class="fas fa-floppy-disk"></i>
                 </span>
               </button>
-              <div class="preview-editor" bind:this={previewEditorDom} />
+              <div class="preview-editor" bind:this={previewEditorDom}></div>
             </div>
           </div>
         </div>
@@ -404,7 +419,7 @@
             >
               <thead>
                 <tr>
-                  <th />
+                  <th></th>
                   {#each _.range(0, columnCount) as ci}
                     <th class="has-background-light">{String.fromCharCode(65 + ci)}</th>
                   {/each}
@@ -425,13 +440,11 @@
         {/if}
       </div>
     </div>
-    <div />
+    <div></div>
   </div>
 </section>
 
 <style lang="scss">
-  @import "bulma/sass/utilities/_all.sass";
-
   $import-full-height: calc(100vh - 205px);
 
   .clipboard {
@@ -457,7 +470,7 @@
   .color-switch {
     .switch[type="checkbox"]:checked + label::before,
     .switch[type="checkbox"]:checked + label:before {
-      background: $link;
+      background: var(--bulma-link, #485fc7);
     }
   }
 </style>

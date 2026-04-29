@@ -66,7 +66,6 @@ hide:
         Assets:Equity:AAPL   6,453 AAPL @ €154,97
     ```
 
-
 <p style="text-align: center; margin-bottom: 3rem">
   <a class="md-button md-button--primary" style="margin-right: 50px;" href="/getting-started/installation/">Install</a>
   <a class="md-button md-button--primary" href="https://demo.paisa.fyi">Demo</a>
@@ -99,7 +98,6 @@ hide:
 </div>
 </div>
 
-
 <div class="feature-card-container" markdown>
 <div class="feature-card" markdown>
 <div class="feature-card-left feature-card-icon feature-card-icon-logo" markdown>
@@ -113,9 +111,9 @@ will not ask you to draw a picture on blank canvas. We provide
 enough guard rails to make data entry easy and error free. The editor
 comes with syntax highlighting, auto completion, error checking and
 auto formatting.
-</div>
-</div>
 
+</div>
+</div>
 
 <div class="feature-card" markdown>
 <div class="feature-card-left feature-card-icon feature-card-icon-equity" markdown>
@@ -128,6 +126,7 @@ auto formatting.
 Selling your data is not the indirect goal of the app. The app will
 never collect or send any data to any server. All your data is stored
 in your system. Checkout the [manifesto](./manifesto.md) for more.
+
 </div>
 </div>
 
@@ -142,9 +141,9 @@ Paisa supports various [price](./reference/commodities.md) data providers, so it
 the latest price of all your assets. It also allows the user to enter
 the price manually, so you can use it to revalue your assets like
 house, car, land, etc.
-</div>
-</div>
 
+</div>
+</div>
 
 <div class="feature-card" markdown>
 <div class="feature-card-left feature-card-icon feature-card-icon-expense" markdown>
@@ -176,10 +175,10 @@ and import them into paisa. Paisa [import](./reference/import.md) system is flex
 enough to handle most of the formats out there in the wild. Once you
 setup the import template, it will hardly take 5 minutes to import and
 categorize all your transactions each month.
-</div>
 
 </div>
 
+</div>
 
 <div class="feature-card" markdown>
 <div class="feature-card-left feature-card-icon feature-card-icon-liability" markdown>
@@ -210,6 +209,7 @@ and tracking your [goals](./reference/goals/index.md). If you know how much you 
 save each month, paisa can tell you when you can achieve your goal. On
 the other hand, if you have a deadline, paisa can tell you how much
 you need to save each month to achieve your goal.
+
 </div>
 
 </div>

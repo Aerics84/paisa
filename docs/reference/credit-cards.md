@@ -11,13 +11,13 @@ you can configure it in Paisa as follows:
 
 ```yaml
 credit_cards:
-    - account: Liabilities:CreditCard:Freedom #(1)!
-      credit_limit: 150000 #(2)!
-      statement_end_day: 8 #(3)!
-      due_day: 20 #(4)!
-      network: visa #(5)!
-      number: "0007" #(6)!
-      expiration_date: "2029-05-01" #(7)!
+  - account: Liabilities:CreditCard:Freedom #(1)!
+    credit_limit: 150000 #(2)!
+    statement_end_day: 8 #(3)!
+    due_day: 20 #(4)!
+    network: visa #(5)!
+    number: "0007" #(6)!
+    expiration_date: "2029-05-01" #(7)!
 ```
 
 1. Account name

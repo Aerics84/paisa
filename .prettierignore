@@ -3,6 +3,9 @@ node_modules
 /build
 /.svelte-kit
 /package
+.cache
+desktop/build
+web/static
 .env
 .env.*
 !.env.example
@@ -15,3 +18,4 @@ src/lib/search/parser/parser.terms.js
 src/lib/search/parser/parser.js
 src/lib/sheet/parser.terms.js
 src/lib/sheet/parser.js
+internal/model/template/templates

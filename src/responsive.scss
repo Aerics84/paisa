@@ -1,13 +1,15 @@
-@import "bulma/sass/utilities/_all.sass";
-
 :root {
   font-size: 12px;
+}
 
-  @include desktop {
+@media screen and (min-width: 1024px) {
+  :root {
     font-size: 14px;
   }
+}
 
-  @include mobile {
+@media screen and (max-width: 1023px) {
+  :root {
     .navbar-item {
       &.has-dropdown {
         .navbar-dropdown {

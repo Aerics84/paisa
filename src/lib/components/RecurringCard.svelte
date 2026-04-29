@@ -46,7 +46,7 @@
       >
         <span class="icon-text">
           <span class="icon {icon.color}">
-            <i class="fas {icon.icon}" />
+            <i class="fas {icon.icon}"></i>
           </span>
           <span class="has-text-grey">{formatCurrencyCrude(totalRecurring(ts))} due</span><span
             ><b>&nbsp;{schedule.scheduled.fromNow()}</b></span
@@ -55,7 +55,7 @@
         <div class="has-text-grey">
           <span class="tag">{intervalText(ts)}</span>
           <span class="icon has-text-grey-light">
-            <i class="fas fa-calendar" />
+            <i class="fas fa-calendar"></i>
           </span>
           {schedule.scheduled.format("DD MMM YYYY")}
         </div>
@@ -78,9 +78,17 @@
         slot="prev"
         let:showPrevPage
         on:click={showPrevPage}
+        on:keydown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            showPrevPage();
+          }
+        }}
         class="custom-arrow custom-arrow-prev"
+        role="button"
+        tabindex="0"
       >
-        <i class="fa-solid has-text-grey-light fa-angle-left" />
+        <i class="fa-solid has-text-grey-light fa-angle-left"></i>
       </div>
       {#each _.reverse(_.take(ts.transactions, 20)) as t}
         <div class="box px-5 py-3 my-0 has-text-grey" style="box-shadow: none;">
@@ -91,9 +99,17 @@
         slot="next"
         let:showNextPage
         on:click={showNextPage}
+        on:keydown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            showNextPage();
+          }
+        }}
         class="custom-arrow custom-arrow-next"
+        role="button"
+        tabindex="0"
       >
-        <i class="fa-solid has-text-grey-light fa-angle-right" />
+        <i class="fa-solid has-text-grey-light fa-angle-right"></i>
       </div>
     </Carousel>
   </div>

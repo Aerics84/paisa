@@ -7,11 +7,11 @@ description: "Documentation on how to search and edit transactions in bulk in Pa
 Paisa provides bulk transaction editor to search and modify multiple
 transactions at once. The interface is made of two parts:
 
-1) Search input box allows you to narrow down the transactions you are
-interested in making changes
+1. Search input box allows you to narrow down the transactions you are
+   interested in making changes
 
-2) Bulk Edit form allows you to make changes to the narrowed down set
-of transactions.
+2. Bulk Edit form allows you to make changes to the narrowed down set
+   of transactions.
 
 ## Search
 
@@ -121,7 +121,6 @@ If you leave out the conditional operator, it will be treated as
 account = Expenses:Utilities payee =~ /uber/i
 account = Expenses:Utilities AND payee =~ /uber/i
 ```
-
 
 ## Bulk Edit Form
 

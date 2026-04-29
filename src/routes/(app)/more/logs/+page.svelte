@@ -73,8 +73,6 @@
 </section>
 
 <style lang="scss">
-  @import "bulma/sass/utilities/_all.sass";
-
   .log {
     gap: 5px;
 
@@ -97,7 +95,9 @@
     }
 
     .fields {
-      font-family: $family-monospace;
+      font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+        monospace;
       flex-basis: 20px;
       flex-grow: 1;
       flex-shrink: 1;

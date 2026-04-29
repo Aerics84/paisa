@@ -932,7 +932,9 @@ async function redirectToLogin() {
     const { goto } = await import("$app/navigation");
     await goto("/login");
     return;
-  } catch {}
+  } catch {
+    // Fall back to a hard navigation when app navigation is unavailable.
+  }
 
   if (typeof window !== "undefined") {
     window.location.href = "/login";

@@ -3,6 +3,9 @@ node_modules
 /build
 /.svelte-kit
 /package
+.cache
+desktop/build
+web/static
 .env
 .env.*
 !.env.example

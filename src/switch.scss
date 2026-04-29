@@ -1,0 +1,78 @@
+.switch[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch[type="checkbox"] + label {
+  --switch-width: 2.5rem;
+  --switch-height: 1.5rem;
+  --switch-gap: 0.1875rem;
+  --switch-knob-size: calc(var(--switch-height) - (var(--switch-gap) * 2));
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--switch-height);
+  padding-left: calc(var(--switch-width) + 0.5rem);
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch[type="checkbox"] + label::before,
+.switch[type="checkbox"] + label::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    left 150ms ease;
+}
+
+.switch[type="checkbox"] + label::before {
+  left: 0;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  transform: translateY(-50%);
+  border-radius: $radius-rounded;
+  background: $grey-lighter;
+  box-shadow: inset 0 0 0 1px rgba($grey, 0.2);
+}
+
+.switch[type="checkbox"] + label::after {
+  left: var(--switch-gap);
+  width: var(--switch-knob-size);
+  height: var(--switch-knob-size);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: $white;
+  box-shadow: 0 1px 2px rgba($black, 0.2);
+}
+
+.switch[type="checkbox"]:checked + label::before {
+  background: $link;
+}
+
+.switch[type="checkbox"]:checked + label::after {
+  left: calc(var(--switch-width) - var(--switch-knob-size) - var(--switch-gap));
+}
+
+.switch[type="checkbox"]:focus-visible + label::before {
+  box-shadow:
+    inset 0 0 0 1px rgba($grey, 0.2),
+    0 0 0 0.125rem rgba($link, 0.25);
+}
+
+.switch[type="checkbox"]:disabled + label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.switch.is-small + label {
+  --switch-width: 2.125rem;
+  --switch-height: 1.25rem;
+}
+
+.switch.is-rounded + label::before {
+  border-radius: $radius-rounded;
+}

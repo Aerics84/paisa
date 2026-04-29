@@ -32,11 +32,14 @@ finance_amount = price - down_payment
 interest_rate = 8.6%
 term = 30
 
-n = term * 12
+n = term \* 12
 r = interest_rate / 12
+
 # EMI
-monthly_payment = r / (1 - (1 + r) ^ (-n)) * finance_amount
-```
+
+monthly_payment = r / (1 - (1 + r) ^ (-n)) \* finance_amount
+
+````
 </div>
 <div class="sheet-result sheet-result-1" markdown>
 ```text
@@ -51,7 +54,8 @@ monthly_payment = r / (1 - (1 + r) ^ (-n)) * finance_amount
 0
 # EMI
 24832
-```
+````
+
 </div>
 </div>
 
@@ -75,11 +79,11 @@ years_to_double(10)
 years_to_double(12)
 years_to_double(14)
 ```
+
 </div>
 <div class="sheet-result sheet-result-2" markdown>
 ```text
 # Years to Double
-
 
 36
 18
@@ -88,7 +92,8 @@ years_to_double(14)
 7
 6
 5
-```
+
+````
 </div>
 </div>
 
@@ -127,19 +132,19 @@ liability = cost_basis_negative({account =~ /^Liabilities:Homeloan/})
 
 # Total
 total = immovable + metal + art + vehicle + bank + share + insurance + loan + cash - liability
-```
+````
+
 </div>
 <div class="sheet-result sheet-result-3" markdown>
 ```text
 # Schedule AL
 
-
-
-
 # Immovable
+
 25,00,000
 
 # Movable
+
 0
 0
 0
@@ -151,11 +156,14 @@ total = immovable + metal + art + vehicle + bank + share + insurance + loan + ca
 0
 
 # Liability
+
 6,21,600
 
 # Total
+
 86,98,682
-```
+
+````
 </div>
 </div>
 
@@ -171,7 +179,7 @@ the number by 100. So `8%` is same as `0.08`.
 100.00
 -100
 8%
-```
+````
 
 #### Operators
 
@@ -258,8 +266,6 @@ y = 2
 z = x + y // add x and y
 ```
 
-
-
 ## Functions
 
 You can find the full list of built-in functions here. This list is
@@ -299,7 +305,6 @@ after FIFO adjustment, you will get the following postings
 
 All your sell postings will be adjusted against the oldest buy
 postings and you will have the remaining buy postings.
-
 
 #### `#!typescript negate(q: Posting[] | Query): Posting[]`
 

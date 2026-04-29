@@ -15,7 +15,7 @@
     <div class:paisa-zone__subtle--selectable={selectable} class="paisa-zone__subtle">
       {subtle}
       {#if selectable}
-        <i class="fas fa-angle-down" />
+        <i class="fas fa-angle-down"></i>
       {/if}
     </div>
   {/if}

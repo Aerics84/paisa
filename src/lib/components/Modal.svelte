@@ -10,7 +10,14 @@
 </script>
 
 <div class="modal" class:is-active={active}>
-  <div class="modal-background" on:click={(e) => close(e)} />
+  <div
+    class="modal-background"
+    role="button"
+    tabindex="0"
+    aria-label="Close modal"
+    on:click={(e) => close(e)}
+    on:keydown={(e) => (e.key === "Enter" || e.key === " ") && close(e)}
+  ></div>
   <div class="modal-card" style:width>
     <header class="modal-card-head {headerClass}">
       <slot name="head" {close} />

@@ -105,9 +105,9 @@
           <div class="box px-3" style="max-width: 1024px;">
             <article class="message">
               <div class="message-body">
-                Prices are <b>not</b> automatically updated after config change. Use the menu at the
-                top right corner to update prices. If the journal failed to sync due to any issues, fix
-                the issues and use the menu to sync again.
+                Prices are <b>not</b> automatically updated after config change. Use the menu at the top
+                right corner to update prices. If the journal failed to sync due to any issues, fix the
+                issues and use the menu to sync again.
               </div>
             </article>
 

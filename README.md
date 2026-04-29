@@ -32,8 +32,10 @@ docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
 `npm install` configures repo-local Git hooks automatically.
 
 - `git commit` formats staged Prettier-supported files and re-stages them.
-- `git push` runs the critical pre-push checks from `scripts/preflight-critical.sh`.
+- `git push` runs the critical pre-push checks from `scripts/preflight-critical.mjs`.
 - `npm run format:changed` formats locally changed files on demand.
+
+The pre-push check validates changed-file formatting, the Svelte/TypeScript check, targeted import and regression tests, the frontend production build, and the Go build.
 
 If a staged file also has unstaged edits, the commit hook stops instead of silently staging extra hunks. In that case, format the file first and stage it again.
 

@@ -221,7 +221,7 @@
                 on:click={(_e) => openCreateModal()}
               >
                 <span class="icon is-small">
-                  <i class="fas fa-file-circle-plus" />
+                  <i class="fas fa-file-circle-plus"></i>
                 </span>
                 <span>Create</span>
               </button>
@@ -236,7 +236,7 @@
                 on:click={(_e) => save()}
               >
                 <span class="icon is-small">
-                  <i class="fas fa-floppy-disk" />
+                  <i class="fas fa-floppy-disk"></i>
                 </span>
                 <span>Save</span>
               </button>
@@ -248,7 +248,7 @@
                 on:click={(_e) => undo(editor)}
               >
                 <span class="icon is-small">
-                  <i class="fas fa-arrow-left" />
+                  <i class="fas fa-arrow-left"></i>
                 </span>
                 <span>Undo</span>
               </button>
@@ -261,7 +261,7 @@
               >
                 <span>Redo</span>
                 <span class="icon is-small">
-                  <i class="fas fa-arrow-right" />
+                  <i class="fas fa-arrow-right"></i>
                 </span>
               </button>
             </p>
@@ -276,7 +276,7 @@
                   on:click={(_e) => revert(selectedVersion)}
                 >
                   <span class="icon is-small">
-                    <i class="fas fa-clock-rotate-left" />
+                    <i class="fas fa-clock-rotate-left"></i>
                   </span>
                   <span>Revert</span>
                 </button>
@@ -293,9 +293,14 @@
               </div>
 
               <p class="control">
-                <button class="button is-small" on:click={(_e) => deleteBackups()}>
+                <button
+                  class="button is-small"
+                  on:click={(_e) => deleteBackups()}
+                  type="button"
+                  aria-label="Delete backups"
+                >
                   <span class="icon is-small">
-                    <i class="fas fa-trash-can" />
+                    <i class="fas fa-trash-can"></i>
                   </span>
                 </button>
               </p>
@@ -304,11 +309,15 @@
 
           {#if $sheetEditorState.errors.length > 0}
             <div class="control ml-5">
-              <a on:click={(_e) => moveToLine(editor, $sheetEditorState.errors[0].line_from)}
-                ><span class="ml-1 tag invertable is-danger is-light"
-                  >{$sheetEditorState.errors.length} error(s) found</span
-                ></a
+              <button
+                class="button-reset"
+                on:click={(_e) => moveToLine(editor, $sheetEditorState.errors[0].line_from)}
+                type="button"
               >
+                <span class="ml-1 tag invertable is-danger is-light"
+                  >{$sheetEditorState.errors.length} error(s) found</span
+                >
+              </button>
             </div>
           {/if}
 
@@ -344,7 +353,7 @@
             class="box box-r-none py-0 pr-1 mb-0"
             style="min-width: min(75%,24rem); max-width: min(75%,48rem);"
           >
-            <div class="sheet-editor" bind:this={editorDom} />
+            <div class="sheet-editor" bind:this={editorDom}></div>
           </div>
           <div
             class="box box-l-none has-text-right sheet-result"

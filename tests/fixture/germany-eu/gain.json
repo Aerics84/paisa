@@ -1,118 +1,118 @@
 {
-    "gain_breakdown":  [
-                           {
-                               "account":  "Assets:Equity:VWCE",
-                               "networth":  {
-                                                "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                "investmentAmount":  1079.5,
-                                                "withdrawalAmount":  0,
-                                                "gainAmount":  14,
-                                                "balanceAmount":  1093.5,
-                                                "balanceUnits":  0,
-                                                "netInvestmentAmount":  1079.5
-                                            },
-                               "xirr":  42.29,
-                               "postings":  [
-                                                {
-                                                    "id":  9,
-                                                    "transaction_id":  "013e55fd-7d95-5346-af69-d4f7aad679ac",
-                                                    "date":  "2022-01-10T00:00:00+01:00",
-                                                    "payee":  "ETF Purchase",
-                                                    "account":  "Assets:Equity:VWCE",
-                                                    "commodity":  "VWCE",
-                                                    "quantity":  4,
-                                                    "amount":  472,
-                                                    "status":  "unmarked",
-                                                    "tag_recurring":  "",
-                                                    "tag_period":  "",
-                                                    "transaction_begin_line":  23,
-                                                    "transaction_end_line":  25,
-                                                    "file_name":  "main.ledger",
-                                                    "forecast":  false,
-                                                    "note":  "",
-                                                    "transaction_note":  "",
-                                                    "market_amount":  486,
-                                                    "balance":  0
-                                                },
-                                                {
-                                                    "id":  27,
-                                                    "transaction_id":  "cef1bc13-7ef3-50b7-ae54-cdd60b9fe340",
-                                                    "date":  "2022-02-07T00:00:00+01:00",
-                                                    "payee":  "ETF Purchase",
-                                                    "account":  "Assets:Equity:VWCE",
-                                                    "commodity":  "VWCE",
-                                                    "quantity":  5,
-                                                    "amount":  607.5,
-                                                    "status":  "unmarked",
-                                                    "tag_recurring":  "",
-                                                    "tag_period":  "",
-                                                    "transaction_begin_line":  59,
-                                                    "transaction_end_line":  61,
-                                                    "file_name":  "main.ledger",
-                                                    "forecast":  false,
-                                                    "note":  "",
-                                                    "transaction_note":  "",
-                                                    "market_amount":  607.5,
-                                                    "balance":  0
-                                                }
-                                            ]
-                           },
-                           {
-                               "account":  "Assets:Savings:Tagesgeld",
-                               "networth":  {
-                                                "date":  "2022-02-07T23:59:59.999999999+01:00",
-                                                "investmentAmount":  1200,
-                                                "withdrawalAmount":  0,
-                                                "gainAmount":  0,
-                                                "balanceAmount":  1200,
-                                                "balanceUnits":  0,
-                                                "netInvestmentAmount":  1200
-                                            },
-                               "xirr":  0,
-                               "postings":  [
-                                                {
-                                                    "id":  3,
-                                                    "transaction_id":  "084ce9a4-b6e6-51fa-8f4e-8a05d70d4669",
-                                                    "date":  "2022-01-04T00:00:00+01:00",
-                                                    "payee":  "Transfer to Tagesgeld",
-                                                    "account":  "Assets:Savings:Tagesgeld",
-                                                    "commodity":  "EUR",
-                                                    "quantity":  600,
-                                                    "amount":  600,
-                                                    "status":  "unmarked",
-                                                    "tag_recurring":  "",
-                                                    "tag_period":  "",
-                                                    "transaction_begin_line":  11,
-                                                    "transaction_end_line":  13,
-                                                    "file_name":  "main.ledger",
-                                                    "forecast":  false,
-                                                    "note":  "",
-                                                    "transaction_note":  "",
-                                                    "market_amount":  600,
-                                                    "balance":  0
-                                                },
-                                                {
-                                                    "id":  21,
-                                                    "transaction_id":  "5a976f71-2fa0-58e0-99cd-68f0f96b4dbd",
-                                                    "date":  "2022-02-04T00:00:00+01:00",
-                                                    "payee":  "Transfer to Tagesgeld",
-                                                    "account":  "Assets:Savings:Tagesgeld",
-                                                    "commodity":  "EUR",
-                                                    "quantity":  600,
-                                                    "amount":  600,
-                                                    "status":  "unmarked",
-                                                    "tag_recurring":  "",
-                                                    "tag_period":  "",
-                                                    "transaction_begin_line":  47,
-                                                    "transaction_end_line":  49,
-                                                    "file_name":  "main.ledger",
-                                                    "forecast":  false,
-                                                    "note":  "",
-                                                    "transaction_note":  "",
-                                                    "market_amount":  600,
-                                                    "balance":  0
-                                                }
-                                            ]
-                           }
-                       ]
+  "gain_breakdown": [
+    {
+      "account": "Assets:Equity:VWCE",
+      "networth": {
+        "date": "2022-02-07T23:59:59.999999999+01:00",
+        "investmentAmount": 1079.5,
+        "withdrawalAmount": 0,
+        "gainAmount": 14,
+        "balanceAmount": 1093.5,
+        "balanceUnits": 0,
+        "netInvestmentAmount": 1079.5
+      },
+      "xirr": 42.29,
+      "postings": [
+        {
+          "id": 9,
+          "transaction_id": "013e55fd-7d95-5346-af69-d4f7aad679ac",
+          "date": "2022-01-10T00:00:00+01:00",
+          "payee": "ETF Purchase",
+          "account": "Assets:Equity:VWCE",
+          "commodity": "VWCE",
+          "quantity": 4,
+          "amount": 472,
+          "status": "unmarked",
+          "tag_recurring": "",
+          "tag_period": "",
+          "transaction_begin_line": 23,
+          "transaction_end_line": 25,
+          "file_name": "main.ledger",
+          "forecast": false,
+          "note": "",
+          "transaction_note": "",
+          "market_amount": 486,
+          "balance": 0
+        },
+        {
+          "id": 27,
+          "transaction_id": "cef1bc13-7ef3-50b7-ae54-cdd60b9fe340",
+          "date": "2022-02-07T00:00:00+01:00",
+          "payee": "ETF Purchase",
+          "account": "Assets:Equity:VWCE",
+          "commodity": "VWCE",
+          "quantity": 5,
+          "amount": 607.5,
+          "status": "unmarked",
+          "tag_recurring": "",
+          "tag_period": "",
+          "transaction_begin_line": 59,
+          "transaction_end_line": 61,
+          "file_name": "main.ledger",
+          "forecast": false,
+          "note": "",
+          "transaction_note": "",
+          "market_amount": 607.5,
+          "balance": 0
+        }
+      ]
+    },
+    {
+      "account": "Assets:Savings:Tagesgeld",
+      "networth": {
+        "date": "2022-02-07T23:59:59.999999999+01:00",
+        "investmentAmount": 1200,
+        "withdrawalAmount": 0,
+        "gainAmount": 0,
+        "balanceAmount": 1200,
+        "balanceUnits": 0,
+        "netInvestmentAmount": 1200
+      },
+      "xirr": 0,
+      "postings": [
+        {
+          "id": 3,
+          "transaction_id": "084ce9a4-b6e6-51fa-8f4e-8a05d70d4669",
+          "date": "2022-01-04T00:00:00+01:00",
+          "payee": "Transfer to Tagesgeld",
+          "account": "Assets:Savings:Tagesgeld",
+          "commodity": "EUR",
+          "quantity": 600,
+          "amount": 600,
+          "status": "unmarked",
+          "tag_recurring": "",
+          "tag_period": "",
+          "transaction_begin_line": 11,
+          "transaction_end_line": 13,
+          "file_name": "main.ledger",
+          "forecast": false,
+          "note": "",
+          "transaction_note": "",
+          "market_amount": 600,
+          "balance": 0
+        },
+        {
+          "id": 21,
+          "transaction_id": "5a976f71-2fa0-58e0-99cd-68f0f96b4dbd",
+          "date": "2022-02-04T00:00:00+01:00",
+          "payee": "Transfer to Tagesgeld",
+          "account": "Assets:Savings:Tagesgeld",
+          "commodity": "EUR",
+          "quantity": 600,
+          "amount": 600,
+          "status": "unmarked",
+          "tag_recurring": "",
+          "tag_period": "",
+          "transaction_begin_line": 47,
+          "transaction_end_line": 49,
+          "file_name": "main.ledger",
+          "forecast": false,
+          "note": "",
+          "transaction_note": "",
+          "market_amount": 600,
+          "balance": 0
+        }
+      ]
+    }
+  ]
 }

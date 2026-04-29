@@ -14,5 +14,7 @@ wailsConfig.Info.productVersion = version;
 fs.writeFileSync(wailsConfigPath, `${JSON.stringify(wailsConfig, null, 2)}\n`);
 
 const controlPath = path.join(root, "desktop", "build", "linux", "DEBIAN", "control");
-const control = fs.readFileSync(controlPath, "utf8").replace(/^Version:\s+.*$/m, `Version: ${version}`);
+const control = fs
+  .readFileSync(controlPath, "utf8")
+  .replace(/^Version:\s+.*$/m, `Version: ${version}`);
 fs.writeFileSync(controlPath, control);

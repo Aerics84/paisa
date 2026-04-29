@@ -27,7 +27,7 @@
       <div class="column is-12">
         <div class="box">
           <LegendCard legends={monthlyInvestmentTimelineLegends} clazz="ml-4" />
-          <svg id="d3-investment-timeline" width="100%" height="500" />
+          <svg id="d3-investment-timeline" width="100%" height="500"></svg>
         </div>
       </div>
     </div>
@@ -40,12 +40,12 @@
       <div class="column is-full-tablet is-half-fullhd">
         <div class="box px-2">
           <LegendCard legends={yearlyInvestmentTimelineLegends} clazz="ml-4" />
-          <svg id="d3-yearly-investment-timeline" width="100%" />
+          <svg id="d3-yearly-investment-timeline" width="100%"></svg>
         </div>
         <BoxLabel text="Financial Year Investment Timeline" />
       </div>
       <div class="column is-full-tablet is-half-fullhd">
-        <div class="columns is-flex-wrap-wrap" id="d3-yearly-investment-cards" />
+        <div class="columns is-flex-wrap-wrap" id="d3-yearly-investment-cards"></div>
       </div>
     </div>
   </div>

@@ -24,6 +24,10 @@ function normalizeLineEndings(value: string) {
   return value.replace(/\r\n/g, "\n");
 }
 
+function toBlobPart(input: Buffer) {
+  return new Uint8Array(input);
+}
+
 Handlebars.registerHelper(
   _.mapValues(helpers, (helper, name) => {
     return function (...args: any[]) {
@@ -54,7 +58,7 @@ describe("import", () => {
             .toString();
 
           const compiled = Handlebars.compile(template);
-          const result = await parse(new File([input], inputFile));
+          const result = await parse(new File([toBlobPart(input)], inputFile));
           const rows = asRows(result);
 
           const actual = render(rows, compiled, { trim: true });
@@ -69,7 +73,7 @@ describe("import", () => {
 describe("broker csv normalization", () => {
   test("trade republic trades expose normalized semantic fields", async () => {
     const input = fs.readFileSync("fixture/import/Trade Republic Trades CSV/trades.csv");
-    const result = await parse(new File([input], "trades.csv"));
+    const result = await parse(new File([toBlobPart(input)], "trades.csv"));
     const rows = asRows(result);
 
     expect(rows[0].broker).toBe("Trade Republic");
@@ -86,7 +90,7 @@ describe("broker csv normalization", () => {
 
   test("trade republic cash exposes normalized cash-flow fields", async () => {
     const input = fs.readFileSync("fixture/import/Trade Republic Cash CSV/cash.csv");
-    const result = await parse(new File([input], "cash.csv"));
+    const result = await parse(new File([toBlobPart(input)], "cash.csv"));
     const rows = asRows(result);
 
     expect(rows[0].broker).toBe("Trade Republic");
@@ -99,7 +103,7 @@ describe("broker csv normalization", () => {
 
   test("scalable capital trades expose normalized semantic fields", async () => {
     const input = fs.readFileSync("fixture/import/Scalable Capital Trades CSV/trades.csv");
-    const result = await parse(new File([input], "trades.csv"));
+    const result = await parse(new File([toBlobPart(input)], "trades.csv"));
     const rows = asRows(result);
 
     expect(rows[0].broker).toBe("Scalable Capital");

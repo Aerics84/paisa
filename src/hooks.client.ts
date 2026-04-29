@@ -31,13 +31,6 @@ dayjs.extend(localeData);
 import updateLocale from "dayjs/plugin/updateLocale";
 dayjs.extend(updateLocale);
 
-import * as pdfjs from "pdfjs-dist";
-import pdfjsWorkerUrl from "pdfjs-dist/build/pdf.worker.js?url";
-
-if (pdfjs.GlobalWorkerOptions) {
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
-}
-
 import Handlebars from "handlebars";
 import helpers from "$lib/template_helpers";
 import * as toast from "bulma-toast";
@@ -60,6 +53,7 @@ Handlebars.registerHelper(
 );
 
 toast.setDefaults({
+  message: "",
   position: "bottom-right",
   dismissible: true,
   pauseOnHover: true,
@@ -67,6 +61,8 @@ toast.setDefaults({
 });
 
 globalThis.USER_CONFIG = {} as any;
+
+export async function init() {}
 
 export const handleError: HandleClientError = async ({ error, status, message }) => {
   let stack = null;

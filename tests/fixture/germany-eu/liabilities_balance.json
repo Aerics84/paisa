@@ -1,28 +1,28 @@
 {
-    "liability_breakdowns":  {
-                                 "Liabilities":  {
-                                                     "group":  "Liabilities",
-                                                     "drawn_amount":  495,
-                                                     "repaid_amount":  495,
-                                                     "interest_amount":  0,
-                                                     "balance_amount":  0,
-                                                     "apr":  0
-                                                 },
-                                 "Liabilities:CreditCard":  {
-                                                                "group":  "Liabilities:CreditCard",
-                                                                "drawn_amount":  495,
-                                                                "repaid_amount":  495,
-                                                                "interest_amount":  0,
-                                                                "balance_amount":  0,
-                                                                "apr":  0
-                                                            },
-                                 "Liabilities:CreditCard:Visa":  {
-                                                                     "group":  "Liabilities:CreditCard:Visa",
-                                                                     "drawn_amount":  495,
-                                                                     "repaid_amount":  495,
-                                                                     "interest_amount":  0,
-                                                                     "balance_amount":  0,
-                                                                     "apr":  0
-                                                                 }
-                             }
+  "liability_breakdowns": {
+    "Liabilities": {
+      "group": "Liabilities",
+      "drawn_amount": 495,
+      "repaid_amount": 495,
+      "interest_amount": 0,
+      "balance_amount": 0,
+      "apr": 0
+    },
+    "Liabilities:CreditCard": {
+      "group": "Liabilities:CreditCard",
+      "drawn_amount": 495,
+      "repaid_amount": 495,
+      "interest_amount": 0,
+      "balance_amount": 0,
+      "apr": 0
+    },
+    "Liabilities:CreditCard:Visa": {
+      "group": "Liabilities:CreditCard:Visa",
+      "drawn_amount": 495,
+      "repaid_amount": 495,
+      "interest_amount": 0,
+      "balance_amount": 0,
+      "apr": 0
+    }
+  }
 }

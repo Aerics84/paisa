@@ -11,11 +11,12 @@
 
 <div class="du-tabs du-tabs-boxed du-tabs-sm">
   {#each options as option}
-    <a
+    <button
       class="du-tab {option.value === value ? 'du-tab-active' : ''}"
+      type="button"
       on:click={() => (value = option.value)}
     >
       {option.label}
-    </a>
+    </button>
   {/each}
 </div>
