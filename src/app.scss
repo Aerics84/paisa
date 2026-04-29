@@ -30,6 +30,7 @@ $editor-full-height: calc(100vh - 45.5px - 7px - 15.75px - 21px - 57.75px - 10.5
 @import "bulma/bulma.sass";
 @import "bulma-switch/src/sass/index.sass";
 @import "@cityssm/bulma-sticky-table/sticky-table";
+@import "./paisa-dashboard-overview";
 
 $backgroundColor: $white;
 $borderColor: none;
@@ -163,25 +164,26 @@ $footerActiveColor: #d00;
 
 html,
 body {
-  background: $white-bis;
-  background-image: radial-gradient(rgba($grey-light, 0.2) 1px, $white-bis 1px);
-  background-size: 20px 20px;
+  background: var(--app-bg);
+  background-image: radial-gradient(var(--app-grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--app-text);
   min-height: 100vh;
 }
 
 .is-primary-color {
-  color: #b388ff;
+  color: var(--app-accent);
   font-weight: bold;
 
   &:hover {
-    color: #b388ff;
+    color: var(--app-accent);
   }
 }
 
 .secondary-link {
-  color: $grey-dark;
+  color: var(--app-text-muted);
   &:hover {
-    color: $link;
+    color: var(--app-accent);
     text-decoration: underline;
   }
 }
@@ -1198,5 +1200,384 @@ div.is-hoverable:hover {
 
   .nfc {
     color: $black;
+  }
+}
+
+.paisa-app-frame {
+  min-height: 100vh;
+}
+
+.paisa-shell-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 13.6rem;
+  background: linear-gradient(
+    180deg,
+    var(--app-sidebar),
+    color-mix(in srgb, var(--app-sidebar) 92%, var(--app-canvas))
+  );
+  background-color: var(--app-sidebar);
+  border-right: 1px solid var(--app-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.55rem 0.95rem 1.15rem;
+  z-index: 30;
+  overflow-y: auto;
+}
+
+.paisa-shell-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.1rem 0.55rem 1.65rem;
+  color: var(--app-sidebar-active-text);
+}
+
+.paisa-shell-sidebar__nav,
+.paisa-shell-sidebar__utility {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.paisa-shell-sidebar__nav {
+  flex: 1;
+}
+
+.paisa-shell-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 3.05rem;
+  padding: 0.78rem 0.9rem 0.78rem 1.05rem;
+  border-radius: 0.65rem;
+  color: var(--app-sidebar-text);
+  position: relative;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.paisa-shell-sidebar__link:hover {
+  background: var(--app-sidebar-muted);
+  color: var(--app-sidebar-active-text);
+}
+
+.paisa-shell-sidebar__link.is-active {
+  background: var(--app-sidebar-active-bg);
+  color: var(--app-sidebar-active-text);
+  box-shadow: none;
+}
+
+.paisa-shell-sidebar__link.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--app-accent);
+}
+
+.paisa-shell-sidebar__icon {
+  width: 1.4rem;
+  text-align: center;
+  color: inherit;
+}
+
+.paisa-shell-sidebar__footer {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--app-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.paisa-shell-sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.3rem 0.2rem 0.1rem;
+  color: var(--app-sidebar-text);
+  min-width: 0;
+}
+
+.paisa-shell-sidebar__profile > div:last-child {
+  min-width: 0;
+}
+
+.paisa-shell-sidebar__profile > div:last-child > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paisa-shell-sidebar__avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--app-sidebar-active-text);
+  font-weight: 600;
+}
+
+.paisa-shell-sidebar__profile-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-sidebar-active-text);
+  font-weight: 500;
+}
+
+.paisa-shell-content {
+  margin-left: 13.6rem;
+  min-height: 100vh;
+  padding: 1.4rem 2.5rem 2.25rem;
+}
+
+.paisa-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.5rem;
+  align-items: center;
+  margin-left: 13.6rem;
+  padding: 1.05rem 2.5rem 1.35rem;
+  margin-bottom: 1.15rem;
+  min-height: 6.35rem;
+  position: sticky;
+  top: 0;
+  z-index: 24;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-bg) 96%, rgba(10, 18, 30, 0.92)),
+    color-mix(in srgb, var(--app-bg) 90%, transparent)
+  );
+  backdrop-filter: blur(18px);
+}
+
+.paisa-topbar__context {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.paisa-topbar__context--overview {
+  justify-content: center;
+}
+
+.paisa-topbar__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.paisa-topbar__title {
+  font-size: 2.2rem;
+  line-height: 1.1;
+  color: #f8fbff;
+  font-weight: 700;
+  text-shadow: 0 1px 12px rgba(3, 8, 16, 0.45);
+}
+
+.paisa-topbar__subtitle {
+  color: #deebfa;
+  font-size: 1.02rem;
+  font-weight: 500;
+}
+
+.paisa-topbar__context--tools {
+  gap: 0.45rem;
+  justify-self: end;
+  align-items: flex-end;
+  min-width: fit-content;
+}
+
+.paisa-topbar__controls,
+.paisa-topbar__filters {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.paisa-topbar__controls {
+  min-width: fit-content;
+}
+
+.paisa-topbar__controls .button,
+.paisa-topbar__controls .select select,
+.paisa-topbar__filters .button,
+.paisa-topbar__filters .select select {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  color: var(--app-text);
+  border-radius: 0.75rem;
+  min-height: 2.15rem;
+}
+
+.paisa-topbar__controls .month-picker > .dropdown-trigger > .button,
+.paisa-topbar__controls .month-picker .dropdown-trigger > .button,
+.paisa-topbar__controls .month-picker + .button,
+.paisa-topbar__controls .month-picker ~ .button {
+  border-radius: 0.7rem;
+}
+
+.paisa-topbar__controls > .dropdown .dropdown-trigger .button,
+.paisa-topbar__filters > .dropdown .dropdown-trigger .button,
+.paisa-topbar__controls > .dropdown-trigger .button,
+.paisa-topbar__filters > .dropdown-trigger .button {
+  width: 2.15rem;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0;
+}
+
+.paisa-topbar__controls .month-picker {
+  flex: 0 0 auto;
+}
+
+.paisa-topbar__controls .month-picker .dropdown-trigger .button {
+  width: auto;
+  min-width: 8.2rem;
+  padding-inline: 0.85rem;
+}
+
+.paisa-topbar__controls .theme-toggle {
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--app-border);
+  border-radius: 0.75rem;
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.paisa-topbar__icon-button {
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
+}
+
+.paisa-topbar--overview {
+  padding-top: 1.05rem;
+  padding-bottom: 1.4rem;
+}
+
+.paisa-topbar--overview .paisa-topbar__context:first-child {
+  min-height: 0;
+}
+
+.paisa-topbar--overview .paisa-topbar__controls {
+  gap: 0.35rem;
+}
+
+.paisa-topbar--overview .paisa-topbar__title {
+  font-size: 2.28rem;
+  color: #f8fbff;
+}
+
+.paisa-topbar--overview .paisa-topbar__subtitle {
+  color: #deebfa;
+  font-size: 1.04rem;
+}
+
+.paisa-dashboard {
+  --dashboard-section-padding-x: 1.95rem;
+  --dashboard-section-padding-y: 1.65rem;
+  --dashboard-zone-padding-x: 1.65rem;
+  --dashboard-support-padding-x: 1.5rem;
+  --dashboard-divider-inset: 1.95rem;
+  --dashboard-hero-gap: 0.95rem;
+  --dashboard-hero-margin-bottom: 0.55rem;
+  --dashboard-hero-min-height: 20.5rem;
+  --dashboard-text-strong: #f8fbff;
+  --dashboard-text-bright: #e4eefb;
+  --dashboard-text-soft: #d5e1f1;
+  --dashboard-text-muted: #b9cade;
+  --dashboard-text-subtle: #95a8c2;
+  --dashboard-warning-strong: #fbbf24;
+  --dashboard-danger-strong: #fb7185;
+  --dashboard-stat-strip-columns: minmax(0, 0.82fr) minmax(0, 0.82fr) minmax(0, 0.88fr)
+    minmax(0, 0.88fr) minmax(0, 0.92fr) minmax(0, 1.28fr);
+  --dashboard-stat-strip-padding: 0.45rem 0 0.8rem;
+  background: radial-gradient(circle at 25% 0%, rgba(45, 212, 191, 0.06), transparent 28rem),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-canvas) 90%, transparent),
+      var(--app-canvas)
+    );
+  border: 1px solid var(--app-border);
+  border-radius: 1.05rem;
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.paisa-dashboard__section {
+  padding: var(--dashboard-section-padding-y) var(--dashboard-section-padding-x);
+}
+
+.paisa-dashboard__section + .paisa-dashboard__section {
+  border-top: 1px solid var(--app-border);
+}
+
+.paisa-dashboard__band {
+  display: grid;
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+.paisa-dashboard__band--middle {
+  grid-template-columns: 1.18fr 1.08fr 0.98fr;
+}
+
+.paisa-dashboard__band--bottom {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.paisa-surface-split > * + * {
+  border-left: 1px solid var(--app-border);
+}
+
+@media (max-width: 1087px) {
+  .paisa-shell-sidebar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--app-sidebar-border);
+  }
+
+  .paisa-shell-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .paisa-topbar {
+    grid-template-columns: 1fr;
+    position: static;
+    margin-left: 0;
+    margin: 0 0 1.15rem;
+    padding: 0 0 1.1rem;
+    min-height: 0;
+    backdrop-filter: none;
+  }
+
+  .paisa-dashboard__band--middle,
+  .paisa-dashboard__band--bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .paisa-surface-split > * + * {
+    border-left: none;
+    border-top: 1px solid var(--app-border);
   }
 }

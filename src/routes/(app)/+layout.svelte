@@ -6,8 +6,6 @@
   import Navbar from "$lib/components/Navbar.svelte";
   import { willClearTippy, willRefresh } from "../../store";
 
-  let isBurger: boolean = null;
-
   function clearTippy() {
     hideAll();
   }
@@ -50,15 +48,18 @@
   });
 
   afterNavigate(() => {
-    isBurger = null;
     setupTippy();
   });
 </script>
 
 {#key $willRefresh}
-  <Navbar bind:isBurger />
+  <div class="paisa-app-frame">
+    <Navbar />
 
-  <Spinner>
-    <slot />
-  </Spinner>
+    <div class="paisa-shell-content">
+      <Spinner>
+        <slot />
+      </Spinner>
+    </div>
+  </div>
 {/key}

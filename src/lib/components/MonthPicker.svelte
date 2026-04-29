@@ -6,6 +6,7 @@
   export let min: dayjs.Dayjs;
   export let max: dayjs.Dayjs;
   export let value: string;
+  export let compact = false;
 
   let allowedYears: number[] = [];
   let selectedYear: number;
@@ -61,19 +62,22 @@
   ];
 </script>
 
-<div class="is-flex">
-  <button
-    class="button is-small border-left"
-    disabled={!isAllowed(valueDate.add(-1, "month"), min, max)}
-    on:click={(_e) => select(valueDate.add(-1, "month"))}
-  >
-    <span class="icon">
-      <i class="fas fa-chevron-left" />
-    </span>
-  </button>
+<div class="is-flex month-picker-shell">
+  {#if !compact}
+    <button
+      class="button is-small border-left"
+      disabled={!isAllowed(valueDate.add(-1, "month"), min, max)}
+      on:click={(_e) => select(valueDate.add(-1, "month"))}
+    >
+      <span class="icon">
+        <i class="fas fa-chevron-left" />
+      </span>
+    </button>
+  {/if}
   <div class="dropdown is-right month-picker is-small" class:is-active={open}>
     <div class="dropdown-trigger">
       <button
+        class:compact
         class="button is-small border-none"
         aria-haspopup="true"
         aria-controls="dropdown-menu2"
@@ -142,15 +146,17 @@
       </div>
     </div>
   </div>
-  <button
-    class="button is-small border-right"
-    disabled={!isAllowed(valueDate.add(1, "month"), min, max)}
-    on:click={(_e) => select(valueDate.add(1, "month"))}
-  >
-    <span class="icon">
-      <i class="fas fa-chevron-right" />
-    </span>
-  </button>
+  {#if !compact}
+    <button
+      class="button is-small border-right"
+      disabled={!isAllowed(valueDate.add(1, "month"), min, max)}
+      on:click={(_e) => select(valueDate.add(1, "month"))}
+    >
+      <span class="icon">
+        <i class="fas fa-chevron-right" />
+      </span>
+    </button>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -165,5 +171,19 @@
       box-shadow: none;
       outline: none;
     }
+  }
+
+  .button.compact {
+    border-radius: 0.75rem !important;
+    padding-inline: 0.85rem;
+    min-width: 8.2rem;
+    height: 2.15rem;
+    justify-content: space-between;
+    gap: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .month-picker-shell {
+    min-width: max-content;
   }
 </style>

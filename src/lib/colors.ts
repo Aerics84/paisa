@@ -299,28 +299,142 @@ const MaterialUI = {
 };
 
 const COLORS = {
-  gain: "#b2df8a",
-  gainText: "#48c78e",
-  loss: "#fb9a99",
-  lossText: "#f14668",
-  danger: "#cc0f35",
-  success: "#257953",
-  warn: "#ffe08a",
-  warnText: "#946c00",
-  diff: "#4a4a4a",
+  gain: "#9cefc7",
+  gainText: "#38c98f",
+  loss: "#ffb1ad",
+  lossText: "#ff6b6b",
+  danger: "#ef4444",
+  success: "#109669",
+  warn: "#ffd66b",
+  warnText: "#c28515",
+  diff: "#64748b",
 
   // accounts
-  primary: MaterialUI.deeppurple.a100,
-  secondary: MaterialUI.lightblue.a400,
-  tertiary: MaterialUI.amber.a400,
-  neutral: "hsl(0, 0%, 48%)",
-  assets: MaterialUI.lightblue.a400,
-  expenses: MaterialUI.red.a400,
-  income: MaterialUI.lime.a700,
-  liabilities: MaterialUI.amber.a700,
-  equity: MaterialUI.purple.a400
+  primary: "#2dd4bf",
+  secondary: "#60a5fa",
+  tertiary: "#fbbf24",
+  neutral: "#94a3b8",
+  assets: "#38bdf8",
+  expenses: "#fb923c",
+  income: "#84cc16",
+  liabilities: "#f59e0b",
+  equity: "#5b8def"
 };
 export default COLORS;
+
+type CategoryVisual = {
+  icon: string;
+  color: string;
+  aliases?: string[];
+};
+
+const CATEGORY_VISUAL_ENTRIES: Record<string, CategoryVisual> = {
+  housing: {
+    icon: "fa-house",
+    color: "#2dd4bf",
+    aliases: ["rent", "home", "mortgage", "house"]
+  },
+  groceries: {
+    icon: "fa-basket-shopping",
+    color: "#60a5fa",
+    aliases: ["grocery", "supermarket", "food"]
+  },
+  transport: {
+    icon: "fa-bus",
+    color: "#f59e0b",
+    aliases: ["travel", "commute", "fuel", "mobility"]
+  },
+  dining: {
+    icon: "fa-utensils",
+    color: "#fb7185",
+    aliases: ["restaurants", "restaurant", "eating out"]
+  },
+  utilities: {
+    icon: "fa-bolt",
+    color: "#facc15",
+    aliases: ["bills", "electricity", "water", "internet", "phone"]
+  },
+  shopping: {
+    icon: "fa-bag-shopping",
+    color: "#a78bfa",
+    aliases: ["retail", "amazon", "clothing"]
+  },
+  health: {
+    icon: "fa-heart-pulse",
+    color: "#fb7185",
+    aliases: ["medical", "doctor", "fitness"]
+  },
+  entertainment: {
+    icon: "fa-film",
+    color: "#c084fc",
+    aliases: ["fun", "leisure", "streaming"]
+  },
+  savings: {
+    icon: "fa-piggy-bank",
+    color: "#34d399",
+    aliases: ["saving", "reserve"]
+  },
+  other: {
+    icon: "fa-ellipsis",
+    color: "#94a3b8",
+    aliases: ["misc", "miscellaneous", "unknown"]
+  }
+};
+
+const CATEGORY_LOOKUP = _.fromPairs(
+  Object.entries(CATEGORY_VISUAL_ENTRIES).flatMap(([key, value]) =>
+    [key].concat(value.aliases || []).map((alias) => [alias, key])
+  )
+);
+
+const CATEGORY_FALLBACKS = [
+  "#2dd4bf",
+  "#60a5fa",
+  "#f59e0b",
+  "#fb7185",
+  "#a78bfa",
+  "#facc15",
+  "#34d399",
+  "#38bdf8",
+  "#f97316",
+  "#c084fc"
+];
+
+function normalizeCategory(category: string) {
+  return category?.toLowerCase().trim() || "other";
+}
+
+function resolvedCategoryKey(category: string) {
+  return CATEGORY_LOOKUP[normalizeCategory(category)] || normalizeCategory(category);
+}
+
+export function categoryVisual(category: string, fallbackIndex = 0): CategoryVisual {
+  const key = resolvedCategoryKey(category);
+  const known = CATEGORY_VISUAL_ENTRIES[key];
+  if (known) {
+    return known;
+  }
+
+  return {
+    icon: "fa-circle",
+    color: CATEGORY_FALLBACKS[Math.abs(fallbackIndex) % CATEGORY_FALLBACKS.length]
+  };
+}
+
+export function categoryColor(category: string, fallbackIndex = 0) {
+  return categoryVisual(category, fallbackIndex).color;
+}
+
+export function categoryIcon(category: string, fallbackIndex = 0) {
+  return categoryVisual(category, fallbackIndex).icon;
+}
+
+export function categoryColorScale(categories: string[]) {
+  return d3
+    .scaleOrdinal<string>()
+    .domain(categories)
+    .range(categories.map((category, index) => categoryColor(category, index)));
+}
 
 export function generateColorScheme(domain: string[]) {
   let colors: string[];

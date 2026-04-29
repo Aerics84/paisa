@@ -7,4 +7,35 @@ $diff-del-bg-dark: rgba(229, 83, 75, 0.4);
 
 $card-header-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
 
+:root {
+  color-scheme: light;
+  --app-bg: #f3f6fb;
+  --app-canvas: #fcfdff;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f5f7fb;
+  --app-surface-strong: #eef3f8;
+  --app-sidebar: #f8fbff;
+  --app-sidebar-muted: rgba(148, 163, 184, 0.16);
+  --app-sidebar-text: #405066;
+  --app-sidebar-active-text: #0f172a;
+  --app-sidebar-active-bg: rgba(15, 118, 110, 0.12);
+  --app-sidebar-border: rgba(148, 163, 184, 0.18);
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-text-subtle: #94a3b8;
+  --app-border: rgba(148, 163, 184, 0.18);
+  --app-border-strong: rgba(100, 116, 139, 0.22);
+  --app-accent: #0f766e;
+  --app-accent-soft: rgba(15, 118, 110, 0.12);
+  --app-accent-secondary: #2563eb;
+  --app-positive: #059669;
+  --app-positive-soft: rgba(5, 150, 105, 0.14);
+  --app-warning: #d97706;
+  --app-warning-soft: rgba(217, 119, 6, 0.14);
+  --app-danger: #dc2626;
+  --app-danger-soft: rgba(220, 38, 38, 0.14);
+  --app-shadow-soft: 0 16px 32px rgba(15, 23, 42, 0.06);
+  --app-grid-line: rgba(148, 163, 184, 0.12);
+}
+
 @import "./app.scss";

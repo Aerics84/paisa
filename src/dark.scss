@@ -31,6 +31,33 @@ html[data-theme="dark"] {
   &:root {
     color-scheme: dark;
     --fa-border-color: hsl(0, 0%, 15%);
+    --app-bg: #07111c;
+    --app-canvas: #0c1826;
+    --app-surface: #101d2c;
+    --app-surface-muted: #132233;
+    --app-surface-strong: #223244;
+    --app-sidebar: #08131f;
+    --app-sidebar-muted: rgba(148, 163, 184, 0.07);
+    --app-sidebar-text: rgba(226, 232, 240, 0.8);
+    --app-sidebar-active-text: #ecfeff;
+    --app-sidebar-active-bg: rgba(45, 212, 191, 0.13);
+    --app-sidebar-border: rgba(148, 163, 184, 0.07);
+    --app-text: #e8edf5;
+    --app-text-muted: #a6b5c7;
+    --app-text-subtle: #748399;
+    --app-border: rgba(148, 163, 184, 0.1);
+    --app-border-strong: rgba(148, 163, 184, 0.16);
+    --app-accent: #28d7cd;
+    --app-accent-soft: rgba(45, 212, 191, 0.12);
+    --app-accent-secondary: #3c89ff;
+    --app-positive: #4ad59a;
+    --app-positive-soft: rgba(56, 201, 143, 0.14);
+    --app-warning: #f2b94d;
+    --app-warning-soft: rgba(240, 181, 72, 0.14);
+    --app-danger: #ff6f66;
+    --app-danger-soft: rgba(255, 107, 107, 0.16);
+    --app-shadow-soft: 0 18px 40px rgba(3, 8, 16, 0.24);
+    --app-grid-line: rgba(148, 163, 184, 0.055);
   }
 
   @import "./app.scss";
