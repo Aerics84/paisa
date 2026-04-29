@@ -27,13 +27,20 @@ function resolveCommand(command) {
 
 export function run(rootDir, command, args, extra = {}) {
   const resolvedCommand = resolveCommand(command);
-  const result = spawnSync(resolvedCommand, args, {
+  const options = {
     cwd: rootDir,
     encoding: "utf8",
     stdio: extra.captureOutput ? ["ignore", "pipe", "pipe"] : "inherit",
-    shell: process.platform === "win32" && resolvedCommand.endsWith(".cmd"),
     ...extra
-  });
+  };
+  const result =
+    process.platform === "win32" && resolvedCommand.endsWith(".cmd")
+      ? spawnSync(
+          process.env.ComSpec || "cmd.exe",
+          ["/d", "/s", "/c", resolvedCommand, ...args],
+          options
+        )
+      : spawnSync(resolvedCommand, args, options);
 
   if (result.error) {
     throw result.error;
