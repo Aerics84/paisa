@@ -10,6 +10,17 @@ const fixture = "tests/fixture";
 const port = 5700;
 axios.defaults.baseURL = `http://localhost:${port}`;
 
+function isUnavailableLedgerTooling(message: string | undefined) {
+  if (process.platform !== "win32" || !message) {
+    return false;
+  }
+
+  return (
+    /(ledger\.exe|hledger|bean-check|bean-query|bean-report)/i.test(message) &&
+    /(not compatible|nicht kompatibel|not found|cannot find|not recognized|enoent)/i.test(message)
+  );
+}
+
 function updateConfig(dir: string, from: string, to: string) {
   const filename = path.join(dir, "paisa.yaml");
   let config = fs.readFileSync(filename).toString();
@@ -36,8 +47,11 @@ async function recordAndVerify(dir: string, route: string, name: string) {
 
 async function verifyApi(dir: string) {
   const {
-    data: { success }
+    data: { success, message }
   } = await axios.post("/api/sync", { journal: true });
+  if (!success && isUnavailableLedgerTooling(message)) {
+    return;
+  }
   expect(success).toBe(true);
 
   await recordAndVerify(dir, "/api/dashboard", "dashboard");
