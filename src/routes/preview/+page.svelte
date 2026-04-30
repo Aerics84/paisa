@@ -71,6 +71,15 @@
   let networthOverview: Networth;
   let networthTimeline: Networth[] = [];
   let loadError = false;
+  let checkingState: WidgetState = "insufficient-data";
+  let networthTrendState: WidgetState = "insufficient-data";
+  let oneYearState: WidgetState = "insufficient-data";
+  let spendingState: WidgetState = "insufficient-data";
+  let driverState: WidgetState = "insufficient-data";
+  let reserveState: WidgetState = "insufficient-data";
+  let budgetState: WidgetState = "insufficient-data";
+  let recurringState: WidgetState = "insufficient-data";
+  let goalState: WidgetState = "insufficient-data";
 
   async function initDemo() {
     await ajax("/api/init", {
@@ -277,9 +286,9 @@
   $: hasCheckingHistory = hasEnoughPoints(checkingSeries);
   $: hasNetworthHistory = hasEnoughPoints(equitySeries);
   $: hasOneYearHistory = hasEnoughPoints(oneYearSeries);
-  $: checkingState: WidgetState = hasCheckingHistory ? "ready" : "insufficient-data";
-  $: networthTrendState: WidgetState = hasNetworthHistory ? "ready" : "insufficient-data";
-  $: oneYearState: WidgetState = hasOneYearHistory ? "ready" : "insufficient-data";
+  $: checkingState = hasCheckingHistory ? "ready" : "insufficient-data";
+  $: networthTrendState = hasNetworthHistory ? "ready" : "insufficient-data";
+  $: oneYearState = hasOneYearHistory ? "ready" : "insufficient-data";
   $: checkingValueTicks = hasCheckingHistory ? sparklineValueTicks(checkingSeries) : [];
   $: equityValueTicks = hasNetworthHistory ? sparklineValueTicks(equitySeries) : [];
   $: checkingDateTicks = hasCheckingHistory ? sparklineDateLabels(cashFlows) : [];
@@ -299,7 +308,7 @@
         .value()
     : [];
   $: hasPreviousExpenseMonth = _.has(groupedExpenses, previousMonthKey(monthKey));
-  $: spendingState: WidgetState = currentExpenses.length ? "ready" : "insufficient-data";
+  $: spendingState = currentExpenses.length ? "ready" : "insufficient-data";
   $: expensePie = d3
     .pie<CategorySummary>()
     .sort(null)
@@ -345,7 +354,7 @@
           tone: "warning",
           deltaLabel: "Need at least two months of expense history",
           state: "insufficient-data",
-          series: []
+          series: [] as number[]
         },
     hasCategoryInsight
       ? {
@@ -366,7 +375,7 @@
           tone: "warning",
           deltaLabel: "Need repeated category history",
           state: "insufficient-data",
-          series: []
+          series: [] as number[]
         },
     hasNetworthInsight
       ? {
@@ -392,7 +401,7 @@
           tone: "warning",
           deltaLabel: "Need at least two snapshots",
           state: "insufficient-data",
-          series: []
+          series: [] as number[]
         }
   ] satisfies InsightItem[];
 
@@ -413,7 +422,7 @@
     latestNetworthPoint && previousNetworthPoint
       ? latestNetworthPoint.netInvestmentAmount - previousNetworthPoint.netInvestmentAmount
       : 0;
-  $: driverState: WidgetState = previousNetworthPoint ? "ready" : "insufficient-data";
+  $: driverState = previousNetworthPoint ? "ready" : "insufficient-data";
   $: driverBase = previousNetworthPoint
     ? [
         {
@@ -443,7 +452,7 @@
     .filter((value) => value > 0)
     .value();
   $: averageMonthlyExpense = recentExpenseTotals.length ? _.mean(recentExpenseTotals) : 0;
-  $: reserveState: WidgetState = averageMonthlyExpense > 0 ? "ready" : "insufficient-data";
+  $: reserveState = averageMonthlyExpense > 0 ? "ready" : "insufficient-data";
   $: reserveMonths = reserveState === "ready" ? checkingTotal / averageMonthlyExpense : 0;
   $: budgetPressure = _.chain(currentBudget?.accounts || [])
     .filter((account) => account.budgeted > 0)
@@ -467,7 +476,7 @@
     .orderBy(["percent"], ["desc"])
     .take(3)
     .value();
-  $: budgetState: WidgetState = !currentBudget?.accounts?.some((account) => account.budgeted > 0)
+  $: budgetState = !currentBudget?.accounts?.some((account) => account.budgeted > 0)
     ? "not-configured"
     : budgetPressure.length
       ? "ready"
@@ -489,13 +498,13 @@
     })
     .filter((item) => item != null)
     .slice(0, 3);
-  $: recurringState: WidgetState = recurringOutlook.length ? "ready" : "insufficient-data";
+  $: recurringState = recurringOutlook.length ? "ready" : "insufficient-data";
 
   $: goalProgress = goalSummaries.slice(0, 3).map((goal) => ({
     name: goal.name,
     percent: goal.target === 0 ? 0 : Math.round((goal.current / goal.target) * 100)
   }));
-  $: goalState: WidgetState = goalSummaries.length
+  $: goalState = goalSummaries.length
     ? goalProgress.length
       ? "ready"
       : "insufficient-data"
