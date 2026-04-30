@@ -284,7 +284,9 @@
   $: greeting =
     currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
   $: contextSubtitle = isOverview
-    ? `${greeting}, Arjun`
+    ? sidebarIdentity
+      ? `${greeting}, ${sidebarIdentity}`
+      : "Live preview dashboard"
     : selectedLink && selectedSubLink
       ? `${selectedLink.label} - ${selectedSubLink.label}`
       : "Track your finances with a calmer workspace.";

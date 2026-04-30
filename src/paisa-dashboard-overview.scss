@@ -264,6 +264,18 @@
   gap: 0.5rem;
 }
 
+.paisa-spark-card__empty,
+.paisa-stat-strip__empty {
+  color: var(--app-text-subtle);
+  font-size: 0.84rem;
+}
+
+.paisa-spark-card__empty {
+  min-height: 8.2rem;
+  display: grid;
+  align-content: center;
+}
+
 .paisa-spark-card__x-axis {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -370,6 +382,37 @@
 .paisa-dashboard__footer {
   color: var(--app-text-subtle);
   font-size: 0.84rem;
+}
+
+.paisa-zone__empty,
+.paisa-support__empty {
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  color: var(--dashboard-text-muted);
+}
+
+.paisa-zone__empty {
+  min-height: 12rem;
+}
+
+.paisa-support__empty {
+  flex: 1;
+}
+
+.paisa-zone__empty strong,
+.paisa-support__empty strong {
+  color: var(--dashboard-text-strong);
+  font-weight: 650;
+}
+
+.paisa-zone__empty p,
+.paisa-support__empty p {
+  margin: 0;
+}
+
+.paisa-zone__empty-link {
+  align-self: flex-start;
 }
 
 .paisa-zone__subtle--selectable {

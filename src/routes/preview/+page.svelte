@@ -29,7 +29,7 @@
     type TransactionSequence,
     now
   } from "$lib/utils";
-  import { refresh } from "../../store";
+  import { month, refresh } from "../../store";
 
   type CategorySummary = {
     category: string;
@@ -46,50 +46,20 @@
     description: string;
     tone: InsightTone;
     deltaLabel: string;
+    state: "ready" | "insufficient-data";
     series: number[];
   };
 
-  type DriverItem = {
+  type WidgetState = "ready" | "insufficient-data" | "not-configured";
+
+  type DriverDisplayItem = {
     label: string;
     value: number;
     icon: string;
-    placeholderRatio?: number;
-  };
-
-  type DriverDisplayItem = DriverItem & {
     widthPercent: number;
-    tone: "positive" | "negative" | "placeholder";
-    isPlaceholder: boolean;
+    tone: "positive" | "negative";
   };
-
-  const previewSeries = {
-    checking: [11200, 13400, 14900, 16200, 15800, 17100, 18350, 19600],
-    equity: [188000, 201000, 209500, 216000, 220500, 228200, 233800, 241400],
-    yearly: [
-      182000, 188500, 191000, 199000, 204000, 211000, 217500, 222000, 228000, 231500, 236000, 243680
-    ],
-    spending: [4180, 3960, 3875, 3742, 3610, 3580],
-    category: [280, 310, 298, 336, 351, 368],
-    positive: [24, 28, 29, 33, 36, 44],
-    warning: [16, 19, 18, 22, 21, 27],
-    negative: [31, 28, 27, 25, 22, 19]
-  };
-
-  const previewDateTicks = ["Apr 18", "Apr 25", "May 2", "May 9", "May 16"];
   const heroChartHeight = 112;
-
-  const placeholderExpenseCategories = [
-    { category: "Housing", total: 1210, delta: 0.12 },
-    { category: "Groceries", total: 652, delta: -0.08 },
-    { category: "Transport", total: 410, delta: -0.04 },
-    { category: "Dining", total: 368, delta: 0.18 },
-    { category: "Utilities", total: 245, delta: 0.09 },
-    { category: "Shopping", total: 237, delta: -0.03 },
-    { category: "Other", total: 620, delta: 0 }
-  ].map((category, index) => ({
-    ...category,
-    ...categoryVisual(category.category, index)
-  }));
 
   let cashFlows: CashFlow[] = [];
   let checkingBalances: Record<string, AssetBreakdown> = {};
@@ -100,10 +70,7 @@
   let liabilityBreakdowns: LiabilityBreakdown[] = [];
   let networthOverview: Networth;
   let networthTimeline: Networth[] = [];
-  let isEmpty = false;
   let loadError = false;
-
-  const monthKey = now().format("YYYY-MM");
 
   async function initDemo() {
     await ajax("/api/init", {
@@ -135,12 +102,9 @@
       networthOverview = dashboard.networth.networth;
       networthTimeline = networthResponse.networthTimeline;
       liabilityBreakdowns = liabilitiesResponse.liability_breakdowns;
-      isEmpty =
-        _.isEmpty(dashboard.expenses) && _.isEmpty(transactionSequences) && !networthOverview;
       loadError = false;
     } catch (_error) {
       loadError = true;
-      isEmpty = true;
     }
   });
 
@@ -220,8 +184,8 @@
     return point?.investmentAmount + point?.gainAmount - point?.withdrawalAmount;
   }
 
-  function hasSignal(values: number[]) {
-    return values.length > 1 && values.some((value) => Math.abs(value) > 0);
+  function hasEnoughPoints(values: number[], min = 2) {
+    return values.filter((value) => Number.isFinite(value)).length >= min;
   }
 
   function sparklineValueTicks(values: number[], count = 3, height = heroChartHeight) {
@@ -254,13 +218,9 @@
     return _.uniq(_.range(count).map((index) => Math.round((index * (length - 1)) / (count - 1))));
   }
 
-  function sparklineDateLabels(
-    points: Array<{ date: unknown }>,
-    fallback = previewDateTicks,
-    count = 5
-  ) {
+  function sparklineDateLabels(points: Array<{ date: unknown }>, count = 5) {
     if (!points?.length) {
-      return fallback;
+      return [];
     }
 
     const recent = _.takeRight(points, Math.max(count, Math.min(points.length, 8)));
@@ -268,9 +228,14 @@
       .map((index) => dayjs(recent[index]?.date as Parameters<typeof dayjs>[0]).format("MMM D"))
       .filter((label) => label !== "Invalid Date");
 
-    return labels.length >= 4 ? labels : fallback;
+    return labels;
   }
 
+  function classifyDriver(value: number) {
+    return value >= 0 ? "positive" : "negative";
+  }
+
+  $: monthKey = $month || now().format("YYYY-MM");
   $: currentBudget = budgetsByMonth[monthKey];
   $: currentExpenses = groupedExpenses[monthKey] || [];
   $: previousExpenses = groupedExpenses[previousMonthKey(monthKey)] || [];
@@ -287,8 +252,8 @@
   $: previousNetworthValue = previousNetworthPoint
     ? networthValue(previousNetworthPoint)
     : currentNetworthValue;
-  $: assetsTotal = checkingTotal + currentNetworthValue;
   $: liabilitiesTotal = _.sumBy(liabilityBreakdowns, (breakdown) => breakdown.balance_amount);
+  $: assetsTotal = currentNetworthValue + liabilitiesTotal;
   $: cashFlowLatest = _.last(cashFlows);
   $: cashFlowMonthToDate = cashFlowLatest
     ? cashFlowLatest.income -
@@ -309,20 +274,16 @@
     networthTimeline.map((point) => networthValue(point)),
     12
   );
-  $: previewMode =
-    currentNetworthValue === 0 &&
-    checkingTotal === 0 &&
-    totalSpent === 0 &&
-    goalSummaries.length === 0 &&
-    transactionSequences.length === 0 &&
-    networthTimeline.length === 0;
-  $: checkingSeriesDisplay = hasSignal(checkingSeries) ? checkingSeries : previewSeries.checking;
-  $: equitySeriesDisplay = hasSignal(equitySeries) ? equitySeries : previewSeries.equity;
-  $: oneYearSeriesDisplay = hasSignal(oneYearSeries) ? oneYearSeries : previewSeries.yearly;
-  $: checkingValueTicks = sparklineValueTicks(checkingSeriesDisplay);
-  $: equityValueTicks = sparklineValueTicks(equitySeriesDisplay);
-  $: checkingDateTicks = sparklineDateLabels(cashFlows);
-  $: equityDateTicks = sparklineDateLabels(networthTimeline);
+  $: hasCheckingHistory = hasEnoughPoints(checkingSeries);
+  $: hasNetworthHistory = hasEnoughPoints(equitySeries);
+  $: hasOneYearHistory = hasEnoughPoints(oneYearSeries);
+  $: checkingState: WidgetState = hasCheckingHistory ? "ready" : "insufficient-data";
+  $: networthTrendState: WidgetState = hasNetworthHistory ? "ready" : "insufficient-data";
+  $: oneYearState: WidgetState = hasOneYearHistory ? "ready" : "insufficient-data";
+  $: checkingValueTicks = hasCheckingHistory ? sparklineValueTicks(checkingSeries) : [];
+  $: equityValueTicks = hasNetworthHistory ? sparklineValueTicks(equitySeries) : [];
+  $: checkingDateTicks = hasCheckingHistory ? sparklineDateLabels(cashFlows) : [];
+  $: equityDateTicks = hasNetworthHistory ? sparklineDateLabels(networthTimeline) : [];
 
   $: topCategory = _.maxBy(expenseCategories, (category) => Math.abs(category.delta));
   $: monthlyExpenseSeries = _(Object.entries(groupedExpenses))
@@ -337,20 +298,12 @@
         .map(([_date, postings]) => byExpenseGroup(postings)[topCategory.category]?.total || 0)
         .value()
     : [];
-  $: expenseCategoriesDisplay = expenseCategories.length
-    ? expenseCategories
-    : placeholderExpenseCategories;
-  $: totalSpentDisplay = expenseCategories.length ? totalSpent : 0;
+  $: hasPreviousExpenseMonth = _.has(groupedExpenses, previousMonthKey(monthKey));
+  $: spendingState: WidgetState = currentExpenses.length ? "ready" : "insufficient-data";
   $: expensePie = d3
     .pie<CategorySummary>()
     .sort(null)
-    .value((entry) => entry.total)(expenseCategoriesDisplay);
-  $: monthlyExpenseSeriesDisplay = hasSignal(monthlyExpenseSeries)
-    ? monthlyExpenseSeries
-    : previewSeries.spending;
-  $: topCategorySeriesDisplay = hasSignal(topCategorySeries)
-    ? topCategorySeries
-    : previewSeries.category;
+    .value((entry) => entry.total)(expenseCategories);
 
   function toneForExpenseDelta(delta: number): InsightTone {
     if (delta < -0.03) {
@@ -362,128 +315,136 @@
     return "warning";
   }
 
+  $: hasSpendingInsight = hasPreviousExpenseMonth && hasEnoughPoints(monthlyExpenseSeries);
+  $: hasCategoryInsight = !!topCategory && hasEnoughPoints(topCategorySeries);
+  $: hasNetworthInsight = !!previousNetworthPoint;
   $: insights = [
-    {
-      title: totalSpent <= previousTotalSpent ? "Spending improving" : "Spending trending up",
-      description:
-        totalSpent <= previousTotalSpent
-          ? `You spent ${formatPercentage(
-              Math.abs(percentDelta(totalSpent, previousTotalSpent)),
-              0
-            )} less than last month.`
-          : `${formatPercentage(
-              percentDelta(totalSpent, previousTotalSpent),
-              0
-            )} more than last month.`,
-      tone: toneForExpenseDelta(percentDelta(totalSpent, previousTotalSpent)),
-      deltaLabel: `${formatCurrency(totalSpent - previousTotalSpent)} vs last month`,
-      series: monthlyExpenseSeriesDisplay
-    },
-    {
-      title: topCategory
-        ? `${topCategory.category} ${topCategory.delta > 0 ? "trending up" : "cooling off"}`
-        : "Category trend unavailable",
-      description: topCategory
-        ? `${formatPercentage(Math.abs(topCategory.delta), 0)} ${
+    hasSpendingInsight
+      ? {
+          title: totalSpent <= previousTotalSpent ? "Spending improving" : "Spending trending up",
+          description:
+            totalSpent <= previousTotalSpent
+              ? `You spent ${formatPercentage(
+                  Math.abs(percentDelta(totalSpent, previousTotalSpent)),
+                  0
+                )} less than last month.`
+              : `${formatPercentage(
+                  percentDelta(totalSpent, previousTotalSpent),
+                  0
+                )} more than last month.`,
+          tone: toneForExpenseDelta(percentDelta(totalSpent, previousTotalSpent)),
+          deltaLabel: `${formatCurrency(totalSpent - previousTotalSpent)} vs last month`,
+          state: "ready",
+          series: monthlyExpenseSeries
+        }
+      : {
+          title: "Spending trend unavailable",
+          description: hasPreviousExpenseMonth
+            ? "Post expenses in both months to compare spending trends."
+            : "Add another month of expense history to compare spending.",
+          tone: "warning",
+          deltaLabel: "Need at least two months of expense history",
+          state: "insufficient-data",
+          series: []
+        },
+    hasCategoryInsight
+      ? {
+          title: `${topCategory.category} ${topCategory.delta > 0 ? "trending up" : "cooling off"}`,
+          description: `${formatPercentage(Math.abs(topCategory.delta), 0)} ${
             topCategory.delta > 0 ? "higher" : "lower"
-          } than last month.`
-        : "Add more expenses to unlock category trends.",
-      tone: topCategory ? toneForExpenseDelta(topCategory.delta) : "warning",
-      deltaLabel: topCategory ? formatCurrency(topCategory.total) : "No category data",
-      series: topCategorySeriesDisplay
-    },
-    {
-      title:
-        currentNetworthValue >= previousNetworthValue
-          ? "Net worth moving up"
-          : "Net worth under pressure",
-      description:
-        currentNetworthValue >= previousNetworthValue
-          ? "Net worth improved since the last snapshot."
-          : "Net worth declined compared with the last snapshot.",
-      tone: currentNetworthValue >= previousNetworthValue ? "positive" : "negative",
-      deltaLabel: `${formatCurrency(currentNetworthValue - previousNetworthValue)} net change`,
-      series: hasSignal(
-        _.takeRight(
-          networthTimeline.map((point) => networthValue(point)),
-          6
-        )
-      )
-        ? _.takeRight(
+          } than last month.`,
+          tone: toneForExpenseDelta(topCategory.delta),
+          deltaLabel: formatCurrency(topCategory.total),
+          state: "ready",
+          series: topCategorySeries
+        }
+      : {
+          title: "Category trend unavailable",
+          description: currentExpenses.length
+            ? "Keep posting expenses over time to unlock category comparisons."
+            : "Post expenses for the selected month to unlock category trends.",
+          tone: "warning",
+          deltaLabel: "Need repeated category history",
+          state: "insufficient-data",
+          series: []
+        },
+    hasNetworthInsight
+      ? {
+          title:
+            currentNetworthValue >= previousNetworthValue
+              ? "Net worth moving up"
+              : "Net worth under pressure",
+          description:
+            currentNetworthValue >= previousNetworthValue
+              ? "Net worth improved since the last snapshot."
+              : "Net worth declined compared with the last snapshot.",
+          tone: currentNetworthValue >= previousNetworthValue ? "positive" : "negative",
+          deltaLabel: `${formatCurrency(currentNetworthValue - previousNetworthValue)} net change`,
+          state: "ready",
+          series: _.takeRight(
             networthTimeline.map((point) => networthValue(point)),
             6
           )
-        : currentNetworthValue >= previousNetworthValue
-          ? previewSeries.positive
-          : previewSeries.negative
-    }
+        }
+      : {
+          title: "Net worth trend unavailable",
+          description: "Add another net worth snapshot to compare movement over time.",
+          tone: "warning",
+          deltaLabel: "Need at least two snapshots",
+          state: "insufficient-data",
+          series: []
+        }
   ] satisfies InsightItem[];
 
-  $: checkingChange = checkingSeries.length > 1 ? checkingSeries.at(-1) - checkingSeries.at(-2) : 0;
-  $: equityPerformance =
+  $: checkingChange = hasCheckingHistory ? checkingSeries.at(-1) - checkingSeries.at(-2) : null;
+  $: checkingChangePercent = hasCheckingHistory
+    ? percentDelta(checkingSeries.at(-1) || 0, checkingSeries.at(-2) || 0)
+    : null;
+  $: networthChange = previousNetworthPoint ? currentNetworthValue - previousNetworthValue : null;
+  $: networthChangePercent = previousNetworthPoint
+    ? percentDelta(currentNetworthValue, previousNetworthValue)
+    : null;
+  $: networthHistoryMonths = networthTimeline.length;
+  $: investmentGainChange =
     latestNetworthPoint && previousNetworthPoint
       ? latestNetworthPoint.gainAmount - previousNetworthPoint.gainAmount
       : 0;
-  $: newInvestments =
+  $: netContributionChange =
     latestNetworthPoint && previousNetworthPoint
       ? latestNetworthPoint.netInvestmentAmount - previousNetworthPoint.netInvestmentAmount
       : 0;
-  $: savingsAdded = cashFlowMonthToDate;
-  $: marketMovement =
-    currentNetworthValue -
-    previousNetworthValue -
-    equityPerformance -
-    newInvestments -
-    savingsAdded +
-    totalSpent;
-  $: netWorthDrivers = [
-    {
-      label: "Equity performance",
-      value: equityPerformance,
-      icon: "fa-arrow-trend-up",
-      placeholderRatio: 0.68
-    },
-    {
-      label: "New investments",
-      value: newInvestments,
-      icon: "fa-circle-plus",
-      placeholderRatio: 0.42
-    },
-    { label: "Savings added", value: savingsAdded, icon: "fa-piggy-bank", placeholderRatio: 0.23 },
-    { label: "Expenses", value: -totalSpent, icon: "fa-credit-card", placeholderRatio: 0.52 },
-    {
-      label: "Market movement",
-      value: marketMovement,
-      icon: "fa-chart-line",
-      placeholderRatio: 0.58
-    }
-  ] satisfies DriverItem[];
-  $: driverMax = _.max(netWorthDrivers.map((driver) => Math.abs(driver.value))) || 1;
-  $: driverImpact = _.sumBy(netWorthDrivers, (driver) => driver.value);
-  $: driverImpactDisplay = previewMode ? 0 : driverImpact;
-  $: displayedNetWorthDrivers = netWorthDrivers.map((driver) => {
-    const isPlaceholder = previewMode;
-    const widthPercent = isPlaceholder
-      ? (driver.placeholderRatio || 0) * 100
-      : Math.max((Math.abs(driver.value) / driverMax) * 100, 0);
+  $: driverState: WidgetState = previousNetworthPoint ? "ready" : "insufficient-data";
+  $: driverBase = previousNetworthPoint
+    ? [
+        {
+          label: "Net contributions",
+          value: netContributionChange,
+          icon: "fa-circle-plus"
+        },
+        {
+          label: "Market gain / loss",
+          value: investmentGainChange,
+          icon: "fa-chart-line"
+        }
+      ]
+    : [];
+  $: driverMax = _.max(driverBase.map((driver) => Math.abs(driver.value))) || 1;
+  $: displayedNetWorthDrivers = driverBase.map((driver) => ({
+    ...driver,
+    widthPercent: Math.max((Math.abs(driver.value) / driverMax) * 100, 0),
+    tone: classifyDriver(driver.value)
+  })) satisfies DriverDisplayItem[];
+  $: driverImpactDisplay = previousNetworthPoint ? netContributionChange + investmentGainChange : 0;
 
-    return {
-      ...driver,
-      widthPercent,
-      isPlaceholder,
-      tone: isPlaceholder ? "placeholder" : driver.value >= 0 ? "positive" : "negative"
-    };
-  }) satisfies DriverDisplayItem[];
-
-  $: averageMonthlyExpense =
-    _.mean(
-      _(Object.entries(groupedExpenses))
-        .sortBy(([date]) => date)
-        .takeRight(3)
-        .map(([_date, postings]) => _.sumBy(postings, (posting) => posting.amount))
-        .value()
-    ) || 0;
-  $: reserveMonths = averageMonthlyExpense ? checkingTotal / averageMonthlyExpense : 0;
+  $: recentExpenseTotals = _(Object.entries(groupedExpenses))
+    .sortBy(([date]) => date)
+    .takeRight(3)
+    .map(([_date, postings]) => _.sumBy(postings, (posting) => posting.amount))
+    .filter((value) => value > 0)
+    .value();
+  $: averageMonthlyExpense = recentExpenseTotals.length ? _.mean(recentExpenseTotals) : 0;
+  $: reserveState: WidgetState = averageMonthlyExpense > 0 ? "ready" : "insufficient-data";
+  $: reserveMonths = reserveState === "ready" ? checkingTotal / averageMonthlyExpense : 0;
   $: budgetPressure = _.chain(currentBudget?.accounts || [])
     .filter((account) => account.budgeted > 0)
     .map((account, index) => {
@@ -506,63 +467,50 @@
     .orderBy(["percent"], ["desc"])
     .take(3)
     .value();
-  $: budgetPressureDisplay = budgetPressure.length
-    ? budgetPressure
-    : ["Dining", "Shopping", "Transport"].map((label, index) => ({
-        label,
-        percent: [82, 74, 58][index],
-        tone: ["negative", "warning", "positive"][index],
-        warning: [true, true, false][index],
-        placeholder: true,
-        ...categoryVisual(label, index)
-      }));
+  $: budgetState: WidgetState = !currentBudget?.accounts?.some((account) => account.budgeted > 0)
+    ? "not-configured"
+    : budgetPressure.length
+      ? "ready"
+      : "insufficient-data";
 
-  $: recurringOutlook = transactionSequences.slice(0, 3).map((sequence) => {
-    const schedule = nextUnpaidSchedule(sequence);
-    return {
-      label: sequence.key,
-      amount: schedule.amount,
-      date: schedule.scheduled,
-      icon: scheduleIcon(schedule)
-    };
-  });
-  $: recurringOutlookDisplay = recurringOutlook.length
-    ? recurringOutlook
-    : [
-        {
-          label: "Netflix",
-          amount: 15.99,
-          date: dayjs().month(4).date(18),
-          icon: { icon: "fa-film", color: "has-text-danger" },
-          placeholder: true
-        },
-        {
-          label: "Spotify",
-          amount: 9.99,
-          date: dayjs().month(4).date(19),
-          icon: { icon: "fa-music", color: "has-text-success" },
-          placeholder: true
-        },
-        {
-          label: "Gym",
-          amount: 39.0,
-          date: dayjs().month(4).date(20),
-          icon: { icon: "fa-dumbbell", color: "has-text-link" },
-          placeholder: true
-        }
-      ];
+  $: recurringOutlook = transactionSequences
+    .map((sequence) => {
+      const schedule = nextUnpaidSchedule(sequence);
+      if (!schedule) {
+        return null;
+      }
+
+      return {
+        label: sequence.key,
+        amount: schedule.amount,
+        date: schedule.scheduled,
+        icon: scheduleIcon(schedule)
+      };
+    })
+    .filter((item) => item != null)
+    .slice(0, 3);
+  $: recurringState: WidgetState = recurringOutlook.length ? "ready" : "insufficient-data";
 
   $: goalProgress = goalSummaries.slice(0, 3).map((goal) => ({
     name: goal.name,
     percent: goal.target === 0 ? 0 : Math.round((goal.current / goal.target) * 100)
   }));
-  $: goalProgressDisplay = goalProgress.length
-    ? goalProgress
-    : [
-        { name: "Emergency Fund", percent: 68, placeholder: true },
-        { name: "Retirement", percent: 42, placeholder: true },
-        { name: "Vacation 2025", percent: 30, placeholder: true }
-      ];
+  $: goalState: WidgetState = goalSummaries.length
+    ? goalProgress.length
+      ? "ready"
+      : "insufficient-data"
+    : "not-configured";
+  $: hasDashboardData =
+    !_.isEmpty(groupedExpenses) ||
+    cashFlows.length > 0 ||
+    !_.isEmpty(checkingBalances) ||
+    goalSummaries.length > 0 ||
+    transactionSequences.length > 0 ||
+    !_.isEmpty(budgetsByMonth) ||
+    liabilityBreakdowns.length > 0 ||
+    networthTimeline.length > 0 ||
+    currentNetworthValue !== 0;
+  $: isEmpty = loadError || !hasDashboardData;
 </script>
 
 {#if isEmpty}
@@ -616,17 +564,20 @@
             <div>
               <div class="paisa-dashboard__label">Total Net Worth</div>
               <div class="paisa-dashboard__amount">{formatCurrency(currentNetworthValue)}</div>
-              <div
-                class="paisa-dashboard__delta {currentNetworthValue >= previousNetworthValue
-                  ? 'is-positive'
-                  : 'is-negative'}"
-              >
-                {formatCurrency(currentNetworthValue - previousNetworthValue)}
-                <span
-                  >{formatPercentage(percentDelta(currentNetworthValue, previousNetworthValue), 2)} vs
-                  last month</span
+              {#if previousNetworthPoint}
+                <div
+                  class="paisa-dashboard__delta {currentNetworthValue >= previousNetworthValue
+                    ? 'is-positive'
+                    : 'is-negative'}"
                 >
-              </div>
+                  {formatCurrency(networthChange)}
+                  <span>{formatPercentage(networthChangePercent, 2)} vs last month</span>
+                </div>
+              {:else}
+                <div class="paisa-dashboard__delta">
+                  <span>Need at least two net worth snapshots for a month-over-month delta.</span>
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -639,88 +590,111 @@
                 </div>
                 <div
                   class="paisa-spark-card__change"
-                  class:positive={checkingChange >= 0}
-                  class:negative={checkingChange < 0}
+                  class:positive={checkingChange != null && checkingChange >= 0}
+                  class:negative={checkingChange != null && checkingChange < 0}
                 >
-                  {formatPercentage(
-                    percentDelta(
-                      checkingSeriesDisplay.at(-1) || 0,
-                      checkingSeriesDisplay.at(-2) || 0
-                    ),
-                    2
-                  )}
+                  {#if checkingState === "ready"}
+                    {formatPercentage(checkingChangePercent, 2)}
+                  {:else}
+                    Need more history
+                  {/if}
                 </div>
               </div>
-              <div class="paisa-spark-card__chart">
-                <div class="paisa-spark-card__y-axis">
-                  {#each checkingValueTicks as tick}
-                    <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
-                  {/each}
-                </div>
-                <div class="paisa-spark-card__plot">
-                  <svg
-                    viewBox={`0 0 420 ${heroChartHeight}`}
-                    class="paisa-sparkline paisa-sparkline--hero"
-                  >
+              {#if checkingState === "ready"}
+                <div class="paisa-spark-card__chart">
+                  <div class="paisa-spark-card__y-axis">
                     {#each checkingValueTicks as tick}
-                      <line x1="0" y1={tick.y} x2="420" y2={tick.y} class="paisa-sparkline__grid" />
-                    {/each}
-                    <path
-                      d={sparklinePath(checkingSeriesDisplay, 420, heroChartHeight)}
-                      class={previewMode ? "is-checking is-placeholder" : "is-checking"}
-                    />
-                  </svg>
-                  <div class="paisa-spark-card__x-axis">
-                    {#each checkingDateTicks as label}
-                      <span>{label}</span>
+                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
                     {/each}
                   </div>
+                  <div class="paisa-spark-card__plot">
+                    <svg
+                      viewBox={`0 0 420 ${heroChartHeight}`}
+                      class="paisa-sparkline paisa-sparkline--hero"
+                    >
+                      {#each checkingValueTicks as tick}
+                        <line
+                          x1="0"
+                          y1={tick.y}
+                          x2="420"
+                          y2={tick.y}
+                          class="paisa-sparkline__grid"
+                        />
+                      {/each}
+                      <path
+                        d={sparklinePath(checkingSeries, 420, heroChartHeight)}
+                        class="is-checking"
+                      />
+                    </svg>
+                    <div class="paisa-spark-card__x-axis">
+                      {#each checkingDateTicks as label}
+                        <span>{label}</span>
+                      {/each}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              {:else}
+                <div class="paisa-spark-card__empty">
+                  Need at least two checking snapshots to plot this trend.
+                </div>
+              {/if}
             </div>
             <div class="paisa-spark-card paisa-spark-card--hero">
               <div class="paisa-spark-card__meta">
                 <div>
-                  <span>Equity</span>
+                  <span>Net Worth</span>
                   <strong>{formatCurrency(currentNetworthValue)}</strong>
                 </div>
                 <div
                   class="paisa-spark-card__change"
-                  class:positive={equityPerformance >= 0}
-                  class:negative={equityPerformance < 0}
+                  class:positive={networthChange != null && networthChange >= 0}
+                  class:negative={networthChange != null && networthChange < 0}
                 >
-                  {formatPercentage(
-                    percentDelta(equitySeriesDisplay.at(-1) || 0, equitySeriesDisplay.at(-2) || 0),
-                    2
-                  )}
+                  {#if networthTrendState === "ready"}
+                    {formatPercentage(networthChangePercent, 2)}
+                  {:else}
+                    Need more history
+                  {/if}
                 </div>
               </div>
-              <div class="paisa-spark-card__chart">
-                <div class="paisa-spark-card__y-axis">
-                  {#each equityValueTicks as tick}
-                    <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
-                  {/each}
-                </div>
-                <div class="paisa-spark-card__plot">
-                  <svg
-                    viewBox={`0 0 420 ${heroChartHeight}`}
-                    class="paisa-sparkline paisa-sparkline--hero"
-                  >
+              {#if networthTrendState === "ready"}
+                <div class="paisa-spark-card__chart">
+                  <div class="paisa-spark-card__y-axis">
                     {#each equityValueTicks as tick}
-                      <line x1="0" y1={tick.y} x2="420" y2={tick.y} class="paisa-sparkline__grid" />
-                    {/each}
-                    <path
-                      d={sparklinePath(equitySeriesDisplay, 420, heroChartHeight)}
-                      class={previewMode ? "is-equity is-placeholder" : "is-equity"}
-                    />
-                  </svg>
-                  <div class="paisa-spark-card__x-axis">
-                    {#each equityDateTicks as label}
-                      <span>{label}</span>
+                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
                     {/each}
                   </div>
+                  <div class="paisa-spark-card__plot">
+                    <svg
+                      viewBox={`0 0 420 ${heroChartHeight}`}
+                      class="paisa-sparkline paisa-sparkline--hero"
+                    >
+                      {#each equityValueTicks as tick}
+                        <line
+                          x1="0"
+                          y1={tick.y}
+                          x2="420"
+                          y2={tick.y}
+                          class="paisa-sparkline__grid"
+                        />
+                      {/each}
+                      <path
+                        d={sparklinePath(equitySeries, 420, heroChartHeight)}
+                        class="is-equity"
+                      />
+                    </svg>
+                    <div class="paisa-spark-card__x-axis">
+                      {#each equityDateTicks as label}
+                        <span>{label}</span>
+                      {/each}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              {:else}
+                <div class="paisa-spark-card__empty">
+                  Need at least two net worth snapshots to plot this trend.
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -735,20 +709,21 @@
                 <strong>{formatCurrency(liabilitiesTotal)}</strong>
               </div>
               <div class="paisa-rail-stat paisa-rail-stat--rank">
-                <span>Net Worth Rank</span>
+                <span>Net Worth History</span>
                 <div class="paisa-rail-stat__stack">
-                  <strong>Top 18%</strong>
-                  <small>vs peers</small>
+                  <strong>{networthHistoryMonths} mo</strong>
+                  <small>captured</small>
                 </div>
               </div>
               <div class="paisa-rail-stat paisa-rail-stat--trend">
                 <span>1Y Net Worth Trend</span>
-                <svg viewBox="0 0 150 38" class="paisa-sparkline paisa-sparkline--compact">
-                  <path
-                    d={sparklinePath(oneYearSeriesDisplay, 150, 38)}
-                    class={previewMode ? "is-checking is-placeholder" : "is-checking"}
-                  />
-                </svg>
+                {#if oneYearState === "ready"}
+                  <svg viewBox="0 0 150 38" class="paisa-sparkline paisa-sparkline--compact">
+                    <path d={sparklinePath(oneYearSeries, 150, 38)} class="is-checking" />
+                  </svg>
+                {:else}
+                  <small>Need more than one monthly point</small>
+                {/if}
               </div>
             </div>
           </div>
@@ -764,18 +739,19 @@
             valueClass={cashFlowMonthToDate >= 0 ? "positive" : "negative"}
           />
           <DashboardStatStripItem
-            label="Net Worth Rank"
-            value="Top 18%"
-            meta="vs peers"
+            label="Net Worth History"
+            value={`${networthHistoryMonths} mo`}
+            meta="captured"
             variant="rank"
           />
           <DashboardStatStripItem label="1Y Net Worth Trend" variant="trend">
-            <svg viewBox="0 0 150 38" class="paisa-sparkline paisa-sparkline--compact">
-              <path
-                d={sparklinePath(oneYearSeriesDisplay, 150, 38)}
-                class={previewMode ? "is-checking is-placeholder" : "is-checking"}
-              />
-            </svg>
+            {#if oneYearState === "ready"}
+              <svg viewBox="0 0 150 38" class="paisa-sparkline paisa-sparkline--compact">
+                <path d={sparklinePath(oneYearSeries, 150, 38)} class="is-checking" />
+              </svg>
+            {:else}
+              <span class="paisa-stat-strip__empty">Need more history</span>
+            {/if}
           </DashboardStatStripItem>
         </div>
       </div>
@@ -789,52 +765,52 @@
               selectable
             />
 
-            <div class="paisa-spending">
-              <div class="paisa-spending__chart">
-                <svg viewBox="-140 -140 280 280">
-                  {#each expensePie as slice, index}
-                    <path
-                      d={donutArc(slice)}
-                      fill={slice.data.color || categoryColor(slice.data.category, index)}
-                      opacity={expenseCategories.length ? 1 : 0.88}
-                    />
-                  {/each}
-                </svg>
-                <div class="paisa-spending__center">
-                  <strong>{formatCurrency(totalSpentDisplay)}</strong>
-                  <span>Total spent</span>
+            {#if spendingState === "ready"}
+              <div class="paisa-spending">
+                <div class="paisa-spending__chart">
+                  <svg viewBox="-140 -140 280 280">
+                    {#each expensePie as slice, index}
+                      <path
+                        d={donutArc(slice)}
+                        fill={slice.data.color || categoryColor(slice.data.category, index)}
+                      />
+                    {/each}
+                  </svg>
+                  <div class="paisa-spending__center">
+                    <strong>{formatCurrency(totalSpent)}</strong>
+                    <span>Total spent</span>
+                  </div>
                 </div>
-              </div>
 
-              <div class="paisa-spending__legend">
-                {#each expenseCategoriesDisplay as category}
-                  <div class="paisa-spending__item">
-                    <div class="paisa-spending__item-label">
-                      <span class="icon" style={`color: ${category.color};`}>
-                        <i class={"fas " + category.icon}></i>
-                      </span>
-                      <span>{category.category}</span>
-                    </div>
-                    <div class="paisa-spending__item-metrics">
-                      <strong
-                        >{expenseCategories.length ? formatCurrency(category.total) : "--"}</strong
-                      >
-                      <span
-                        class:positive={category.delta <= 0}
-                        class:negative={category.delta > 0}
-                      >
-                        {#if expenseCategories.length}
+                <div class="paisa-spending__legend">
+                  {#each expenseCategories as category}
+                    <div class="paisa-spending__item">
+                      <div class="paisa-spending__item-label">
+                        <span class="icon" style={`color: ${category.color};`}>
+                          <i class={"fas " + category.icon}></i>
+                        </span>
+                        <span>{category.category}</span>
+                      </div>
+                      <div class="paisa-spending__item-metrics">
+                        <strong>{formatCurrency(category.total)}</strong>
+                        <span
+                          class:positive={category.delta <= 0}
+                          class:negative={category.delta > 0}
+                        >
                           {category.delta > 0 ? "+" : category.delta < 0 ? "-" : "--"}
                           {formatPercentage(Math.abs(category.delta), 0)}
-                        {:else}
-                          --
-                        {/if}
-                      </span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                {/each}
+                  {/each}
+                </div>
               </div>
-            </div>
+            {:else}
+              <div class="paisa-zone__empty">
+                <strong>No expenses posted for this month.</strong>
+                <p>Post expenses in the selected month to unlock the spending breakdown.</p>
+              </div>
+            {/if}
           </div>
 
           <div class="paisa-zone paisa-zone--insights">
@@ -866,9 +842,14 @@
                     <div class="paisa-insight__text">{insight.description}</div>
                     <div class="paisa-insight__delta">{insight.deltaLabel}</div>
                   </div>
-                  <svg viewBox="0 0 130 46" class="paisa-sparkline paisa-sparkline--mini">
-                    <path d={sparklinePath(insight.series, 130, 46)} class={"is-" + insight.tone} />
-                  </svg>
+                  {#if insight.state === "ready"}
+                    <svg viewBox="0 0 130 46" class="paisa-sparkline paisa-sparkline--mini">
+                      <path
+                        d={sparklinePath(insight.series, 130, 46)}
+                        class={"is-" + insight.tone}
+                      />
+                    </svg>
+                  {/if}
                 </article>
               {/each}
             </div>
@@ -876,43 +857,45 @@
 
           <div class="paisa-zone paisa-zone--drivers">
             <DashboardSectionHeader title="C. Net Worth Drivers" subtle="This month" selectable />
-            <div class="paisa-driver-list">
-              {#each displayedNetWorthDrivers as driver}
-                <div class="paisa-driver">
-                  <div class="paisa-driver__row">
-                    <span class="paisa-driver__label">
-                      <span class="icon">
-                        <i class={"fas " + driver.icon}></i>
+            {#if driverState === "ready"}
+              <div class="paisa-driver-list">
+                {#each displayedNetWorthDrivers as driver}
+                  <div class="paisa-driver">
+                    <div class="paisa-driver__row">
+                      <span class="paisa-driver__label">
+                        <span class="icon">
+                          <i class={"fas " + driver.icon}></i>
+                        </span>
+                        <span>{driver.label}</span>
                       </span>
-                      <span>{driver.label}</span>
-                    </span>
-                    <strong
-                      class:negative={!driver.isPlaceholder && driver.value < 0}
-                      class:positive={!driver.isPlaceholder && driver.value >= 0}
-                      class:paisa-driver__value--placeholder={driver.isPlaceholder}
-                    >
-                      {driver.isPlaceholder ? "Preview" : formatCurrency(driver.value)}
-                    </strong>
+                      <strong class:negative={driver.value < 0} class:positive={driver.value >= 0}>
+                        {formatCurrency(driver.value)}
+                      </strong>
+                    </div>
+                    <div class="paisa-driver__track">
+                      <div
+                        class={"paisa-driver__fill " + driver.tone}
+                        style={`width: ${driver.widthPercent}%`}
+                      ></div>
+                    </div>
                   </div>
-                  <div class="paisa-driver__track">
-                    <div
-                      class={"paisa-driver__fill " + driver.tone}
-                      style={`width: ${driver.widthPercent}%`}
-                    ></div>
-                  </div>
-                </div>
-              {/each}
-            </div>
-            <div class="paisa-driver__impact">
-              <span>Net impact</span>
-              <strong
-                class:negative={!previewMode && driverImpactDisplay < 0}
-                class:positive={!previewMode && driverImpactDisplay >= 0}
-                class:paisa-driver__value--placeholder={previewMode}
-              >
-                {previewMode ? "Preview only" : formatCurrency(driverImpactDisplay)}
-              </strong>
-            </div>
+                {/each}
+              </div>
+              <div class="paisa-driver__impact">
+                <span>Net impact</span>
+                <strong
+                  class:negative={driverImpactDisplay < 0}
+                  class:positive={driverImpactDisplay >= 0}
+                >
+                  {formatCurrency(driverImpactDisplay)}
+                </strong>
+              </div>
+            {:else}
+              <div class="paisa-zone__empty">
+                <strong>Net worth drivers need more history.</strong>
+                <p>Add another snapshot so contributions and market movement can be compared.</p>
+              </div>
+            {/if}
           </div>
         </div>
       </div>
@@ -922,19 +905,26 @@
           <div class="paisa-support">
             <div class="paisa-zone__title">Cash Reserve</div>
             <div class="paisa-support__value">{formatCurrency(checkingTotal)}</div>
-            <div class="paisa-support__text">{formatFloat(reserveMonths)} months of expenses</div>
-            <div class="paisa-progress">
-              <div
-                class="paisa-progress__fill"
-                style={`width: ${Math.min((reserveMonths / 9) * 100, 100)}%`}
-              ></div>
-            </div>
-            <div class="paisa-progress__ticks">
-              <span>0</span>
-              <span>3 mo</span>
-              <span>6 mo</span>
-              <span>9+ mo</span>
-            </div>
+            {#if reserveState === "ready"}
+              <div class="paisa-support__text">{formatFloat(reserveMonths)} months of expenses</div>
+              <div class="paisa-progress">
+                <div
+                  class="paisa-progress__fill"
+                  style={`width: ${Math.min((reserveMonths / 9) * 100, 100)}%`}
+                ></div>
+              </div>
+              <div class="paisa-progress__ticks">
+                <span>0</span>
+                <span>3 mo</span>
+                <span>6 mo</span>
+                <span>9+ mo</span>
+              </div>
+            {:else}
+              <div class="paisa-support__empty">
+                <strong>Need expense history.</strong>
+                <p>Post expenses in at least one recent month to estimate your reserve runway.</p>
+              </div>
+            {/if}
           </div>
 
           <div class="paisa-support">
@@ -942,33 +932,50 @@
               <div class="paisa-zone__title">Budget Pressure</div>
               <div class="paisa-zone__subtle">This month</div>
             </div>
-            <div class="paisa-mini-list">
-              {#each budgetPressureDisplay as budget}
-                <div class="paisa-mini-list__row">
-                  <span class="paisa-mini-list__label">
-                    <span class="icon" style={`color: ${budget.color};`}>
-                      <i class={"fas " + budget.icon}></i>
+            {#if budgetState === "ready"}
+              <div class="paisa-mini-list">
+                {#each budgetPressure as budget}
+                  <div class="paisa-mini-list__row">
+                    <span class="paisa-mini-list__label">
+                      <span class="icon" style={`color: ${budget.color};`}>
+                        <i class={"fas " + budget.icon}></i>
+                      </span>
+                      <span>{budget.label}</span>
                     </span>
-                    <span>{budget.label}</span>
-                  </span>
-                  <div class="paisa-mini-list__meter">
-                    <div class="paisa-mini-list__track">
-                      <div
-                        class={"paisa-mini-list__fill " + budget.tone}
-                        style={`width: ${Math.min(budget.percent, 100)}%`}
-                      ></div>
+                    <div class="paisa-mini-list__meter">
+                      <div class="paisa-mini-list__track">
+                        <div
+                          class={"paisa-mini-list__fill " + budget.tone}
+                          style={`width: ${Math.min(budget.percent, 100)}%`}
+                        ></div>
+                      </div>
+                      <strong>{budget.percent}%</strong>
+                      {#if budget.warning}
+                        <span class="paisa-mini-list__alert">!</span>
+                      {/if}
                     </div>
-                    <strong>{budget.percent}%</strong>
-                    {#if budget.warning}
-                      <span class="paisa-mini-list__alert">!</span>
-                    {/if}
                   </div>
-                </div>
-              {/each}
-            </div>
-            <a href="/expense/budget" class="secondary-link paisa-mini-list__link"
-              >View all budgets</a
-            >
+                {/each}
+              </div>
+              <a href="/expense/budget" class="secondary-link paisa-mini-list__link"
+                >View all budgets</a
+              >
+            {:else if budgetState === "not-configured"}
+              <div class="paisa-support__empty">
+                <strong>No budget configured.</strong>
+                <p>Create budget lines to monitor category pressure here.</p>
+                <a
+                  href="/expense/budget"
+                  class="secondary-link paisa-mini-list__link paisa-zone__empty-link"
+                  >Set up budget</a
+                >
+              </div>
+            {:else}
+              <div class="paisa-support__empty">
+                <strong>Budget data is not ready yet.</strong>
+                <p>Keep posting expenses this month to compare actuals against your budget.</p>
+              </div>
+            {/if}
           </div>
 
           <div class="paisa-support">
@@ -976,25 +983,32 @@
               <div class="paisa-zone__title">Recurring Outlook</div>
               <div class="paisa-zone__subtle">Next 7 days</div>
             </div>
-            <div class="paisa-mini-list">
-              {#each recurringOutlookDisplay as recurring}
-                <div class="paisa-mini-list__row paisa-mini-list__row--recurring">
-                  <span class="is-flex is-align-items-center" style="gap: 0.55rem;">
-                    <span class={"icon paisa-recurring-icon " + recurring.icon.color}>
-                      <i class={"fas " + recurring.icon.icon}></i>
+            {#if recurringState === "ready"}
+              <div class="paisa-mini-list">
+                {#each recurringOutlook as recurring}
+                  <div class="paisa-mini-list__row paisa-mini-list__row--recurring">
+                    <span class="is-flex is-align-items-center" style="gap: 0.55rem;">
+                      <span class={"icon paisa-recurring-icon " + recurring.icon.color}>
+                        <i class={"fas " + recurring.icon.icon}></i>
+                      </span>
+                      <span>{recurring.label}</span>
                     </span>
-                    <span>{recurring.label}</span>
-                  </span>
-                  <div class="is-flex is-align-items-center" style="gap: 0.85rem;">
-                    <strong>{formatCurrency(recurring.amount)}</strong>
-                    <span class="paisa-zone__subtle">{recurring.date.format("MMM D")}</span>
+                    <div class="is-flex is-align-items-center" style="gap: 0.85rem;">
+                      <strong>{formatCurrency(recurring.amount)}</strong>
+                      <span class="paisa-zone__subtle">{recurring.date.format("MMM D")}</span>
+                    </div>
                   </div>
-                </div>
-              {/each}
-            </div>
-            <a href="/cash_flow/recurring" class="secondary-link paisa-mini-list__link"
-              >View all recurring</a
-            >
+                {/each}
+              </div>
+              <a href="/cash_flow/recurring" class="secondary-link paisa-mini-list__link"
+                >View all recurring</a
+              >
+            {:else}
+              <div class="paisa-support__empty">
+                <strong>No recurring outlook yet.</strong>
+                <p>Recurring items appear after Paisa can detect repeating transactions.</p>
+              </div>
+            {/if}
           </div>
 
           <div class="paisa-support">
@@ -1006,34 +1020,44 @@
                 >View all goals</a
               >
             </div>
-            <div class="paisa-mini-list">
-              {#each goalProgressDisplay as goal, index}
-                <div class="paisa-mini-list__goal">
-                  <div class="is-flex is-justify-content-space-between">
-                    <span>{goal.name}</span>
-                    <strong>{goal.percent}%</strong>
+            {#if goalState === "ready"}
+              <div class="paisa-mini-list">
+                {#each goalProgress as goal, index}
+                  <div class="paisa-mini-list__goal">
+                    <div class="is-flex is-justify-content-space-between">
+                      <span>{goal.name}</span>
+                      <strong>{goal.percent}%</strong>
+                    </div>
+                    <div class="paisa-mini-list__track">
+                      <div
+                        class="paisa-mini-list__fill positive"
+                        style={`width: ${Math.min(goal.percent, 100)}%; background: ${categoryColor(
+                          goal.name,
+                          index
+                        )};`}
+                      ></div>
+                    </div>
                   </div>
-                  <div class="paisa-mini-list__track">
-                    <div
-                      class="paisa-mini-list__fill positive"
-                      style={`width: ${Math.min(goal.percent, 100)}%; background: ${categoryColor(
-                        goal.name,
-                        index
-                      )};`}
-                    ></div>
-                  </div>
-                </div>
-              {/each}
-            </div>
+                {/each}
+              </div>
+            {:else if goalState === "not-configured"}
+              <div class="paisa-support__empty">
+                <strong>No goals configured.</strong>
+                <p>Create savings or retirement goals to track progress here.</p>
+              </div>
+            {:else}
+              <div class="paisa-support__empty">
+                <strong>Goal progress is not ready yet.</strong>
+                <p>Goal targets exist, but Paisa needs more qualifying data to chart progress.</p>
+              </div>
+            {/if}
           </div>
         </div>
       </div>
 
       <div class="paisa-dashboard__section paisa-dashboard__footer">
         <span>Last updated: Today, {now().format("HH:mm")}</span>
-        <span class="is-flex is-align-items-center" style="gap: 0.45rem;">
-          <span class="status-dot"></span> All accounts connected
-        </span>
+        <span>Classic and preview dashboards remain available in parallel.</span>
       </div>
     </div>
   </section>
