@@ -4,13 +4,13 @@ with pkgs;
 
 pkgsStatic.stdenv.mkDerivation {
   pname = "ledger";
-  version = "3.3.2";
+  version = "3.4.1";
 
   src = fetchFromGitHub {
     owner = "ledger";
     repo = "ledger";
-    rev = "4355c4faf157d5ef47b126286aa501742732708d";
-    hash = "sha256-9IowdrQpJarALr21Y+Mhmld+eC4YUpEn+goqWyBb6Xc=";
+    tag = "v${version}";
+    hash = "sha256-yk6/4ImUzgZY8O7MmQMwFkuJ/pMXo6W5TAA0GGIxYgg=";
   };
 
   outputs = [ "out" "dev" ];

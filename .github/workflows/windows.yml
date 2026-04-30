@@ -1,0 +1,73 @@
+name: Windows Release
+
+on:
+  push:
+    branches:
+      - ci/windows-*
+    tags:
+      - "*"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  windows-binary:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            git
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-libedit
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-mpfr
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-texinfo
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-utfcpp
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.24.2"
+      - run: |
+          $VERSION = Get-Content VERSION -Raw
+          $VERSION = $VERSION.Trim()
+          $LDFLAGS = "-X github.com/ananthakumaran/paisa/internal/version.current=$VERSION"
+          choco install sqlite
+          choco install nsis
+          npm ci
+          npm run build
+          git clone --branch v3.4.1 --depth 1 https://github.com/ledger/ledger.git .\ledger-src
+          $MSYS_WORKSPACE = $env:GITHUB_WORKSPACE -replace '\\','/'
+          $MSYS_WORKSPACE = $MSYS_WORKSPACE -replace '^([A-Za-z]):','/$1'
+          C:\msys64\usr\bin\bash -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src; cmake -S . -B build -G 'MSYS Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_PYTHON=OFF -DUSE_GPGME=OFF -DBUILD_LIBRARY=OFF -DBUILD_DOCS=OFF"
+          C:\msys64\usr\bin\bash -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src/build; make -j2"
+          cp .\ledger-src\build\ledger.exe internal/binary/ledger
+          .\ledger-src\build\ledger.exe --version
+          go build -ldflags $LDFLAGS
+          cp paisa.exe paisa-cli-windows-amd64.exe
+          $env:PATH += ";C:\Program Files (x86)\NSIS\Bin"
+          cd desktop
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          wails build -tags webkit2_40 -nsis -webview2 embed -ldflags $LDFLAGS
+          cd ..
+          cp .\desktop\build\bin\paisa-amd64-installer.exe paisa-app-windows-amd64.exe
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            paisa-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
