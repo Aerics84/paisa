@@ -3,10 +3,8 @@
   import { followCursor, delegate, hideAll } from "tippy.js";
   import _ from "lodash";
   import Spinner from "$lib/components/Spinner.svelte";
-  import Navbar from "$lib/components/Navbar.svelte";
+  import PreviewNavbar from "$lib/components/PreviewNavbar.svelte";
   import { willClearTippy, willRefresh } from "../../store";
-
-  let isBurger: boolean = null;
 
   function clearTippy() {
     hideAll();
@@ -42,23 +40,49 @@
     });
   }
 
+  function prefixInternalLinks() {
+    for (const anchor of document.querySelectorAll<HTMLAnchorElement>('a[href^="/"]')) {
+      const href = anchor.getAttribute("href");
+      if (
+        !href ||
+        href.startsWith("/preview") ||
+        href.startsWith("/api/") ||
+        href.startsWith("//") ||
+        anchor.dataset.noPreviewPrefix === "true" ||
+        anchor.target === "_blank"
+      ) {
+        continue;
+      }
+
+      anchor.setAttribute("href", `/preview${href}`);
+    }
+  }
+
+  function refreshEnhancements() {
+    setupTippy();
+    prefixInternalLinks();
+  }
+
   willClearTippy.subscribe(clearTippy);
   beforeNavigate(clearTippy);
   willRefresh.subscribe(() => {
     clearTippy();
-    setupTippy();
+    refreshEnhancements();
   });
 
   afterNavigate(() => {
-    isBurger = null;
-    setupTippy();
+    refreshEnhancements();
   });
 </script>
 
 {#key $willRefresh}
-  <Navbar bind:isBurger />
+  <div class="paisa-app-frame">
+    <PreviewNavbar />
 
-  <Spinner>
-    <slot />
-  </Spinner>
+    <div class="paisa-shell-content">
+      <Spinner>
+        <slot />
+      </Spinner>
+    </div>
+  </div>
 {/key}
