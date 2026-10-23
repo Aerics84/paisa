@@ -11,7 +11,7 @@
   let cashFlows: CashFlow[] = [];
   let renderer: (cashflows: CashFlow[]) => void;
 
-  $: if (!_.isEmpty(cashFlows)) {
+  $: if (!_.isEmpty(cashFlows) && renderer) {
     renderer(
       _.filter(
         cashFlows,

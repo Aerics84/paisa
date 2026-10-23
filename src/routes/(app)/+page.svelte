@@ -26,14 +26,12 @@
   import BudgetCard from "$lib/components/BudgetCard.svelte";
   import LevelItem from "$lib/components/LevelItem.svelte";
   import ZeroState from "$lib/components/ZeroState.svelte";
-  import { MasonryGrid } from "@egjs/svelte-grid";
+  import MasonryGrid from "$lib/components/MasonryGrid.svelte";
   import { refresh } from "../../store";
   import UpcomingCard from "$lib/components/UpcomingCard.svelte";
   import GoalSummaryCard from "$lib/components/GoalSummaryCard.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import BalanceCard from "$lib/components/BalanceCard.svelte";
-
-  let UntypedMasonryGrid = MasonryGrid as any;
 
   let cashflowLegends: Legend[] = [];
   let month = now().format("YYYY-MM");
@@ -210,13 +208,13 @@
                   >
                 </p>
                 <div class="content">
-                  <UntypedMasonryGrid gap={10} maxStretchColumnSize={400} align="stretch">
+                  <MasonryGrid gap={10} maxStretchColumnSize={400} align="stretch">
                     {#each _.values(checkingBalances) as assetBreakdown}
                       <div class="is-flex-grow-1">
                         <BalanceCard {assetBreakdown} />
                       </div>
                     {/each}
-                  </UntypedMasonryGrid>
+                  </MasonryGrid>
                 </div>
               </div>
             </article>
@@ -336,13 +334,13 @@
                     >
                   </p>
                   <div>
-                    <UntypedMasonryGrid gap={10} maxStretchColumnSize={500} align="stretch">
+                    <MasonryGrid gap={10} maxStretchColumnSize={500} align="stretch">
                       {#each _.take(transactions, 20) as t}
                         <div class="mr-3 is-flex-grow-1">
                           <TransactionCard {t} />
                         </div>
                       {/each}
-                    </UntypedMasonryGrid>
+                    </MasonryGrid>
                   </div>
                 </div>
               </article>

@@ -80,6 +80,11 @@ declare module "textures" {
   export default textures;
 }
 
+declare module "@egjs/svelte-grid/src/Grid.svelte" {
+  const Grid: any;
+  export default Grid;
+}
+
 declare module "arima/async" {
   export class Arima {
     constructor(options: object);

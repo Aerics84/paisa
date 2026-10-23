@@ -60,7 +60,7 @@
       .value();
   }
 
-  $: if (grouped_expenses) {
+  $: if (grouped_expenses && renderer) {
     renderCalendar($month, grouped_expenses[$month] || [], z, $detailScope);
 
     const expenses = filterExpenseScope(grouped_expenses[$month] || [], $detailScope);
