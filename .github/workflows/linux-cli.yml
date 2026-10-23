@@ -24,7 +24,7 @@ jobs:
           cache: npm
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.24.2"
+          go-version: "1.26.10"
       - uses: vegardit/fast-apt-mirror.sh@v1
       - run: |
           VERSION=$(cat VERSION)
