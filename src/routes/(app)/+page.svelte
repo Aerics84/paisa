@@ -4,7 +4,11 @@
   import LastNMonths from "$lib/components/LastNMonths.svelte";
   import TransactionCard from "$lib/components/TransactionCard.svelte";
   import * as expense from "$lib/expense/monthly";
-  import { enrichTrantionSequence, sortTrantionSequence } from "$lib/transaction_sequence";
+  import {
+    enrichTrantionSequence,
+    nextUnpaidSchedule,
+    sortTrantionSequence
+  } from "$lib/transaction_sequence";
   import {
     ajax,
     formatCurrency,
@@ -67,16 +71,16 @@
   }
 
   onMount(async () => {
+    const dashboard = await ajax("/api/dashboard");
     ({
       expenses,
       cashFlows,
       goalSummaries,
       budget: { budgetsByMonth },
-      transactionSequences,
       networth: { networth, xirr },
       checkingBalances: { asset_breakdowns: checkingBalances },
       transactions
-    } = await ajax("/api/dashboard"));
+    } = dashboard);
 
     goalSummaries = _.sortBy(goalSummaries, (g) => -g.priority);
 
@@ -101,7 +105,10 @@
     cashflowRenderer(cashFlows);
     cashflowLegends = legends;
     transactionSequences = _.take(
-      sortTrantionSequence(enrichTrantionSequence(transactionSequences)),
+      _.filter(
+        sortTrantionSequence(enrichTrantionSequence(dashboard.transactionSequences)),
+        (ts) => !!nextUnpaidSchedule(ts)
+      ),
       16
     );
   });

@@ -37,13 +37,12 @@
   }
 
   onMount(async () => {
-    ({ transaction_sequences: transactionSequences } = await ajax("/api/recurring"));
+    const { transaction_sequences: rawTransactionSequences } = await ajax("/api/recurring");
+    transactionSequences = sortTrantionSequence(enrichTrantionSequence(rawTransactionSequences));
 
     if (_.isEmpty(transactionSequences)) {
       isEmpty = true;
     }
-
-    transactionSequences = sortTrantionSequence(enrichTrantionSequence(transactionSequences));
 
     setAllowedDateRange(
       _.compact(_.flatMap(transactionSequences, (ts) => ts.schedules.map((s) => s.scheduled)))

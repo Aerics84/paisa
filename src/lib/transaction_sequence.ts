@@ -203,7 +203,8 @@ export function enrichTrantionSequence(transactionSequences: TransactionSequence
 export function sortTrantionSequence(transactionSequences: TransactionSequence[]) {
   return _.chain(transactionSequences)
     .sortBy((ts) => {
-      return Math.abs(nextUnpaidSchedule(ts).scheduled.diff(now()));
+      const schedule = nextUnpaidSchedule(ts);
+      return schedule ? Math.abs(schedule.scheduled.diff(now())) : Number.MAX_SAFE_INTEGER;
     })
     .value();
 }
