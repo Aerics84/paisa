@@ -24,6 +24,25 @@ class Ledger < Formula
     ENV.cxx11
     ENV.prepend_path "PATH", Formula["python@3.14"].opt_libexec/"bin"
 
+    # Use architecture-specific Homebrew archives instead of a hard-coded path.
+    # This keeps GMP and MPFR out of the shipped binary's dynamic dependencies.
+    mpfr_lib = formula_opt_lib("mpfr")/"libmpfr.a"
+    gmp_lib = formula_opt_lib("gmp")/"libgmp.a"
+    inreplace "CMakeLists.txt" do |s|
+      s.gsub!(
+        "target_link_libraries(${_target} ${MPFR_LIB})",
+        "target_link_libraries(${_target} #{mpfr_lib})",
+      )
+      s.gsub!(
+        "target_link_libraries(${_target} ${GMP_LIB})",
+        "target_link_libraries(${_target} #{gmp_lib})",
+      )
+      # Ledger's optional edit support links Apple's dynamic libedit.tbd.
+      s.gsub!(
+        "check_library_exists(edit readline \"\" HAVE_EDIT)",
+        "set(HAVE_EDIT 0)",
+      )
+    end
     args = %W[
       --jobs=#{ENV.make_jobs}
       --output=build

@@ -15,6 +15,7 @@ import type { Posting } from "./utils";
 function posting(account: string, amount: number): Posting {
   return {
     id: `${account}-${amount}`,
+    transaction_id: `${account}-${amount}`,
     date: dayjs("2026-02-10"),
     payee: account,
     account,

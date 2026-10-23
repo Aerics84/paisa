@@ -1,6 +1,7 @@
 package stock
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -226,4 +228,54 @@ func TestGetHistoryTrimsForeignCurrencyHistoryForNonEURDefault(t *testing.T) {
 	require.Len(t, prices, 1)
 	require.Equal(t, "2024-01-02", prices[0].Date.Format("2006-01-02"))
 	require.True(t, prices[0].Value.Equal(decimal.RequireFromString("8800")))
+}
+
+func TestYahooResultUnmarshalJSON(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		timestamps string
+		closes     string
+		wantDates  []int64
+		wantCloses []float64
+	}{
+		{
+			name:       "preserve numeric zero",
+			timestamps: "[100,200,300]",
+			closes:     "[10,0,20]",
+			wantDates:  []int64{100, 200, 300},
+			wantCloses: []float64{10, 0, 20},
+		},
+		{
+			name:       "drop leading middle and trailing nulls",
+			timestamps: "[100,200,300,400,500]",
+			closes:     "[null,10,null,20,null]",
+			wantDates:  []int64{200, 400},
+			wantCloses: []float64{10, 20},
+		},
+		{
+			name:       "all null",
+			timestamps: "[100,200]",
+			closes:     "[null,null]",
+			wantDates:  []int64{},
+		},
+		{
+			name:       "empty history",
+			timestamps: "[]",
+			closes:     "[]",
+			wantDates:  []int64{},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data := fmt.Sprintf(`{"timestamp":%s,"meta":{"currency":"INR"},"indicators":{"quote":[{"close":%s}]}}`, tc.timestamps, tc.closes)
+			var result Result
+			require.NoError(t, json.Unmarshal([]byte(data), &result))
+			assert.Equal(t, "INR", result.Meta.Currency)
+			assert.Equal(t, tc.wantDates, result.Timestamp)
+			require.Len(t, result.Indicators.Quote, 1)
+			require.Len(t, result.Indicators.Quote[0].Close, len(tc.wantCloses))
+			for i, close := range tc.wantCloses {
+				assert.Equal(t, close, result.Indicators.Quote[0].Close[i])
+			}
+		})
+	}
 }

@@ -17,6 +17,7 @@ dayjs.extend(isSameOrAfter);
 function posting(date: string, account: string, amount: number): Posting {
   return {
     id: `${date}-${account}-${amount}`,
+    transaction_id: `${date}-${account}-${amount}`,
     date: dayjs(date),
     payee: account,
     account,
