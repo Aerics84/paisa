@@ -38,5 +38,4 @@ brand/*.png
 # Keep local agent/config files out of Git
 /.codex/
 /.githooks/
-/.github/
 /AGENTS.md
