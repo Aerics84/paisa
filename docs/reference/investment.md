@@ -57,6 +57,15 @@ The API reports this through `has_income_postings` and
 `Net Income` is positive; the numeric `overall_savings_rate` is `0` when it
 is not available, so consumers must check the flag before displaying it.
 
+The card colors follow the common guideline of saving 20 % of net income: a
+`Total Savings Rate` of 20 % or more is green, a positive rate below 20 % is
+amber, and a negative rate is red. `Total Surplus` is green when positive and
+red when negative, and negative amounts are shown in red. `N/A` values stay
+neutral, so a period without recorded data does not look like a bad year.
+`Investment Rate` is not colored: investing is not good or bad by itself and
+the 20 % guideline does not apply to it. The colors describe recorded postings
+only; they are not investment advice.
+
 ## What the surplus is not
 
 The surplus is a calculated value derived from the postings recorded in your

@@ -39,6 +39,17 @@ function naCells(): number {
   ).length;
 }
 
+function cell(label: string): HTMLElement {
+  const row = Array.from(document.querySelectorAll("#d3-yearly-investment-cards tr")).find((tr) =>
+    tr.querySelector("td")?.textContent.trim().startsWith(label)
+  );
+  return row.querySelectorAll("td")[1] as HTMLElement;
+}
+
+function hasColorClass(label: string, colorClass: string): boolean {
+  return cell(label).classList.contains(colorClass);
+}
+
 function useLocale(locale: string) {
   (globalThis as any).USER_CONFIG = { locale, display_precision: 2 };
 }
@@ -166,5 +177,78 @@ describe("yearly investment card", () => {
     expect(html).toContain("data-tippy-content");
     expect(html).toContain("Calculated from recorded ledger postings");
     expect(html).toContain("not the change in bank balance");
+    expect(html).toContain("20% of net income");
+  });
+});
+
+describe("yearly investment card colors", () => {
+  test("colors a positive year with an above-target savings rate green", () => {
+    useLocale("en-US");
+
+    render(yearlyCard({ overall_savings_rate: 33.3333, savings_rate: 22.2222 }));
+
+    expect(hasColorClass("Total Surplus", "has-text-success")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-success")).toBe(true);
+  });
+
+  test("colors a below-target but positive savings rate amber", () => {
+    useLocale("en-US");
+
+    render(yearlyCard({ overall_savings_rate: 15.21 }));
+
+    expect(hasColorClass("Total Surplus", "has-text-success")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-warning-dark")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-success")).toBe(false);
+  });
+
+  test("colors a deficit year red", () => {
+    useLocale("en-US");
+
+    render(yearlyCard({ overall_surplus: -200, overall_savings_rate: -22.2222 }));
+
+    expect(hasColorClass("Total Surplus", "has-text-danger")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-danger")).toBe(true);
+  });
+
+  test("keeps a zero surplus neutral", () => {
+    useLocale("en-US");
+
+    render(yearlyCard({ overall_surplus: 0, overall_savings_rate: 0 }));
+
+    for (const color of ["has-text-success", "has-text-danger"]) {
+      expect(hasColorClass("Total Surplus", color)).toBe(false);
+    }
+    expect(hasColorClass("Total Savings Rate", "has-text-warning-dark")).toBe(true);
+  });
+
+  test("keeps unavailable values and the investment rate neutral", () => {
+    useLocale("en-US");
+
+    render(
+      yearlyCard({
+        net_income: 0,
+        overall_surplus: 0,
+        overall_savings_rate: 0,
+        overall_savings_rate_available: false,
+        savings_rate: 0,
+        has_income_postings: false
+      })
+    );
+
+    for (const label of ["Total Surplus", "Total Savings Rate", "Investment Rate"]) {
+      for (const color of ["has-text-success", "has-text-danger", "has-text-warning-dark"]) {
+        expect(hasColorClass(label, color)).toBe(false);
+      }
+    }
+  });
+
+  test("marks negative amounts as negative", () => {
+    useLocale("en-US");
+
+    render(yearlyCard({ net_income: -100, net_investment: -500 }));
+
+    expect(hasColorClass("Net Income", "has-text-danger")).toBe(true);
+    expect(hasColorClass("Investment", "has-text-danger")).toBe(true);
+    expect(hasColorClass("Gross Salary Income", "has-text-danger")).toBe(false);
   });
 });

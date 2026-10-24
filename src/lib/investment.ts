@@ -22,7 +22,36 @@ function financialYear(card: InvestmentYearlyCard) {
 }
 
 const SAVINGS_TOOLTIP =
-  "<p>Total surplus is net income minus net expense. Total savings rate is 100 × surplus / net income.</p><p>N/A when the period has no recorded income or no recorded expense.</p><p>Calculated from recorded ledger postings; this is not the change in bank balance.</p>";
+  "<p>Total surplus is net income minus net expense. Total savings rate is 100 × surplus / net income.</p><p>Guideline: 20% of net income.</p><p>N/A when the period has no recorded income or no recorded expense.</p><p>Calculated from recorded ledger postings; this is not the change in bank balance.</p>";
+
+const TARGET_SAVINGS_RATE = 20;
+
+function amountColor(value: number) {
+  return value < 0 ? "has-text-danger" : "";
+}
+
+function surplusColor(value: number) {
+  if (value > 0) {
+    return "has-text-success";
+  }
+  if (value < 0) {
+    return "has-text-danger";
+  }
+  return "";
+}
+
+function savingsRateColor(available: boolean, value: number) {
+  if (!available) {
+    return "";
+  }
+  if (value < 0) {
+    return "has-text-danger";
+  }
+  if (value < TARGET_SAVINGS_RATE) {
+    return "has-text-warning-dark";
+  }
+  return "has-text-success";
+}
 
 export function renderMonthlyInvestmentTimeline(postings: Posting[]): Legend[] {
   const id = "#d3-investment-timeline";
@@ -423,7 +452,9 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
     </tr>
     <tr>
       <td>Net Income</td>
-      <td class='has-text-right has-text-weight-bold'>${formatCurrency(card.net_income)}</td>
+      <td class='has-text-right has-text-weight-bold ${amountColor(
+        card.net_income
+      )}'>${formatCurrency(card.net_income)}</td>
     </tr>
     <tr>
       <td>Net Expense</td>
@@ -431,7 +462,9 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
     </tr>
     <tr>
       <td>Investment</td>
-      <td class='has-text-right has-text-weight-bold'>${formatCurrency(card.net_investment)}</td>
+      <td class='has-text-right has-text-weight-bold ${amountColor(
+        card.net_investment
+      )}'>${formatCurrency(card.net_investment)}</td>
     </tr>
     <tr>
       <td>Total Surplus
@@ -439,13 +472,16 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
           <i class="fa-solid fa-circle-info"></i>
         </span>
       </td>
-      <td class='has-text-right has-text-weight-bold'>${
-        surplusAvailable ? formatCurrency(card.overall_surplus) : "N/A"
-      }</td>
+      <td class='has-text-right has-text-weight-bold ${
+        surplusAvailable ? surplusColor(card.overall_surplus) : ""
+      }'>${surplusAvailable ? formatCurrency(card.overall_surplus) : "N/A"}</td>
     </tr>
     <tr>
       <td>Total Savings Rate</td>
-      <td class='has-text-right has-text-weight-bold'>${rate(
+      <td class='has-text-right has-text-weight-bold ${savingsRateColor(
+        netIncomePositive && card.overall_savings_rate_available && surplusAvailable,
+        card.overall_savings_rate
+      )}'>${rate(
         netIncomePositive && card.overall_savings_rate_available && surplusAvailable,
         card.overall_savings_rate
       )}</td>
