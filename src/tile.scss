@@ -1,0 +1,59 @@
+// Bulma 1.x dropped the `tile` component that the classic dashboard
+// (src/routes/(app)/+page.svelte) uses for its multi-column layout.
+// This is the component from Bulma 0.9.4, kept locally so the dashboard
+// keeps its original layout after the Bulma 1.x upgrade.
+@use "sass:math";
+
+$tile-spacing: 0.75rem !default;
+
+.tile {
+  align-items: stretch;
+  display: block;
+  flex-basis: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-height: min-content;
+
+  &.is-ancestor {
+    margin-left: $tile-spacing * -1;
+    margin-right: $tile-spacing * -1;
+    margin-top: $tile-spacing * -1;
+
+    &:last-child {
+      margin-bottom: $tile-spacing * -1;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: $tile-spacing;
+    }
+  }
+
+  &.is-child {
+    margin: 0 !important;
+  }
+
+  &.is-parent {
+    padding: $tile-spacing;
+  }
+
+  &.is-vertical {
+    flex-direction: column;
+
+    & > .tile.is-child:not(:last-child) {
+      margin-bottom: 1.5rem !important;
+    }
+  }
+
+  @include tablet {
+    &:not(.is-child) {
+      display: flex;
+    }
+
+    @for $i from 1 through 12 {
+      &.is-#{$i} {
+        flex: none;
+        width: math.div($i, 12) * 100%;
+      }
+    }
+  }
+}
