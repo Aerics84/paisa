@@ -14,6 +14,7 @@
 
   export let breakdowns: Record<string, AssetBreakdown>;
   export let indent = true;
+  export let preview = false;
 
   const columns: ColumnDefinition[] = [
     {
@@ -59,7 +60,7 @@
 </script>
 
 {#if indent}
-  <Table data={tree} tree {columns} />
+  <Table data={tree} tree {columns} {preview} />
 {:else}
-  <Table data={Object.values(breakdowns)} {columns} />
+  <Table data={Object.values(breakdowns)} {columns} {preview} />
 {/if}

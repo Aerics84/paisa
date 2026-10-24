@@ -7,15 +7,16 @@
     type Legend,
     type Networth
   } from "$lib/utils";
-  import COLORS from "$lib/colors";
   import { renderNetworth } from "$lib/networth";
   import _ from "lodash";
   import { onDestroy, onMount } from "svelte";
   import { dateRange, setAllowedDateRange } from "../../../../store";
-  import LevelItem from "$lib/components/LevelItem.svelte";
-  import ZeroState from "$lib/components/ZeroState.svelte";
-  import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import PreviewEmpty from "$lib/components/preview/PreviewEmpty.svelte";
+  import PreviewKpi from "$lib/components/preview/PreviewKpi.svelte";
+  import PreviewKpiStrip from "$lib/components/preview/PreviewKpiStrip.svelte";
+  import PreviewPage from "$lib/components/preview/PreviewPage.svelte";
+  import PreviewPanel from "$lib/components/preview/PreviewPanel.svelte";
 
   let networth = 0;
   let investment = 0;
@@ -25,8 +26,9 @@
   let destroy: () => void;
   let points: Networth[] = [];
   let legends: Legend[] = [];
+  let loadError = false;
 
-  $: if (!_.isEmpty(points)) {
+  $: if (!_.isEmpty(points) && svg) {
     if (destroy) {
       destroy();
     }
@@ -47,53 +49,91 @@
   });
 
   onMount(async () => {
-    const result = await ajax("/api/networth");
-    points = result.networthTimeline;
-    setAllowedDateRange(_.map(points, (p) => p.date));
+    try {
+      const result = await ajax("/api/networth");
+      points = result.networthTimeline;
+      setAllowedDateRange(_.map(points, (p) => p.date));
 
-    const current = _.last(points);
-    if (current) {
-      networth = current.investmentAmount + current.gainAmount - current.withdrawalAmount;
-      investment = current.investmentAmount - current.withdrawalAmount;
-      gain = current.gainAmount;
+      const current = _.last(points);
+      if (current) {
+        networth = current.investmentAmount + current.gainAmount - current.withdrawalAmount;
+        investment = current.investmentAmount - current.withdrawalAmount;
+        gain = current.gainAmount;
+      }
+      xirr = result.xirr;
+      loadError = false;
+    } catch (_error) {
+      loadError = true;
     }
-    xirr = result.xirr;
   });
 </script>
 
-<section class="section tab-networth">
-  <div class="container is-fluid">
-    <nav class="level {isMobile() && 'grid-2'}">
-      <LevelItem title="Net worth" color={COLORS.primary} value={formatCurrency(networth)} />
-      <LevelItem
-        title="Net Investment"
-        color={COLORS.secondary}
-        value={formatCurrency(investment)}
-      />
-      <LevelItem
-        title="Gain / Loss"
-        color={gain >= 0 ? COLORS.gainText : COLORS.lossText}
-        value={formatCurrency(gain)}
-      />
-      <LevelItem title="XIRR" value={formatFloat(xirr)} />
-    </nav>
-  </div>
-</section>
+<PreviewPage
+  eyebrow="Trend Analysis"
+  title="Net Worth"
+  description="Track the shape of total wealth, invested capital, gains, and return over the selected period."
+>
+  <PreviewKpiStrip>
+    <PreviewKpi label="Net worth" value={formatCurrency(networth)} tone="accent" />
+    <PreviewKpi label="Net investment" value={formatCurrency(investment)} />
+    <PreviewKpi
+      label="Gain / Loss"
+      value={formatCurrency(gain)}
+      tone={gain >= 0 ? "positive" : "negative"}
+    />
+    <PreviewKpi label="XIRR" value={formatFloat(xirr)} />
+  </PreviewKpiStrip>
 
-<section class="section tab-networth">
-  <div class="container is-fluid">
-    <div class="columns">
-      <div class="column is-12">
-        <div class="box overflow-x-auto">
-          <ZeroState item={points}>
-            <strong>Oops!</strong> You have no transactions.
-          </ZeroState>
+  <PreviewPanel
+    title="Net worth timeline"
+    subtle="Investment, withdrawal, and market movement in one long-running view."
+  >
+    {#if loadError}
+      <PreviewEmpty
+        title="Net-worth data is unavailable"
+        message="The backend returned an error for this endpoint. The rest of the preview shell remains available."
+      />
+    {:else if points.length}
+      <LegendCard {legends} clazz="mb-3" />
+      <div class="paisa-preview-chart">
+        <svg id="d3-networth-timeline" height="500" bind:this={svg}></svg>
+      </div>
+    {:else}
+      <PreviewEmpty
+        title="No net-worth history yet"
+        message="Add transactions or import a journal before this trend can be calculated."
+      />
+    {/if}
+  </PreviewPanel>
 
-          <LegendCard {legends} clazz="ml-4" />
-          <svg id="d3-networth-timeline" height="500" bind:this={svg} />
+  <div class="paisa-preview-grid">
+    <PreviewPanel title="Current signal" subtle="What this view can explain from live data.">
+      <div class="paisa-preview-list">
+        <div class="paisa-preview-list__item">
+          <span>Observed snapshots</span>
+          <strong>{points.length}</strong>
+        </div>
+        <div class="paisa-preview-list__item">
+          <span>Visible range</span>
+          <strong>{isMobile() ? "Compact" : "Full timeline"}</strong>
         </div>
       </div>
-    </div>
-    <BoxLabel text="Networth Timeline" />
+    </PreviewPanel>
+
+    <PreviewPanel
+      title="Drill deeper"
+      subtle="Use adjacent asset views to separate allocation and returns."
+    >
+      <div class="paisa-preview-list">
+        <a class="paisa-preview-list__item secondary-link" href="/preview/assets/investment">
+          <span>Contribution rhythm</span>
+          <strong>Investment</strong>
+        </a>
+        <a class="paisa-preview-list__item secondary-link" href="/preview/assets/gain">
+          <span>Return drivers</span>
+          <strong>Gain</strong>
+        </a>
+      </div>
+    </PreviewPanel>
   </div>
-</section>
+</PreviewPage>
