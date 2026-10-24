@@ -239,6 +239,16 @@ svg text {
   background-color: $grey-lightest;
 }
 
+// Bulma 1.x resolves these helpers from the light `--bulma-white-*` variables,
+// ignoring the dark theme. Map them to the theme palette instead.
+.has-background-white {
+  background-color: $white !important;
+}
+
+.has-background-white-ter {
+  background-color: $white-ter !important;
+}
+
 .svg-text-grey-light {
   fill: $grey-light;
 }
