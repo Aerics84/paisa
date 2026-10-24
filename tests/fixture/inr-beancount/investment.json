@@ -265,7 +265,12 @@
       "net_income": 121027,
       "net_investment": 88768.183232,
       "net_expense": 20100,
-      "savings_rate": 73.34576849132839
+      "savings_rate": 73.34576849132839,
+      "overall_surplus": 100927,
+      "overall_savings_rate": 83.3921356391549,
+      "overall_savings_rate_available": true,
+      "period_complete": false,
+      "has_activity": true
     }
   ]
 }
