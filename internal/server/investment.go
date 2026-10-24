@@ -26,6 +26,12 @@ type InvestmentYearlyCard struct {
 	NetInvestment     decimal.Decimal   `json:"net_investment"`
 	NetExpense        decimal.Decimal   `json:"net_expense"`
 	SavingsRate       decimal.Decimal   `json:"savings_rate"`
+
+	OverallSurplus              decimal.Decimal `json:"overall_surplus"`
+	OverallSavingsRate          decimal.Decimal `json:"overall_savings_rate"`
+	OverallSavingsRateAvailable bool            `json:"overall_savings_rate_available"`
+	PeriodComplete              bool            `json:"period_complete"`
+	HasActivity                 bool            `json:"has_activity"`
 }
 
 func GetInvestment(db *gorm.DB) gin.H {
@@ -47,7 +53,7 @@ func GetInvestment(db *gorm.DB) gin.H {
 func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expenses []posting.Posting, incomes []posting.Posting) []InvestmentYearlyCard {
 	var yearlyCards []InvestmentYearlyCard = make([]InvestmentYearlyCard, 0)
 
-	if len(assets) == 0 {
+	if len(assets) == 0 && len(expenses) == 0 && len(incomes) == 0 {
 		return yearlyCards
 	}
 
@@ -105,17 +111,26 @@ func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expe
 			savingsRate = (netInvestment.Div(netIncome)).Mul(decimal.NewFromInt(100))
 		}
 
+		savingsMetrics := calculateSavingsMetrics(netIncome, netExpense)
+		hasActivity := len(currentYearPostings) > 0 || len(currentYearExpenses) > 0 ||
+			len(currentYearTaxes) > 0 || len(currentYearIncomes) > 0
+
 		yearlyCards = append(yearlyCards, InvestmentYearlyCard{
-			StartDate:         start,
-			EndDate:           yearEnd,
-			Postings:          currentYearPostings,
-			NetTax:            netTax,
-			GrossSalaryIncome: grossSalaryIncome,
-			GrossOtherIncome:  grossOtherIncome,
-			NetIncome:         netIncome,
-			NetInvestment:     netInvestment,
-			NetExpense:        netExpense,
-			SavingsRate:       savingsRate,
+			StartDate:                   start,
+			EndDate:                     yearEnd,
+			Postings:                    currentYearPostings,
+			NetTax:                      netTax,
+			GrossSalaryIncome:           grossSalaryIncome,
+			GrossOtherIncome:            grossOtherIncome,
+			NetIncome:                   netIncome,
+			NetInvestment:               netInvestment,
+			NetExpense:                  netExpense,
+			SavingsRate:                 savingsRate,
+			OverallSurplus:              savingsMetrics.Surplus,
+			OverallSavingsRate:          savingsMetrics.OverallRate,
+			OverallSavingsRateAvailable: savingsMetrics.OverallRateAvailable,
+			PeriodComplete:              !yearEnd.After(end),
+			HasActivity:                 hasActivity,
 		})
 
 	}

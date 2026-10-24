@@ -21,6 +21,9 @@ function financialYear(card: InvestmentYearlyCard) {
   return `${card.start_date.format("YYYY")} - ${card.end_date.format("YY")}`;
 }
 
+const SAVINGS_TOOLTIP =
+  "<p>Total surplus is net income minus net expense. Total savings rate is 100 × surplus / net income.</p><p>Calculated from recorded ledger postings; this is not the change in bank balance.</p>";
+
 export function renderMonthlyInvestmentTimeline(postings: Posting[]): Legend[] {
   const id = "#d3-investment-timeline";
   const timeFormat = "MMM-YYYY";
@@ -381,7 +384,7 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
     .attr("class", "card-header")
     .append("p")
     .attr("class", "card-header-title has-text-grey-dark")
-    .text((c) => financialYear(c));
+    .text((c) => (c.period_complete ? financialYear(c) : `${financialYear(c)} (YTD)`));
 
   card
     .append("div")
@@ -389,6 +392,14 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
     .append("div")
     .attr("class", "content")
     .html((card) => {
+      if (!card.has_activity) {
+        return `<p class="has-text-grey is-size-7">No recorded activity</p>`;
+      }
+
+      const netIncomePositive = card.net_income > 0;
+      const rate = (available: boolean, value: number) =>
+        available ? `${formatFloat(value, 2)}%` : "N/A";
+
       return `
 <table class="table is-narrow is-fullwidth is-size-7 is-hoverable has-text-grey">
   <tbody>
@@ -421,8 +432,26 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
       <td class='has-text-right has-text-weight-bold'>${formatCurrency(card.net_investment)}</td>
     </tr>
     <tr>
-      <td>Savings Rate</td>
-      <td class='has-text-right has-text-weight-bold'>${formatFloat(card.savings_rate)}</td>
+      <td>Total Surplus
+        <span class="icon is-small is-link" data-tippy-content="${SAVINGS_TOOLTIP}">
+          <i class="fa-solid fa-circle-info"></i>
+        </span>
+      </td>
+      <td class='has-text-right has-text-weight-bold'>${formatCurrency(card.overall_surplus)}</td>
+    </tr>
+    <tr>
+      <td>Total Savings Rate</td>
+      <td class='has-text-right has-text-weight-bold'>${rate(
+        netIncomePositive && card.overall_savings_rate_available,
+        card.overall_savings_rate
+      )}</td>
+    </tr>
+    <tr>
+      <td>Investment Rate</td>
+      <td class='has-text-right has-text-weight-bold'>${rate(
+        netIncomePositive,
+        card.savings_rate
+      )}</td>
     </tr>
   </tbody>
 </table>

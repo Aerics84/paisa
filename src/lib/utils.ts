@@ -280,6 +280,11 @@ export interface InvestmentYearlyCard {
   net_investment: number;
   net_expense: number;
   savings_rate: number;
+  overall_surplus: number;
+  overall_savings_rate: number;
+  overall_savings_rate_available: boolean;
+  period_complete: boolean;
+  has_activity: boolean;
 }
 
 export interface IncomeYearlyCard {
