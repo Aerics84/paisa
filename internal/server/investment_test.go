@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func configureInvestmentTest(t *testing.T) {
@@ -139,12 +142,42 @@ func TestComputeInvestmentYearlyCardMarksEmptyPeriodAsNoActivity(t *testing.T) {
 	require.True(t, cards[2].OverallSavingsRate.LessThan(decimal.Zero), "recorded deficit should produce a negative rate, got %s", cards[2].OverallSavingsRate)
 }
 
-func TestComputeInvestmentYearlyCardReturnsNothingForEmptyJournal(t *testing.T) {
+func openInvestmentTestDB(t *testing.T) *gorm.DB {
+	t.Helper()
+
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("file:investment-%s?mode=memory&cache=shared", t.Name())), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.AutoMigrate(&posting.Posting{}))
+	return db
+}
+
+func TestGetInvestmentReturnsNothingForEmptyJournal(t *testing.T) {
 	configureInvestmentTest(t)
 
-	cards := computeInvestmentYearlyCard(investmentYearStart(0), nil, nil, nil)
+	response := GetInvestment(openInvestmentTestDB(t))
 
+	cards, ok := response["yearly_cards"].([]InvestmentYearlyCard)
+	require.True(t, ok)
 	require.Empty(t, cards, "a completely empty journal should not produce yearly cards")
+}
+
+func TestGetInvestmentCreatesNoActivityCardForUnrelatedPostings(t *testing.T) {
+	configureInvestmentTest(t)
+	db := openInvestmentTestDB(t)
+	require.NoError(t, db.Create(&posting.Posting{
+		Date:      investmentYearStart(0).AddDate(0, 1, 0),
+		Account:   "Assets:Checking",
+		Commodity: "INR",
+		Amount:    decimal.NewFromInt(500),
+		Quantity:  decimal.NewFromInt(500),
+	}).Error)
+
+	response := GetInvestment(db)
+
+	cards, ok := response["yearly_cards"].([]InvestmentYearlyCard)
+	require.True(t, ok)
+	require.Len(t, cards, 1, "a non-empty journal should produce a card even without relevant postings")
+	require.False(t, cards[0].HasActivity, "unrelated postings do not count as activity")
 }
 
 func TestComputeInvestmentYearlyCardMarksRecordedIncomeAndExpenseSides(t *testing.T) {

@@ -55,10 +55,6 @@ func GetInvestment(db *gorm.DB) gin.H {
 func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expenses []posting.Posting, incomes []posting.Posting) []InvestmentYearlyCard {
 	var yearlyCards []InvestmentYearlyCard = make([]InvestmentYearlyCard, 0)
 
-	if len(assets) == 0 && len(expenses) == 0 && len(incomes) == 0 {
-		return yearlyCards
-	}
-
 	var p posting.Posting
 	end := utils.EndOfToday()
 	for start = utils.BeginningOfFinancialYear(start); start.Before(end); start = start.AddDate(1, 0, 0) {
