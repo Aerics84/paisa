@@ -22,7 +22,7 @@ function financialYear(card: InvestmentYearlyCard) {
 }
 
 const SAVINGS_TOOLTIP =
-  "<p>Total surplus is net income minus net expense. Total savings rate is 100 × surplus / net income.</p><p>Calculated from recorded ledger postings; this is not the change in bank balance.</p>";
+  "<p>Total surplus is net income minus net expense. Total savings rate is 100 × surplus / net income.</p><p>N/A when the period has no recorded income or no recorded expense.</p><p>Calculated from recorded ledger postings; this is not the change in bank balance.</p>";
 
 export function renderMonthlyInvestmentTimeline(postings: Posting[]): Legend[] {
   const id = "#d3-investment-timeline";
@@ -397,6 +397,8 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
       }
 
       const netIncomePositive = card.net_income > 0;
+      const surplusAvailable =
+        card.has_income_postings === true && card.has_expense_postings === true;
       const rate = (available: boolean, value: number) =>
         available ? `${formatFloat(value, 2)}%` : "N/A";
 
@@ -437,12 +439,14 @@ export function renderYearlyCards(yearlyCards: InvestmentYearlyCard[]) {
           <i class="fa-solid fa-circle-info"></i>
         </span>
       </td>
-      <td class='has-text-right has-text-weight-bold'>${formatCurrency(card.overall_surplus)}</td>
+      <td class='has-text-right has-text-weight-bold'>${
+        surplusAvailable ? formatCurrency(card.overall_surplus) : "N/A"
+      }</td>
     </tr>
     <tr>
       <td>Total Savings Rate</td>
       <td class='has-text-right has-text-weight-bold'>${rate(
-        netIncomePositive && card.overall_savings_rate_available,
+        netIncomePositive && card.overall_savings_rate_available && surplusAvailable,
         card.overall_savings_rate
       )}</td>
     </tr>

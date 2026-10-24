@@ -32,6 +32,8 @@ type InvestmentYearlyCard struct {
 	OverallSavingsRateAvailable bool            `json:"overall_savings_rate_available"`
 	PeriodComplete              bool            `json:"period_complete"`
 	HasActivity                 bool            `json:"has_activity"`
+	HasIncomePostings           bool            `json:"has_income_postings"`
+	HasExpensePostings          bool            `json:"has_expense_postings"`
 }
 
 func GetInvestment(db *gorm.DB) gin.H {
@@ -131,6 +133,8 @@ func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expe
 			OverallSavingsRateAvailable: savingsMetrics.OverallRateAvailable,
 			PeriodComplete:              !yearEnd.After(end),
 			HasActivity:                 hasActivity,
+			HasIncomePostings:           len(currentYearIncomes) > 0,
+			HasExpensePostings:          len(currentYearExpenses) > 0,
 		})
 
 	}

@@ -17,6 +17,7 @@ runOrExit("npm", ["run", "check:format:changed"]);
 runOrExit("npm", ["run", "check"]);
 runOrExit("node", ["./scripts/gofmt-changed.mjs"]);
 runOrExit("bun", ["test", "--preload", "./src/happydom.ts", "src/lib/import.test.ts"]);
+runOrExit("bun", ["test", "--preload", "./src/happydom.ts", "src/lib/investment.test.ts"]);
 runOrExit("npm", ["run", "build"]);
 runOrExit("go", ["build", ...(process.env.GO_VERSION_LDFLAGS || "").split(/\s+/).filter(Boolean)]);
 

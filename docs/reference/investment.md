@@ -11,17 +11,17 @@ did not spend and how much of it you invested.
 
 ## The numbers on a yearly card
 
-| Row                 | Meaning                                                        |
-| ------------------- | -------------------------------------------------------------- |
-| Gross Salary Income | Postings under `Income:Salary`                                 |
-| Gross Other Income  | Postings under any other `Income:` account                     |
-| Tax                 | Postings under `Expenses:Tax`                                  |
-| Net Income          | `Gross Salary Income + Gross Other Income - Tax`               |
-| Net Expense         | Postings under `Expenses:` except `Expenses:Tax`               |
-| Investment          | Postings under `Assets:` (excluding cash and loan-funded buys) |
-| Total Surplus       | `Net Income - Net Expense`                                     |
-| Total Savings Rate  | `100 * Total Surplus / Net Income`                             |
-| Investment Rate     | `100 * Investment / Net Income`                                |
+| Row                 | Meaning                                                                      |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Gross Salary Income | Postings under `Income:Salary`                                               |
+| Gross Other Income  | Postings under any other `Income:` account                                   |
+| Tax                 | Postings under `Expenses:Tax`                                                |
+| Net Income          | `Gross Salary Income + Gross Other Income - Tax`                             |
+| Net Expense         | Postings under `Expenses:` except `Expenses:Tax`                             |
+| Investment          | Postings under `Assets:` (excluding cash, loan-funded buys and stock splits) |
+| Total Surplus       | `Net Income - Net Expense`                                                   |
+| Total Savings Rate  | `100 * Total Surplus / Net Income`                                           |
+| Investment Rate     | `100 * Investment / Net Income`                                              |
 
 `Net Income` is Paisa's existing income definition: salary plus every other
 income posting, minus taxes. "Other income" is not limited to earned
@@ -37,12 +37,25 @@ excluded from `Net Expense`. Taxes are counted exactly once.
 `Investment Rate` describes the share of net income that was moved into
 investment accounts. The two answers are different questions: money can be
 saved without being invested, and money can be invested without being
-saved (for example from an existing cash balance or a loan).
+saved (for example by moving an existing cash balance into an investment
+account).
 
 Negative surpluses and rates above 100% are shown as they are. They are not
 clipped, because clipping would hide a real overspend or a real drawdown of
 savings. When `Net Income` is zero or negative, both rates are shown as
 `N/A` instead of `0%`, because the division would be meaningless.
+
+`Total Surplus` and `Total Savings Rate` are also shown as `N/A` when the
+period contains no recorded income posting or no recorded expense posting.
+A period that only records investments, or only one side of the
+income/expense pair, cannot state what was saved: "spent nothing" and
+"expenses not recorded" look identical in the ledger. Paisa does not
+present either case as a confident figure.
+
+The API reports this through `has_income_postings` and
+`has_expense_postings`. `overall_savings_rate_available` mirrors whether
+`Net Income` is positive; the numeric `overall_savings_rate` is `0` when it
+is not available, so consumers must check the flag before displaying it.
 
 ## What the surplus is not
 
@@ -65,9 +78,10 @@ balance.
 
 Two flags describe the data behind a card:
 
-- `period_complete` only says whether the end of the financial year lies in
-  the past. A running financial year is labeled `(YTD)` and should be read as
-  a year-to-date figure, not as a finished year.
+- `period_complete` only says whether the end of the financial year is
+  already over; a year that ends today already counts as complete. A running
+  financial year is labeled `(YTD)` and should be read as a year-to-date
+  figure, not as a finished year.
 - `has_activity` only says whether at least one income, expense, tax or
   investment posting was processed for that period. A period without any such
   posting is shown as `No recorded activity` instead of a confirmed zero

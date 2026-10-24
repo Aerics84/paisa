@@ -120,9 +120,10 @@ page will roll it up to 2 level wherever necessary.
 ### Tax
 
 Income tax paid to government should be credited to `#!ledger
-Expenses:Tax` account. This is used to calculate your Net Income and
-your Savings Rate. If you want to track different types of taxes, you
-can use sub accounts as well, for example `#!ledger Expenses:Tax:Income`
+Expenses:Tax` account. This is used to calculate your Net Income, which
+feeds the rates on the [investment page](investment.md). If you want to
+track different types of taxes, you can use sub accounts as well, for
+example `#!ledger Expenses:Tax:Income`
 and `#!ledger Expenses:Tax:GST`.
 
 ## Liabilities

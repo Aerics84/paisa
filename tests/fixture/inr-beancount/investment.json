@@ -270,7 +270,9 @@
       "overall_savings_rate": 83.3921356391549,
       "overall_savings_rate_available": true,
       "period_complete": false,
-      "has_activity": true
+      "has_activity": true,
+      "has_income_postings": true,
+      "has_expense_postings": true
     }
   ]
 }

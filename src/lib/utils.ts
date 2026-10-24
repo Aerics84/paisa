@@ -285,6 +285,8 @@ export interface InvestmentYearlyCard {
   overall_savings_rate_available: boolean;
   period_complete: boolean;
   has_activity: boolean;
+  has_income_postings: boolean;
+  has_expense_postings: boolean;
 }
 
 export interface IncomeYearlyCard {

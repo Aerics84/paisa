@@ -146,3 +146,56 @@ func TestComputeInvestmentYearlyCardReturnsNothingForEmptyJournal(t *testing.T) 
 
 	require.Empty(t, cards, "a completely empty journal should not produce yearly cards")
 }
+
+func TestComputeInvestmentYearlyCardMarksRecordedIncomeAndExpenseSides(t *testing.T) {
+	configureInvestmentTest(t)
+
+	cases := []struct {
+		name          string
+		expenses      []posting.Posting
+		incomes       []posting.Posting
+		hasIncome     bool
+		hasExpense    bool
+		unavailableOn string
+	}{
+		{
+			name:          "income only",
+			incomes:       []posting.Posting{investmentPosting(0, 1, "Income:Salary", -1000)},
+			hasIncome:     true,
+			hasExpense:    false,
+			unavailableOn: "expense side",
+		},
+		{
+			name:          "expense only",
+			expenses:      []posting.Posting{investmentPosting(0, 2, "Expenses:Food", 600)},
+			hasIncome:     false,
+			hasExpense:    true,
+			unavailableOn: "income side",
+		},
+		{
+			name:       "both sides",
+			expenses:   []posting.Posting{investmentPosting(0, 2, "Expenses:Food", 600)},
+			incomes:    []posting.Posting{investmentPosting(0, 1, "Income:Salary", -1000)},
+			hasIncome:  true,
+			hasExpense: true,
+		},
+		{
+			name:          "tax only is not an expense side",
+			expenses:      []posting.Posting{investmentPosting(0, 2, "Expenses:Tax", 100)},
+			incomes:       []posting.Posting{investmentPosting(0, 1, "Income:Salary", -1000)},
+			hasIncome:     true,
+			hasExpense:    false,
+			unavailableOn: "expense side",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cards := computeInvestmentYearlyCard(investmentYearStart(0), nil, tc.expenses, tc.incomes)
+
+			require.Len(t, cards, 1)
+			require.Equal(t, tc.hasIncome, cards[0].HasIncomePostings, "unexpected income availability for %s", tc.unavailableOn)
+			require.Equal(t, tc.hasExpense, cards[0].HasExpensePostings, "unexpected expense availability for %s", tc.unavailableOn)
+		})
+	}
+}
