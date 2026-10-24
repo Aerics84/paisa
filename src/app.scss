@@ -239,6 +239,14 @@ svg text {
   background-color: $grey-lightest;
 }
 
+// Bulma 1.x resets `svg` to width/height auto (base/generic.scss), which makes
+// percentage-sized chart canvases fall back to the 300×150 default and clip
+// their content. Restore the intent for canvases that declare width="100%";
+// icons and fixed-size svgs keep the reset.
+svg[width="100%"] {
+  width: 100%;
+}
+
 // Bulma 1.x resolves these helpers from the light `--bulma-white-*` variables,
 // ignoring the dark theme. Map them to the theme palette instead.
 .has-background-white {
