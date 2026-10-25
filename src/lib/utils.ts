@@ -678,6 +678,8 @@ export function ajax(route: "/api/gain"): Promise<{
 }>;
 export function ajax(route: "/api/dashboard"): Promise<{
   checkingBalances: { asset_breakdowns: Record<string, AssetBreakdown> };
+  checkingBalanceTimeline: { month: string; account: string; balance: number }[];
+  availableMonthRange: { from: string; to: string };
   expenses: { [key: string]: Posting[] };
   cashFlows: CashFlow[];
   transactionSequences: TransactionSequence[];
@@ -868,6 +870,12 @@ export function ajax(
 export function ajax(route: "/api/version"): Promise<{ version: string }>;
 
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
+
+export function ajax<T = any>(
+  route: string,
+  options?: RequestOptions,
+  params?: Record<string, string>
+): Promise<T>;
 
 export async function ajax(
   route: string,

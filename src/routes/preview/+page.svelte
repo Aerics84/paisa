@@ -8,6 +8,16 @@
   import DashboardSectionHeader from "$lib/components/dashboard/DashboardSectionHeader.svelte";
   import DashboardStatStripItem from "$lib/components/dashboard/DashboardStatStripItem.svelte";
   import {
+    hasRecordedActivity,
+    isCurrentMonthlyReview,
+    monthlyReviewEndpoint,
+    performanceRows,
+    positionLabel,
+    surplusState,
+    trendSeries,
+    type MonthlyReviewResponse
+  } from "$lib/monthly_review";
+  import {
     enrichTrantionSequence,
     nextUnpaidSchedule,
     scheduleIcon,
@@ -29,7 +39,7 @@
     type TransactionSequence,
     now
   } from "$lib/utils";
-  import { month, refresh } from "../../store";
+  import { dateMax, dateMin, month, refresh } from "../../store";
 
   type CategorySummary = {
     category: string;
@@ -70,6 +80,12 @@
   let liabilityBreakdowns: LiabilityBreakdown[] = [];
   let networthOverview: Networth;
   let networthTimeline: Networth[] = [];
+  let checkingBalanceTimeline: { month: string; account: string; balance: number }[] = [];
+  let availableMonthRange: { from: string; to: string } | null = null;
+  let monthlyReview: MonthlyReviewResponse | null = null;
+  let monthlyReviewLoading = false;
+  let monthlyReviewError = false;
+  let monthlyReviewRequest = 0;
   let loadError = false;
   let checkingState: WidgetState = "insufficient-data";
   let networthTrendState: WidgetState = "insufficient-data";
@@ -91,6 +107,42 @@
     refresh();
   }
 
+  async function loadMonthlyReview(selectedMonth: string) {
+    const request = ++monthlyReviewRequest;
+    monthlyReviewLoading = true;
+
+    try {
+      const response = (await ajax(monthlyReviewEndpoint(selectedMonth))) as MonthlyReviewResponse;
+      if (request !== monthlyReviewRequest || !isCurrentMonthlyReview(response, selectedMonth)) {
+        return;
+      }
+      monthlyReview = response;
+      monthlyReviewError = false;
+    } catch (_error) {
+      if (request === monthlyReviewRequest) {
+        monthlyReview = null;
+        monthlyReviewError = true;
+      }
+    } finally {
+      if (request === monthlyReviewRequest) {
+        monthlyReviewLoading = false;
+      }
+    }
+  }
+
+  function applyAvailableMonthRange(range: { from: string; to: string } | null) {
+    if (!range?.from || !range?.to) {
+      return;
+    }
+
+    const from = dayjs(range.from);
+    const to = dayjs(range.to);
+    if (from.isValid() && to.isValid()) {
+      dateMin.set(from);
+      dateMax.set(to);
+    }
+  }
+
   onMount(async () => {
     try {
       const [dashboard, networthResponse, liabilitiesResponse] = await Promise.all([
@@ -108,6 +160,9 @@
         12
       );
       checkingBalances = dashboard.checkingBalances.asset_breakdowns;
+      checkingBalanceTimeline = dashboard.checkingBalanceTimeline || [];
+      availableMonthRange = dashboard.availableMonthRange || null;
+      applyAvailableMonthRange(availableMonthRange);
       networthOverview = dashboard.networth.networth;
       networthTimeline = networthResponse.networthTimeline;
       liabilityBreakdowns = liabilitiesResponse.liability_breakdowns;
@@ -245,6 +300,18 @@
   }
 
   $: monthKey = $month || now().format("YYYY-MM");
+  $: selectedMonthLabel = dayjs(monthKey + "-01").format("MMM YYYY");
+  $: if (monthKey) {
+    void loadMonthlyReview(monthKey);
+  }
+  $: activeMonthlyReview = isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null;
+  $: reviewTrend = trendSeries(activeMonthlyReview);
+  $: reviewSurplusState = surplusState(activeMonthlyReview);
+  $: reviewPerformance = performanceRows(activeMonthlyReview);
+  $: reviewHasActivity = hasRecordedActivity(activeMonthlyReview);
+  $: reviewLoading = monthlyReviewLoading && !activeMonthlyReview;
+  $: reviewTrendValues = reviewTrend.map((point) => point.value ?? 0);
+  $: reviewTrendMax = Math.max(_.max(reviewTrendValues) ?? 0, 0);
   $: currentBudget = budgetsByMonth[monthKey];
   $: currentExpenses = groupedExpenses[monthKey] || [];
   $: previousExpenses = groupedExpenses[previousMonthKey(monthKey)] || [];
@@ -766,13 +833,179 @@
       </div>
 
       <div class="paisa-dashboard__section">
+        <div class="paisa-review">
+          <div class="paisa-review__header">
+            <div>
+              <div class="paisa-zone__title">Monthly Review</div>
+              <div class="paisa-zone__subtle">
+                {selectedMonthLabel}{activeMonthlyReview && !activeMonthlyReview.period_complete
+                  ? " · in progress"
+                  : ""}
+              </div>
+            </div>
+            {#if activeMonthlyReview}
+              <div class="paisa-review__status">
+                {activeMonthlyReview.period_complete ? "Complete calendar month" : "Month to date"}
+              </div>
+            {/if}
+          </div>
+
+          {#if reviewLoading}
+            <div class="paisa-zone__empty">
+              <strong>Loading {selectedMonthLabel}…</strong>
+            </div>
+          {:else if monthlyReviewError}
+            <div class="paisa-zone__empty">
+              <strong>Monthly review could not be loaded.</strong>
+              <p>Select another month or reload the page.</p>
+            </div>
+          {:else if !activeMonthlyReview}
+            <div class="paisa-zone__empty">
+              <strong>Monthly review is not available yet.</strong>
+            </div>
+          {:else}
+            {#if reviewHasActivity}
+              <div class="paisa-review__metrics">
+                <div class="paisa-review__metric">
+                  <span>Net income after tax</span>
+                  <strong>{formatCurrency(activeMonthlyReview.net_income_after_tax)}</strong>
+                  <small>
+                    {activeMonthlyReview.has_income_postings
+                      ? `Tax ${formatCurrency(activeMonthlyReview.net_tax)}`
+                      : "No recorded income"}
+                  </small>
+                </div>
+                <div class="paisa-review__metric">
+                  <span>Surplus / Deficit</span>
+                  {#if reviewSurplusState === "ready"}
+                    <strong class:is-negative={activeMonthlyReview.surplus < 0}
+                      >{formatCurrency(activeMonthlyReview.surplus)}</strong
+                    >
+                    <small>net income − expenses</small>
+                  {:else}
+                    <strong class="is-muted">Not available</strong>
+                    <small>
+                      {reviewSurplusState === "income-missing"
+                        ? "No recorded income this month."
+                        : reviewSurplusState === "expense-missing"
+                          ? "No recorded expenses this month."
+                          : "No recorded income or expenses this month."}
+                    </small>
+                  {/if}
+                </div>
+                <div class="paisa-review__metric">
+                  <span>Net expense</span>
+                  <strong>{formatCurrency(activeMonthlyReview.net_expense)}</strong>
+                  <small>Excludes tax</small>
+                </div>
+                <div class="paisa-review__metric">
+                  <span>Investments</span>
+                  <strong>{formatCurrency(activeMonthlyReview.investment_contributions)}</strong>
+                  <small>Dividends {formatCurrency(activeMonthlyReview.dividend_income)}</small>
+                </div>
+              </div>
+
+              <div class="paisa-review__trend">
+                <div class="paisa-zone__subtle">Net income · last three months</div>
+                <div class="paisa-review__trend-bars">
+                  {#each reviewTrend as point}
+                    <div class="paisa-review__trend-point" class:is-mtd={point.isMonthToDate}>
+                      <div class="paisa-review__trend-track">
+                        {#if point.value != null && reviewTrendMax > 0}
+                          <div
+                            class="paisa-review__trend-fill"
+                            style={`height: ${Math.max((Math.max(point.value, 0) / reviewTrendMax) * 100, 2)}%`}
+                          ></div>
+                        {/if}
+                      </div>
+                      <strong
+                        >{point.value != null
+                          ? formatCurrency(point.value)
+                          : "Not available"}</strong
+                      >
+                      <span
+                        >{dayjs(point.month + "-01").format("MMM")}{point.isMonthToDate
+                          ? " · MTD"
+                          : ""}</span
+                      >
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {:else}
+              <div class="paisa-review__no-activity">
+                <strong>No recorded activity</strong>
+                <p>
+                  There are no postings for {selectedMonthLabel}. This does not prove the ledger
+                  history is complete.
+                </p>
+              </div>
+            {/if}
+
+            <div class="paisa-review__performance">
+              <div class="paisa-review__performance-header">
+                <div class="paisa-zone__subtle">Investment performance</div>
+                {#if reviewPerformance.asOf}
+                  <div class="paisa-zone__subtle">
+                    Prices as of {dayjs(reviewPerformance.asOf).format("MMM D, YYYY")}
+                  </div>
+                {/if}
+              </div>
+
+              {#if activeMonthlyReview.performance_state === "ready" && reviewPerformance.best.length}
+                <div class="paisa-review__performers">
+                  <div class="paisa-review__performer-group">
+                    <div class="paisa-zone__subtle">Best</div>
+                    {#each reviewPerformance.best as performer}
+                      <div class="paisa-review__performer">
+                        <span>{positionLabel(performer.account)}</span>
+                        <strong
+                          class:is-positive={performer.total_return_percent >= 0}
+                          class:is-negative={performer.total_return_percent < 0}
+                        >
+                          {formatPercentage(performer.total_return_percent / 100, 2)}
+                        </strong>
+                        {#if performer.dividend_income}
+                          <small>Dividends {formatCurrency(performer.dividend_income)}</small>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                  <div class="paisa-review__performer-group">
+                    <div class="paisa-zone__subtle">Weakest</div>
+                    {#each reviewPerformance.weakest as performer}
+                      <div class="paisa-review__performer">
+                        <span>{positionLabel(performer.account)}</span>
+                        <strong
+                          class:is-positive={performer.total_return_percent >= 0}
+                          class:is-negative={performer.total_return_percent < 0}
+                        >
+                          {formatPercentage(performer.total_return_percent / 100, 2)}
+                        </strong>
+                        {#if performer.dividend_income}
+                          <small>Dividends {formatCurrency(performer.dividend_income)}</small>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {:else}
+                <div class="paisa-zone__empty">
+                  <strong>Investment performance is not available for {selectedMonthLabel}.</strong>
+                  <p>
+                    Historical prices or flow coverage are insufficient for a comparable ranking.
+                  </p>
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <div class="paisa-dashboard__section">
         <div class="paisa-dashboard__band paisa-dashboard__band--middle">
           <div class="paisa-zone paisa-zone--spending">
-            <DashboardSectionHeader
-              title="A. Where Money Went This Month"
-              subtle="This month"
-              selectable
-            />
+            <DashboardSectionHeader title="A. Where Money Went This Month" subtle="This month" />
 
             {#if spendingState === "ready"}
               <div class="paisa-spending">
@@ -865,7 +1098,7 @@
           </div>
 
           <div class="paisa-zone paisa-zone--drivers">
-            <DashboardSectionHeader title="C. Net Worth Drivers" subtle="This month" selectable />
+            <DashboardSectionHeader title="C. Net Worth Drivers" subtle={selectedMonthLabel} />
             {#if driverState === "ready"}
               <div class="paisa-driver-list">
                 {#each displayedNetWorthDrivers as driver}

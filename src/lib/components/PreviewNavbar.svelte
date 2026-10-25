@@ -387,15 +387,6 @@
         >
       {/if}
       <ThemeSwitcher />
-      <button
-        class="button is-small paisa-topbar__icon-button"
-        type="button"
-        aria-label="Notifications"
-      >
-        <span class="icon is-small">
-          <i class="far fa-bell"></i>
-        </span>
-      </button>
       {#if !isOverview}
         <Actions />
       {/if}

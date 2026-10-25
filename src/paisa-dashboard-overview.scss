@@ -862,3 +862,201 @@
     gap: 0.65rem;
   }
 }
+
+.paisa-review {
+  border: 1px solid var(--app-border);
+  border-radius: 1.35rem;
+  background: var(--app-canvas);
+  box-shadow: var(--app-shadow-soft);
+  padding: 1.35rem 1.45rem;
+  display: grid;
+  gap: 1.15rem;
+}
+
+.paisa-review__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.paisa-review__status {
+  color: var(--app-text-subtle);
+  font-size: 0.78rem;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  white-space: nowrap;
+}
+
+.paisa-review__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.paisa-review__metric {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+}
+
+.paisa-review__metric span {
+  font-size: 0.78rem;
+  color: var(--app-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.paisa-review__metric strong {
+  font-size: 1.35rem;
+  color: var(--dashboard-text-strong);
+}
+
+.paisa-review__metric strong.is-muted {
+  font-size: 1rem;
+  color: var(--app-text-subtle);
+}
+
+.paisa-review__metric small {
+  color: var(--app-text-muted);
+  font-size: 0.78rem;
+}
+
+.paisa-review__metric strong.is-negative,
+.paisa-review__performer strong.is-negative {
+  color: var(--app-danger);
+}
+
+.paisa-review__performer strong.is-positive {
+  color: var(--app-positive);
+}
+
+.paisa-review__trend {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.paisa-review__trend-bars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.paisa-review__trend-point {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.paisa-review__trend-track {
+  height: 5.5rem;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.paisa-review__trend-fill {
+  width: 100%;
+  border-radius: 0.45rem 0.45rem 0 0;
+  background: linear-gradient(180deg, var(--app-accent), rgba(45, 212, 191, 0.25));
+  min-height: 2px;
+}
+
+.paisa-review__trend-point.is-mtd .paisa-review__trend-fill {
+  opacity: 0.6;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--app-accent) 0,
+    var(--app-accent) 5px,
+    rgba(45, 212, 191, 0.2) 5px,
+    rgba(45, 212, 191, 0.2) 10px
+  );
+}
+
+.paisa-review__trend-point strong {
+  font-size: 0.95rem;
+  color: var(--dashboard-text-strong);
+}
+
+.paisa-review__trend-point span {
+  color: var(--app-text-subtle);
+  font-size: 0.78rem;
+}
+
+.paisa-review__performance {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.paisa-review__performance-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.paisa-review__performers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.paisa-review__performer-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.paisa-review__performer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.75rem;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.paisa-review__performer span {
+  font-weight: 600;
+  color: var(--dashboard-text-strong);
+}
+
+.paisa-review__performer small {
+  grid-column: 1 / -1;
+  color: var(--app-text-subtle);
+}
+
+.paisa-review__no-activity {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--app-border);
+  border-radius: 1rem;
+}
+
+.paisa-review__no-activity strong {
+  color: var(--dashboard-text-strong);
+}
+
+.paisa-review__no-activity p {
+  margin: 0;
+  color: var(--app-text-muted);
+}
+
+@media (max-width: 1087px) {
+  .paisa-review__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .paisa-review__metrics,
+  .paisa-review__performers {
+    grid-template-columns: 1fr;
+  }
+}
