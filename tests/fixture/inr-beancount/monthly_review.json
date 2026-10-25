@@ -1,0 +1,42 @@
+{
+  "month": "2022-02",
+  "activity_state": "no_recorded_activity",
+  "period_complete": false,
+  "net_income_after_tax": 0,
+  "net_tax": 0,
+  "net_expense": 0,
+  "surplus": 0,
+  "has_income_postings": false,
+  "has_expense_postings": false,
+  "flow_graph": {
+    "nodes": [],
+    "links": []
+  },
+  "net_income_trend": [
+    {
+      "month": "2021-12",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-01",
+      "value": 21027,
+      "available": true,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-02",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": true
+    }
+  ],
+  "investment_contributions": 0,
+  "investment_market_movement": 0,
+  "dividend_income": 0,
+  "best_performers": [],
+  "weakest_performers": [],
+  "performance_state": "not_available",
+  "performance_as_of": "0001-01-01T00:00:00Z"
+}

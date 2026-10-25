@@ -1,0 +1,120 @@
+{
+  "month": "2022-02",
+  "activity_state": "ready",
+  "period_complete": false,
+  "net_income_after_tax": 4800,
+  "net_tax": 0,
+  "net_expense": 1660,
+  "surplus": 3140,
+  "has_income_postings": true,
+  "has_expense_postings": true,
+  "flow_graph": {
+    "nodes": [
+      {
+        "id": 1,
+        "name": "Assets:Checking:ING"
+      },
+      {
+        "id": 9,
+        "name": "Assets:Equity:VWCE"
+      },
+      {
+        "id": 5,
+        "name": "Assets:Savings:Tagesgeld"
+      },
+      {
+        "id": 6,
+        "name": "Expenses"
+      },
+      {
+        "id": 7,
+        "name": "Expenses:Rent"
+      },
+      {
+        "id": 8,
+        "name": "Expenses:Utilities"
+      },
+      {
+        "id": 2,
+        "name": "Income"
+      },
+      {
+        "id": 3,
+        "name": "Income:Salary"
+      },
+      {
+        "id": 4,
+        "name": "Income:Salary:Acme GmbH"
+      }
+    ],
+    "links": [
+      {
+        "source": 1,
+        "target": 5,
+        "value": 600
+      },
+      {
+        "source": 1,
+        "target": 6,
+        "value": 1660
+      },
+      {
+        "source": 1,
+        "target": 9,
+        "value": 607.5
+      },
+      {
+        "source": 2,
+        "target": 1,
+        "value": 4800
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "value": 4800
+      },
+      {
+        "source": 4,
+        "target": 3,
+        "value": 4800
+      },
+      {
+        "source": 6,
+        "target": 7,
+        "value": 1450
+      },
+      {
+        "source": 6,
+        "target": 8,
+        "value": 210
+      }
+    ]
+  },
+  "net_income_trend": [
+    {
+      "month": "2021-12",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-01",
+      "value": 4800,
+      "available": true,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-02",
+      "value": 4800,
+      "available": true,
+      "is_month_to_date": true
+    }
+  ],
+  "investment_contributions": 1207.5,
+  "investment_market_movement": 0,
+  "dividend_income": 0,
+  "best_performers": [],
+  "weakest_performers": [],
+  "performance_state": "not_available",
+  "performance_as_of": "0001-01-01T00:00:00Z"
+}

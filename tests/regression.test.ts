@@ -48,6 +48,7 @@ async function verifyApi(dir: string) {
   expect(success).toBe(true);
 
   await recordAndVerify(dir, "/api/dashboard", "dashboard");
+  await recordAndVerify(dir, "/api/dashboard/monthly?month=2022-02", "monthly_review");
   await recordAndVerify(dir, "/api/cash_flow", "cash_flow");
   await recordAndVerify(dir, "/api/income_statement", "income_statement");
   await recordAndVerify(dir, "/api/expense", "expense");
