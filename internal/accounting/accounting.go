@@ -162,7 +162,7 @@ func RunningBalance(db *gorm.DB, postings []posting.Posting) []Point {
 	accumulator := make(map[string]decimal.Decimal)
 
 	end := utils.EndOfToday()
-	for start := postings[0].Date; start.Before(end); start = start.AddDate(0, 0, 1) {
+	for start := utils.BeginningOfDay(postings[0].Date); start.Before(end); start = utils.BeginningOfDay(start.AddDate(0, 0, 1)) {
 		for len(postings) > 0 && (postings[0].Date.Before(start) || postings[0].Date.Equal(start)) {
 			p, postings = postings[0], postings[1:]
 			accumulator[p.Commodity] = accumulator[p.Commodity].Add(p.Quantity)

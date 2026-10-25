@@ -130,7 +130,11 @@ func Now() time.Time {
 	if !now.Equal(time.Time{}) {
 		return now
 	}
-	return time.Now()
+	return time.Now().In(config.TimeZone())
+}
+
+func BeginningOfDay(date time.Time) time.Time {
+	return toDate(date)
 }
 
 func IsNowDefined() bool {

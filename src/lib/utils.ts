@@ -638,6 +638,10 @@ type RequestOptions = RequestInit & {
   background?: boolean;
 };
 
+export function parseApiDate(value: string) {
+  return dayjs(value.slice(0, 10));
+}
+
 export function ajax(
   route: "/api/config"
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
@@ -924,7 +928,7 @@ export async function ajax(
         value
       )
     ) {
-      return dayjs(value);
+      return parseApiDate(value);
     }
     return value;
   });
