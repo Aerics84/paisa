@@ -260,6 +260,7 @@ func TestIsSalaryIncomeMatchesWholeSegments(t *testing.T) {
 }
 
 func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
+	utils.SetNow("2026-06-15")
 	configureInvestmentTestWith(t, map[string]interface{}{
 		"salary_income_accounts": []string{"Income:Employment:Wages"},
 	})

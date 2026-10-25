@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -36,22 +37,46 @@ func GetCurrentCashFlow(db *gorm.DB) []CashFlow {
 }
 
 func computeCashFlow(db *gorm.DB, q *query.Query, balance decimal.Decimal) []CashFlow {
-	var cashFlows []CashFlow
+	cashFlows := make([]CashFlow, 0)
 
-	expenses := utils.GroupByMonth(q.Clone().Like("Expenses:%").NotAccountPrefix("Expenses:Tax").All())
-	incomes := utils.GroupByMonth(q.Clone().Like("Income:%").All())
-	liabilities := utils.GroupByMonth(q.Clone().Like("Liabilities:%").All())
-	investments := utils.GroupByMonth(q.Clone().Like("Assets:%").NotAccountPrefix("Assets:Checking").All())
-	taxes := utils.GroupByMonth(q.Clone().AccountPrefix("Expenses:Tax").All())
-	checkings := utils.GroupByMonth(q.Clone().AccountPrefix("Assets:Checking").All())
-	postings := q.Clone().All()
-
-	if len(postings) == 0 {
-		return []CashFlow{}
+	all := q.Clone().All()
+	if len(all) == 0 {
+		return cashFlows
 	}
 
-	end := utils.MaxTime(utils.EndOfToday(), postings[len(postings)-1].Date)
-	for start := utils.BeginningOfMonth(postings[0].Date); start.Before(end); start = start.AddDate(0, 1, 0) {
+	expenseList := make([]posting.Posting, 0)
+	incomeList := make([]posting.Posting, 0)
+	liabilityList := make([]posting.Posting, 0)
+	investmentList := make([]posting.Posting, 0)
+	taxList := make([]posting.Posting, 0)
+	checkingList := make([]posting.Posting, 0)
+
+	for _, p := range all {
+		switch {
+		case utils.IsSameOrParent(p.Account, "Expenses:Tax"):
+			taxList = append(taxList, p)
+		case utils.FirstName(p.Account) == "Expenses":
+			expenseList = append(expenseList, p)
+		case utils.FirstName(p.Account) == "Income":
+			incomeList = append(incomeList, p)
+		case utils.FirstName(p.Account) == "Liabilities":
+			liabilityList = append(liabilityList, p)
+		case utils.IsSameOrParent(p.Account, "Assets:Checking"):
+			checkingList = append(checkingList, p)
+		case utils.FirstName(p.Account) == "Assets":
+			investmentList = append(investmentList, p)
+		}
+	}
+
+	expenses := utils.GroupByMonth(expenseList)
+	incomes := utils.GroupByMonth(incomeList)
+	liabilities := utils.GroupByMonth(liabilityList)
+	investments := utils.GroupByMonth(investmentList)
+	taxes := utils.GroupByMonth(taxList)
+	checkings := utils.GroupByMonth(checkingList)
+
+	end := utils.MaxTime(utils.EndOfToday(), all[len(all)-1].Date)
+	for start := utils.BeginningOfMonth(all[0].Date); start.Before(end); start = start.AddDate(0, 1, 0) {
 		cashFlow := CashFlow{Date: start}
 
 		key := start.Format("2006-01")
