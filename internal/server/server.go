@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -32,8 +33,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
+var monthlyRouteMonthPattern = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
+
+func Build(db *gorm.DB, enableCompression bool) *gin.Engine {	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
 	if enableCompression {
@@ -144,6 +146,22 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 
 	router.GET("/api/dashboard", func(c *gin.Context) {
 		c.JSON(200, GetDashboard(db))
+	})
+
+	router.GET("/api/dashboard/monthly", func(c *gin.Context) {
+		monthText := c.Query("month")
+		if !monthlyRouteMonthPattern.MatchString(monthText) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "month must use YYYY-MM"})
+			return
+		}
+
+		month, err := time.ParseInLocation("2006-01", monthText, config.TimeZone())
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "month must use YYYY-MM"})
+			return
+		}
+
+		c.JSON(200, GetMonthlyReview(db, month))
 	})
 
 	router.GET("/api/networth", func(c *gin.Context) {
