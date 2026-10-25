@@ -81,3 +81,17 @@ tax_regime: germany
 	assert.False(t, SupportsScheduleAL())
 	assert.True(t, SupportsGermanyTaxFeatures())
 }
+
+func TestSalaryIncomeAccountsConfig(t *testing.T) {
+	base := "journal_path: test.ledger\ndb_path: test.db\n"
+	require.NoError(t, LoadConfig([]byte(base+"salary_income_accounts: [Income:Employment:Wages]\n"), ""))
+	require.NotNil(t, GetConfig().SalaryIncomeAccounts)
+	assert.Equal(t, []string{"Income:Employment:Wages"}, *GetConfig().SalaryIncomeAccounts)
+
+	require.NoError(t, LoadConfig([]byte(base+"salary_income_accounts: []\n"), ""))
+	require.NotNil(t, GetConfig().SalaryIncomeAccounts)
+	assert.Empty(t, *GetConfig().SalaryIncomeAccounts)
+
+	assert.Error(t, LoadConfig([]byte(base+"salary_income_accounts: Income:Salary\n"), ""))
+	assert.Error(t, LoadConfig([]byte(base+"salary_income_accounts: [Assets:Employment]\n"), ""))
+}

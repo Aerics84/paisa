@@ -64,7 +64,7 @@ func monthlyIncome(postings []posting.Posting) (decimal.Decimal, decimal.Decimal
 
 	for _, p := range postings {
 		switch {
-		case strings.HasPrefix(p.Account, "Income:Salary"):
+		case isSalaryIncome(p.Account):
 			grossSalary = grossSalary.Sub(p.Amount)
 		case utils.FirstName(p.Account) == "Income":
 			grossOther = grossOther.Sub(p.Amount)

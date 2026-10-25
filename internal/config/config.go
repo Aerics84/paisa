@@ -192,6 +192,8 @@ type Config struct {
 
 	ImportTemplates []ImportTemplate `json:"import_templates" yaml:"import_templates"`
 
+	SalaryIncomeAccounts *[]string `json:"salary_income_accounts" yaml:"salary_income_accounts"`
+
 	Accounts []Account `json:"accounts" yaml:"accounts"`
 
 	Goals Goals `json:"goals" yaml:"goals"`

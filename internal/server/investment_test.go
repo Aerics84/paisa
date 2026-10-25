@@ -11,6 +11,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,12 +19,21 @@ import (
 
 func configureInvestmentTest(t *testing.T) {
 	t.Helper()
+	configureInvestmentTestWith(t, nil)
+}
+
+func configureInvestmentTestWith(t *testing.T, extra map[string]interface{}) {
+	t.Helper()
 	root := t.TempDir()
-	content, err := json.Marshal(map[string]interface{}{
+	payload := map[string]interface{}{
 		"journal_path":                  filepath.Join(root, "main.ledger"),
 		"db_path":                       filepath.Join(root, "paisa.db"),
 		"financial_year_starting_month": 4,
-	})
+	}
+	for key, value := range extra {
+		payload[key] = value
+	}
+	content, err := json.Marshal(payload)
 	require.NoError(t, err)
 	require.NoError(t, config.LoadConfig(content, ""))
 }
@@ -231,4 +241,36 @@ func TestComputeInvestmentYearlyCardMarksRecordedIncomeAndExpenseSides(t *testin
 			require.Equal(t, tc.hasExpense, cards[0].HasExpensePostings, "unexpected expense availability for %s", tc.unavailableOn)
 		})
 	}
+}
+
+func TestIsSalaryIncomeMatchesWholeSegments(t *testing.T) {
+	require.NoError(t, config.LoadConfig([]byte(
+		"journal_path: test.ledger\ndb_path: test.db\n",
+	), ""))
+	for account, want := range map[string]bool{
+		"Income:Salary":          true,
+		"Income:Salary:Employer": true,
+		"Income:Payroll:Bonus":   true,
+		"Income:SalaryOther":     false,
+		"Income:PayrollOther":    false,
+		"Income:Bank:Interest":   false,
+	} {
+		assert.Equal(t, want, isSalaryIncome(account), account)
+	}
+}
+
+func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
+	configureInvestmentTestWith(t, map[string]interface{}{
+		"salary_income_accounts": []string{"Income:Employment:Wages"},
+	})
+	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
+	assets := []posting.Posting{{Date: date, Account: "Assets:Broker", Amount: decimal.NewFromInt(100)}}
+	incomes := []posting.Posting{
+		{Date: date, Account: "Income:Employment:Wages", Amount: decimal.NewFromInt(-1000)},
+		{Date: date, Account: "Income:Other", Amount: decimal.NewFromInt(-50)},
+	}
+	cards := computeInvestmentYearlyCard(date, assets, nil, incomes)
+	require.NotEmpty(t, cards)
+	assert.True(t, cards[0].GrossSalaryIncome.Equal(decimal.NewFromInt(1000)))
+	assert.True(t, cards[0].GrossOtherIncome.Equal(decimal.NewFromInt(50)))
 }

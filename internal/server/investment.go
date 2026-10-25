@@ -1,10 +1,10 @@
 package server
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
@@ -52,6 +52,19 @@ func GetInvestment(db *gorm.DB) gin.H {
 	return gin.H{"assets": assets, "yearly_cards": computeInvestmentYearlyCard(p.Date, assets, expenses, incomes)}
 }
 
+func isSalaryIncome(account string) bool {
+	accounts := []string{"Income:Salary", "Income:Payroll"}
+	if configured := config.GetConfig().SalaryIncomeAccounts; configured != nil {
+		accounts = *configured
+	}
+	for _, parent := range accounts {
+		if utils.IsSameOrParent(account, parent) {
+			return true
+		}
+	}
+	return false
+}
+
 func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expenses []posting.Posting, incomes []posting.Posting) []InvestmentYearlyCard {
 	var yearlyCards []InvestmentYearlyCard = make([]InvestmentYearlyCard, 0)
 
@@ -87,14 +100,14 @@ func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expe
 		}
 
 		grossSalaryIncome := utils.SumBy(currentYearIncomes, func(p posting.Posting) decimal.Decimal {
-			if strings.HasPrefix(p.Account, "Income:Salary") {
+			if isSalaryIncome(p.Account) {
 				return p.Amount.Neg()
 			} else {
 				return decimal.Zero
 			}
 		})
 		grossOtherIncome := utils.SumBy(currentYearIncomes, func(p posting.Posting) decimal.Decimal {
-			if !strings.HasPrefix(p.Account, "Income:Salary") {
+			if !isSalaryIncome(p.Account) {
 				return p.Amount.Neg()
 			} else {
 				return decimal.Zero

@@ -722,6 +722,16 @@
       "description": "When strict mode is enabled, all the accounts and commodities should be defined before use.",
       "enum": ["", "yes", "no"]
     },
+    "salary_income_accounts": {
+      "type": "array",
+      "description": "Income accounts classified as salary. When unset, Income:Salary and Income:Payroll are used. An empty list disables salary classification; an explicit list replaces the defaults. Matching is done on whole account segments.",
+      "items": {
+        "type": "string",
+        "pattern": "^Income:[^:*]+(:[^:*]+)*$"
+      },
+      "ui:widget": "accounts",
+      "uniqueItems": true
+    },
     "retirement": {
       "type": "object",
       "ui:widget": "hidden"

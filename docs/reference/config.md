@@ -27,9 +27,10 @@ can type the full account name like `#!ledger
 Account:Equity:APPL`. Paisa also supports wildcard `*`, you can use
 `#!ledger Account:Equity:*` to represent all accounts under
 Equity. It's also possible to use negation. `#!ledger !Expenses:Tax`
-will match all accounts except Tax. If you use negation, then all the
-accounts should be negation. Don't mix negation with others, if done
-the behavior will be undefined.
+will match all accounts except Tax. Positive patterns are combined with
+OR, negative patterns are excluded first, and when only negative
+patterns are given every account that doesn't match them is included.
+Mixing negation with positive patterns is supported.
 
 ```yaml
 # Path to your journal file. It can be absolute or relative to the
@@ -131,6 +132,18 @@ week_starting_day: 0
 #
 # OPTIONAL, ENUM: yes, no DEFAULT: no
 strict: "no"
+
+# Income accounts that count as salary in the investment and monthly
+# review reports. When unset, Income:Salary and Income:Payroll are
+# treated as salary. Set it to an explicit list to replace those
+# defaults, or to an empty list ([]) to disable salary classification.
+# Matching is done on whole account segments, so Income:SalaryOther is
+# not salary while Income:Salary:Employer is.
+#
+# OPTIONAL, DEFAULT: [Income:Salary, Income:Payroll]
+salary_income_accounts:
+  - Income:Salary
+  - Income:Payroll
 
 ## Budget
 budget:
