@@ -39,3 +39,5 @@ brand/*.png
 /.codex/
 /.githooks/
 /AGENTS.md
+*.db-shm
+*.db-wal
