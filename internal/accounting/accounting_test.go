@@ -51,3 +51,15 @@ func TestFilterByGlobCombinesPositiveAndNegativePatterns(t *testing.T) {
 	assert.Equal(t, []string{"Assets:Bank:Checking", "Assets:Broker", "Assets:Cash", "Expenses:Food"},
 		accounts(FilterByGlob(ps, nil)))
 }
+
+func TestFIFOConsumesLotsInOrder(t *testing.T) {
+	ps := []posting.Posting{
+		{Commodity: "AAPL", Quantity: decimal.NewFromInt(10), Amount: decimal.NewFromInt(100)},
+		{Commodity: "AAPL", Quantity: decimal.NewFromInt(10), Amount: decimal.NewFromInt(110)},
+		{Commodity: "AAPL", Quantity: decimal.NewFromInt(-15), Amount: decimal.NewFromInt(-180)},
+	}
+	remaining := FIFO(ps)
+	require.Len(t, remaining, 1)
+	assert.True(t, remaining[0].Quantity.Equal(decimal.NewFromInt(5)))
+	assert.True(t, remaining[0].Amount.Equal(decimal.NewFromInt(55)))
+}
