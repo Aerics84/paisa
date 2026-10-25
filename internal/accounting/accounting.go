@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"path/filepath"
@@ -37,40 +38,58 @@ func Register(postings []posting.Posting) []Balance {
 	return balances
 }
 
+func matchAccountGlob(pattern string, account string) (bool, error) {
+	if strings.Contains(pattern, "*") {
+		return filepath.Match(pattern, account)
+	}
+	return utils.IsSameOrParent(account, pattern), nil
+}
+
 func FilterByGlob(postings []posting.Posting, accounts []string) []posting.Posting {
-	negatePresent := lo.SomeBy(accounts, func(accountGlob string) bool {
-		return accountGlob[0] == '!'
-	})
-	var combine func(collection []string, predicate func(item string) bool) bool
-	if negatePresent {
-		combine = lo.EveryBy[string]
-	} else {
-		combine = lo.SomeBy[string]
+	positives := make([]string, 0, len(accounts))
+	negatives := make([]string, 0, len(accounts))
+	for _, accountGlob := range accounts {
+		if accountGlob == "" {
+			continue
+		}
+		if accountGlob[0] == '!' {
+			if len(accountGlob) > 1 {
+				negatives = append(negatives, accountGlob[1:])
+			}
+			continue
+		}
+		positives = append(positives, accountGlob)
+	}
+
+	matches := func(globs []string, account string) bool {
+		for _, glob := range globs {
+			match, err := matchAccountGlob(glob, account)
+			if err != nil {
+				log.Warn("Invalid account glob used for filtering ", glob, err)
+				continue
+			}
+			if match {
+				return true
+			}
+		}
+		return false
 	}
 
 	return lo.Filter(postings, func(p posting.Posting, _ int) bool {
-		return combine(accounts, func(accountGlob string) bool {
-			negative := false
+		account := p.Account
+		if service.IsCapitalGains(p) {
+			account = service.CapitalGainsSourceAccount(p.Account)
+		}
 
-			if accountGlob[0] == '!' {
-				negative = true
-				accountGlob = accountGlob[1:]
-			}
+		if matches(negatives, account) {
+			return false
+		}
 
-			account := p.Account
-			if service.IsCapitalGains(p) {
-				account = service.CapitalGainsSourceAccount(p.Account)
-			}
-			match, err := filepath.Match(accountGlob, account)
-			if err != nil {
-				log.Fatal("Invalid account glob used for filtering", accountGlob, err)
-			}
+		if len(positives) == 0 {
+			return true
+		}
 
-			if negative {
-				return !match
-			}
-			return match
-		})
+		return matches(positives, account)
 	})
 }
 
