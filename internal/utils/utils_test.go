@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,6 +18,24 @@ func TestNowUsesConfiguredTimeZone(t *testing.T) {
 	t.Cleanup(func() { now = time.Time{} })
 
 	assert.Equal(t, "Europe/Berlin", Now().Location().String())
+}
+
+func TestOpenDBUsesWALAndBusyTimeout(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, config.LoadConfig([]byte(fmt.Sprintf(
+		"journal_path: %s/main.ledger\ndb_path: %s/test.db\n", dir, dir,
+	)), ""))
+	db, err := OpenDB()
+	require.NoError(t, err)
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	t.Cleanup(func() { sqlDB.Close() })
+	var mode string
+	require.NoError(t, db.Raw("PRAGMA journal_mode").Scan(&mode).Error)
+	assert.Equal(t, "wal", mode)
+	var timeout int
+	require.NoError(t, db.Raw("PRAGMA busy_timeout").Scan(&timeout).Error)
+	assert.Equal(t, 5000, timeout)
 }
 
 func TestBuildSubPath(t *testing.T) {

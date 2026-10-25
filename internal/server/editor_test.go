@@ -2,12 +2,14 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -86,4 +88,17 @@ func TestDeleteBackupsDoesNotExpandFilename(t *testing.T) {
 			require.FileExists(t, unrelated)
 		})
 	}
+}
+
+func TestPruneOldBackupsKeepsNewest(t *testing.T) {
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.ledger")
+	for i := 0; i < 15; i++ {
+		name := fmt.Sprintf("%s.backup.2026-01-%02d-00-00-00.000", journal, i+1)
+		require.NoError(t, os.WriteFile(name, []byte("x"), 0644))
+	}
+	pruneOldBackups(journal, 10)
+	matches, err := filepath.Glob(journal + ".backup.*")
+	require.NoError(t, err)
+	assert.Len(t, matches, 10)
 }

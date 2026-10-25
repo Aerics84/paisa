@@ -282,7 +282,16 @@ func UnQuote(str string) string {
 
 func OpenDB() (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(config.GetDBPath()), &gorm.Config{Logger: gorm_logrus.New()})
-	return db, err
+	if err != nil {
+		return db, err
+	}
+	if err := db.Exec("PRAGMA journal_mode = WAL").Error; err != nil {
+		return db, err
+	}
+	if err := db.Exec("PRAGMA busy_timeout = 5000").Error; err != nil {
+		return db, err
+	}
+	return db, nil
 }
 
 func Dos2Unix(str string) string {

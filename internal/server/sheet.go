@@ -120,6 +120,8 @@ func SaveSheetFile(db *gorm.DB, file SheetFile) gin.H {
 		return gin.H{"saved": false, "message": "Failed to write file"}
 	}
 
+	pruneOldBackups(filePath, maxEditorBackups)
+
 	return gin.H{"saved": true, "file": readSheetFileWithVersions(dir, filePath)}
 }
 

@@ -56,8 +56,25 @@ func GetFile(file LedgerFile) gin.H {
 	return gin.H{"file": readLedgerFile(dir, filePath)}
 }
 
-func DeleteBackups(file LedgerFile) gin.H {
-	path := config.GetJournalPath()
+const maxEditorBackups = 10
+
+// pruneOldBackups keeps the newest maxBackups backup files and removes the
+// older ones. Backup names embed a sortable timestamp.
+func pruneOldBackups(filePath string, maxBackups int) {
+	backups := utils.Glob(filePath, ".backup.*")
+	if len(backups) <= maxBackups {
+		return
+	}
+
+	sort.Sort(sort.Reverse(sort.StringSlice(backups)))
+	for _, backup := range backups[maxBackups:] {
+		if err := os.Remove(backup); err != nil {
+			log.Warn(err)
+		}
+	}
+}
+
+func DeleteBackups(file LedgerFile) gin.H {	path := config.GetJournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
@@ -131,6 +148,8 @@ func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
 		log.Warn(err)
 		return gin.H{"errors": errors, "saved": false, "message": "Failed to write file"}
 	}
+
+	pruneOldBackups(filePath, maxEditorBackups)
 
 	Sync(db, SyncRequest{Journal: true})
 
