@@ -63,27 +63,27 @@
 - Produces: `calculateSavingsMetrics(netIncome, netExpense decimal.Decimal) SavingsMetrics` in `internal/server/investment_metrics.go`.
 - `OverallRateAvailable` ist genau dann `true`, wenn `netIncome > 0`; `Surplus` wird unabhängig davon berechnet.
 
-- [ ] **Step 1: Failing tests ergänzen** in `internal/server/investment_metrics_test.go`.
+- [x] **Step 1: Failing tests ergänzen** in `internal/server/investment_metrics_test.go`.
   - `TestCalculateSavingsMetricsReturnsSurplusAndOverallRate`: bei Nettoeinkommen 900 und Nettoausgaben 600 muss der Überschuss 300 und die Gesamtquote 33,333… % betragen.
   - `TestCalculateSavingsMetricsPreservesNegativeSurplus`: bei 900 Einkommen und 1.000 Ausgaben muss der Überschuss -100 und die Quote kleiner als 0 sein.
   - `TestCalculateSavingsMetricsMarksNonPositiveIncomeUnavailable`: bei Einkommen 0 oder -100 muss die Quote nicht verfügbar sein; die Funktion darf weder panicen noch `NaN`/`Inf` erzeugen.
-- [ ] **Step 2: Tests rot ausführen.**
+- [x] **Step 2: Tests rot ausführen.**
 
   Run: `go test ./internal/server -run TestCalculateSavingsMetrics -count=1`
 
   Expected: FAIL, weil `SavingsMetrics` und `calculateSavingsMetrics` noch nicht existieren.
 
-- [ ] **Step 3: Minimale Berechnung implementieren** in `internal/server/investment_metrics.go`.
+- [x] **Step 3: Minimale Berechnung implementieren** in `internal/server/investment_metrics.go`.
   - `Surplus = netIncome - netExpense`.
   - Bei `netIncome > 0`: `OverallRate = Surplus / netIncome * 100`, `OverallRateAvailable = true`.
   - Sonst `OverallRateAvailable = false`; keine künstliche 0-%-Quote erzeugen.
-- [ ] **Step 4: Tests grün ausführen.**
+- [x] **Step 4: Tests grün ausführen.**
 
   Run: `go test ./internal/server -run TestCalculateSavingsMetrics -count=1`
 
   Expected: PASS für positive, null/negative und defizitäre Fälle.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
   `git add internal/server/investment_metrics.go internal/server/investment_metrics_test.go`
 
@@ -105,7 +105,7 @@
 - Produces: `overall_surplus`, `overall_savings_rate`, `overall_savings_rate_available`, `period_complete` und `has_activity` je `InvestmentYearlyCard`.
 - Existing API field `savings_rate` bleibt bestehen und bedeutet weiterhin `net_investment / net_income`; die UI bezeichnet es künftig als **Investitionsquote**.
 
-- [ ] **Step 1: Failing Jahreskarten- und Darstellungstests schreiben.**
+- [x] **Step 1: Failing Jahreskarten- und Darstellungstests schreiben.**
   - In `internal/server/investment_test.go`, `TestComputeInvestmentYearlyCardSubtractsTaxesOnce`: bei 1.000 Bruttoeinkommen, 100 Steuer und 600 Nettoausgaben muss `net_income` 900, `overall_surplus` 300 und `overall_savings_rate` 33,333… % sein.
   - In `internal/server/investment_test.go`, `TestComputeInvestmentYearlyCardKeepsInvestmentRateSeparate`: bei 200 Nettoinvestition und 900 Nettoeinkommen muss `savings_rate` weiterhin 22,222… % sein.
   - In `internal/server/investment_test.go`, `TestComputeInvestmentYearlyCardMarksCurrentFinancialYearIncomplete`: mit kontrollierter Uhr innerhalb eines Finanzjahres muss `period_complete` false sein; abgeschlossene Vorjahre müssen true sein.
@@ -116,7 +116,7 @@
   - Bei `period_complete === false` muss die Karte den Zeitraum als laufend/YTD kennzeichnen.
   - Bei `has_activity === false` muss die Karte „No recorded activity“ zeigen, nicht einen scheinbar bestätigten Nullüberschuss.
   - Mit `en-US`-Locale muss ein Wert von 33,333… % als `33.33%` erscheinen; API-/Backendwerte bleiben ungerundet.
-- [ ] **Step 2: Gezielt rot ausführen.**
+- [x] **Step 2: Gezielt rot ausführen.**
 
   Run: `go test ./internal/server -run 'Test(CalculateSavingsMetrics|ComputeInvestmentYearlyCard)' -count=1`
 
@@ -124,21 +124,21 @@
 
   Expected: FAIL, weil Berechnung, API-Felder und UI-Ausgabe noch fehlen.
 
-- [ ] **Step 3: Jahreskarte erweitern** in `internal/server/investment.go`.
+- [x] **Step 3: Jahreskarte erweitern** in `internal/server/investment.go`.
   - `InvestmentYearlyCard` erhält die neuen JSON-Felder.
   - `period_complete` ist false, wenn das Finanzjahrende nach `utils.EndOfToday()` liegt; sonst true.
   - `has_activity` ist true, wenn im Finanzjahr mindestens eine Income-, Expense-/Tax- oder Investment-Buchung verarbeitet wurde.
   - `computeInvestmentYearlyCard` übergibt vorhandenes `netIncome` und `netExpense` an `calculateSavingsMetrics`.
   - Entferne die frühe Rückgabe bei `len(assets) == 0`; Einkommen und Ausgaben reichen aus, um Jahreskarten zu berechnen. Die bestehende Rückgabe bei vollständig leerem Journal bleibt erhalten.
   - Bestehendes `SavingsRate` nicht umdeuten oder entfernen.
-- [ ] **Step 4: TypeScript-Typ und Jahreskartenanzeige ergänzen.**
+- [x] **Step 4: TypeScript-Typ und Jahreskartenanzeige ergänzen.**
   - `InvestmentYearlyCard` in `src/lib/utils.ts` um die neuen Felder ergänzen.
   - In `src/lib/investment.ts` die bisherige Beschriftung „Savings Rate“ in „Investment Rate“ ändern.
   - „Total Surplus“ und „Total Savings Rate“ zusätzlich anzeigen; bei `net_income <= 0` beide Quoten als „N/A“ ausgeben.
   - Bei `period_complete === false` die Karte als laufendes Jahr/YTD kennzeichnen; bei `has_activity === false` „No recorded activity“ anzeigen.
   - Einen kompakten Info-Tooltip statt eines dauerhaften Absatzes verwenden. Er erklärt die Formel und sagt ausdrücklich: „Calculated from recorded ledger postings; this is not the change in bank balance.“
   - UI-Rundung mit vorhandener `formatFloat(value, 2)` umsetzen; Backend/API-Werte bleiben ungerundet.
-- [ ] **Step 5: Tests grün ausführen.**
+- [x] **Step 5: Tests grün ausführen.**
 
   Run: `go test ./internal/server -run 'Test(CalculateSavingsMetrics|ComputeInvestmentYearlyCard)' -count=1`
 
@@ -148,7 +148,7 @@
 
   Expected: PASS; beide Quoten sind unterscheidbar und fehlende Quoten werden nicht als Null dargestellt.
 
-- [ ] **Step 6: Commit.**
+- [x] **Step 6: Commit.**
 
   `git add internal/server/investment.go src/lib/utils.ts src/lib/investment.ts src/lib/investment.test.ts`
 
@@ -162,14 +162,14 @@
 - Modify: `mkdocs.yml`
 - Update: `tests/fixture/*/investment.json` – nur Fixtures, deren Antwort sich geändert hat.
 
-- [ ] **Step 1: Referenzdokument verfassen.**
+- [x] **Step 1: Referenzdokument verfassen.**
   - Formeln und Vorzeichen erklären.
   - Festhalten, dass `net_income` Paisas bestehende Definition nutzt (Salary + sonstige Income-Postings minus `Expenses:Tax`); „sonstige Income“ kann auch Anlageerträge enthalten.
   - Festhalten, dass der Überschuss ein rechnerischer Wert aus erfassten Postings ist, keine Bankguthabenänderung und keine vollständige Vermögensüberleitung; V1 zerlegt ihn nicht in Cashbestand, Tilgung und andere Vermögensbewegungen.
   - Erklären, dass `period_complete` nur das Kalender-/Finanzjahrende beschreibt und `has_activity` nur vorhandene Ledger-Postings; Paisa kann nie erfasste Buchungen nicht erkennen.
   - Hinweis: laufende Finanzjahre sind YTD; historische Kennzahlen sind keine Prognose.
-- [ ] **Step 2: Seite in `mkdocs.yml` unter Reference eintragen.**
-- [ ] **Step 3: Investment-Regression-Snapshots aktualisieren und diff prüfen.**
+- [x] **Step 2: Seite in `mkdocs.yml` unter Reference eintragen.**
+- [x] **Step 3: Investment-Regression-Snapshots aktualisieren und diff prüfen.**
 
   Run (PowerShell): `$env:REGENERATE="true"; bun test tests/regression.test.ts`
 
@@ -189,7 +189,9 @@
 
   Expected: alle Tests, Typprüfung und Produktionsbuild erfolgreich.
 
-- [ ] **Step 5: Commit.**
+  **Aktueller Prüfhinweis (Windows, 2026-10-25):** Die Investment-Go-Tests, Bun-Tests, Regressionstests, Typprüfung und der Produktionsbuild laufen erfolgreich. `go test ./...` scheitert derzeit allein in `internal/utils.TestBuildSubPath`: Der Test erwartet Unix-Pfadtrenner (`/`), Windows liefert `\`. Daher bleibt dieser Prüfschritt offen.
+
+- [x] **Step 5: Commit.**
 
   `git add docs/reference/investment.md mkdocs.yml tests/fixture`
 
