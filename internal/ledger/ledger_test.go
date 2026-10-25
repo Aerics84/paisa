@@ -1,11 +1,15 @@
 package ledger
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/ananthakumaran/paisa/internal/model/price"
 	"github.com/ananthakumaran/paisa/internal/utils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func assertPriceEqual(t *testing.T, actual price.Price, date string, commodityName string, value float64) {
@@ -125,4 +129,31 @@ func TestParseAmount(t *testing.T) {
 	commodity, amount, _ = parseAmount("100E-8    BTC")
 	assert.Equal(t, "BTC", commodity)
 	assert.Equal(t, 1e-06, amount.InexactFloat64())
+}
+
+func TestBuildHLedgerPostingsPrefersCostOverPrice(t *testing.T) {
+	date := time.Date(2026, time.August, 1, 0, 0, 0, 0, time.UTC)
+	pricesTree := buildPricesTree([]price.Price{{
+		Date: date, CommodityName: "USD", Value: decimal.NewFromInt(1),
+	}})
+	var transaction HLedgerTransaction
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"tdescription": "401(k)", "tindex": 1, "tstatus": "Cleared",
+		"tsourcepos": [{"sourceLine": 1}, {"sourceLine": 2}]
+	}`), &transaction))
+
+	for name, amount := range map[string]string{
+		"legacy total price": `{"paccount":"Assets:401k","pamount":[{"acommodity":"401K","aquantity":{"floatingPoint":2},"aprice":{"tag":"TotalPrice","contents":{"acommodity":"USD","aquantity":{"floatingPoint":100}}}}]}`,
+		"modern total cost":  `{"paccount":"Assets:401k","pamount":[{"acommodity":"401K","aquantity":{"floatingPoint":2},"acost":{"tag":"TotalCost","contents":{"acommodity":"USD","aquantity":{"floatingPoint":100}}}}]}`,
+		"modern unit cost":   `{"paccount":"Assets:401k","pamount":[{"acommodity":"401K","aquantity":{"floatingPoint":2},"acost":{"tag":"UnitCost","contents":{"acommodity":"USD","aquantity":{"floatingPoint":50}}}}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var p HLedgerPosting
+			require.NoError(t, json.Unmarshal([]byte(amount), &p))
+			postings, err := buildHLedgerPostings(p, transaction, pricesTree, date)
+			require.NoError(t, err)
+			require.Len(t, postings, 1)
+			assert.True(t, postings[0].Amount.Equal(decimal.NewFromInt(100)))
+		})
+	}
 }

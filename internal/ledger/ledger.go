@@ -812,6 +812,16 @@ func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, 
 	return postings, nil
 }
 
+type hledgerPrice struct {
+	Contents struct {
+		Commodity string `json:"acommodity"`
+		Quantity  struct {
+			Value float64 `json:"floatingPoint"`
+		} `json:"aquantity"`
+	} `json:"contents"`
+	Tag string `json:"tag"`
+}
+
 type HLedgerPosting struct {
 	Account string     `json:"paccount"`
 	Comment string     `json:"pcomment"`
@@ -821,15 +831,8 @@ type HLedgerPosting struct {
 		Quantity  struct {
 			Value float64 `json:"floatingPoint"`
 		} `json:"aquantity"`
-		Price struct {
-			Contents struct {
-				Commodity string `json:"acommodity"`
-				Quantity  struct {
-					Value float64 `json:"floatingPoint"`
-				} `json:"aquantity"`
-			} `json:"contents"`
-			Tag string `json:"tag"`
-		} `json:"aprice"`
+		Price hledgerPrice `json:"aprice"`
+		Cost  hledgerPrice `json:"acost"`
 	} `json:"pamount"`
 }
 
@@ -945,23 +948,28 @@ func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map
 		totalAmount := decimal.NewFromFloat(amount.Quantity.Value)
 		totalAmountSet := false
 
+		amountPrice := amount.Cost
+		if amountPrice.Tag == "" {
+			amountPrice = amount.Price
+		}
+
 		if amount.Commodity != config.DefaultCurrency() {
-			if amount.Price.Contents.Quantity.Value != 0 {
+			if amountPrice.Contents.Quantity.Value != 0 {
 				var unconvertedTotal decimal.Decimal
-				if amount.Price.Tag == "TotalPrice" {
-					unconvertedTotal = decimal.NewFromFloat(amount.Price.Contents.Quantity.Value)
+				if amountPrice.Tag == "TotalPrice" || amountPrice.Tag == "TotalCost" {
+					unconvertedTotal = decimal.NewFromFloat(amountPrice.Contents.Quantity.Value)
 				} else {
-					unconvertedTotal = decimal.NewFromFloat(amount.Price.Contents.Quantity.Value).Mul(decimal.NewFromFloat(amount.Quantity.Value))
+					unconvertedTotal = decimal.NewFromFloat(amountPrice.Contents.Quantity.Value).Mul(decimal.NewFromFloat(amount.Quantity.Value))
 				}
 
-				if amount.Price.Contents.Commodity != config.DefaultCurrency() {
+				if amountPrice.Contents.Commodity != config.DefaultCurrency() {
 					pr := lookupPrice(pricesTree, amount.Commodity, date)
 					if !pr.Equal(decimal.Zero) {
 						totalAmount = decimal.NewFromFloat(amount.Quantity.Value).Mul(pr)
 						totalAmountSet = true
 					}
 					if !totalAmountSet {
-						pr = lookupPrice(pricesTree, amount.Price.Contents.Commodity, date)
+						pr = lookupPrice(pricesTree, amountPrice.Contents.Commodity, date)
 						if !pr.Equal(decimal.Zero) {
 							totalAmount = unconvertedTotal.Mul(pr)
 						}
