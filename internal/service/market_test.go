@@ -35,8 +35,7 @@ func openTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func TestMetalValuationUsesStoredUnitPrice(t *testing.T) {
-	loadMarketTestConfig(t)
+func TestMetalValuationUsesStoredUnitPrice(t *testing.T) {	loadMarketTestConfig(t)
 	ClearPriceCache()
 
 	db := openTestDB(t)
@@ -68,4 +67,72 @@ func TestMetalValuationUsesStoredUnitPrice(t *testing.T) {
 		Amount:    decimal.NewFromInt(160),
 	}, valuationDate)
 	assert.True(t, postingValue.Equal(decimal.NewFromInt(200)))
+}
+
+func TestGetUnitPriceReturnsLastQuoteOnOrBeforeDate(t *testing.T) {
+	loadMarketTestConfig(t)
+	ClearPriceCache()
+
+	db := openTestDB(t)
+	firstQuote := time.Date(2024, 3, 1, 0, 0, 0, 0, config.TimeZone())
+	secondQuote := time.Date(2024, 3, 5, 0, 0, 0, 0, config.TimeZone())
+
+	require.NoError(t, db.Create(&price.Price{
+		Date:          firstQuote,
+		CommodityType: config.Stock,
+		CommodityID:   "asof-1",
+		CommodityName: "ASOF",
+		Value:         decimal.NewFromInt(100),
+	}).Error)
+	require.NoError(t, db.Create(&price.Price{
+		Date:          secondQuote,
+		CommodityType: config.Stock,
+		CommodityID:   "asof-1",
+		CommodityName: "ASOF",
+		Value:         decimal.NewFromInt(110),
+	}).Error)
+
+	before, ok := FindUnitPrice(db, "ASOF", time.Date(2024, 2, 29, 0, 0, 0, 0, config.TimeZone()))
+	require.False(t, ok, "a lookup before the first quote must not invent a price")
+	assert.True(t, before.Value.Equal(decimal.Zero))
+
+	onFirst, ok := FindUnitPrice(db, "ASOF", firstQuote)
+	require.True(t, ok)
+	assert.True(t, onFirst.Date.Equal(firstQuote))
+	assert.True(t, onFirst.Value.Equal(decimal.NewFromInt(100)))
+
+	between, ok := FindUnitPrice(db, "ASOF", time.Date(2024, 3, 3, 0, 0, 0, 0, config.TimeZone()))
+	require.True(t, ok)
+	assert.True(t, between.Date.Equal(firstQuote), "the quote date must identify the carried-forward price")
+	assert.True(t, between.Value.Equal(decimal.NewFromInt(100)))
+
+	onSecond, ok := FindUnitPrice(db, "ASOF", secondQuote)
+	require.True(t, ok)
+	assert.True(t, onSecond.Date.Equal(secondQuote))
+	assert.True(t, onSecond.Value.Equal(decimal.NewFromInt(110)))
+
+	_, ok = FindUnitPrice(db, "NO_SUCH_COMMODITY", secondQuote)
+	require.False(t, ok, "an unknown commodity must be reported as unavailable, not fatal")
+}
+
+func TestGetUnitPriceCarriesQuoteThroughWeekend(t *testing.T) {
+	loadMarketTestConfig(t)
+	ClearPriceCache()
+
+	db := openTestDB(t)
+	friday := time.Date(2024, 3, 8, 0, 0, 0, 0, config.TimeZone())
+	sunday := time.Date(2024, 3, 10, 0, 0, 0, 0, config.TimeZone())
+
+	require.NoError(t, db.Create(&price.Price{
+		Date:          friday,
+		CommodityType: config.Stock,
+		CommodityID:   "weekend-1",
+		CommodityName: "WEEKEND",
+		Value:         decimal.NewFromInt(50),
+	}).Error)
+
+	quote, ok := FindUnitPrice(db, "WEEKEND", sunday)
+	require.True(t, ok)
+	assert.True(t, quote.Date.Equal(friday), "weekends carry the Friday quote and expose its actual date")
+	assert.True(t, quote.Value.Equal(decimal.NewFromInt(50)))
 }

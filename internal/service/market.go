@@ -71,25 +71,38 @@ func ClearPriceCache() {
 	pcache = priceCache{}
 }
 
-func GetUnitPrice(db *gorm.DB, commodity string, date time.Time) price.Price {
+// FindUnitPrice returns the last stored quote on or before date together with
+// its actual quote date. It reports false instead of terminating when a
+// commodity has no usable price series, so callers can treat missing coverage
+// as unavailable.
+func FindUnitPrice(db *gorm.DB, commodity string, date time.Time) (price.Price, bool) {
 	pcache.Do(func() { loadPriceCache(db) })
 
 	pt := pcache.pricesTree[commodity]
-	if pt == nil {
-		log.Fatal("Price not found ", commodity)
-	}
-
-	pc := utils.BTreeDescendFirstLessOrEqual(pt, price.Price{Date: date})
-	if !pc.Value.Equal(decimal.Zero) {
-		return pc
+	if pt != nil {
+		pc := utils.BTreeDescendFirstLessOrEqual(pt, price.Price{Date: date})
+		if !pc.Value.Equal(decimal.Zero) {
+			return pc, true
+		}
 	}
 
 	pt = pcache.postingPricesTree[commodity]
-	if pt == nil {
+	if pt != nil {
+		pc := utils.BTreeDescendFirstLessOrEqual(pt, price.Price{Date: date})
+		if !pc.Value.Equal(decimal.Zero) {
+			return pc, true
+		}
+	}
+
+	return price.Price{}, false
+}
+
+func GetUnitPrice(db *gorm.DB, commodity string, date time.Time) price.Price {
+	pc, found := FindUnitPrice(db, commodity, date)
+	if !found {
 		log.Fatal("Price not found ", commodity)
 	}
-	return utils.BTreeDescendFirstLessOrEqual(pt, price.Price{Date: date})
-
+	return pc
 }
 
 func GetAllPrices(db *gorm.DB, commodity string) []price.Price {
