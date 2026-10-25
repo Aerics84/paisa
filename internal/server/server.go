@@ -35,7 +35,8 @@ import (
 
 var monthlyRouteMonthPattern = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
 
-func Build(db *gorm.DB, enableCompression bool) *gin.Engine {	gin.SetMode(gin.ReleaseMode)
+func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
 	if enableCompression {

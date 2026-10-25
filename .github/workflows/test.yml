@@ -38,6 +38,7 @@ jobs:
           node ./scripts/gofmt-changed.mjs
           npm run test:imports
           npm run test:investment
+          npm run test:monthly
           npm run build
           nix develop --command bash -lc 'go build && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...

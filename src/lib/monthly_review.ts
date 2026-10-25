@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { Graph } from "./utils";
 
 export type MonthlyActivityState = "ready" | "no_recorded_activity";
@@ -144,4 +145,14 @@ export function performanceRows(review: MonthlyReviewResponse | null): Performan
 export function positionLabel(account: string): string {
   const parts = account.split(":");
   return parts[parts.length - 1] || account;
+}
+
+/**
+ * Formats both a `YYYY-MM` key and a full RFC3339 timestamp as a compact
+ * month label. Checking history is serialized as a timestamp, while trend
+ * points are serialized as month keys.
+ */
+export function formatMonthLabel(value: string): string {
+  const date = value.length === 7 ? dayjs(value + "-01") : dayjs(value);
+  return date.isValid() ? date.format("MMM YY") : value;
 }

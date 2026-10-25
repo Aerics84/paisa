@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -31,6 +32,18 @@ func monthlyReviewTestDate(date string) time.Time {
 func setMonthlyReviewNow(t *testing.T, date string) {
 	t.Helper()
 	utils.SetNow(date)
+}
+
+func loadMonthlyReviewConfigWithTimeZone(t *testing.T, zone string) {
+	t.Helper()
+
+	err := config.LoadConfig([]byte(fmt.Sprintf(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: EUR
+time_zone: %s
+`, zone)), "")
+	require.NoError(t, err)
 }
 
 func openMonthlyReviewTestDB(t *testing.T) *gorm.DB {
@@ -332,26 +345,167 @@ func TestGetMonthlyReviewAttributesDividendsOnlyWhenIdentifiable(t *testing.T) {
 	}
 	require.NotNil(t, vti)
 	requireDecimalEqual(t, "0", vti.DividendIncome, "an unidentifiable dividend must not be attributed to a position")
-	requireDecimalEqual(t, "5", review.InvestmentMarketMovement)
+	requireDecimalEqual(t, "0", review.InvestmentMarketMovement, "dividends are reported separately from market movement")
 }
 
-func TestGetMonthlyReviewExcludesQuantityOnlyStockSplit(t *testing.T) {
+func TestGetMonthlyReviewIncludesFirstCalendarDayReturn(t *testing.T) {
 	setMonthlyReviewNow(t, "2022-03-15")
 	db := openMonthlyReviewTestDB(t)
 
-	addMonthlyReviewPosting(t, db, "buy", "2022-01-10", "Assets:Equity:VWCE", "VWCE", "10", "1000")
-	addMonthlyReviewCurrencyPosting(t, db, "buy", "2022-01-10", "Assets:Checking:Bank", "-1000")
-	addMonthlyReviewPosting(t, db, "split", "2022-02-15", "Assets:Equity:VWCE", "VWCE", "10", "0")
-	addMonthlyReviewPosting(t, db, "split", "2022-02-15", "Assets:Equity:VWCE", "VWCE", "-1", "0")
+	addMonthlyReviewPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Equity:VWCE", "VWCE", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Checking:Bank", "-1000")
+	addMonthlyReviewPosting(t, db, "buy-vti", "2022-01-10", "Assets:Equity:VTI", "VTI", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vti", "2022-01-10", "Assets:Checking:Bank", "-1000")
 
 	addMonthlyReviewPrice(t, db, "2022-01-31", "VWCE", "100")
-	addWeeklyMonthlyReviewPrices(t, db, "VWCE", []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"}, "110")
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VTI", "100")
+	addMonthlyReviewPrice(t, db, "2022-02-01", "VWCE", "110")
+	addMonthlyReviewPrice(t, db, "2022-02-01", "VTI", "100")
+	for _, priceDate := range []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"} {
+		addMonthlyReviewPrice(t, db, priceDate, "VWCE", "110")
+		addMonthlyReviewPrice(t, db, priceDate, "VTI", "100")
+	}
 	service.ClearPriceCache()
 
 	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
 
-	require.Equal(t, "not_available", review.PerformanceState, "a split must not be ranked as a 900% return")
+	require.Equal(t, "ready", review.PerformanceState)
+	require.NotEmpty(t, review.BestPerformers)
+	require.Equal(t, "Assets:Equity:VWCE", review.BestPerformers[0].Account)
+	requireDecimalEqual(t, "10", review.BestPerformers[0].TotalReturnPercent, "the first calendar day must earn its price move")
+	requireDecimalEqual(t, "100", review.BestPerformers[0].GainLoss)
+	requireDecimalEqual(t, "100", review.InvestmentMarketMovement)
+}
+
+func TestGetMonthlyReviewKeepsCoverageUnavailableWhenAPositionHasNoPrice(t *testing.T) {
+	setMonthlyReviewNow(t, "2022-03-15")
+	db := openMonthlyReviewTestDB(t)
+
+	for _, position := range []struct{ account, commodity, quantity, amount string }{
+		{"Assets:Equity:VWCE", "VWCE", "10", "1000"},
+		{"Assets:Equity:VTI", "VTI", "10", "1000"},
+		{"Assets:Equity:UNPRICED", "UNPRICED", "100", "1000"},
+	} {
+		addMonthlyReviewPosting(t, db, "buy-"+position.commodity, "2022-01-10", position.account, position.commodity, position.quantity, position.amount)
+		addMonthlyReviewCurrencyPosting(t, db, "buy-"+position.commodity, "2022-01-10", "Assets:Checking:Bank", "-"+position.amount)
+	}
+
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VWCE", "100")
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VTI", "100")
+	for _, priceDate := range []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"} {
+		addMonthlyReviewPrice(t, db, priceDate, "VWCE", "110")
+		addMonthlyReviewPrice(t, db, priceDate, "VTI", "90")
+	}
+	service.ClearPriceCache()
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+
+	require.Equal(t, "not_available", review.PerformanceState, "an unpriced position must not be silently dropped from coverage")
 	require.Empty(t, review.BestPerformers)
+}
+
+func TestGetMonthlyReviewKeepsCoverageUnavailableForMixedCommodityAccount(t *testing.T) {
+	setMonthlyReviewNow(t, "2022-03-15")
+	db := openMonthlyReviewTestDB(t)
+
+	addMonthlyReviewPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Equity:VWCE", "VWCE", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Checking:Bank", "-1000")
+	addMonthlyReviewPosting(t, db, "buy-vti", "2022-01-10", "Assets:Equity:VTI", "VTI", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vti", "2022-01-10", "Assets:Checking:Bank", "-1000")
+	addMonthlyReviewPosting(t, db, "buy-aaa", "2022-01-10", "Assets:Equity:MIXED", "AAA", "10", "1000")
+	addMonthlyReviewPosting(t, db, "buy-bbb", "2022-01-10", "Assets:Equity:MIXED", "BBB", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-mixed", "2022-01-10", "Assets:Checking:Bank", "-2000")
+
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VWCE", "100")
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VTI", "100")
+	for _, priceDate := range []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"} {
+		addMonthlyReviewPrice(t, db, priceDate, "VWCE", "110")
+		addMonthlyReviewPrice(t, db, priceDate, "VTI", "90")
+	}
+	service.ClearPriceCache()
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+
+	require.Equal(t, "not_available", review.PerformanceState, "a mixed-commodity account cannot be silently excluded from coverage")
+	require.Empty(t, review.BestPerformers)
+}
+
+func TestGetMonthlyReviewExcludesQuantityOnlyStockSplitFromRanking(t *testing.T) {
+	setMonthlyReviewNow(t, "2022-03-15")
+	db := openMonthlyReviewTestDB(t)
+
+	addMonthlyReviewPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Equity:VWCE", "VWCE", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vwce", "2022-01-10", "Assets:Checking:Bank", "-1000")
+	addMonthlyReviewPosting(t, db, "buy-vti", "2022-01-10", "Assets:Equity:VTI", "VTI", "10", "1000")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-vti", "2022-01-10", "Assets:Checking:Bank", "-1000")
+	addMonthlyReviewPosting(t, db, "buy-split", "2022-01-10", "Assets:Equity:SPLIT", "SPLIT", "1", "10")
+	addMonthlyReviewCurrencyPosting(t, db, "buy-split", "2022-01-10", "Assets:Checking:Bank", "-10")
+	addMonthlyReviewPosting(t, db, "split", "2022-02-15", "Assets:Equity:SPLIT", "SPLIT", "10", "0")
+	addMonthlyReviewPosting(t, db, "split", "2022-02-15", "Assets:Equity:SPLIT", "SPLIT", "-1", "0")
+
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VWCE", "100")
+	addMonthlyReviewPrice(t, db, "2022-01-31", "VTI", "100")
+	addMonthlyReviewPrice(t, db, "2022-01-31", "SPLIT", "10")
+	for _, priceDate := range []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"} {
+		addMonthlyReviewPrice(t, db, priceDate, "VWCE", "100")
+		addMonthlyReviewPrice(t, db, priceDate, "VTI", "100")
+		addMonthlyReviewPrice(t, db, priceDate, "SPLIT", "10")
+	}
+	service.ClearPriceCache()
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+
+	require.Equal(t, "ready", review.PerformanceState)
+	require.Len(t, review.BestPerformers, 2)
+	for _, performer := range append(review.BestPerformers, review.WeakestPerformers...) {
+		require.NotEqual(t, "Assets:Equity:SPLIT", performer.Account, "a quantity-only split must not be ranked")
+	}
+}
+
+func TestGetMonthlyReviewUsesSignedNetContributions(t *testing.T) {
+	setMonthlyReviewNow(t, "2022-03-15")
+	db := openMonthlyReviewTestDB(t)
+
+	addMonthlyReviewSalary(t, db, "salary", "2022-02-01", "1000")
+	addMonthlyReviewPosting(t, db, "buy", "2022-02-05", "Assets:Equity:VWCE", "VWCE", "30", "300")
+	addMonthlyReviewCurrencyPosting(t, db, "buy", "2022-02-05", "Assets:Checking:Bank", "-300")
+	addMonthlyReviewPosting(t, db, "sell", "2022-02-10", "Assets:Equity:VWCE", "VWCE", "-10", "-100")
+	addMonthlyReviewCurrencyPosting(t, db, "sell", "2022-02-10", "Assets:Checking:Bank", "100")
+	addMonthlyReviewPosting(t, db, "transfer", "2022-02-15", "Assets:Equity:VWCE", "VWCE", "-10", "-100")
+	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2022-02-15", "Assets:Savings:Tagesgeld", "100")
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+
+	requireDecimalEqual(t, "200", review.InvestmentContributions, "sales and reallocations must net against purchases")
+}
+
+func TestGetMonthlyReviewIncludesPostingsAcrossTimezoneOffsets(t *testing.T) {
+	db := openMonthlyReviewTestDB(t)
+	loadMonthlyReviewConfigWithTimeZone(t, "Europe/Berlin")
+	setMonthlyReviewNow(t, "2022-03-15")
+
+	require.NoError(t, db.Create(&posting.Posting{
+		TransactionID: "salary",
+		Date:          time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Account:       "Income:Salary:Acme",
+		Commodity:     "EUR",
+		Quantity:      decimal.NewFromInt(-1000),
+		Amount:        decimal.NewFromInt(-1000),
+	}).Error)
+	require.NoError(t, db.Create(&posting.Posting{
+		TransactionID: "salary",
+		Date:          time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Account:       "Assets:Checking:Bank",
+		Commodity:     "EUR",
+		Quantity:      decimal.NewFromInt(1000),
+		Amount:        decimal.NewFromInt(1000),
+	}).Error)
+
+	review := GetMonthlyReview(db, time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC))
+
+	require.Equal(t, "ready", review.ActivityState)
+	requireDecimalEqual(t, "1000", review.NetIncomeAfterTax, "a UTC-stored first-of-month posting must be included")
+	requireDecimalEqual(t, "1000", review.NetIncomeTrend[2].Value)
 }
 
 func TestMonthlyDashboardRouteRejectsInvalidMonth(t *testing.T) {

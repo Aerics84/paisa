@@ -35,7 +35,8 @@ func openTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func TestMetalValuationUsesStoredUnitPrice(t *testing.T) {	loadMarketTestConfig(t)
+func TestMetalValuationUsesStoredUnitPrice(t *testing.T) {
+	loadMarketTestConfig(t)
 	ClearPriceCache()
 
 	db := openTestDB(t)
@@ -135,4 +136,14 @@ func TestGetUnitPriceCarriesQuoteThroughWeekend(t *testing.T) {
 	require.True(t, ok)
 	assert.True(t, quote.Date.Equal(friday), "weekends carry the Friday quote and expose its actual date")
 	assert.True(t, quote.Value.Equal(decimal.NewFromInt(50)))
+}
+
+func TestGetUnitPriceReturnsEmptyPriceForUnknownCommodity(t *testing.T) {
+	loadMarketTestConfig(t)
+	ClearPriceCache()
+
+	db := openTestDB(t)
+	quote := GetUnitPrice(db, "NO_GET_PRICE", time.Date(2024, 1, 2, 0, 0, 0, 0, config.TimeZone()))
+
+	assert.True(t, quote.Value.Equal(decimal.Zero), "an unknown commodity must fall back to a zero quote instead of terminating")
 }

@@ -134,6 +134,22 @@ func TestCheckingBalanceTimelineLimitsToLatestTwelveRecordedMonths(t *testing.T)
 	require.True(t, balance.Equal(decimal.NewFromInt(300)), "the carried balance must include all earlier postings")
 }
 
+func TestCheckingBalanceTimelineFillsEmptyCalendarMonths(t *testing.T) {
+	db := openBalanceTestDB(t)
+
+	addCheckingPosting(t, db, "jan", "2022-01-10", "Assets:Checking:Bank", "1000")
+	addCheckingPosting(t, db, "mar", "2022-03-10", "Assets:Checking:Bank", "500")
+
+	points := GetCheckingBalanceTimeline(db)
+
+	balance, found := findCheckingBalance(points, "2022-02", "Assets:Checking:Bank")
+	require.True(t, found, "an empty calendar month must still carry the recorded balance")
+	require.True(t, balance.Equal(decimal.NewFromInt(1000)))
+	balance, found = findCheckingBalance(points, "2022-03", "Assets:Checking:Bank")
+	require.True(t, found)
+	require.True(t, balance.Equal(decimal.NewFromInt(1500)))
+}
+
 func TestCheckingBalanceTimelineReturnsEmptyWithoutCheckingAccounts(t *testing.T) {
 	db := openBalanceTestDB(t)
 
@@ -145,6 +161,7 @@ func TestCheckingBalanceTimelineReturnsEmptyWithoutCheckingAccounts(t *testing.T
 
 func TestAvailableMonthRangeUsesRecordedPostingBounds(t *testing.T) {
 	db := openBalanceTestDB(t)
+	utils.SetNow("2022-03-15")
 
 	addCheckingPosting(t, db, "jan", "2020-02-10", "Assets:Checking:Bank", "100")
 	addCheckingPosting(t, db, "feb", "2022-04-20", "Assets:Checking:Bank", "100")
@@ -153,6 +170,17 @@ func TestAvailableMonthRangeUsesRecordedPostingBounds(t *testing.T) {
 
 	require.True(t, monthRange.From.Equal(utils.BeginningOfMonth(balanceTestDate("2020-02-10"))))
 	require.True(t, monthRange.To.Equal(utils.BeginningOfMonth(balanceTestDate("2022-04-20"))))
+}
+
+func TestAvailableMonthRangeIncludesCurrentMonthWithoutPostings(t *testing.T) {
+	db := openBalanceTestDB(t)
+	utils.SetNow("2022-03-15")
+
+	addCheckingPosting(t, db, "jan", "2022-01-10", "Assets:Checking:Bank", "100")
+
+	monthRange := GetAvailableMonthRange(db)
+
+	require.True(t, monthRange.To.Equal(utils.BeginningOfMonth(balanceTestDate("2022-03-15"))), "the current month must remain selectable for month-to-date")
 }
 
 func TestAvailableMonthRangeIsZeroWithoutPostings(t *testing.T) {

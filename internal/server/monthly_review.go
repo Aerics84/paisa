@@ -33,24 +33,24 @@ type MonthlyMetricPoint struct {
 // MonthlyReview is the period-specific counterpart to the live snapshot. It
 // never mixes live balances into the selected month.
 type MonthlyReview struct {
-	Month                   string                       `json:"month"`
-	ActivityState           string                       `json:"activity_state"`
-	PeriodComplete          bool                         `json:"period_complete"`
-	NetIncomeAfterTax       decimal.Decimal              `json:"net_income_after_tax"`
-	NetTax                  decimal.Decimal              `json:"net_tax"`
-	NetExpense              decimal.Decimal              `json:"net_expense"`
-	Surplus                 decimal.Decimal              `json:"surplus"`
-	HasIncomePostings       bool                         `json:"has_income_postings"`
-	HasExpensePostings      bool                         `json:"has_expense_postings"`
-	FlowGraph               Graph                        `json:"flow_graph"`
-	NetIncomeTrend          []MonthlyMetricPoint         `json:"net_income_trend"`
-	InvestmentContributions decimal.Decimal              `json:"investment_contributions"`
-	InvestmentMarketMovement decimal.Decimal             `json:"investment_market_movement"`
-	DividendIncome          decimal.Decimal              `json:"dividend_income"`
-	BestPerformers          []MonthlyPositionPerformance `json:"best_performers"`
-	WeakestPerformers       []MonthlyPositionPerformance `json:"weakest_performers"`
-	PerformanceState        string                       `json:"performance_state"`
-	PerformanceAsOf         time.Time                    `json:"performance_as_of"`
+	Month                    string                       `json:"month"`
+	ActivityState            string                       `json:"activity_state"`
+	PeriodComplete           bool                         `json:"period_complete"`
+	NetIncomeAfterTax        decimal.Decimal              `json:"net_income_after_tax"`
+	NetTax                   decimal.Decimal              `json:"net_tax"`
+	NetExpense               decimal.Decimal              `json:"net_expense"`
+	Surplus                  decimal.Decimal              `json:"surplus"`
+	HasIncomePostings        bool                         `json:"has_income_postings"`
+	HasExpensePostings       bool                         `json:"has_expense_postings"`
+	FlowGraph                Graph                        `json:"flow_graph"`
+	NetIncomeTrend           []MonthlyMetricPoint         `json:"net_income_trend"`
+	InvestmentContributions  decimal.Decimal              `json:"investment_contributions"`
+	InvestmentMarketMovement decimal.Decimal              `json:"investment_market_movement"`
+	DividendIncome           decimal.Decimal              `json:"dividend_income"`
+	BestPerformers           []MonthlyPositionPerformance `json:"best_performers"`
+	WeakestPerformers        []MonthlyPositionPerformance `json:"weakest_performers"`
+	PerformanceState         string                       `json:"performance_state"`
+	PerformanceAsOf          time.Time                    `json:"performance_as_of"`
 }
 
 func emptyFlowGraph() Graph {
@@ -125,7 +125,7 @@ func computeMonthlyIncomeTrend(db *gorm.DB, selectedStart time.Time, currentMont
 			end = utils.EndOfToday()
 		}
 
-		postings := query.Init(db).Where("date >= ? and date <= ?", start, end).All()
+		postings := query.Init(db).Where("substr(date, 1, 10) >= ? and substr(date, 1, 10) <= ?", start.Format("2006-01-02"), end.Format("2006-01-02")).All()
 		point := MonthlyMetricPoint{
 			Month:         start.Format("2006-01"),
 			Value:         decimal.Zero,
@@ -150,7 +150,7 @@ type monthlyPositionCandidate struct {
 	postings  []posting.Posting
 }
 
-func candidatePositions(postings []posting.Posting) []monthlyPositionCandidate {
+func candidatePositions(postings []posting.Posting) ([]monthlyPositionCandidate, bool) {
 	byAccount := make(map[string][]posting.Posting)
 	order := make([]string, 0)
 	for _, p := range postings {
@@ -161,6 +161,7 @@ func candidatePositions(postings []posting.Posting) []monthlyPositionCandidate {
 	}
 
 	var candidates []monthlyPositionCandidate
+	complete := true
 	for _, account := range order {
 		ps := byAccount[account]
 		commodities := make(map[string]bool)
@@ -170,7 +171,13 @@ func candidatePositions(postings []posting.Posting) []monthlyPositionCandidate {
 			}
 		}
 
-		if len(commodities) != 1 {
+		if len(commodities) == 0 {
+			continue
+		}
+		if len(commodities) > 1 {
+			// A single account holding multiple priced commodities cannot be
+			// valued as one comparable position. Do not hide it from coverage.
+			complete = false
 			continue
 		}
 
@@ -181,7 +188,7 @@ func candidatePositions(postings []posting.Posting) []monthlyPositionCandidate {
 		candidates = append(candidates, monthlyPositionCandidate{account: account, commodity: commodity, postings: ps})
 	}
 
-	return candidates
+	return candidates, complete
 }
 
 func accountLeaf(account string) string {
@@ -240,10 +247,10 @@ func splitAffectedAccounts(monthPostings []posting.Posting) map[string]bool {
 	return affected
 }
 
-func positionFlows(monthPostings []posting.Posting, account string) []PositionCashFlow {
+func positionFlows(monthPostings []posting.Posting, account string, commodity string) []PositionCashFlow {
 	flows := make([]PositionCashFlow, 0)
 	for _, p := range monthPostings {
-		if p.Account != account {
+		if p.Account != account || p.Commodity != commodity {
 			continue
 		}
 
@@ -256,6 +263,34 @@ func positionFlows(monthPostings []posting.Posting, account string) []PositionCa
 	return flows
 }
 
+func positionStartValue(db *gorm.DB, candidate monthlyPositionCandidate, periodStart time.Time) (decimal.Decimal, time.Time, bool) {
+	quantity := decimal.Zero
+	for _, p := range candidate.postings {
+		if p.Commodity != candidate.commodity {
+			continue
+		}
+		if p.Date.Before(periodStart) {
+			quantity = quantity.Add(p.Quantity)
+		}
+	}
+
+	if quantity.LessThan(decimal.Zero) {
+		return decimal.Zero, time.Time{}, false
+	}
+	if quantity.IsZero() {
+		return decimal.Zero, time.Time{}, true
+	}
+
+	// The prior close, not a quote dated on PeriodStart itself: a quote on the
+	// first day belongs to that day's end-of-day valuation.
+	quote, found := service.FindUnitPrice(db, candidate.commodity, periodStart.Add(-time.Nanosecond))
+	if !found || !quote.Value.GreaterThan(decimal.Zero) {
+		return decimal.Zero, time.Time{}, false
+	}
+
+	return quantity.Mul(quote.Value), quote.Date, true
+}
+
 func computePositionValuations(db *gorm.DB, candidate monthlyPositionCandidate, flows []PositionCashFlow, periodStart time.Time, periodEnd time.Time) ([]PositionValuation, map[time.Time]bool, bool) {
 	flowDates := make(map[time.Time]bool)
 	for _, flow := range flows {
@@ -266,7 +301,12 @@ func computePositionValuations(db *gorm.DB, candidate monthlyPositionCandidate, 
 	holdings := make(map[time.Time]bool)
 	quantity := decimal.Zero
 	index := 0
-	sorted := candidate.postings
+	sorted := make([]posting.Posting, 0, len(candidate.postings))
+	for _, p := range candidate.postings {
+		if p.Commodity == candidate.commodity {
+			sorted = append(sorted, p)
+		}
+	}
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Date.Before(sorted[j].Date) })
 
 	for day := periodStart; !day.After(periodEnd); day = day.AddDate(0, 0, 1) {
@@ -304,29 +344,35 @@ func computePositionValuations(db *gorm.DB, candidate monthlyPositionCandidate, 
 	return valuations, holdings, true
 }
 
-func positionEndValue(db *gorm.DB, candidate monthlyPositionCandidate, periodEnd time.Time) decimal.Decimal {
+func positionEndValue(db *gorm.DB, candidate monthlyPositionCandidate, periodEnd time.Time) (decimal.Decimal, bool) {
 	quantity := decimal.Zero
 	for _, p := range candidate.postings {
+		if p.Commodity != candidate.commodity {
+			continue
+		}
 		if !p.Date.After(periodEnd) {
 			quantity = quantity.Add(p.Quantity)
 		}
 	}
 
-	if !quantity.GreaterThan(decimal.Zero) {
-		return decimal.Zero
+	if quantity.LessThan(decimal.Zero) {
+		return decimal.Zero, false
+	}
+	if quantity.IsZero() {
+		return decimal.Zero, true
 	}
 
 	quote, found := service.FindUnitPrice(db, candidate.commodity, periodEnd)
-	if !found {
-		return decimal.Zero
+	if !found || !quote.Value.GreaterThan(decimal.Zero) {
+		return decimal.Zero, false
 	}
 
-	return quantity.Mul(quote.Value)
+	return quantity.Mul(quote.Value), true
 }
 
 func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, periodStart time.Time, periodEnd time.Time) ([]MonthlyPositionPerformance, []MonthlyPositionPerformance, string, time.Time, decimal.Decimal) {
-	assetPostings := query.Init(db).Where("date <= ?", periodEnd).Like("Assets:%").NotAccountPrefix("Assets:Checking").All()
-	candidates := candidatePositions(assetPostings)
+	assetPostings := query.Init(db).Where("substr(date, 1, 10) <= ?", periodEnd.Format("2006-01-02")).Like("Assets:%").NotAccountPrefix("Assets:Checking").All()
+	candidates, coverageComplete := candidatePositions(assetPostings)
 	dividendFlows := dividendFlowsByAccount(monthPostings, candidates)
 	splits := splitAffectedAccounts(monthPostings)
 
@@ -337,15 +383,26 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 	var performanceAsOf time.Time
 
 	for _, candidate := range candidates {
-		totalValue = totalValue.Add(positionEndValue(db, candidate, periodEnd))
+		endValue, priced := positionEndValue(db, candidate, periodEnd)
+		if !priced {
+			coverageComplete = false
+		}
+		totalValue = totalValue.Add(endValue)
 
 		if splits[candidate.account] {
 			continue
 		}
 
-		flows := positionFlows(monthPostings, candidate.account)
+		startValue, startPriceDate, startPriced := positionStartValue(db, candidate, periodStart)
+		if !startPriced {
+			coverageComplete = false
+			continue
+		}
+
+		flows := positionFlows(monthPostings, candidate.account, candidate.commodity)
 		valuations, holdings, ok := computePositionValuations(db, candidate, flows, periodStart, periodEnd)
 		if !ok {
+			coverageComplete = false
 			continue
 		}
 
@@ -362,6 +419,8 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 			Account:         candidate.account,
 			PeriodStart:     periodStart,
 			PeriodEnd:       periodEnd,
+			StartValue:      startValue,
+			StartPriceDate:  startPriceDate,
 			DailyValuations: valuations,
 			CashFlows:       cashFlows,
 			MaxPriceAgeDays: DefaultMaxPriceAgeDays,
@@ -371,14 +430,14 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 		}
 
 		ranked = append(ranked, performance)
-		rankableValue = rankableValue.Add(valuations[len(valuations)-1].MarketValue)
-		marketMovement = marketMovement.Add(performance.GainLoss)
+		rankableValue = rankableValue.Add(endValue)
+		marketMovement = marketMovement.Add(performance.GainLoss.Sub(performance.DividendIncome))
 		if performanceAsOf.IsZero() || performance.PriceAsOf.Before(performanceAsOf) {
 			performanceAsOf = performance.PriceAsOf
 		}
 	}
 
-	if len(ranked) < 2 || totalValue.LessThanOrEqual(decimal.Zero) ||
+	if !coverageComplete || len(ranked) < 2 || totalValue.LessThanOrEqual(decimal.Zero) ||
 		rankableValue.Mul(decimal.NewFromInt(100)).LessThan(totalValue.Mul(decimal.NewFromInt(50))) {
 		return []MonthlyPositionPerformance{}, []MonthlyPositionPerformance{}, MonthlyPerformanceNotAvailable, time.Time{}, decimal.Zero
 	}
@@ -417,7 +476,7 @@ func GetMonthlyReview(db *gorm.DB, month time.Time) MonthlyReview {
 		periodComplete = false
 	}
 
-	postings := query.Init(db).Where("date >= ? and date <= ?", periodStart, periodEnd).All()
+	postings := query.Init(db).Where("substr(date, 1, 10) >= ? and substr(date, 1, 10) <= ?", periodStart.Format("2006-01-02"), periodEnd.Format("2006-01-02")).All()
 
 	review := MonthlyReview{
 		Month:             periodStart.Format("2006-01"),

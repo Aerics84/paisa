@@ -21,8 +21,8 @@
     },
     {
       "month": "2022-01",
-      "value": 0,
-      "available": false,
+      "value": 11000,
+      "available": true,
       "is_month_to_date": false
     },
     {

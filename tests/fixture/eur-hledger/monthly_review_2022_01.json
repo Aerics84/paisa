@@ -1,0 +1,84 @@
+{
+  "month": "2022-01",
+  "activity_state": "ready",
+  "period_complete": true,
+  "net_income_after_tax": 11000,
+  "net_tax": 0,
+  "net_expense": 0,
+  "surplus": 11000,
+  "has_income_postings": true,
+  "has_expense_postings": false,
+  "flow_graph": {
+    "nodes": [
+      {
+        "id": 1,
+        "name": "Assets:Checking"
+      },
+      {
+        "id": 5,
+        "name": "Assets:Equity:AAPL"
+      },
+      {
+        "id": 2,
+        "name": "Income"
+      },
+      {
+        "id": 3,
+        "name": "Income:Salary"
+      },
+      {
+        "id": 4,
+        "name": "Income:Salary:Acme"
+      }
+    ],
+    "links": [
+      {
+        "source": 1,
+        "target": 5,
+        "value": 10005.05
+      },
+      {
+        "source": 2,
+        "target": 1,
+        "value": 11000
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "value": 11000
+      },
+      {
+        "source": 4,
+        "target": 3,
+        "value": 11000
+      }
+    ]
+  },
+  "net_income_trend": [
+    {
+      "month": "2021-11",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2021-12",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-01",
+      "value": 11000,
+      "available": true,
+      "is_month_to_date": false
+    }
+  ],
+  "investment_contributions": 10005.05,
+  "investment_market_movement": 0,
+  "dividend_income": 0,
+  "best_performers": [],
+  "weakest_performers": [],
+  "performance_state": "not_available",
+  "performance_as_of": "0001-01-01T00:00:00Z"
+}

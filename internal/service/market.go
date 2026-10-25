@@ -100,7 +100,9 @@ func FindUnitPrice(db *gorm.DB, commodity string, date time.Time) (price.Price, 
 func GetUnitPrice(db *gorm.DB, commodity string, date time.Time) price.Price {
 	pc, found := FindUnitPrice(db, commodity, date)
 	if !found {
-		log.Fatal("Price not found ", commodity)
+		// Returning an empty price lets valuation callers fall back to the
+		// posting amount instead of terminating the whole server.
+		return price.Price{}
 	}
 	return pc
 }

@@ -1,0 +1,188 @@
+{
+  "month": "2022-01",
+  "activity_state": "ready",
+  "period_complete": true,
+  "net_income_after_tax": 121027.3,
+  "net_tax": 0,
+  "net_expense": 20100,
+  "surplus": 100927.3,
+  "has_income_postings": true,
+  "has_expense_postings": true,
+  "flow_graph": {
+    "nodes": [
+      {
+        "id": 1,
+        "name": "Assets:Checking"
+      },
+      {
+        "id": 10,
+        "name": "Assets:Dollar"
+      },
+      {
+        "id": 9,
+        "name": "Assets:Equity:AAPL"
+      },
+      {
+        "id": 8,
+        "name": "Assets:Equity:ABNB"
+      },
+      {
+        "id": 7,
+        "name": "Assets:Equity:NIFTY"
+      },
+      {
+        "id": 5,
+        "name": "Expenses"
+      },
+      {
+        "id": 11,
+        "name": "Expenses:Charges"
+      },
+      {
+        "id": 6,
+        "name": "Expenses:Rent"
+      },
+      {
+        "id": 2,
+        "name": "Income"
+      },
+      {
+        "id": 12,
+        "name": "Income:CapitalGains"
+      },
+      {
+        "id": 13,
+        "name": "Income:CapitalGains:Equity"
+      },
+      {
+        "id": 14,
+        "name": "Income:CapitalGains:Equity:AAPL"
+      },
+      {
+        "id": 15,
+        "name": "Income:Interest"
+      },
+      {
+        "id": 16,
+        "name": "Income:Interest:Checking"
+      },
+      {
+        "id": 3,
+        "name": "Income:Salary"
+      },
+      {
+        "id": 4,
+        "name": "Income:Salary:Acme"
+      }
+    ],
+    "links": [
+      {
+        "source": 1,
+        "target": 5,
+        "value": 20100
+      },
+      {
+        "source": 1,
+        "target": 7,
+        "value": 80000
+      },
+      {
+        "source": 1,
+        "target": 8,
+        "value": 16050.6340142592
+      },
+      {
+        "source": 1,
+        "target": 9,
+        "value": 10000
+      },
+      {
+        "source": 1,
+        "target": 10,
+        "value": 804.42048
+      },
+      {
+        "source": 2,
+        "target": 1,
+        "value": 121027.3
+      },
+      {
+        "source": 3,
+        "target": 2,
+        "value": 120000
+      },
+      {
+        "source": 4,
+        "target": 3,
+        "value": 120000
+      },
+      {
+        "source": 5,
+        "target": 6,
+        "value": 20000
+      },
+      {
+        "source": 5,
+        "target": 11,
+        "value": 100
+      },
+      {
+        "source": 9,
+        "target": 1,
+        "value": 10000
+      },
+      {
+        "source": 12,
+        "target": 2,
+        "value": 27.3
+      },
+      {
+        "source": 13,
+        "target": 12,
+        "value": 27.3
+      },
+      {
+        "source": 14,
+        "target": 13,
+        "value": 27.3
+      },
+      {
+        "source": 15,
+        "target": 2,
+        "value": 1000
+      },
+      {
+        "source": 16,
+        "target": 15,
+        "value": 1000
+      }
+    ]
+  },
+  "net_income_trend": [
+    {
+      "month": "2021-11",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2021-12",
+      "value": 0,
+      "available": false,
+      "is_month_to_date": false
+    },
+    {
+      "month": "2022-01",
+      "value": 121027.3,
+      "available": true,
+      "is_month_to_date": false
+    }
+  ],
+  "investment_contributions": 96855.0544942592,
+  "investment_market_movement": 0,
+  "dividend_income": 0,
+  "best_performers": [],
+  "weakest_performers": [],
+  "performance_state": "not_available",
+  "performance_as_of": "0001-01-01T00:00:00Z"
+}

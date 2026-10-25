@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  formatMonthLabel,
   hasRecordedActivity,
   isCurrentMonthlyReview,
   monthlyReviewEndpoint,
@@ -56,6 +57,11 @@ describe("monthly review selection", () => {
 });
 
 describe("monthly review trend", () => {
+  test("formats month keys and full timestamps identically", () => {
+    expect(formatMonthLabel("2022-01")).toBe("Jan 22");
+    expect(formatMonthLabel("2022-01-01T00:00:00Z")).toBe("Jan 22");
+  });
+
   test("keeps missing trend months unavailable instead of zero", () => {
     const series = trendSeries(monthlyReview());
 

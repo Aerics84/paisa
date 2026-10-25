@@ -53,14 +53,12 @@ func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 		return points
 	}
 
-	monthByKey := make(map[string]time.Time)
 	flowsByAccount := make(map[string]map[string]decimal.Decimal)
 	firstMonthByAccount := make(map[string]time.Time)
 
 	for _, p := range postings {
 		month := utils.BeginningOfMonth(p.Date)
 		key := month.Format("2006-01")
-		monthByKey[key] = month
 
 		if flowsByAccount[p.Account] == nil {
 			flowsByAccount[p.Account] = make(map[string]decimal.Decimal)
@@ -72,16 +70,21 @@ func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 		}
 	}
 
-	keys := utils.SortedKeys(monthByKey)
-	if len(keys) > 12 {
-		keys = keys[len(keys)-12:]
+	keys := make([]string, 0, 12)
+	lastMonth := utils.BeginningOfMonth(postings[len(postings)-1].Date)
+	windowStart := lastMonth.AddDate(0, -11, 0)
+	monthByKey := make(map[string]time.Time, len(keys))
+	for index := 0; index < 12; index++ {
+		month := windowStart.AddDate(0, index, 0)
+		key := month.Format("2006-01")
+		keys = append(keys, key)
+		monthByKey[key] = month
 	}
-	firstDisplayedMonth := monthByKey[keys[0]]
 
 	for _, account := range utils.SortedKeys(flowsByAccount) {
 		balance := decimal.Zero
 		for _, key := range utils.SortedKeys(flowsByAccount[account]) {
-			if monthByKey[key].Before(firstDisplayedMonth) {
+			if key < keys[0] {
 				balance = balance.Add(flowsByAccount[account][key])
 			}
 		}
@@ -107,16 +110,24 @@ func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 	return points
 }
 
-// GetAvailableMonthRange reports the first and last recorded posting month.
+// GetAvailableMonthRange reports the first and last selectable month. The end
+// is never earlier than the current month, so a running month with no postings
+// can still show its month-to-date review.
 func GetAvailableMonthRange(db *gorm.DB) AvailableMonthRange {
 	postings := query.Init(db).All()
 	if len(postings) == 0 {
 		return AvailableMonthRange{}
 	}
 
+	to := utils.BeginningOfMonth(postings[len(postings)-1].Date)
+	current := utils.BeginningOfMonth(utils.Now())
+	if current.After(to) {
+		to = current
+	}
+
 	return AvailableMonthRange{
 		From: utils.BeginningOfMonth(postings[0].Date),
-		To:   utils.BeginningOfMonth(postings[len(postings)-1].Date),
+		To:   to,
 	}
 }
 

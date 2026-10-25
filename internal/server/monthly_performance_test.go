@@ -48,6 +48,76 @@ func requireDecimalEqual(t *testing.T, expected string, actual decimal.Decimal, 
 	require.True(t, actual.Equal(decimal.RequireFromString(expected)), append([]interface{}{"expected " + expected + ", got " + actual.String()}, msgAndArgs...)...)
 }
 
+func TestMonthlyPerformanceIncludesFirstCalendarDay(t *testing.T) {
+	start := performanceTestDate(2022, time.February, 1)
+	end := performanceTestDate(2022, time.February, 28)
+	previousClose := performanceTestDate(2022, time.January, 31)
+
+	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(100),
+		StartPriceDate: previousClose,
+		DailyValuations: []PositionValuation{
+			performanceTestValuation(start, "110", start),
+			performanceTestValuation(end, "110", end),
+		},
+	})
+
+	require.True(t, ok)
+	requireDecimalEqual(t, "10", performance.TotalReturnPercent, "the first calendar day must earn its price move")
+	requireDecimalEqual(t, "10", performance.GainLoss)
+}
+
+func TestMonthlyPerformanceIncludesFirstDaySale(t *testing.T) {
+	start := performanceTestDate(2022, time.February, 1)
+	end := performanceTestDate(2022, time.February, 28)
+	previousClose := performanceTestDate(2022, time.January, 31)
+
+	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(100),
+		StartPriceDate: previousClose,
+		DailyValuations: []PositionValuation{
+			performanceTestValuation(start, "0", start),
+			performanceTestValuation(end, "0", end),
+		},
+		CashFlows: []PositionCashFlow{performanceTestFlow(start, PositionCashFlowSale, "110")},
+	})
+
+	require.True(t, ok)
+	requireDecimalEqual(t, "10", performance.TotalReturnPercent)
+	requireDecimalEqual(t, "10", performance.GainLoss)
+	requireDecimalEqual(t, "110", performance.NetWithdrawals)
+}
+
+func TestMonthlyPerformanceIncludesFirstDayDividend(t *testing.T) {
+	start := performanceTestDate(2022, time.February, 1)
+	end := performanceTestDate(2022, time.February, 28)
+	previousClose := performanceTestDate(2022, time.January, 31)
+
+	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(1000),
+		StartPriceDate: previousClose,
+		DailyValuations: []PositionValuation{
+			performanceTestValuation(start, "1000", start),
+			performanceTestValuation(end, "1000", end),
+		},
+		CashFlows: []PositionCashFlow{performanceTestFlow(start, PositionCashFlowDividend, "20")},
+	})
+
+	require.True(t, ok)
+	requireDecimalEqual(t, "2", performance.TotalReturnPercent)
+	requireDecimalEqual(t, "20", performance.GainLoss)
+	requireDecimalEqual(t, "20", performance.DividendIncome)
+}
+
 func TestMonthlyPerformanceKeepsBuysAndSellsOutOfReturn(t *testing.T) {
 	start := performanceTestDate(2022, time.January, 1)
 	mid := performanceTestDate(2022, time.January, 15)
@@ -75,9 +145,11 @@ func TestMonthlyPerformanceKeepsBuysAndSellsOutOfReturn(t *testing.T) {
 
 	t.Run("partial sale is a withdrawal and not a loss", func(t *testing.T) {
 		performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-			Account:     "Assets:Equity:VWCE",
-			PeriodStart: start,
-			PeriodEnd:   end,
+			Account:        "Assets:Equity:VWCE",
+			PeriodStart:    start,
+			PeriodEnd:      end,
+			StartValue:     decimal.NewFromInt(1000),
+			StartPriceDate: start,
 			DailyValuations: []PositionValuation{
 				performanceTestValuation(start, "1000", start),
 				performanceTestValuation(mid, "800", mid),
@@ -99,9 +171,11 @@ func TestMonthlyPerformanceIncludesDividendsInTotalReturn(t *testing.T) {
 	end := performanceTestDate(2022, time.January, 31)
 
 	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:VWCE",
-		PeriodStart: start,
-		PeriodEnd:   end,
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(1000),
+		StartPriceDate: start,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(start, "1000", start),
 			performanceTestValuation(mid, "1000", mid),
@@ -124,9 +198,11 @@ func TestMonthlyPerformanceHandlesFullyClosedPosition(t *testing.T) {
 	end := performanceTestDate(2022, time.January, 31)
 
 	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:VWCE",
-		PeriodStart: start,
-		PeriodEnd:   end,
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(1000),
+		StartPriceDate: start,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(start, "1000", start),
 			performanceTestValuation(mid, "0", mid),
@@ -149,9 +225,11 @@ func TestMonthlyPerformanceHandlesForeignCurrencyValues(t *testing.T) {
 	// Values are already converted to the configured base currency, so both
 	// asset and FX movement are part of the value series.
 	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:US_STOCK",
-		PeriodStart: start,
-		PeriodEnd:   end,
+		Account:        "Assets:Equity:US_STOCK",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(1000),
+		StartPriceDate: start,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(start, "1000", start),
 			performanceTestValuation(end, "1100", end),
@@ -169,40 +247,51 @@ func TestMonthlyPerformanceRejectsInsufficientPriceCoverage(t *testing.T) {
 	end := performanceTestDate(2022, time.January, 31)
 
 	cases := []struct {
-		name        string
-		valuations []PositionValuation
-		flows       []PositionCashFlow
+		name           string
+		startValue     string
+		startPriceDate time.Time
+		valuations     []PositionValuation
+		flows          []PositionCashFlow
 	}{
 		{
-			name: "missing start quote",
+			name:       "missing start quote",
+			startValue: "1000",
 			valuations: []PositionValuation{
 				performanceTestValuation(start, "1000", time.Time{}),
 				performanceTestValuation(end, "1100", end),
 			},
 		},
 		{
-			name: "missing end quote",
+			name:           "missing end quote",
+			startValue:     "1000",
+			startPriceDate: start,
 			valuations: []PositionValuation{
 				performanceTestValuation(start, "1000", start),
 				performanceTestValuation(end, "1100", time.Time{}),
 			},
 		},
 		{
-			name: "stale end quote",
+			name:           "stale end quote",
+			startValue:     "1000",
+			startPriceDate: start,
 			valuations: []PositionValuation{
 				performanceTestValuation(start, "1000", start),
 				performanceTestValuation(end, "1100", start),
 			},
 		},
 		{
-			name: "single quote date for the whole month",
+			name:           "single quote date for the whole month",
+			startValue:     "1000",
+			startPriceDate: start,
 			valuations: []PositionValuation{
 				performanceTestValuation(start, "1000", start),
 				performanceTestValuation(end, "1100", start),
 			},
 		},
 		{
-			name: "flow without a matching valuation day",
+			name:           "flow without a matching valuation day",
+			startValue:     "1000",
+			startPriceDate: start,
 			valuations: []PositionValuation{
 				performanceTestValuation(start, "1000", start),
 				performanceTestValuation(end, "1100", end),
@@ -217,6 +306,8 @@ func TestMonthlyPerformanceRejectsInsufficientPriceCoverage(t *testing.T) {
 				Account:         "Assets:Equity:VWCE",
 				PeriodStart:     start,
 				PeriodEnd:       end,
+				StartValue:      decimal.RequireFromString(tc.startValue),
+				StartPriceDate:  tc.startPriceDate,
 				DailyValuations: tc.valuations,
 				CashFlows:       tc.flows,
 			})
@@ -232,9 +323,11 @@ func TestMonthlyPerformanceAllowsWeekendCarryForward(t *testing.T) {
 	monday := performanceTestDate(2022, time.January, 10)
 
 	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:VWCE",
-		PeriodStart: friday,
-		PeriodEnd:   monday,
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    friday,
+		PeriodEnd:      monday,
+		StartValue:     decimal.NewFromInt(100),
+		StartPriceDate: friday,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(friday, "100", friday),
 			performanceTestValuation(saturday, "100", friday),
@@ -253,9 +346,11 @@ func TestMonthlyPerformanceAcceptsCarryForwardWithinAgeLimit(t *testing.T) {
 	lastQuote := performanceTestDate(2022, time.January, 29)
 
 	performance, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:VWCE",
-		PeriodStart: start,
-		PeriodEnd:   end,
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(100),
+		StartPriceDate: start,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(start, "100", start),
 			performanceTestValuation(end, "110", lastQuote),
@@ -273,9 +368,11 @@ func TestMonthlyPerformanceRejectsUnsupportedFlowKind(t *testing.T) {
 	end := performanceTestDate(2022, time.January, 31)
 
 	_, ok := calculateMonthlyPositionPerformance(PositionMonthlyInput{
-		Account:     "Assets:Equity:VWCE",
-		PeriodStart: start,
-		PeriodEnd:   end,
+		Account:        "Assets:Equity:VWCE",
+		PeriodStart:    start,
+		PeriodEnd:      end,
+		StartValue:     decimal.NewFromInt(100),
+		StartPriceDate: start,
 		DailyValuations: []PositionValuation{
 			performanceTestValuation(start, "100", start),
 			performanceTestValuation(end, "110", end),

@@ -39,9 +39,14 @@ type PositionCashFlow struct {
 // PositionMonthlyInput is everything needed to compute a flow-adjusted total
 // return for one position in one calendar period.
 type PositionMonthlyInput struct {
-	Account         string              `json:"account"`
-	PeriodStart     time.Time           `json:"period_start"`
-	PeriodEnd       time.Time           `json:"period_end"`
+	Account     string    `json:"account"`
+	PeriodStart time.Time `json:"period_start"`
+	PeriodEnd   time.Time `json:"period_end"`
+	// StartValue is the position value at the start of PeriodStart, based on
+	// the last quote on or before PeriodStart. It makes the first calendar
+	// day's return measurable. Zero means there was no prior holding.
+	StartValue      decimal.Decimal     `json:"start_value"`
+	StartPriceDate  time.Time           `json:"start_price_date"`
 	DailyValuations []PositionValuation `json:"daily_valuations"`
 	CashFlows       []PositionCashFlow  `json:"cash_flows"`
 	// MaxPriceAgeDays is the largest accepted distance between a valuation day
@@ -125,7 +130,7 @@ func positionFlowsByDate(flows []PositionCashFlow) (map[time.Time][3]decimal.Dec
 // returns false whenever the valuation or flow coverage cannot support a
 // trustworthy number, so callers never present a missing result as 0%.
 func calculateMonthlyPositionPerformance(input PositionMonthlyInput) (MonthlyPositionPerformance, bool) {
-	if len(input.DailyValuations) < 2 {
+	if len(input.DailyValuations) < 1 {
 		return MonthlyPositionPerformance{}, false
 	}
 
@@ -162,6 +167,29 @@ func calculateMonthlyPositionPerformance(input PositionMonthlyInput) (MonthlyPos
 	quoteDates := make(map[time.Time]bool)
 	valuationDates := make(map[time.Time]bool)
 	var priceAsOf time.Time
+
+	if input.StartValue.LessThan(decimal.Zero) {
+		return MonthlyPositionPerformance{}, false
+	}
+
+	if input.StartValue.GreaterThan(decimal.Zero) {
+		if input.StartPriceDate.IsZero() {
+			return MonthlyPositionPerformance{}, false
+		}
+
+		periodStart := normalizePerformanceDate(input.PeriodStart)
+		startPriceDate := normalizePerformanceDate(input.StartPriceDate)
+		if startPriceDate.After(periodStart) {
+			return MonthlyPositionPerformance{}, false
+		}
+		if performanceDaysBetween(startPriceDate, periodStart) > maxPriceAge {
+			return MonthlyPositionPerformance{}, false
+		}
+
+		quoteDates[startPriceDate] = true
+		priceAsOf = input.StartPriceDate
+	}
+
 	for _, valuation := range valuations {
 		valuationDate := normalizePerformanceDate(valuation.Date)
 		valuationDates[valuationDate] = true
@@ -218,13 +246,15 @@ func calculateMonthlyPositionPerformance(input PositionMonthlyInput) (MonthlyPos
 
 	growth := decimal.NewFromInt(1)
 	computedReturn := false
-	previous := valuations[0]
+	previous := input.StartValue
 
-	for _, valuation := range valuations[1:] {
+	// The prior close is the base for the first calendar day, so a price move
+	// on PeriodStart itself is part of the return.
+	for _, valuation := range valuations {
 		entry := flowsByDate[normalizePerformanceDate(valuation.Date)]
 		purchased, sold, dividends := entry[0], entry[1], entry[2]
 
-		if previous.MarketValue.GreaterThan(decimal.Zero) {
+		if previous.GreaterThan(decimal.Zero) {
 			// Value left at the end of the subperiod, excluding external
 			// purchases, plus sale proceeds and dividends. The result is what
 			// the capital at the start of the subperiod actually earned.
@@ -233,20 +263,19 @@ func calculateMonthlyPositionPerformance(input PositionMonthlyInput) (MonthlyPos
 				return MonthlyPositionPerformance{}, false
 			}
 
-			growth = growth.Mul(numerator.Div(previous.MarketValue))
+			growth = growth.Mul(numerator.Div(previous))
 			computedReturn = true
 		}
 
-		previous = valuation
+		previous = valuation.MarketValue
 	}
 
 	if !computedReturn {
 		return MonthlyPositionPerformance{}, false
 	}
 
-	startValue := valuations[0].MarketValue
 	endValue := valuations[len(valuations)-1].MarketValue
-	gainLoss := endValue.Sub(startValue).Sub(netContributions).Add(netWithdrawals).Add(dividendIncome)
+	gainLoss := endValue.Sub(input.StartValue).Sub(netContributions).Add(netWithdrawals).Add(dividendIncome)
 
 	return MonthlyPositionPerformance{
 		Account:            input.Account,

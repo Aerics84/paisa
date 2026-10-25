@@ -897,7 +897,7 @@
 
 .paisa-review__metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -1138,6 +1138,11 @@
 .paisa-review__investment-drivers strong {
   color: var(--dashboard-text-strong);
   font-size: 1rem;
+}
+
+.paisa-review__investment-drivers small {
+  color: var(--app-text-subtle);
+  font-size: 0.7rem;
 }
 
 .paisa-goals__note {

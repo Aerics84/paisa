@@ -813,5 +813,16 @@
       "fileName": "main.ledger",
       "note": ""
     }
-  ]
+  ],
+  "checkingBalanceTimeline": [
+    {
+      "month": "2022-01-01T00:00:00Z",
+      "account": "Assets:Checking",
+      "balance": 4072.2455057408
+    }
+  ],
+  "availableMonthRange": {
+    "from": "2022-01-01T00:00:00Z",
+    "to": "2022-02-01T00:00:00Z"
+  }
 }

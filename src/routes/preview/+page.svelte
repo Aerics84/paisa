@@ -7,6 +7,7 @@
   import { renderFlow } from "$lib/cash_flow";
   import DashboardSectionHeader from "$lib/components/dashboard/DashboardSectionHeader.svelte";
   import {
+    formatMonthLabel,
     hasRecordedActivity,
     isCurrentMonthlyReview,
     monthlyReviewEndpoint,
@@ -201,9 +202,7 @@
       return [];
     }
 
-    return sampledIndices(months.length, count).map((index) =>
-      dayjs(months[index] + "-01").format("MMM YY")
-    );
+    return sampledIndices(months.length, count).map((index) => formatMonthLabel(months[index]));
   }
 
   function valueTicks(min: number, max: number, count = 3, height = heroChartHeight) {
@@ -277,7 +276,7 @@
       .filter((link) => link.source === expenses.id)
       .map((link) => {
         const target = review.flow_graph.nodes.find((node) => node.id === link.target);
-        if (!target?.name.startsWith("Expenses:")) {
+        if (!target?.name.startsWith("Expenses:") || target.name === "Expenses:Tax") {
           return null;
         }
         return {
@@ -811,6 +810,10 @@
                       >{formatCurrency(activeMonthlyReview.surplus)}</strong
                     >
                     <small>net income − expenses</small>
+                    <small
+                      >Calculated from recorded postings; not a checking-balance change or a
+                      complete wealth reconciliation.</small
+                    >
                   {:else}
                     <strong class="is-muted">Not available</strong>
                     <small>
@@ -824,8 +827,16 @@
                 </div>
                 <div class="paisa-review__metric">
                   <span>Net expense</span>
-                  <strong>{formatCurrency(activeMonthlyReview.net_expense)}</strong>
-                  <small>Excludes tax</small>
+                  <strong
+                    >{activeMonthlyReview.has_expense_postings
+                      ? formatCurrency(activeMonthlyReview.net_expense)
+                      : "Not available"}</strong
+                  >
+                  <small
+                    >{activeMonthlyReview.has_expense_postings
+                      ? "Excludes tax"
+                      : "No recorded expenses"}</small
+                  >
                 </div>
               </div>
 
@@ -901,19 +912,19 @@
                 <div>
                   <span>Net contributions</span><strong
                     >{formatCurrency(activeMonthlyReview.investment_contributions)}</strong
-                  >
+                  ><small>Non-checking assets</small>
                 </div>
                 <div>
                   <span>Market movement</span><strong
                     >{activeMonthlyReview.performance_state === "ready"
                       ? formatCurrency(activeMonthlyReview.investment_market_movement)
                       : "Not available"}</strong
-                  >
+                  ><small>Ranked positions</small>
                 </div>
                 <div>
                   <span>Dividends</span><strong
                     >{formatCurrency(activeMonthlyReview.dividend_income)}</strong
-                  >
+                  ><small>Total return component</small>
                 </div>
               </div>
 
@@ -978,40 +989,46 @@
               </svelte:fragment>
             </DashboardSectionHeader>
 
-            <div class="paisa-insights">
-              {#each insights as insight}
-                <article class={"paisa-insight paisa-insight--" + insight.tone}>
-                  <div class="paisa-insight__icon">
-                    <span class="icon">
-                      <i
-                        class={"fas " +
-                          (insight.tone === "positive"
-                            ? "fa-arrow-trend-up"
-                            : insight.tone === "warning"
-                              ? "fa-triangle-exclamation"
-                              : insight.tone === "negative"
-                                ? "fa-arrow-trend-down"
-                                : "fa-circle-info")}
-                      ></i>
-                    </span>
-                  </div>
-                  <div class="paisa-insight__copy">
-                    <div class="paisa-insight__title">{insight.title}</div>
-                    <div class="paisa-insight__text">{insight.description}</div>
-                    <div class="paisa-insight__delta">{insight.deltaLabel}</div>
-                  </div>
-                  {#if insight.state === "ready" && insight.series.length > 1}
-                    <svg viewBox="0 0 130 46" class="paisa-sparkline paisa-sparkline--mini">
-                      <path
-                        d={sparklinePath(insight.series, 130, 46)}
-                        class={"is-" + insight.tone}
-                        vector-effect="non-scaling-stroke"
-                      />
-                    </svg>
-                  {/if}
-                </article>
-              {/each}
-            </div>
+            {#if reviewLoading}
+              <div class="paisa-zone__empty">
+                <strong>Loading {selectedMonthLabel}…</strong>
+              </div>
+            {:else}
+              <div class="paisa-insights">
+                {#each insights as insight}
+                  <article class={"paisa-insight paisa-insight--" + insight.tone}>
+                    <div class="paisa-insight__icon">
+                      <span class="icon">
+                        <i
+                          class={"fas " +
+                            (insight.tone === "positive"
+                              ? "fa-arrow-trend-up"
+                              : insight.tone === "warning"
+                                ? "fa-triangle-exclamation"
+                                : insight.tone === "negative"
+                                  ? "fa-arrow-trend-down"
+                                  : "fa-circle-info")}
+                        ></i>
+                      </span>
+                    </div>
+                    <div class="paisa-insight__copy">
+                      <div class="paisa-insight__title">{insight.title}</div>
+                      <div class="paisa-insight__text">{insight.description}</div>
+                      <div class="paisa-insight__delta">{insight.deltaLabel}</div>
+                    </div>
+                    {#if insight.state === "ready" && insight.series.length > 1}
+                      <svg viewBox="0 0 130 46" class="paisa-sparkline paisa-sparkline--mini">
+                        <path
+                          d={sparklinePath(insight.series, 130, 46)}
+                          class={"is-" + insight.tone}
+                          vector-effect="non-scaling-stroke"
+                        />
+                      </svg>
+                    {/if}
+                  </article>
+                {/each}
+              </div>
+            {/if}
           </div>
 
           <div class="paisa-zone paisa-zone--goals">
