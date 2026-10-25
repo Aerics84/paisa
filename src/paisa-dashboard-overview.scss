@@ -945,54 +945,48 @@
   gap: 0.65rem;
 }
 
-.paisa-review__trend-bars {
+.paisa-review__trend-values {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
-  align-items: end;
 }
 
 .paisa-review__trend-point {
   display: grid;
-  gap: 0.4rem;
-  justify-items: center;
-  text-align: center;
+  gap: 0.25rem;
+  align-content: start;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.85rem;
 }
 
-.paisa-review__trend-track {
-  height: 5.5rem;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  border-bottom: 1px solid var(--app-border);
-}
-
-.paisa-review__trend-fill {
-  width: 100%;
-  border-radius: 0.45rem 0.45rem 0 0;
-  background: linear-gradient(180deg, var(--app-accent), rgba(45, 212, 191, 0.25));
-  min-height: 2px;
-}
-
-.paisa-review__trend-point.is-mtd .paisa-review__trend-fill {
-  opacity: 0.6;
-  background: repeating-linear-gradient(
-    135deg,
-    var(--app-accent) 0,
-    var(--app-accent) 5px,
-    rgba(45, 212, 191, 0.2) 5px,
-    rgba(45, 212, 191, 0.2) 10px
-  );
+.paisa-review__trend-point.is-mtd {
+  border-style: dashed;
 }
 
 .paisa-review__trend-point strong {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   color: var(--dashboard-text-strong);
 }
 
 .paisa-review__trend-point span {
   color: var(--app-text-subtle);
   font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.paisa-review__trend-point small {
+  color: var(--app-text-muted);
+  font-size: 0.78rem;
+}
+
+.paisa-review__trend-point small.is-positive {
+  color: var(--app-positive);
+}
+
+.paisa-review__trend-point small.is-negative {
+  color: var(--app-danger);
 }
 
 .paisa-review__performance {

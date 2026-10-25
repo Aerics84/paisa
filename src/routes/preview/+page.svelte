@@ -141,7 +141,7 @@
 
   async function renderMonthlyFlow(review: MonthlyReviewResponse) {
     const request = ++sankeyRequest;
-    const empty = !review.flow_graph?.nodes?.length;
+    const empty = !review.flow_graph?.nodes?.length || !review.flow_graph?.links?.length;
     sankeyEmpty = empty;
     renderedSankeyMonth = review.month;
 
@@ -831,32 +831,29 @@
 
               <div class="paisa-review__trend">
                 <div class="paisa-zone__subtle">Net income · last three months</div>
-                <div class="paisa-review__trend-bars">
-                  {#each reviewTrend as point}
+                <div class="paisa-review__trend-values">
+                  {#each reviewTrend as point, index}
+                    {@const previous = index > 0 ? reviewTrend[index - 1] : null}
                     <div class="paisa-review__trend-point" class:is-mtd={point.isMonthToDate}>
-                      <div class="paisa-review__trend-track">
-                        {#if point.value != null && availableTrendValues.length}
-                          <div
-                            class="paisa-review__trend-fill"
-                            style={`height: ${Math.max(
-                              (Math.max(point.value, 0) /
-                                Math.max(_.max(availableTrendValues) ?? 0, 1)) *
-                                100,
-                              point.value === 0 ? 0 : 2
-                            )}%`}
-                          ></div>
-                        {/if}
-                      </div>
+                      <span>{dayjs(point.month + "-01").format("MMM YYYY")}</span>
                       <strong
                         >{point.value != null
                           ? formatCurrency(point.value)
                           : "Not available"}</strong
                       >
-                      <span
-                        >{dayjs(point.month + "-01").format("MMM")}{point.isMonthToDate
-                          ? " · MTD"
-                          : ""}</span
-                      >
+                      {#if point.isMonthToDate}
+                        <small>Month to date</small>
+                      {:else if point.value != null && previous?.value != null}
+                        <small
+                          class:is-positive={point.value >= previous.value}
+                          class:is-negative={point.value < previous.value}
+                        >
+                          {point.value >= previous.value ? "↑" : "↓"}
+                          {formatCurrency(Math.abs(point.value - previous.value))}
+                        </small>
+                      {:else}
+                        <small>No comparable month</small>
+                      {/if}
                     </div>
                   {/each}
                 </div>
