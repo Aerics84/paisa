@@ -204,7 +204,7 @@
           normalizedPath.startsWith(selectedLink.href + l.href)
         );
 
-        if (!_.isEmpty(selectedSubLink.children)) {
+        if (selectedSubLink && !_.isEmpty(selectedSubLink.children)) {
           selectedSubSubLink = _.find(selectedSubLink.children, (l) =>
             normalizedPath.startsWith(selectedLink.href + selectedSubLink.href + l.href)
           );

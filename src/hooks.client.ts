@@ -33,6 +33,7 @@ dayjs.extend(updateLocale);
 
 import Handlebars from "handlebars";
 import helpers from "$lib/template_helpers";
+import { formatError, isResizeObserverLoopError } from "$lib/error";
 import * as toast from "bulma-toast";
 import _ from "lodash";
 
@@ -72,18 +73,6 @@ export const handleError: HandleClientError = async ({ error, status, message })
   return { message, stack, status, detail: error.toString() };
 };
 
-function formatError(error: any) {
-  if (error.stack) {
-    return error.stack;
-  }
-
-  if (error.message) {
-    return error.message;
-  } else {
-    return error.toString();
-  }
-}
-
 const footer = `
 <p class="mt-3">
   Please report this issue at <a href="https://github.com/ananthakumaran/paisa/issues"
@@ -109,5 +98,8 @@ window.addEventListener("unhandledrejection", (event) => {
   displayError(event.reason);
 });
 window.addEventListener("error", (event) => {
+  if (isResizeObserverLoopError(event.message) || isResizeObserverLoopError(event.error?.message)) {
+    return;
+  }
   displayError(event.error);
 });
