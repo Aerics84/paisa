@@ -95,8 +95,7 @@
               {/each}
             </select>
           </div>
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-          <div class="help">{@html selectedProvider.description}</div>
+          <div class="help">{selectedProvider.description}</div>
         </div>
       </div>
       <div class="field">
@@ -139,8 +138,7 @@
                   ></Select>
                 {/key}
               {/if}
-              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-              <p class="help">{@html field.help}</p>
+              <p class="help">{field.help}</p>
             </div>
           </div>
         {/each}

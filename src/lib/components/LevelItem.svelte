@@ -7,6 +7,16 @@
   export let narrow: boolean = false;
   export let color: string = null;
   export let subtitle: string = null;
+
+  // Subtitles intentionally use <b> for emphasis. Escape everything else so
+  // a caller can never inject markup through a label or account name.
+  function sanitizeSubtitle(value: string): string {
+    return (value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/&lt;(\/?)b&gt;/g, "<$1b>");
+  }
 </script>
 
 <div class="level-item {narrow && 'is-narrow'} has-text-left" class:small>
@@ -19,7 +29,7 @@
     {/if}
     {#if !_.isEmpty(subtitle)}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      <div class="sub-title">{@html subtitle}</div>
+      <div class="sub-title">{@html sanitizeSubtitle(subtitle)}</div>
     {/if}
   </div>
 </div>

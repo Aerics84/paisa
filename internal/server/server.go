@@ -453,6 +453,10 @@ func Listen(db *gorm.DB, host string, port int) {
 	}
 }
 
+func rateLimitKey(c *gin.Context) string {
+	return c.ClientIP()
+}
+
 func TokenAuthMiddleware() gin.HandlerFunc {
 	store, err := memstore.NewCtx(10)
 	if err != nil {
@@ -476,7 +480,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), "user", 0)
+		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0)
 		if detail.Remaining <= 0 {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
 			return
@@ -497,7 +501,7 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		rateLimiter.RateLimitCtx(c.Request.Context(), "user", 1)
+		rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 1)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 
