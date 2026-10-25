@@ -130,6 +130,17 @@ func (p ExchangePrice) Less(o btree.Item) bool {
 	return p.Timestamp < (o.(ExchangePrice).Timestamp)
 }
 
+// normalizeYahooCurrency maps Yahoo's minor-unit currency codes to their
+// ISO currency and returns the factor prices must be multiplied with.
+func normalizeYahooCurrency(currency string) (string, float64) {
+	switch currency {
+	case "GBp", "GBX":
+		return "GBP", 0.01
+	default:
+		return currency, 1
+	}
+}
+
 func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 	log.Info("Fetching stock price history from Yahoo")
 	response, err := getTicker(ticker)
@@ -142,18 +153,20 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 	if err != nil {
 		return nil, err
 	}
+	quoteCurrency, scale := normalizeYahooCurrency(result.Meta.Currency)
 	needExchangePrice := false
 	var exchangePrice *btree.BTree
 	var earliestExchangeTimestamp int64
 
-	if !utils.IsCurrency(result.Meta.Currency) {
+	if !utils.IsCurrency(quoteCurrency) {
 		needExchangePrice = true
-		exchangeResponse, err := getTicker(fmt.Sprintf("%s%s=X", result.Meta.Currency, config.DefaultCurrency()))
+		exchangeTicker := fmt.Sprintf("%s%s=X", quoteCurrency, config.DefaultCurrency())
+		exchangeResponse, err := getTicker(exchangeTicker)
 		if err != nil {
 			return nil, err
 		}
 
-		exchangeResult, err := firstYahooResult(fmt.Sprintf("%s%s=X", result.Meta.Currency, config.DefaultCurrency()), exchangeResponse)
+		exchangeResult, err := firstYahooResult(exchangeTicker, exchangeResponse)
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +186,7 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 		}
 
 		if exchangePrice.Len() == 0 {
-			return nil, fmt.Errorf("missing yahoo exchange rate data for %s", result.Meta.Currency)
+			return nil, fmt.Errorf("missing yahoo exchange rate data for %s", quoteCurrency)
 		}
 
 		earliestExchangeTimestamp = exchangePrice.Min().(ExchangePrice).Timestamp
@@ -186,7 +199,7 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 		}
 
 		date := time.Unix(timestamp, 0)
-		value := result.Indicators.Quote[0].Close[i]
+		value := result.Indicators.Quote[0].Close[i] * scale
 		if math.IsNaN(value) || value == 0 {
 			continue
 		}
@@ -199,7 +212,7 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 
 			fxPrice := utils.BTreeDescendFirstLessOrEqual(exchangePrice, ExchangePrice{Timestamp: timestamp})
 			if fxPrice.Close == 0 {
-				return nil, fmt.Errorf("missing yahoo exchange rate near %s for %s", date.Format("2006-01-02"), result.Meta.Currency)
+				return nil, fmt.Errorf("missing yahoo exchange rate near %s for %s", date.Format("2006-01-02"), quoteCurrency)
 			}
 			value = value * fxPrice.Close
 		}
@@ -211,13 +224,13 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 
 	if skippedForMissingExchangeHistory > 0 {
 		firstExchangeDate := time.Unix(earliestExchangeTimestamp, 0).Format("2006-01-02")
-		log.Infof("Skipped %d yahoo price rows for %s before first %s/%s exchange rate on %s", skippedForMissingExchangeHistory, ticker, result.Meta.Currency, config.DefaultCurrency(), firstExchangeDate)
+		log.Infof("Skipped %d yahoo price rows for %s before first %s/%s exchange rate on %s", skippedForMissingExchangeHistory, ticker, quoteCurrency, config.DefaultCurrency(), firstExchangeDate)
 	}
 
 	if len(prices) == 0 {
 		if needExchangePrice {
 			firstExchangeDate := time.Unix(earliestExchangeTimestamp, 0).Format("2006-01-02")
-			return nil, fmt.Errorf("no importable yahoo price history for %s after trimming prices before first %s/%s exchange rate on %s", ticker, result.Meta.Currency, config.DefaultCurrency(), firstExchangeDate)
+			return nil, fmt.Errorf("no importable yahoo price history for %s after trimming prices before first %s/%s exchange rate on %s", ticker, quoteCurrency, config.DefaultCurrency(), firstExchangeDate)
 		}
 		return nil, fmt.Errorf("empty yahoo price history for %s", ticker)
 	}

@@ -279,3 +279,42 @@ func TestYahooResultUnmarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeYahooCurrency(t *testing.T) {
+	for _, tc := range []struct {
+		in    string
+		want  string
+		scale float64
+	}{
+		{"GBp", "GBP", 0.01},
+		{"GBX", "GBP", 0.01},
+		{"GBP", "GBP", 1},
+		{"USD", "USD", 1},
+	} {
+		got, scale := normalizeYahooCurrency(tc.in)
+		assert.Equal(t, tc.want, got)
+		assert.Equal(t, tc.scale, scale)
+	}
+}
+
+func TestGetHistoryConvertsGBpToGBP(t *testing.T) {
+	loadYahooTestConfig(t) // DefaultCurrency EUR
+	previous := yahooHTTPClient
+	t.Cleanup(func() { yahooHTTPClient = previous })
+	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case strings.Contains(req.URL.String(), "/VOD.L?"):
+			return yahooJSONResponse(yahooChartJSON("GBp", []string{"2024-01-02"}, []float64{100})), nil
+		case strings.Contains(req.URL.String(), "/GBPEUR=X?"):
+			return yahooJSONResponse(yahooChartJSON("EUR", []string{"2024-01-02"}, []float64{1.2})), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	prices, err := GetHistory("VOD.L", "Vodafone")
+	require.NoError(t, err)
+	require.Len(t, prices, 1)
+	assert.True(t, prices[0].Value.Equal(decimal.RequireFromString("1.2")))
+}
