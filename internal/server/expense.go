@@ -101,7 +101,7 @@ func computeHierarchyGraph(postings []posting.Posting) Graph {
 		to := lo.Filter(t.Postings, func(p posting.Posting, _ int) bool { return p.Amount.GreaterThan(decimal.Zero) })
 
 		for _, f := range from {
-			for f.Amount.Abs().GreaterThan(decimal.NewFromFloat(0.1)) && len(to) > 0 {
+			for f.Amount.Abs().GreaterThan(decimal.Zero) && len(to) > 0 {
 				top := to[0]
 				if top.Amount.GreaterThan(f.Amount.Neg()) {
 					addLink(f.Account, top.Account, f.Amount.Neg(), &nodes, &links)
