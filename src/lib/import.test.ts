@@ -156,4 +156,12 @@ describe("template helpers", () => {
   test("date helper normalizes day-first dates", () => {
     expect(helpers.date("28.04.2026", "DD.MM.YYYY")).toBe("2026/04/28");
   });
+
+  test("negate preserves decimal notation", () => {
+    expect(helpers.negate("0.00000001")).toBe("-0.00000001");
+    expect(helpers.negate(0.00000001)).toBe("-0.00000001");
+    expect(helpers.negate("-0.00000001")).toBe("0.00000001");
+    expect(helpers.negate("₹ 1,234.56")).toBe("-1234.56");
+    expect(helpers.negate(0)).toBe("0");
+  });
 });

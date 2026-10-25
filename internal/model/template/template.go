@@ -2,8 +2,10 @@ package template
 
 import (
 	"embed"
+	"errors"
 	"fmt"
-	"path/filepath"
+	"io/fs"
+	"path"
 	"strings"
 
 	"github.com/ananthakumaran/paisa/internal/config"
@@ -29,25 +31,37 @@ type Template struct {
 }
 
 func All() []Template {
-	var templates []Template
+	return all(config.GetConfig().ImportTemplates, BuiltinTemplates)
+}
 
-	for _, t := range config.GetConfig().ImportTemplates {
+func all(custom []config.ImportTemplate, builtins fs.FS) []Template {
+	templates := []Template{}
+
+	for _, t := range custom {
 		template := Template{ID: buildID(t.Name, Custom), Name: t.Name, Content: t.Content, TemplateType: Custom}
 		templates = append(templates, template)
 	}
 
-	dirEntries, err := BuiltinTemplates.ReadDir("templates")
+	dirEntries, err := fs.ReadDir(builtins, "templates")
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return templates
+		}
 		log.Fatal(err)
 	}
+
 	for _, f := range dirEntries {
 		name := f.Name()
-		content, err := BuiltinTemplates.ReadFile(fmt.Sprintf("templates/%s", name))
+		if f.IsDir() || path.Ext(name) != ".handlebars" {
+			continue
+		}
+
+		content, err := fs.ReadFile(builtins, path.Join("templates", name))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		name = strings.TrimSuffix(name, filepath.Ext(name))
+		name = strings.TrimSuffix(name, path.Ext(name))
 		template := Template{ID: buildID(name, Builtin), Name: name, Content: string(content), TemplateType: Builtin}
 		templates = append(templates, template)
 	}

@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { BigNumber } from "bignumber.js";
 import _ from "lodash";
 import { get } from "svelte/store";
 import { accountTfIdf } from "../store";
@@ -86,6 +87,13 @@ function scrubAmount(str: string) {
   }
 }
 
+function negateAmount(value: string | number) {
+  const amount = _.isNumber(value) ? value.toString() : scrubAmount(value);
+  if (amount) {
+    return new BigNumber(amount).negated().toFixed();
+  }
+}
+
 function normalizeNumericToken(token: string) {
   if (!token) {
     return token;
@@ -160,7 +168,7 @@ export default {
   gt: (a: string | number, b: string | number) => parseAmount(a) > parseAmount(b),
   lte: (a: string | number, b: string | number) => parseAmount(a) <= parseAmount(b),
   lt: (a: string | number, b: string | number) => parseAmount(a) < parseAmount(b),
-  negate: (value: string) => parseAmount(value) * -1,
+  negate: negateAmount,
   round(str: string, options: any) {
     return _.round(parseAmount(str), options.hash.precision || 0);
   },

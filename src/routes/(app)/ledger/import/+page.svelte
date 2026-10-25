@@ -46,9 +46,16 @@
   onMount(async () => {
     accountTfIdf.set(await ajax("/api/account/tf_idf"));
     ({ templates } = await ajax("/api/templates"));
-    selectedTemplate = templates[0];
-    saveAsName = selectedTemplate.name;
-    templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
+    templates = templates || [];
+    if (templates.length > 0) {
+      selectedTemplate = templates[0];
+      saveAsName = selectedTemplate.name;
+      templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
+    } else {
+      selectedTemplate = undefined;
+      saveAsName = "";
+      templateEditor = createTemplateEditor("", templateEditorDom);
+    }
     previewEditor = createPreviewEditor(preview, previewEditorDom, { readonly: true });
     void getSpreadsheetModule();
   });
@@ -75,8 +82,11 @@
     }
 
     ({ templates } = await ajax("/api/templates", { background: true }));
+    templates = templates || [];
     selectedTemplate = _.find(templates, { id: template.id });
-    saveAsName = selectedTemplate.name;
+    if (selectedTemplate) {
+      saveAsName = selectedTemplate.name;
+    }
     toast.toast({
       message: `Saved ${saveAsName}`,
       type: "is-success"
@@ -109,8 +119,9 @@
     }
 
     ({ templates } = await ajax("/api/templates", { background: true }));
+    templates = templates || [];
     selectedTemplate = templates[0];
-    saveAsName = selectedTemplate.name;
+    saveAsName = selectedTemplate ? selectedTemplate.name : "";
     toast.toast({
       message: `Removed ${oldName}`,
       type: "is-success"
