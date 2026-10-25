@@ -45,6 +45,7 @@ type MonthlyReview struct {
 	FlowGraph               Graph                        `json:"flow_graph"`
 	NetIncomeTrend          []MonthlyMetricPoint         `json:"net_income_trend"`
 	InvestmentContributions decimal.Decimal              `json:"investment_contributions"`
+	InvestmentMarketMovement decimal.Decimal             `json:"investment_market_movement"`
 	DividendIncome          decimal.Decimal              `json:"dividend_income"`
 	BestPerformers          []MonthlyPositionPerformance `json:"best_performers"`
 	WeakestPerformers       []MonthlyPositionPerformance `json:"weakest_performers"`
@@ -323,7 +324,7 @@ func positionEndValue(db *gorm.DB, candidate monthlyPositionCandidate, periodEnd
 	return quantity.Mul(quote.Value)
 }
 
-func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, periodStart time.Time, periodEnd time.Time) ([]MonthlyPositionPerformance, []MonthlyPositionPerformance, string, time.Time) {
+func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, periodStart time.Time, periodEnd time.Time) ([]MonthlyPositionPerformance, []MonthlyPositionPerformance, string, time.Time, decimal.Decimal) {
 	assetPostings := query.Init(db).Where("date <= ?", periodEnd).Like("Assets:%").NotAccountPrefix("Assets:Checking").All()
 	candidates := candidatePositions(assetPostings)
 	dividendFlows := dividendFlowsByAccount(monthPostings, candidates)
@@ -332,6 +333,7 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 	var ranked []MonthlyPositionPerformance
 	totalValue := decimal.Zero
 	rankableValue := decimal.Zero
+	marketMovement := decimal.Zero
 	var performanceAsOf time.Time
 
 	for _, candidate := range candidates {
@@ -370,6 +372,7 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 
 		ranked = append(ranked, performance)
 		rankableValue = rankableValue.Add(valuations[len(valuations)-1].MarketValue)
+		marketMovement = marketMovement.Add(performance.GainLoss)
 		if performanceAsOf.IsZero() || performance.PriceAsOf.Before(performanceAsOf) {
 			performanceAsOf = performance.PriceAsOf
 		}
@@ -377,7 +380,7 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 
 	if len(ranked) < 2 || totalValue.LessThanOrEqual(decimal.Zero) ||
 		rankableValue.Mul(decimal.NewFromInt(100)).LessThan(totalValue.Mul(decimal.NewFromInt(50))) {
-		return []MonthlyPositionPerformance{}, []MonthlyPositionPerformance{}, MonthlyPerformanceNotAvailable, time.Time{}
+		return []MonthlyPositionPerformance{}, []MonthlyPositionPerformance{}, MonthlyPerformanceNotAvailable, time.Time{}, decimal.Zero
 	}
 
 	sort.SliceStable(ranked, func(i, j int) bool {
@@ -394,7 +397,7 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 		weakest = append(weakest, ranked[index])
 	}
 
-	return best, weakest, MonthlyPerformanceReady, performanceAsOf
+	return best, weakest, MonthlyPerformanceReady, performanceAsOf, marketMovement
 }
 
 // GetMonthlyReview derives every period-specific number from postings in the
@@ -457,11 +460,12 @@ func GetMonthlyReview(db *gorm.DB, month time.Time) MonthlyReview {
 
 	// Held positions can move without any posting in the month, so performance
 	// is derived independently from the ledger-activity state.
-	best, weakest, performanceState, performanceAsOf := computeMonthlyPerformance(db, postings, periodStart, periodEnd)
+	best, weakest, performanceState, performanceAsOf, marketMovement := computeMonthlyPerformance(db, postings, periodStart, periodEnd)
 	review.BestPerformers = best
 	review.WeakestPerformers = weakest
 	review.PerformanceState = performanceState
 	review.PerformanceAsOf = performanceAsOf
+	review.InvestmentMarketMovement = marketMovement
 
 	return review
 }

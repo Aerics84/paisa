@@ -43,9 +43,9 @@ func performanceTestFlow(date time.Time, kind string, amount string) PositionCas
 	}
 }
 
-func requireDecimalEqual(t *testing.T, expected string, actual decimal.Decimal) {
+func requireDecimalEqual(t *testing.T, expected string, actual decimal.Decimal, msgAndArgs ...interface{}) {
 	t.Helper()
-	require.True(t, actual.Equal(decimal.RequireFromString(expected)), "expected %s, got %s", expected, actual)
+	require.True(t, actual.Equal(decimal.RequireFromString(expected)), append([]interface{}{"expected " + expected + ", got " + actual.String()}, msgAndArgs...)...)
 }
 
 func TestMonthlyPerformanceKeepsBuysAndSellsOutOfReturn(t *testing.T) {

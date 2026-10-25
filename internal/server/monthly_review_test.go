@@ -293,6 +293,7 @@ func TestGetMonthlyReviewRanksFlowAdjustedPositions(t *testing.T) {
 	require.Equal(t, "Assets:Equity:VTI", review.WeakestPerformers[0].Account)
 	requireDecimalEqual(t, "-10", review.WeakestPerformers[0].TotalReturnPercent)
 	require.True(t, review.PerformanceAsOf.Equal(monthlyReviewTestDate("2022-02-28")))
+	requireDecimalEqual(t, "0", review.InvestmentMarketMovement)
 }
 
 func TestGetMonthlyReviewAttributesDividendsOnlyWhenIdentifiable(t *testing.T) {
@@ -331,6 +332,7 @@ func TestGetMonthlyReviewAttributesDividendsOnlyWhenIdentifiable(t *testing.T) {
 	}
 	require.NotNil(t, vti)
 	requireDecimalEqual(t, "0", vti.DividendIncome, "an unidentifiable dividend must not be attributed to a position")
+	requireDecimalEqual(t, "5", review.InvestmentMarketMovement)
 }
 
 func TestGetMonthlyReviewExcludesQuantityOnlyStockSplit(t *testing.T) {

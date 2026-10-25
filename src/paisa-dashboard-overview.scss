@@ -289,7 +289,7 @@
 }
 
 .paisa-sparkline--hero path {
-  stroke-width: 4.25;
+  stroke-width: 2.5;
 }
 
 .paisa-sparkline {
@@ -300,7 +300,8 @@
 
 .paisa-sparkline path {
   fill: none;
-  stroke-width: 3;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
 }
 
@@ -349,7 +350,7 @@
 }
 
 .paisa-sparkline--compact path {
-  stroke-width: 2.5;
+  stroke-width: 1.75;
 }
 
 .paisa-zone {
@@ -541,6 +542,11 @@
 .paisa-insight--negative .paisa-insight__icon {
   color: var(--app-danger);
   background: var(--app-danger-soft);
+}
+
+.paisa-insight--neutral .paisa-insight__icon {
+  color: var(--app-text-muted);
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .paisa-insight__title {
@@ -1058,5 +1064,109 @@
   .paisa-review__metrics,
   .paisa-review__performers {
     grid-template-columns: 1fr;
+  }
+}
+
+.paisa-spark-card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  margin-top: 0.45rem;
+  color: var(--app-text-subtle);
+  font-size: 0.72rem;
+}
+
+.paisa-spark-card__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.paisa-spark-card__legend i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.paisa-dashboard__band--review {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.paisa-dashboard__band--support {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+.paisa-review__flow {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.paisa-review__flow-canvas {
+  overflow-x: auto;
+  border-top: 1px solid var(--app-border);
+  padding-top: 0.35rem;
+}
+
+.paisa-review__flow-canvas svg {
+  width: 100%;
+  min-width: 62rem;
+  height: auto;
+}
+
+.paisa-review__investment-drivers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.paisa-review__investment-drivers > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.85rem;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.paisa-review__investment-drivers span {
+  color: var(--app-text-subtle);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.paisa-review__investment-drivers strong {
+  color: var(--dashboard-text-strong);
+  font-size: 1rem;
+}
+
+.paisa-goals__note {
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 1087px) {
+  .paisa-dashboard__band--review,
+  .paisa-dashboard__band--support {
+    grid-template-columns: 1fr;
+  }
+
+  .paisa-review__flow-canvas svg {
+    min-width: 46rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .paisa-review__investment-drivers {
+    grid-template-columns: 1fr;
+  }
+
+  .paisa-review__flow-canvas svg {
+    min-width: 34rem;
   }
 }

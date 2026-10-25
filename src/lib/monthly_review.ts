@@ -37,6 +37,7 @@ export interface MonthlyReviewResponse {
   flow_graph: Graph;
   net_income_trend: MonthlyMetricPoint[];
   investment_contributions: number;
+  investment_market_movement: number;
   dividend_income: number;
   best_performers: MonthlyPositionPerformance[];
   weakest_performers: MonthlyPositionPerformance[];

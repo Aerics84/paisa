@@ -27,6 +27,7 @@ function monthlyReview(overrides: Partial<MonthlyReviewResponse> = {}): MonthlyR
       { month: "2022-02", value: 2000, available: true, is_month_to_date: false }
     ],
     investment_contributions: 300,
+    investment_market_movement: 120,
     dividend_income: 20,
     best_performers: [],
     weakest_performers: [],
