@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -36,6 +38,34 @@ func TestOpenDBUsesWALAndBusyTimeout(t *testing.T) {
 	var timeout int
 	require.NoError(t, db.Raw("PRAGMA busy_timeout").Scan(&timeout).Error)
 	assert.Equal(t, 5000, timeout)
+}
+
+func TestOpenDBAppliesPragmasToEveryConnection(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, config.LoadConfig([]byte(fmt.Sprintf(
+		"journal_path: %s/main.ledger\ndb_path: %s/test.db\n", dir, dir,
+	)), ""))
+	db, err := OpenDB()
+	require.NoError(t, err)
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	t.Cleanup(func() { sqlDB.Close() })
+	sqlDB.SetMaxOpenConns(4)
+
+	ctx := context.Background()
+	first, err := sqlDB.Conn(ctx)
+	require.NoError(t, err)
+	defer first.Close()
+
+	second, err := sqlDB.Conn(ctx)
+	require.NoError(t, err)
+	defer second.Close()
+
+	for name, conn := range map[string]*sql.Conn{"first": first, "second": second} {
+		var timeout int
+		require.NoError(t, conn.QueryRowContext(ctx, "PRAGMA busy_timeout").Scan(&timeout), name)
+		assert.Equal(t, 5000, timeout, name)
+	}
 }
 
 func TestBuildSubPath(t *testing.T) {

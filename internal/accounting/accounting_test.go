@@ -12,7 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRunningBalanceStartsAtConfiguredMidnight(t *testing.T) {	require.NoError(t, config.LoadConfig([]byte(
+func TestRunningBalanceStartsAtConfiguredMidnight(t *testing.T) {
+	require.NoError(t, config.LoadConfig([]byte(
 		"journal_path: test.ledger\ndb_path: test.db\ntime_zone: Europe/Berlin\ndefault_currency: EUR\n",
 	), ""))
 	utils.SetNow("2026-06-10")

@@ -74,7 +74,8 @@ func pruneOldBackups(filePath string, maxBackups int) {
 	}
 }
 
-func DeleteBackups(file LedgerFile) gin.H {	path := config.GetJournalPath()
+func DeleteBackups(file LedgerFile) gin.H {
+	path := config.GetJournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {

@@ -3,7 +3,6 @@ package accounting
 import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/bmatcuk/doublestar/v4"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )
@@ -27,7 +26,7 @@ func IsInternalTransfer(postings []posting.Posting, globs []string) bool {
 			if glob == "" {
 				continue
 			}
-			match, err := doublestar.Match(glob, p.Account)
+			match, err := matchAccountGlob(glob, p.Account)
 			if err != nil {
 				log.Warn("Invalid transfer account glob used for filtering ", glob, err)
 				continue

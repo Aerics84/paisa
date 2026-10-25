@@ -18,6 +18,11 @@ func TestIsInternalTransfer(t *testing.T) {
 	withExpense := append(append([]posting.Posting{}, tx...), posting.Posting{TransactionID: "t1", Account: "Expenses:Fee"})
 	assert.False(t, IsInternalTransfer(withExpense, []string{"Assets:Cash"}))
 	assert.False(t, IsInternalTransfer(tx, nil))
+
+	assert.True(t, IsInternalTransfer([]posting.Posting{
+		{TransactionID: "t2", Account: "Assets:Cash:Wallet"},
+		{TransactionID: "t2", Account: "Assets:Broker"},
+	}, []string{"Assets:Cash"}), "a plain account name should match its subaccounts")
 }
 
 func TestFilterOutInternalTransfersRemovesWholeTransaction(t *testing.T) {

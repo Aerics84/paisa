@@ -147,7 +147,8 @@ salary_income_accounts:
 
 # Asset accounts that mark internal transfers. A transaction is treated
 # as an internal transfer when every leg belongs to Assets and at least
-# one leg matches one of these globs. Internal transfers are excluded
+# one leg matches one of these globs. A plain account name also matches
+# its subaccounts; use * for a wildcard. Internal transfers are excluded
 # from the savings rate and investment contributions, so moving money
 # between your own accounts doesn't look like new savings.
 #
