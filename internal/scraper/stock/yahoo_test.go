@@ -72,6 +72,25 @@ func yahooChartJSON(currency string, dates []string, closes []float64) string {
 	}`, strings.Join(timestamps, ", "), strings.Join(closeValues, ", "), currency)
 }
 
+// yahooTestTransport answers the cookie and crumb endpoints so tests that
+// only care about chart requests don't have to model the auth handshake.
+func yahooTestTransport(handler roundTripFunc) http.RoundTripper {
+	return roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch req.URL.String() {
+		case yahooCookieURL:
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Set-Cookie": []string{"TEST=1; Path=/"}},
+				Body:       io.NopCloser(strings.NewReader("")),
+			}, nil
+		case yahooCrumbURL:
+			return yahooJSONResponse("test-crumb"), nil
+		default:
+			return handler(req)
+		}
+	})
+}
+
 func TestGetHistoryReturnsErrorForEmptyYahooResult(t *testing.T) {
 	loadYahooTestConfig(t)
 
@@ -80,7 +99,7 @@ func TestGetHistoryReturnsErrorForEmptyYahooResult(t *testing.T) {
 		yahooHTTPClient = previousClient
 	})
 
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: 200,
 			Body: io.NopCloser(strings.NewReader(`{
@@ -104,7 +123,7 @@ func TestGetHistoryTrimsPricesBeforeExchangeHistory(t *testing.T) {
 		yahooHTTPClient = previousClient
 	})
 
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		switch {
 		case strings.Contains(req.URL.String(), "/AAPL?"):
 			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-01", "2024-01-02", "2024-01-03"}, []float64{100, 110, 120})), nil
@@ -133,7 +152,7 @@ func TestGetHistoryReturnsErrorWhenExchangeHistoryIsEmpty(t *testing.T) {
 		yahooHTTPClient = previousClient
 	})
 
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		switch {
 		case strings.Contains(req.URL.String(), "/AAPL?"):
 			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-01"}, []float64{100})), nil
@@ -158,7 +177,7 @@ func TestGetHistoryReturnsErrorWhenAllPricesPrecedeExchangeHistory(t *testing.T)
 		yahooHTTPClient = previousClient
 	})
 
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		switch {
 		case strings.Contains(req.URL.String(), "/AAPL?"):
 			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-01", "2024-01-02"}, []float64{100, 110})), nil
@@ -184,7 +203,7 @@ func TestGetHistoryKeepsSameCurrencyHistoryUnchanged(t *testing.T) {
 	})
 
 	requests := 0
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		requests++
 		switch {
 		case strings.Contains(req.URL.String(), "/BMW.DE?"):
@@ -211,7 +230,7 @@ func TestGetHistoryTrimsForeignCurrencyHistoryForNonEURDefault(t *testing.T) {
 		yahooHTTPClient = previousClient
 	})
 
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		switch {
 		case strings.Contains(req.URL.String(), "/AAPL?"):
 			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-01", "2024-01-02"}, []float64{100, 110})), nil
@@ -301,7 +320,7 @@ func TestGetHistoryConvertsGBpToGBP(t *testing.T) {
 	loadYahooTestConfig(t) // DefaultCurrency EUR
 	previous := yahooHTTPClient
 	t.Cleanup(func() { yahooHTTPClient = previous })
-	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
 		switch {
 		case strings.Contains(req.URL.String(), "/VOD.L?"):
 			return yahooJSONResponse(yahooChartJSON("GBp", []string{"2024-01-02"}, []float64{100})), nil
@@ -317,4 +336,78 @@ func TestGetHistoryConvertsGBpToGBP(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, prices, 1)
 	assert.True(t, prices[0].Value.Equal(decimal.RequireFromString("1.2")))
+}
+
+func TestGetTickerUsesCrumb(t *testing.T) {
+	loadYahooTestConfig(t)
+	previousClient := yahooHTTPClient
+	previousCookieURL, previousCrumbURL := yahooCookieURL, yahooCrumbURL
+	previousSession := yahooSessionState
+	yahooCookieURL, yahooCrumbURL = "https://example.test/cookie", "https://example.test/crumb"
+	yahooSessionState = newYahooSession()
+	t.Cleanup(func() {
+		yahooHTTPClient = previousClient
+		yahooCookieURL, yahooCrumbURL = previousCookieURL, previousCrumbURL
+		yahooSessionState = previousSession
+	})
+
+	var sawCrumb bool
+	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.URL.String() == yahooCookieURL:
+			return &http.Response{StatusCode: 200, Header: http.Header{"Set-Cookie": []string{"A=1; Path=/"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		case req.URL.String() == yahooCrumbURL:
+			return yahooJSONResponse("crumb123"), nil
+		case strings.Contains(req.URL.String(), "/AAPL?"):
+			sawCrumb = strings.Contains(req.URL.RawQuery, "crumb=crumb123")
+			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-02"}, []float64{100})), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	_, err := getTicker("AAPL")
+	require.NoError(t, err)
+	assert.True(t, sawCrumb)
+}
+
+func TestGetTickerRefreshesCrumbOnUnauthorized(t *testing.T) {
+	loadYahooTestConfig(t)
+	previousClient := yahooHTTPClient
+	previousCookieURL, previousCrumbURL := yahooCookieURL, yahooCrumbURL
+	previousSession := yahooSessionState
+	yahooCookieURL, yahooCrumbURL = "https://example.test/cookie", "https://example.test/crumb"
+	yahooSessionState = newYahooSession()
+	t.Cleanup(func() {
+		yahooHTTPClient = previousClient
+		yahooCookieURL, yahooCrumbURL = previousCookieURL, previousCrumbURL
+		yahooSessionState = previousSession
+	})
+
+	crumbCalls := 0
+	chartCalls := 0
+	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.URL.String() == yahooCookieURL:
+			return &http.Response{StatusCode: 200, Header: http.Header{"Set-Cookie": []string{"A=1; Path=/"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		case req.URL.String() == yahooCrumbURL:
+			crumbCalls++
+			return yahooJSONResponse(fmt.Sprintf("crumb%d", crumbCalls)), nil
+		case strings.Contains(req.URL.String(), "/AAPL?"):
+			chartCalls++
+			if chartCalls == 1 {
+				return &http.Response{StatusCode: http.StatusUnauthorized, Body: io.NopCloser(strings.NewReader(""))}, nil
+			}
+			return yahooJSONResponse(yahooChartJSON("USD", []string{"2024-01-02"}, []float64{100})), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	_, err := getTicker("AAPL")
+	require.NoError(t, err)
+	assert.Equal(t, 2, crumbCalls)
+	assert.Equal(t, 2, chartCalls)
 }

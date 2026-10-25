@@ -2,11 +2,15 @@ package stock
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -238,7 +242,20 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 }
 
 func getTicker(ticker string) (*Response, error) {
-	url := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y", ticker)
+	response, err := fetchTicker(ticker, false)
+	if err != nil && retryable(err) {
+		return fetchTicker(ticker, true)
+	}
+	return response, err
+}
+
+func fetchTicker(ticker string, refresh bool) (*Response, error) {
+	crumb, err := yahooSessionState.getCrumb(refresh)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y&crumb=%s", ticker, url.QueryEscape(crumb))
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -247,11 +264,16 @@ func getTicker(ticker string) (*Response, error) {
 	agent.Do(func() { selectAgent() })
 	req.Header.Add("User-Agent", agent.name)
 
-	resp, err := yahooHTTPClient.Do(req)
+	resp, err := yahooSessionState.client().Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(io.Discard, resp.Body)
+		return nil, &statusError{StatusCode: resp.StatusCode, URL: url}
+	}
 
 	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -265,6 +287,97 @@ func getTicker(ticker string) (*Response, error) {
 	}
 
 	return &response, nil
+}
+
+type statusError struct {
+	StatusCode int
+	URL        string
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("yahoo request to %s failed with status %d", e.URL, e.StatusCode)
+}
+
+func retryable(err error) bool {
+	var statusErr *statusError
+	if errors.As(err, &statusErr) {
+		switch statusErr.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden, http.StatusTooManyRequests:
+			return true
+		}
+	}
+	return false
+}
+
+var yahooCookieURL = "https://fc.yahoo.com"
+var yahooCrumbURL = "https://query1.finance.yahoo.com/v1/test/getcrumb"
+
+type yahooSession struct {
+	mu    sync.Mutex
+	jar   http.CookieJar
+	crumb string
+}
+
+var yahooSessionState = newYahooSession()
+
+func newYahooSession() *yahooSession {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &yahooSession{jar: jar}
+}
+
+func (s *yahooSession) client() *http.Client {
+	return &http.Client{
+		Jar:       s.jar,
+		Transport: yahooHTTPClient.Transport,
+		Timeout:   30 * time.Second,
+	}
+}
+
+// getCrumb fetches and caches the cookie/crumb pair Yahoo expects on chart
+// requests. refresh forces a new handshake after an unauthorized response.
+func (s *yahooSession) getCrumb(refresh bool) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.crumb != "" && !refresh {
+		return s.crumb, nil
+	}
+
+	client := s.client()
+
+	cookieResp, err := client.Get(yahooCookieURL)
+	if err != nil {
+		return "", err
+	}
+	io.Copy(io.Discard, cookieResp.Body)
+	cookieResp.Body.Close()
+
+	crumbResp, err := client.Get(yahooCrumbURL)
+	if err != nil {
+		return "", err
+	}
+	defer crumbResp.Body.Close()
+
+	if crumbResp.StatusCode != http.StatusOK {
+		io.Copy(io.Discard, crumbResp.Body)
+		return "", &statusError{StatusCode: crumbResp.StatusCode, URL: yahooCrumbURL}
+	}
+
+	crumbBytes, err := io.ReadAll(crumbResp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	crumb := strings.TrimSpace(string(crumbBytes))
+	if crumb == "" || strings.HasPrefix(crumb, "<") {
+		return "", fmt.Errorf("invalid yahoo crumb response")
+	}
+
+	s.crumb = crumb
+	return crumb, nil
 }
 
 func firstYahooResult(ticker string, response *Response) (Result, error) {
