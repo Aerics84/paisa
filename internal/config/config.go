@@ -194,6 +194,8 @@ type Config struct {
 
 	SalaryIncomeAccounts *[]string `json:"salary_income_accounts" yaml:"salary_income_accounts"`
 
+	TransferAccounts []string `json:"transfer_accounts" yaml:"transfer_accounts"`
+
 	Accounts []Account `json:"accounts" yaml:"accounts"`
 
 	Goals Goals `json:"goals" yaml:"goals"`
@@ -231,6 +233,8 @@ var defaultConfig = Config{
 	AllocationTargets:          []AllocationTarget{},
 	Commodities:                []Commodity{},
 	ImportTemplates:            []ImportTemplate{},
+	SalaryIncomeAccounts:       nil,
+	TransferAccounts:           []string{},
 	Accounts:                   []Account{},
 	Goals:                      Goals{Retirement: []RetirementGoal{}, Savings: []SavingsGoal{}},
 	UserAccounts:               []UserAccount{},

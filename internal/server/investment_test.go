@@ -274,3 +274,23 @@ func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
 	assert.True(t, cards[0].GrossSalaryIncome.Equal(decimal.NewFromInt(1000)))
 	assert.True(t, cards[0].GrossOtherIncome.Equal(decimal.NewFromInt(50)))
 }
+
+func TestGetInvestmentExcludesInternalTransfers(t *testing.T) {
+	configureInvestmentTestWith(t, map[string]interface{}{
+		"transfer_accounts": []string{"Assets:Cash"},
+	})
+	db := openInvestmentTestDB(t)
+	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
+	rows := []posting.Posting{
+		{TransactionID: "transfer", Date: date, Account: "Assets:Cash", Amount: decimal.NewFromInt(-100), Quantity: decimal.NewFromInt(-100), Commodity: "EUR"},
+		{TransactionID: "transfer", Date: date, Account: "Assets:Broker", Amount: decimal.NewFromInt(100), Quantity: decimal.NewFromInt(100), Commodity: "EUR"},
+		{TransactionID: "buy", Date: date, Account: "Assets:Checking:Bank", Amount: decimal.NewFromInt(-50), Quantity: decimal.NewFromInt(-50), Commodity: "EUR"},
+		{TransactionID: "buy", Date: date, Account: "Assets:Broker", Amount: decimal.NewFromInt(50), Quantity: decimal.NewFromInt(50), Commodity: "EUR"},
+	}
+	require.NoError(t, db.Create(&rows).Error)
+
+	result := GetInvestment(db)
+	assets := result["assets"].([]posting.Posting)
+	require.Len(t, assets, 1)
+	assert.Equal(t, "buy", assets[0].TransactionID)
+}

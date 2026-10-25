@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func loadMonthlyReviewConfig(t *testing.T) {
+func loadMonthlyReviewConfigWith(t *testing.T, extra string) {
 	t.Helper()
 
 	err := config.LoadConfig([]byte(`
@@ -19,8 +19,12 @@ journal_path: main.ledger
 db_path: paisa.db
 default_currency: EUR
 time_zone: UTC
-`), "")
+`+extra), "")
 	require.NoError(t, err)
+}
+
+func loadMonthlyReviewConfig(t *testing.T) {
+	loadMonthlyReviewConfigWith(t, "")
 }
 
 func performanceTestDate(year int, month time.Month, day int) time.Time {

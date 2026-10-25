@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/transaction"
 	"github.com/ananthakumaran/paisa/internal/query"
@@ -87,6 +89,7 @@ func monthlyExpense(postings []posting.Posting) decimal.Decimal {
 }
 
 func monthlyInvestmentContributions(postings []posting.Posting) decimal.Decimal {
+	postings = accounting.FilterOutInternalTransfers(postings, config.GetConfig().TransferAccounts)
 	total := decimal.Zero
 	for _, p := range postings {
 		if utils.FirstName(p.Account) == "Assets" && !utils.IsCheckingAccount(p.Account) {

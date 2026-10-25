@@ -527,3 +527,17 @@ func TestMonthlyDashboardRouteRejectsInvalidMonth(t *testing.T) {
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 	require.Equal(t, "2022-02", body["month"])
 }
+
+func TestMonthlyReviewExcludesInternalTransfersFromContributions(t *testing.T) {
+	setMonthlyReviewNow(t, "2026-06-15")
+	db := openMonthlyReviewTestDB(t)
+	loadMonthlyReviewConfigWith(t, "transfer_accounts: [Assets:Cash]\n")
+
+	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2026-06-01", "Assets:Cash", "-100")
+	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2026-06-01", "Assets:Broker", "100")
+	addMonthlyReviewCurrencyPosting(t, db, "buy", "2026-06-02", "Assets:Checking:Bank", "-50")
+	addMonthlyReviewCurrencyPosting(t, db, "buy", "2026-06-02", "Assets:Broker", "50")
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2026-06-01"))
+	requireDecimalEqual(t, "50", review.InvestmentContributions)
+}

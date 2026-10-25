@@ -145,6 +145,17 @@ salary_income_accounts:
   - Income:Salary
   - Income:Payroll
 
+# Asset accounts that mark internal transfers. A transaction is treated
+# as an internal transfer when every leg belongs to Assets and at least
+# one leg matches one of these globs. Internal transfers are excluded
+# from the savings rate and investment contributions, so moving money
+# between your own accounts doesn't look like new savings.
+#
+# OPTIONAL, DEFAULT: []
+transfer_accounts:
+  - Assets:Tagesgeld
+  - Assets:Depot:Verrechnung
+
 ## Budget
 budget:
   # Rollover unspent money to next month

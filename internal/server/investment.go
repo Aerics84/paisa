@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -49,7 +50,41 @@ func GetInvestment(db *gorm.DB) gin.H {
 	}
 
 	assets = lo.Filter(assets, func(p posting.Posting, _ int) bool { return !service.IsStockSplit(db, p) })
+	assets = filterOutInternalTransfers(db, assets)
 	return gin.H{"assets": assets, "yearly_cards": computeInvestmentYearlyCard(p.Date, assets, expenses, incomes)}
+}
+
+// filterOutInternalTransfers drops asset postings that belong to internal
+// transfers. It reloads every leg of the candidate transactions so that a
+// transfer with a non-asset leg is not misclassified.
+func filterOutInternalTransfers(db *gorm.DB, assets []posting.Posting) []posting.Posting {
+	globs := config.GetConfig().TransferAccounts
+	if len(globs) == 0 || len(assets) == 0 {
+		return assets
+	}
+
+	transactionIDs := lo.Uniq(lo.Map(assets, func(p posting.Posting, _ int) string {
+		return p.TransactionID
+	}))
+
+	var rows []posting.Posting
+	if err := db.Where("transaction_id in ?", transactionIDs).Find(&rows).Error; err != nil {
+		log.Error(err)
+		return assets
+	}
+
+	internal := make(map[string]bool)
+	for transactionID, ps := range lo.GroupBy(rows, func(p posting.Posting) string {
+		return p.TransactionID
+	}) {
+		if accounting.IsInternalTransfer(ps, globs) {
+			internal[transactionID] = true
+		}
+	}
+
+	return lo.Filter(assets, func(p posting.Posting, _ int) bool {
+		return !internal[p.TransactionID]
+	})
 }
 
 func isSalaryIncome(account string) bool {
