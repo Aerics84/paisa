@@ -1003,18 +1003,18 @@
   ],
   "checkingBalanceTimeline": [
     {
-      "month": "2022-01-01T00:00:00Z",
+      "month": "2022-01-01T00:00:00+01:00",
       "account": "Assets:Checking:ING",
       "balance": 1573
     },
     {
-      "month": "2022-02-01T00:00:00Z",
+      "month": "2022-02-01T00:00:00+01:00",
       "account": "Assets:Checking:ING",
       "balance": 3505.5
     }
   ],
   "availableMonthRange": {
-    "from": "2022-01-01T00:00:00Z",
-    "to": "2022-02-01T00:00:00Z"
+    "from": "2022-01-01T00:00:00+01:00",
+    "to": "2022-02-01T00:00:00+01:00"
   }
 }

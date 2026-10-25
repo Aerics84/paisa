@@ -1,15 +1,15 @@
 {
   "accounts": [
-    "Income:Salary:Acme GmbH",
     "Assets:Checking:ING",
-    "Assets:Savings:Tagesgeld",
-    "Expenses:Rent",
-    "Expenses:Utilities",
     "Assets:Equity:VWCE",
+    "Assets:Savings:Tagesgeld",
     "Expenses:Food",
-    "Liabilities:CreditCard:Visa",
+    "Expenses:Leisure",
+    "Expenses:Rent",
     "Expenses:Transport",
-    "Expenses:Leisure"
+    "Expenses:Utilities",
+    "Income:Salary:Acme GmbH",
+    "Liabilities:CreditCard:Visa"
   ],
   "commodities": ["EUR", "VWCE"],
   "files": [
@@ -21,14 +21,14 @@
     }
   ],
   "payees": [
-    "Salary",
-    "Transfer to Tagesgeld",
-    "Rent",
-    "Utilities",
+    "Deutschlandticket",
     "ETF Purchase",
     "Groceries",
-    "Deutschlandticket",
-    "Weekend Trip",
-    "Pay Credit Card Bill"
+    "Pay Credit Card Bill",
+    "Rent",
+    "Salary",
+    "Transfer to Tagesgeld",
+    "Utilities",
+    "Weekend Trip"
   ]
 }

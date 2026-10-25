@@ -1,17 +1,17 @@
 {
   "accounts": [
-    "Income:Salary:Acme",
     "Assets:Checking",
-    "Expenses:Rent",
-    "Assets:Equity:NIFTY",
-    "Assets:Equity:ABNB",
-    "Assets:Equity:AAPL",
-    "Income:CapitalGains:Equity:AAPL",
-    "Expenses:Charges",
     "Assets:Dollar",
-    "Income:Interest:Checking"
+    "Assets:Equity:AAPL",
+    "Assets:Equity:ABNB",
+    "Assets:Equity:NIFTY",
+    "Expenses:Charges",
+    "Expenses:Rent",
+    "Income:CapitalGains:Equity:AAPL",
+    "Income:Interest:Checking",
+    "Income:Salary:Acme"
   ],
-  "commodities": ["INR", "NIFTY", "ABNB", "USD", "AAPL"],
+  "commodities": ["AAPL", "ABNB", "INR", "NIFTY", "USD"],
   "files": [
     {
       "name": "main.ledger",
@@ -21,14 +21,14 @@
     }
   ],
   "payees": [
-    "Salary",
-    "Rent",
     "Bonus",
-    "Investment",
     "Buy ABNB",
     "Buy Apple",
-    "Sell",
+    "Interest",
+    "Investment",
     "Multi Currency Debit",
-    "Interest"
+    "Rent",
+    "Salary",
+    "Sell"
   ]
 }

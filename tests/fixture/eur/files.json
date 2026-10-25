@@ -1,6 +1,6 @@
 {
-  "accounts": ["Income:Salary:Acme", "Assets:Checking", "Assets:Equity:AAPL"],
-  "commodities": ["EUR", "AAPL"],
+  "accounts": ["Assets:Checking", "Assets:Equity:AAPL", "Income:Salary:Acme"],
+  "commodities": ["AAPL", "EUR"],
   "files": [
     {
       "name": "main.ledger",
@@ -9,5 +9,5 @@
       "operation": ""
     }
   ],
-  "payees": ["Salary", "Buy stock"]
+  "payees": ["Buy stock", "Salary"]
 }

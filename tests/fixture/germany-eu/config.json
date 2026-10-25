@@ -1,15 +1,15 @@
 {
   "accounts": [
-    "Income:Salary:Acme GmbH",
     "Assets:Checking:ING",
-    "Assets:Savings:Tagesgeld",
-    "Expenses:Rent",
-    "Expenses:Utilities",
     "Assets:Equity:VWCE",
+    "Assets:Savings:Tagesgeld",
     "Expenses:Food",
-    "Liabilities:CreditCard:Visa",
+    "Expenses:Leisure",
+    "Expenses:Rent",
     "Expenses:Transport",
-    "Expenses:Leisure"
+    "Expenses:Utilities",
+    "Income:Salary:Acme GmbH",
+    "Liabilities:CreditCard:Visa"
   ],
   "config": {
     "journal_path": "main.ledger",
@@ -111,7 +111,9 @@
         "number": "4242",
         "expiration_date": "2029-12-01"
       }
-    ]
+    ],
+    "salary_income_accounts": null,
+    "transfer_accounts": []
   },
   "now": "2022-02-07T00:00:00Z",
   "schema": {
@@ -339,7 +341,7 @@
         "type": "string"
       },
       "default_currency": {
-        "description": "The default currency to use. NOTE: Paisa tries to convert other currencies to default currency, so make sure it\u0027s possible to convert to default currency by specifying the exchange rate.",
+        "description": "The default currency to use. NOTE: Paisa tries to convert other currencies to default currency, so make sure it's possible to convert to default currency by specifying the exchange rate.",
         "type": "string"
       },
       "display_precision": {
@@ -555,7 +557,7 @@
         "type": "array"
       },
       "journal_path": {
-        "description": "Path to your journal file. It can be absolute or relative to the configuration file. The main journal file can refer other files using \u003ccode\u003einclude\u003c/code\u003e as long as all the files are in the same or sub directory",
+        "description": "Path to your journal file. It can be absolute or relative to the configuration file. The main journal file can refer other files using <code>include</code> as long as all the files are in the same or sub directory",
         "type": "string"
       },
       "ledger_cli": {
@@ -564,7 +566,7 @@
         "type": "string"
       },
       "locale": {
-        "description": "The locale used to format numbers. The list of locales supported depends on your browser. It\u0027s known to work well with en-US and en-IN.",
+        "description": "The locale used to format numbers. The list of locales supported depends on your browser. It's known to work well with en-US and en-IN.",
         "pattern": "^[a-z]{2}-[A-Z]{2}$",
         "type": "string"
       },
@@ -1296,6 +1298,25 @@
         "maximum": 6,
         "minimum": 0,
         "type": "integer"
+      },
+      "salary_income_accounts": {
+        "description": "Income accounts classified as salary. When unset, Income:Salary and Income:Payroll are used. An empty list disables salary classification; an explicit list replaces the defaults. Matching is done on whole account segments.",
+        "items": {
+          "pattern": "^Income:[^:*]+(:[^:*]+)*$",
+          "type": "string"
+        },
+        "type": "array",
+        "ui:widget": "accounts",
+        "uniqueItems": true
+      },
+      "transfer_accounts": {
+        "description": "Asset accounts that mark internal transfers. A transaction counts as an internal transfer when all its legs belong to Assets and at least one leg matches one of these globs. A plain account name also matches its subaccounts; use * for a wildcard. Internal transfers are excluded from savings rate calculations.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "ui:widget": "accounts",
+        "uniqueItems": true
       }
     },
     "required": ["journal_path", "db_path"],

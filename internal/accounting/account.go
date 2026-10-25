@@ -16,7 +16,7 @@ type accountCache struct {
 var acache accountCache
 
 func loadAccountCache(db *gorm.DB) {
-	db.Model(&posting.Posting{}).Distinct().Pluck("Account", &acache.accounts)
+	db.Model(&posting.Posting{}).Distinct().Order("account").Pluck("Account", &acache.accounts)
 }
 
 func AllAccounts(db *gorm.DB) []string {

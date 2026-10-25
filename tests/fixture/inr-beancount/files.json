@@ -1,19 +1,19 @@
 {
   "accounts": [
-    "Income:Salary:Acme",
     "Assets:Checking",
-    "Expenses:Rent",
-    "Assets:Equity:NIFTY",
-    "Assets:Equity:ABNB",
-    "Assets:Equity:AAPL",
-    "Income:CapitalGains:Equity:AAPL",
-    "Expenses:Charges",
-    "Assets:Dollar",
     "Assets:Coinbase:BTC",
+    "Assets:Dollar",
+    "Assets:Equity:AAPL",
+    "Assets:Equity:ABNB",
+    "Assets:Equity:NIFTY",
     "Equity:OpeningBalances",
-    "Income:Interest:Checking"
+    "Expenses:Charges",
+    "Expenses:Rent",
+    "Income:CapitalGains:Equity:AAPL",
+    "Income:Interest:Checking",
+    "Income:Salary:Acme"
   ],
-  "commodities": ["INR", "NIFTY", "ABNB", "USD", "AAPL", "BTC"],
+  "commodities": ["AAPL", "ABNB", "BTC", "INR", "NIFTY", "USD"],
   "files": [
     {
       "name": "main.beancount",
@@ -23,16 +23,16 @@
     }
   ],
   "payees": [
-    "Salary",
-    "Rent",
+    "(Padding inserted for Balance of 21000 INR for difference 1072.7 INR)",
     "Bonus",
-    "Investment",
     "Buy ABNB",
     "Buy Apple",
-    "Sell",
+    "Interest",
+    "Investment",
     "Multi Currency Debit",
     "Purchased 0.00000001 BTC",
-    "(Padding inserted for Balance of 21000 INR for difference 1072.7 INR)",
-    "Interest"
+    "Rent",
+    "Salary",
+    "Sell"
   ]
 }

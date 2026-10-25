@@ -29,9 +29,9 @@ func GetFiles(db *gorm.DB) gin.H {
 	var accounts []string
 	var payees []string
 	var commodities []string
-	db.Model(&posting.Posting{}).Distinct().Pluck("Account", &accounts)
-	db.Model(&posting.Posting{}).Distinct().Pluck("Payee", &payees)
-	db.Model(&posting.Posting{}).Distinct().Pluck("Commodity", &commodities)
+	db.Model(&posting.Posting{}).Distinct().Order("account").Pluck("Account", &accounts)
+	db.Model(&posting.Posting{}).Distinct().Order("payee").Pluck("Payee", &payees)
+	db.Model(&posting.Posting{}).Distinct().Order("commodity").Pluck("Commodity", &commodities)
 
 	path := config.GetJournalPath()
 
