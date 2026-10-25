@@ -1,7 +1,9 @@
 package assets
 
 import (
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
@@ -25,6 +27,97 @@ type AssetBreakdown struct {
 	XIRR             decimal.Decimal `json:"xirr"`
 	GainAmount       decimal.Decimal `json:"gainAmount"`
 	AbsoluteReturn   decimal.Decimal `json:"absoluteReturn"`
+}
+
+// CheckingBalancePoint is the recorded end-of-month balance of one checking
+// account. It never includes market prices; checking accounts are cash.
+type CheckingBalancePoint struct {
+	Month   time.Time       `json:"month"`
+	Account string          `json:"account"`
+	Balance decimal.Decimal `json:"balance"`
+}
+
+// AvailableMonthRange is the picker bound derived from recorded postings. It
+// is not a claim that the ledger history is complete.
+type AvailableMonthRange struct {
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+}
+
+// GetCheckingBalanceTimeline returns the end-of-month balance of every
+// checking account for the latest twelve recorded calendar months.
+func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
+	points := make([]CheckingBalancePoint, 0)
+	postings := query.Init(db).AccountPrefix("Assets:Checking").All()
+	if len(postings) == 0 {
+		return points
+	}
+
+	monthByKey := make(map[string]time.Time)
+	flowsByAccount := make(map[string]map[string]decimal.Decimal)
+	firstMonthByAccount := make(map[string]time.Time)
+
+	for _, p := range postings {
+		month := utils.BeginningOfMonth(p.Date)
+		key := month.Format("2006-01")
+		monthByKey[key] = month
+
+		if flowsByAccount[p.Account] == nil {
+			flowsByAccount[p.Account] = make(map[string]decimal.Decimal)
+		}
+		flowsByAccount[p.Account][key] = flowsByAccount[p.Account][key].Add(p.Amount)
+
+		if first, found := firstMonthByAccount[p.Account]; !found || month.Before(first) {
+			firstMonthByAccount[p.Account] = month
+		}
+	}
+
+	keys := utils.SortedKeys(monthByKey)
+	if len(keys) > 12 {
+		keys = keys[len(keys)-12:]
+	}
+	firstDisplayedMonth := monthByKey[keys[0]]
+
+	for _, account := range utils.SortedKeys(flowsByAccount) {
+		balance := decimal.Zero
+		for _, key := range utils.SortedKeys(flowsByAccount[account]) {
+			if monthByKey[key].Before(firstDisplayedMonth) {
+				balance = balance.Add(flowsByAccount[account][key])
+			}
+		}
+
+		for _, key := range keys {
+			month := monthByKey[key]
+			if firstMonthByAccount[account].After(month) {
+				continue
+			}
+
+			balance = balance.Add(flowsByAccount[account][key])
+			points = append(points, CheckingBalancePoint{Month: month, Account: account, Balance: balance})
+		}
+	}
+
+	sort.Slice(points, func(i, j int) bool {
+		if points[i].Month.Equal(points[j].Month) {
+			return points[i].Account < points[j].Account
+		}
+		return points[i].Month.Before(points[j].Month)
+	})
+
+	return points
+}
+
+// GetAvailableMonthRange reports the first and last recorded posting month.
+func GetAvailableMonthRange(db *gorm.DB) AvailableMonthRange {
+	postings := query.Init(db).All()
+	if len(postings) == 0 {
+		return AvailableMonthRange{}
+	}
+
+	return AvailableMonthRange{
+		From: utils.BeginningOfMonth(postings[0].Date),
+		To:   utils.BeginningOfMonth(postings[len(postings)-1].Date),
+	}
 }
 
 func GetCheckingBalance(db *gorm.DB) gin.H {
