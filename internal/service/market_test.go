@@ -1,6 +1,9 @@
 package service
 
 import (
+	"os"
+	"os/exec"
+	"sync"
 	"testing"
 	"time"
 
@@ -146,4 +149,29 @@ func TestGetUnitPriceReturnsEmptyPriceForUnknownCommodity(t *testing.T) {
 	quote := GetUnitPrice(db, "NO_GET_PRICE", time.Date(2024, 1, 2, 0, 0, 0, 0, config.TimeZone()))
 
 	assert.True(t, quote.Value.Equal(decimal.Zero), "an unknown commodity must fall back to a zero quote instead of terminating")
+}
+
+func TestGetUnitPriceReturnsZeroWithoutPanic(t *testing.T) {
+	if os.Getenv("PAISA_TEST_MISSING_PRICE") == "1" {
+		quote := GetUnitPrice(openTestDB(t), "MISSING", time.Now())
+		if !quote.Value.IsZero() {
+			os.Exit(2)
+		}
+		os.Exit(0)
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestGetUnitPriceReturnsZeroWithoutPanic")
+	cmd.Env = append(os.Environ(), "PAISA_TEST_MISSING_PRICE=1")
+	require.NoError(t, cmd.Run())
+}
+
+func TestPriceCacheConcurrentClearAndRead(t *testing.T) {
+	db := openTestDB(t)
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(2)
+		go func() { defer wg.Done(); _, _ = FindUnitPrice(db, "EUR", time.Now()) }()
+		go func() { defer wg.Done(); ClearPriceCache() }()
+	}
+	wg.Wait()
 }
