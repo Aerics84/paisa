@@ -102,6 +102,12 @@ $footerActiveColor: #d00;
 
   .du-tab {
     color: $grey-dark !important;
+    // daisyUI 5 emits component rules inside `@layer utilities`, so Bulma's
+    // unlayered `button` reset (`padding: 0; font-size: 1em`) wins over the
+    // layered `.du-tab` metrics. Re-assert the `tabs-sm` metrics here so the
+    // month selector keeps its boxed pill shape.
+    padding-inline: var(--du-tab-p, 0.5rem);
+    font-size: 0.875rem;
 
     &.du-tab-active {
       background-color: $white !important;

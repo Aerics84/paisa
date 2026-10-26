@@ -9,7 +9,7 @@
   }
 </script>
 
-<div class="du-tabs du-tabs-boxed du-tabs-sm">
+<div class="du-tabs du-tabs-box du-tabs-sm">
   {#each options as option}
     <button
       class="du-tab {option.value === value ? 'du-tab-active' : ''}"
