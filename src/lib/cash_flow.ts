@@ -17,6 +17,7 @@ import _ from "lodash";
 import { firstName } from "$lib/utils";
 import { tooltip } from "$lib/utils";
 import { formatCurrency } from "$lib/utils";
+import { formatCurrencyCrudeWithSymbol, formatCurrencyWithSymbol } from "$lib/utils";
 import { iconify } from "$lib/icon";
 import { willClearTippy } from "../store";
 import COLORS, { generateColorScheme } from "./colors";
@@ -271,7 +272,11 @@ export function renderMonthlyFlow(
   return { renderer, legends };
 }
 
-export function renderFlow(graph: Graph) {
+export function renderFlow(graph: Graph, options: { withCurrency?: boolean } = {}) {
+  const formatValue = options.withCurrency ? formatCurrencyWithSymbol : formatCurrency;
+  const formatCompactValue = options.withCurrency
+    ? formatCurrencyCrudeWithSymbol
+    : formatCurrencyCrude;
   const id = "#d3-expense-flow";
   const svg = d3.select(id);
   const margin = { top: rem(60), right: rem(20), bottom: rem(40), left: rem(20) },
@@ -342,7 +347,7 @@ export function renderFlow(graph: Graph) {
     .attr("data-tippy-content", (d: any) =>
       tooltip([
         ["Account", iconify(d.name)],
-        ["Total", [formatCurrency(d.value), "has-text-right has-text-weight-bold"]]
+        ["Total", [formatValue(d.value), "has-text-right has-text-weight-bold"]]
       ])
     );
 
@@ -374,7 +379,7 @@ export function renderFlow(graph: Graph) {
       return "middle";
     })
     .classed("svg-text-grey-dark", true)
-    .text((d: any) => `${name(d)} ${formatCurrencyCrude(d.value)}`);
+    .text((d: any) => `${name(d)} ${formatCompactValue(d.value)}`);
 
   const link = linkG.data(sankeyLinks).enter().append("g");
 
@@ -389,7 +394,7 @@ export function renderFlow(graph: Graph) {
       tooltip([
         ["Debit Account", iconify(d.source.name)],
         ["Credit Account", iconify(d.target.name)],
-        ["Total", [formatCurrency(d.value), "has-text-right has-text-weight-bold"]]
+        ["Total", [formatValue(d.value), "has-text-right has-text-weight-bold"]]
       ])
     );
 

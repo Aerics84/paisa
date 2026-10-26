@@ -25,15 +25,14 @@
   } from "$lib/transaction_sequence";
   import {
     ajax,
-    formatCurrency,
-    formatCurrencyCrudeWithPrecision,
+    formatCurrencyCrudeWithSymbol,
+    formatCurrencyWithSymbol,
     formatFloat,
     formatPercentage,
     type AssetBreakdown,
     type Budget,
     type CashFlow,
     type GoalSummary,
-    type Graph,
     type LiabilityBreakdown,
     type Networth,
     type TransactionSequence,
@@ -55,7 +54,6 @@
     tone: InsightTone;
     deltaLabel: string;
     state: "ready" | "insufficient-data";
-    series: number[];
   };
 
   type WidgetState = "ready" | "insufficient-data" | "not-configured";
@@ -82,7 +80,6 @@
   let loadError = false;
   let checkingState: WidgetState = "insufficient-data";
   let networthTrendState: WidgetState = "insufficient-data";
-  let oneYearState: WidgetState = "insufficient-data";
   let reserveState: WidgetState = "insufficient-data";
   let budgetState: WidgetState = "insufficient-data";
   let recurringState: WidgetState = "insufficient-data";
@@ -153,7 +150,7 @@
 
     const element = document.getElementById("d3-expense-flow");
     if (element) {
-      renderFlow(review.flow_graph);
+      renderFlow(review.flow_graph, { withCurrency: true });
     }
   }
 
@@ -213,7 +210,7 @@
       const value = max - spread * ratio;
 
       return {
-        label: formatCurrencyCrudeWithPrecision(value, 0),
+        label: formatCurrencyCrudeWithSymbol(value, 0),
         top: ratio * 100,
         y: ratio * height
       };
@@ -249,17 +246,6 @@
         .y((point) => y(point.value as number))
         .curve(d3.curveMonotoneX)(points) || ""
     );
-  }
-
-  function sparklinePath(values: number[], width = 220, height = 68) {
-    const safe = values.filter((value) => Number.isFinite(value));
-    if (safe.length <= 1) {
-      return "";
-    }
-
-    const min = _.min(safe) ?? 0;
-    const max = _.max(safe) ?? min + 1;
-    return pathForValues(values, min, max, width, height);
   }
 
   function topExpenseGroup(review: MonthlyReviewResponse | null) {
@@ -300,11 +286,13 @@
   $: reviewPerformance = performanceRows(activeMonthlyReview);
   $: reviewHasActivity = hasRecordedActivity(activeMonthlyReview);
   $: reviewLoading = monthlyReviewLoading && !activeMonthlyReview;
-  $: availableTrendValues = reviewTrend
-    .filter((point) => point.value != null)
-    .map((point) => point.value as number);
   $: topExpense = topExpenseGroup(activeMonthlyReview);
   $: currentBudget = budgetsByMonth[monthKey];
+  $: flowTerminalCount = (activeMonthlyReview?.flow_graph?.nodes || []).filter(
+    (node) =>
+      !(activeMonthlyReview?.flow_graph?.links || []).some((link) => link.source === node.id)
+  ).length;
+  $: flowChartHeight = Math.max(440, Math.min(1100, flowTerminalCount * 30 + 120));
 
   $: if (activeMonthlyReview && activeMonthlyReview.month !== renderedSankeyMonth) {
     void renderMonthlyFlow(activeMonthlyReview);
@@ -321,17 +309,15 @@
           description: `There are no postings for ${selectedMonthLabel}. This does not prove the ledger history is complete.`,
           tone: "neutral",
           deltaLabel: "No activity recorded",
-          state: "insufficient-data",
-          series: [] as number[]
+          state: "insufficient-data"
         }
       : reviewSurplusState === "ready"
         ? {
             title: activeMonthlyReview.surplus >= 0 ? "Surplus recorded" : "Deficit recorded",
             description: "Net income after tax minus non-tax expenses.",
             tone: activeMonthlyReview.surplus >= 0 ? "positive" : "negative",
-            deltaLabel: formatCurrency(activeMonthlyReview.surplus),
-            state: "ready",
-            series: availableTrendValues
+            deltaLabel: formatCurrencyWithSymbol(activeMonthlyReview.surplus),
+            state: "ready"
           }
         : {
             title:
@@ -343,8 +329,7 @@
             description: "Surplus is not calculated from incomplete postings for this month.",
             tone: "neutral",
             deltaLabel: "Surplus not calculated",
-            state: "insufficient-data",
-            series: [] as number[]
+            state: "insufficient-data"
           };
 
   $: expenseInsightItem =
@@ -353,9 +338,8 @@
           title: `${topExpense.label} was the largest expense group`,
           description: `Based on actual postings in ${selectedMonthLabel}.`,
           tone: "neutral",
-          deltaLabel: formatCurrency(topExpense.value),
-          state: "ready",
-          series: [] as number[]
+          deltaLabel: formatCurrencyWithSymbol(topExpense.value),
+          state: "ready"
         }
       : {
           title: "No expense groups recorded",
@@ -364,8 +348,7 @@
             : `There are no postings for ${selectedMonthLabel}.`,
           tone: "neutral",
           deltaLabel: "No expenses posted",
-          state: "insufficient-data",
-          series: [] as number[]
+          state: "insufficient-data"
         };
 
   $: investmentInsightItem =
@@ -384,13 +367,10 @@
               : reviewPerformance.best[0].total_return_percent < 0
                 ? "negative"
                 : "warning",
-          deltaLabel: `Market movement ${formatCurrency(
+          deltaLabel: `Market movement ${formatCurrencyWithSymbol(
             activeMonthlyReview.investment_market_movement
           )}`,
-          state: "ready",
-          series: reviewPerformance.best
-            .concat(reviewPerformance.weakest)
-            .map((performer) => performer.gain_loss)
+          state: "ready"
         }
       : {
           title: "Investment performance unavailable",
@@ -398,8 +378,7 @@
             "Historical prices or flow coverage are insufficient for a comparable monthly ranking.",
           tone: "neutral",
           deltaLabel: "Not available",
-          state: "insufficient-data",
-          series: [] as number[]
+          state: "insufficient-data"
         };
 
   $: insights = [surplusInsightItem, expenseInsightItem, investmentInsightItem];
@@ -438,12 +417,9 @@
   $: networthSeries = monthlyNetworth.map((point) => networthValue(point));
   $: latestNetworthPoint = _.last(networthTimeline) || networthOverview;
   $: currentNetworthValue = latestNetworthPoint ? networthValue(latestNetworthPoint) : 0;
-  $: liabilitiesTotal = _.sumBy(liabilityBreakdowns, (breakdown) => breakdown.balance_amount);
-  $: assetsTotal = currentNetworthValue + liabilitiesTotal;
   $: networthHistoryMonths = monthlyNetworth.length;
   $: networthHasHistory = networthSeries.length >= 2;
   $: networthTrendState = networthHasHistory ? "ready" : "insufficient-data";
-  $: oneYearState = networthHasHistory ? "ready" : "insufficient-data";
   $: networthMin = _.min(networthSeries) ?? 0;
   $: networthMax = _.max(networthSeries) ?? 0;
   $: networthValueTicks = networthHasHistory ? valueTicks(networthMin, networthMax) : [];
@@ -584,9 +560,8 @@
           <div class="paisa-dashboard__hero-summary">
             <div>
               <div class="paisa-dashboard__label">Total Net Worth</div>
-              <div class="paisa-dashboard__amount">{formatCurrency(currentNetworthValue)}</div>
-              <div class="paisa-dashboard__delta">
-                <span>Live snapshot · updated {now().format("MMM D, HH:mm")}</span>
+              <div class="paisa-dashboard__amount">
+                {formatCurrencyWithSymbol(currentNetworthValue)}
               </div>
             </div>
           </div>
@@ -595,8 +570,69 @@
             <div class="paisa-spark-card paisa-spark-card--hero">
               <div class="paisa-spark-card__meta">
                 <div>
+                  <span>Net Worth</span>
+                  <strong>{formatCurrencyWithSymbol(currentNetworthValue)}</strong>
+                </div>
+                <div class="paisa-spark-card__change">
+                  {#if networthHasHistory}
+                    {networthHistoryMonths} months
+                  {:else}
+                    Need more history
+                  {/if}
+                </div>
+              </div>
+              {#if networthTrendState === "ready"}
+                <div class="paisa-spark-card__chart">
+                  <div class="paisa-spark-card__y-axis">
+                    {#each networthValueTicks as tick}
+                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
+                    {/each}
+                  </div>
+                  <div class="paisa-spark-card__plot">
+                    <svg
+                      viewBox={`0 0 420 ${heroChartHeight}`}
+                      class="paisa-sparkline paisa-sparkline--hero"
+                    >
+                      {#each networthValueTicks as tick}
+                        <line
+                          x1="0"
+                          y1={tick.y}
+                          x2="420"
+                          y2={tick.y}
+                          class="paisa-sparkline__grid"
+                        />
+                      {/each}
+                      <path
+                        d={pathForValues(
+                          networthSeries,
+                          networthMin,
+                          networthMax,
+                          420,
+                          heroChartHeight
+                        )}
+                        class="is-equity"
+                        vector-effect="non-scaling-stroke"
+                      />
+                    </svg>
+                    <div class="paisa-spark-card__x-axis">
+                      {#each networthDateTicks as label}
+                        <span>{label}</span>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+              {:else}
+                <div class="paisa-spark-card__empty">
+                  Need at least two monthly net worth snapshots to plot this trend.
+                </div>
+              {/if}
+            </div>
+
+            <div class="paisa-spark-card paisa-spark-card--hero">
+              <div class="paisa-spark-card__meta">
+                <div>
                   <span>Checking</span>
-                  <strong>{formatCurrency(checkingTotal)}</strong>
+                  <strong>{formatCurrencyWithSymbol(checkingTotal)}</strong>
                 </div>
                 <div class="paisa-spark-card__change">
                   {#if checkingHasHistory}
@@ -661,101 +697,6 @@
                 </div>
               {/if}
             </div>
-
-            <div class="paisa-spark-card paisa-spark-card--hero">
-              <div class="paisa-spark-card__meta">
-                <div>
-                  <span>Net Worth</span>
-                  <strong>{formatCurrency(currentNetworthValue)}</strong>
-                </div>
-                <div class="paisa-spark-card__change">
-                  {#if networthHasHistory}
-                    {networthHistoryMonths} months
-                  {:else}
-                    Need more history
-                  {/if}
-                </div>
-              </div>
-              {#if networthTrendState === "ready"}
-                <div class="paisa-spark-card__chart">
-                  <div class="paisa-spark-card__y-axis">
-                    {#each networthValueTicks as tick}
-                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
-                    {/each}
-                  </div>
-                  <div class="paisa-spark-card__plot">
-                    <svg
-                      viewBox={`0 0 420 ${heroChartHeight}`}
-                      class="paisa-sparkline paisa-sparkline--hero"
-                    >
-                      {#each networthValueTicks as tick}
-                        <line
-                          x1="0"
-                          y1={tick.y}
-                          x2="420"
-                          y2={tick.y}
-                          class="paisa-sparkline__grid"
-                        />
-                      {/each}
-                      <path
-                        d={pathForValues(
-                          networthSeries,
-                          networthMin,
-                          networthMax,
-                          420,
-                          heroChartHeight
-                        )}
-                        class="is-equity"
-                        vector-effect="non-scaling-stroke"
-                      />
-                    </svg>
-                    <div class="paisa-spark-card__x-axis">
-                      {#each networthDateTicks as label}
-                        <span>{label}</span>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {:else}
-                <div class="paisa-spark-card__empty">
-                  Need at least two monthly net worth snapshots to plot this trend.
-                </div>
-              {/if}
-            </div>
-          </div>
-
-          <div class="paisa-dashboard__hero-rail">
-            <div class="paisa-dashboard__rail-grid">
-              <div class="paisa-rail-stat">
-                <span>Assets</span>
-                <strong>{formatCurrency(assetsTotal)}</strong>
-              </div>
-              <div class="paisa-rail-stat">
-                <span>Liabilities</span>
-                <strong>{formatCurrency(liabilitiesTotal)}</strong>
-              </div>
-              <div class="paisa-rail-stat paisa-rail-stat--rank">
-                <span>Net Worth History</span>
-                <div class="paisa-rail-stat__stack">
-                  <strong>{networthHistoryMonths} mo</strong>
-                  <small>captured</small>
-                </div>
-              </div>
-              <div class="paisa-rail-stat paisa-rail-stat--trend">
-                <span>12M Net Worth Trend</span>
-                {#if oneYearState === "ready"}
-                  <svg viewBox="0 0 150 38" class="paisa-sparkline paisa-sparkline--compact">
-                    <path
-                      d={pathForValues(networthSeries, networthMin, networthMax, 150, 38)}
-                      class="is-checking"
-                      vector-effect="non-scaling-stroke"
-                    />
-                  </svg>
-                {:else}
-                  <small>Need more than one monthly point</small>
-                {/if}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -796,10 +737,12 @@
               <div class="paisa-review__metrics">
                 <div class="paisa-review__metric">
                   <span>Net income after tax</span>
-                  <strong>{formatCurrency(activeMonthlyReview.net_income_after_tax)}</strong>
+                  <strong
+                    >{formatCurrencyWithSymbol(activeMonthlyReview.net_income_after_tax)}</strong
+                  >
                   <small>
                     {activeMonthlyReview.has_income_postings
-                      ? `Tax ${formatCurrency(activeMonthlyReview.net_tax)}`
+                      ? `Tax ${formatCurrencyWithSymbol(activeMonthlyReview.net_tax)}`
                       : "No recorded income"}
                   </small>
                 </div>
@@ -807,13 +750,9 @@
                   <span>Surplus / Deficit</span>
                   {#if reviewSurplusState === "ready"}
                     <strong class:is-negative={activeMonthlyReview.surplus < 0}
-                      >{formatCurrency(activeMonthlyReview.surplus)}</strong
+                      >{formatCurrencyWithSymbol(activeMonthlyReview.surplus)}</strong
                     >
                     <small>net income − expenses</small>
-                    <small
-                      >Calculated from recorded postings; not a checking-balance change or a
-                      complete wealth reconciliation.</small
-                    >
                   {:else}
                     <strong class="is-muted">Not available</strong>
                     <small>
@@ -829,7 +768,7 @@
                   <span>Net expense</span>
                   <strong
                     >{activeMonthlyReview.has_expense_postings
-                      ? formatCurrency(activeMonthlyReview.net_expense)
+                      ? formatCurrencyWithSymbol(activeMonthlyReview.net_expense)
                       : "Not available"}</strong
                   >
                   <small
@@ -849,7 +788,7 @@
                       <span>{dayjs(point.month + "-01").format("MMM YYYY")}</span>
                       <strong
                         >{point.value != null
-                          ? formatCurrency(point.value)
+                          ? formatCurrencyWithSymbol(point.value)
                           : "Not available"}</strong
                       >
                       {#if point.isMonthToDate}
@@ -860,7 +799,7 @@
                           class:is-negative={point.value < previous.value}
                         >
                           {point.value >= previous.value ? "↑" : "↓"}
-                          {formatCurrency(Math.abs(point.value - previous.value))}
+                          {formatCurrencyWithSymbol(Math.abs(point.value - previous.value))}
                         </small>
                       {:else}
                         <small>No comparable month</small>
@@ -884,7 +823,7 @@
                   </div>
                 {:else}
                   <div class="paisa-review__flow-canvas">
-                    <svg id="d3-expense-flow" height={440}></svg>
+                    <svg id="d3-expense-flow" height={flowChartHeight}></svg>
                   </div>
                 {/if}
               </div>
@@ -911,19 +850,21 @@
               <div class="paisa-review__investment-drivers">
                 <div>
                   <span>Net contributions</span><strong
-                    >{formatCurrency(activeMonthlyReview.investment_contributions)}</strong
+                    >{formatCurrencyWithSymbol(
+                      activeMonthlyReview.investment_contributions
+                    )}</strong
                   ><small>Non-checking assets</small>
                 </div>
                 <div>
                   <span>Market movement</span><strong
                     >{activeMonthlyReview.performance_state === "ready"
-                      ? formatCurrency(activeMonthlyReview.investment_market_movement)
+                      ? formatCurrencyWithSymbol(activeMonthlyReview.investment_market_movement)
                       : "Not available"}</strong
                   ><small>Ranked positions</small>
                 </div>
                 <div>
                   <span>Dividends</span><strong
-                    >{formatCurrency(activeMonthlyReview.dividend_income)}</strong
+                    >{formatCurrencyWithSymbol(activeMonthlyReview.dividend_income)}</strong
                   ><small>Total return component</small>
                 </div>
               </div>
@@ -942,7 +883,9 @@
                           {formatPercentage(performer.total_return_percent / 100, 2)}
                         </strong>
                         {#if performer.dividend_income}
-                          <small>Dividends {formatCurrency(performer.dividend_income)}</small>
+                          <small
+                            >Dividends {formatCurrencyWithSymbol(performer.dividend_income)}</small
+                          >
                         {/if}
                       </div>
                     {/each}
@@ -959,7 +902,9 @@
                           {formatPercentage(performer.total_return_percent / 100, 2)}
                         </strong>
                         {#if performer.dividend_income}
-                          <small>Dividends {formatCurrency(performer.dividend_income)}</small>
+                          <small
+                            >Dividends {formatCurrencyWithSymbol(performer.dividend_income)}</small
+                          >
                         {/if}
                       </div>
                     {/each}
@@ -1016,15 +961,6 @@
                       <div class="paisa-insight__text">{insight.description}</div>
                       <div class="paisa-insight__delta">{insight.deltaLabel}</div>
                     </div>
-                    {#if insight.state === "ready" && insight.series.length > 1}
-                      <svg viewBox="0 0 130 46" class="paisa-sparkline paisa-sparkline--mini">
-                        <path
-                          d={sparklinePath(insight.series, 130, 46)}
-                          class={"is-" + insight.tone}
-                          vector-effect="non-scaling-stroke"
-                        />
-                      </svg>
-                    {/if}
                   </article>
                 {/each}
               </div>
@@ -1059,9 +995,6 @@
                   </div>
                 {/each}
               </div>
-              <div class="paisa-zone__subtle paisa-goals__note">
-                Current status, not a value for the selected review month.
-              </div>
             {:else if goalState === "not-configured"}
               <div class="paisa-support__empty">
                 <strong>No goals configured.</strong>
@@ -1084,7 +1017,7 @@
               <div class="paisa-zone__title">Cash Reserve</div>
               <div class="paisa-zone__subtle">Current</div>
             </div>
-            <div class="paisa-support__value">{formatCurrency(checkingTotal)}</div>
+            <div class="paisa-support__value">{formatCurrencyWithSymbol(checkingTotal)}</div>
             {#if reserveState === "ready"}
               <div class="paisa-support__text">{formatFloat(reserveMonths)} months of expenses</div>
               <div class="paisa-progress">
@@ -1174,7 +1107,7 @@
                       <span>{recurring.label}</span>
                     </span>
                     <div class="is-flex is-align-items-center" style="gap: 0.85rem;">
-                      <strong>{formatCurrency(recurring.amount)}</strong>
+                      <strong>{formatCurrencyWithSymbol(recurring.amount)}</strong>
                       <span class="paisa-zone__subtle">{recurring.date.format("MMM D")}</span>
                     </div>
                   </div>

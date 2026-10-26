@@ -43,7 +43,7 @@
 
 .paisa-dashboard__hero-top {
   display: grid;
-  grid-template-columns: minmax(18rem, 0.8fr) minmax(34rem, 1.65fr) minmax(16rem, 0.52fr);
+  grid-template-columns: minmax(20rem, 1fr) minmax(40rem, 2.2fr);
   gap: var(--dashboard-hero-gap);
   align-items: start;
   margin-bottom: var(--dashboard-hero-margin-bottom);
@@ -55,74 +55,6 @@
   padding: 0.35rem 0.75rem 0.35rem 0.2rem;
   display: flex;
   align-items: center;
-}
-
-.paisa-dashboard__hero-rail {
-  min-width: 0;
-  border-left: 1px solid var(--app-border);
-  padding-left: 0.6rem;
-  display: flex;
-  align-items: center;
-}
-
-.paisa-dashboard__rail-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  width: 100%;
-  align-content: center;
-}
-
-.paisa-rail-stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  min-height: 3.7rem;
-  padding: 0.62rem 0;
-}
-
-.paisa-rail-stat + .paisa-rail-stat {
-  border-top: 1px solid var(--app-border);
-}
-
-.paisa-rail-stat span {
-  color: #d3def0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.paisa-rail-stat strong {
-  color: #f8fbff;
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.paisa-rail-stat--rank strong {
-  font-size: 1.52rem;
-  line-height: 1.05;
-  text-align: right;
-}
-
-.paisa-rail-stat__stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.28rem;
-  min-height: 100%;
-}
-
-.paisa-rail-stat__stack small {
-  color: #95a8c2;
-  font-size: 0.8rem;
-}
-
-.paisa-rail-stat--trend svg {
-  width: 7.9rem;
-  flex: none;
 }
 
 .paisa-dashboard__section + .paisa-dashboard__section {
@@ -154,28 +86,6 @@
   font-weight: 650;
   color: var(--dashboard-text-strong);
   margin-bottom: 0.55rem;
-}
-
-.paisa-dashboard__delta {
-  display: inline-flex;
-  gap: 0.55rem;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 0.98rem;
-  font-weight: 600;
-}
-
-.paisa-dashboard__delta.is-positive {
-  color: var(--app-positive);
-}
-
-.paisa-dashboard__delta.is-negative {
-  color: var(--app-danger);
-}
-
-.paisa-dashboard__delta span {
-  color: var(--dashboard-text-muted);
-  font-weight: 500;
 }
 
 .paisa-dashboard__trend-group {
@@ -242,7 +152,7 @@
 
 .paisa-spark-card__chart {
   display: grid;
-  grid-template-columns: 3.15rem minmax(0, 1fr);
+  grid-template-columns: 4.4rem minmax(0, 1fr);
   gap: 0.8rem;
   align-items: stretch;
 }
@@ -347,10 +257,6 @@
   font-weight: 750;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-}
-
-.paisa-sparkline--compact path {
-  stroke-width: 1.75;
 }
 
 .paisa-zone {
@@ -509,7 +415,7 @@
 
 .paisa-insight {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 142px;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 1.15rem;
   align-items: center;
   min-height: 5.2rem;
@@ -817,17 +723,6 @@
   .paisa-stat-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .paisa-dashboard__hero-rail {
-    border-left: none;
-    border-top: 1px solid var(--app-border);
-    padding-left: 0;
-    padding-top: 1.2rem;
-  }
-
-  .paisa-dashboard__rail-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 1087px) {
@@ -852,14 +747,6 @@
   .paisa-dashboard__section + .paisa-dashboard__section::before {
     left: 0;
     right: 0;
-  }
-
-  .paisa-insight {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .paisa-insight svg {
-    display: none;
   }
 
   .paisa-dashboard__footer {
@@ -1143,10 +1030,6 @@
 .paisa-review__investment-drivers small {
   color: var(--app-text-subtle);
   font-size: 0.7rem;
-}
-
-.paisa-goals__note {
-  margin-top: 0.85rem;
 }
 
 @media (max-width: 1087px) {

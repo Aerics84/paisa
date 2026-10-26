@@ -1057,6 +1057,60 @@ export function formatCurrencyCrudeWithPrecision(value: number, precision: numbe
   return unicodeMinus(value.toLocaleString(config.locale, options));
 }
 
+export function formatCurrencyWithSymbol(value: number, precision: number = null) {
+  const config = getUserConfig();
+  value = normalize(value);
+
+  if (precision == null) {
+    precision = config.display_precision;
+  }
+
+  if (!config.default_currency) {
+    return formatCurrency(value, precision);
+  }
+
+  try {
+    return unicodeMinus(
+      value.toLocaleString(config.locale, {
+        style: "currency",
+        currency: config.default_currency,
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision
+      })
+    );
+  } catch {
+    return formatCurrency(value, precision);
+  }
+}
+
+export function formatCurrencyCrudeWithSymbol(value: number, precision: number = -1) {
+  const config = getUserConfig();
+  value = normalize(value);
+
+  if (!config.default_currency) {
+    return formatCurrencyCrudeWithPrecision(value, precision);
+  }
+
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency: config.default_currency,
+    notation: "compact"
+  };
+
+  if (precision < 0) {
+    options.maximumFractionDigits = 2;
+  } else {
+    options.maximumFractionDigits = precision;
+    options.minimumFractionDigits = precision;
+  }
+
+  try {
+    return unicodeMinus(value.toLocaleString(config.locale, options));
+  } catch {
+    return formatCurrencyCrudeWithPrecision(value, precision);
+  }
+}
+
 export function formatFloat(value: number, precision = 2) {
   const config = getUserConfig();
   value = normalize(value);
