@@ -69,35 +69,33 @@ func all(custom []config.ImportTemplate, builtins fs.FS) []Template {
 	return templates
 }
 
-func Upsert(name string, content string) Template {
+func Upsert(name string, content string) (Template, error) {
 	template := Template{ID: buildID(name, Custom), Name: name, Content: content, TemplateType: Custom}
 
 	if config.GetConfig().Readonly {
-		return template
+		return template, nil
 	}
 
-	Delete(name)
+	if err := Delete(name); err != nil {
+		return template, err
+	}
 	cfg := config.GetConfig()
 	cfg.ImportTemplates = append(cfg.ImportTemplates, config.ImportTemplate{Name: name, Content: content})
 	err := config.SaveConfigObject(cfg)
 	if err != nil {
-		log.Fatal(err)
+		return template, err
 	}
 
-	return template
+	return template, nil
 }
 
-func Delete(name string) {
+func Delete(name string) error {
 	cfg := config.GetConfig()
 	cfg.ImportTemplates = lo.Filter(cfg.ImportTemplates, func(t config.ImportTemplate, _ int) bool {
 		return t.Name != name
 	})
 
-	err := config.SaveConfigObject(cfg)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	return config.SaveConfigObject(cfg)
 }
 
 func buildID(name string, templateType TemplateType) string {

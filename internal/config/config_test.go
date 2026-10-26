@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,4 +96,20 @@ func TestSalaryIncomeAccountsConfig(t *testing.T) {
 
 	assert.Error(t, LoadConfig([]byte(base+"salary_income_accounts: Income:Salary\n"), ""))
 	assert.Error(t, LoadConfig([]byte(base+"salary_income_accounts: [Assets:Employment]\n"), ""))
+}
+
+func TestSaveConfigObjectRoundTripsUnsetSalaryIncomeAccounts(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\n"), 0644))
+	LoadConfigFile(path)
+
+	require.Nil(t, GetConfig().SalaryIncomeAccounts)
+
+	require.NoError(t, SaveConfigObject(GetConfig()))
+	require.NoError(t, SaveConfigObject(GetConfig()))
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.NotContains(t, string(content), "salary_income_accounts: null")
 }
