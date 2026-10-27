@@ -585,6 +585,21 @@ nav.level.grid-2 {
   }
 }
 
+button.navbar-link {
+  appearance: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+}
+
+@include mobile {
+  button.navbar-link {
+    width: 100%;
+  }
+}
+
 .navbar {
   background-color: $white !important;
   color: rgba(0, 0, 0, 0.7);
@@ -953,7 +968,7 @@ nav.level.grid-2 {
   }
 }
 
-nav.breadcrumb a.is-inactive {
+nav.breadcrumb .is-inactive {
   color: $grey;
   cursor: default;
   pointer-events: none;
