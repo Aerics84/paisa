@@ -6,7 +6,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/config"
 	c "github.com/ananthakumaran/paisa/internal/model/commodity"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
-	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/taxation"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -57,12 +56,7 @@ func GetGermanyTax(db *gorm.DB) gin.H {
 		return gin.H{"tax_years": map[string]GermanyTaxYear{}}
 	}
 
-	commodities := lo.Filter(c.All(), func(commodity config.Commodity, _ int) bool {
-		return commodity.Type == config.MutualFund || commodity.Type == config.Stock
-	})
-	postings := query.Init(db).Like("Assets:%").Commodities(commodities).All()
-	incomePostings := query.Init(db).AccountPrefix("Income:Dividend", "Income:Interest").All()
-	withholdingTaxPostings := query.Init(db).AccountPrefix("Expenses:Broker:Taxes").All()
+	postings, incomePostings, withholdingTaxPostings := collectGermanyTaxPostings(db)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string { return p.Account })
 	years := map[string]*GermanyTaxYear{}
 
