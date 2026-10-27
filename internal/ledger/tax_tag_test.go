@@ -38,7 +38,7 @@ db_path: `+filepath.Join(dir, "paisa.db")+`
 tax_regime: germany
 default_currency: EUR
 time_zone: Europe/Berlin
-`), journal))
+`), ""))
 
 	postings, err := (LedgerCLI{}).Parse(journal, nil)
 	require.NoError(t, err)

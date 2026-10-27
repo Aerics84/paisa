@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -10,7 +11,9 @@ import (
 )
 
 func TestHLedgerReadsTaxCategoryAfterRecurringTag(t *testing.T) {
-	require.NoError(t, config.LoadConfig([]byte("journal_path: main.ledger\ndb_path: test.db\ndefault_currency: EUR\ntime_zone: UTC\n"), ""))
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.ledger")
+	require.NoError(t, config.LoadConfig([]byte("journal_path: "+journal+"\ndb_path: test.db\ndefault_currency: EUR\ntime_zone: UTC\n"), ""))
 	date := time.Date(2025, 9, 9, 0, 0, 0, 0, time.UTC)
 	p := HLedgerPosting{
 		Account: "Expenses:Household:Goods",

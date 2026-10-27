@@ -951,13 +951,13 @@ func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map
 
 	dir := filepath.Dir(config.GetJournalPath())
 	var fileName string
-	var err error
 	if !forecast {
-		fileName, err = filepath.Rel(dir, t.TSourcePos[0].SourceName)
-		if err != nil {
-			return nil, err
+		fileName = t.TSourcePos[0].SourceName
+		if filepath.IsAbs(fileName) {
+			if relativePath, err := filepath.Rel(dir, fileName); err == nil {
+				fileName = relativePath
+			}
 		}
-
 	}
 
 	for _, amount := range p.Amount {

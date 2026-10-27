@@ -38,7 +38,7 @@ ledger_cli: beancount
 tax_regime: germany
 default_currency: EUR
 time_zone: Europe/Berlin
-`), journal))
+`), ""))
 
 	postings, err := (Beancount{}).Parse(journal, nil)
 	require.NoError(t, err)
