@@ -400,6 +400,85 @@ export interface GermanyTaxYear {
   diagnostics: GermanyTaxDiagnostic[];
 }
 
+export interface TaxOverviewPosting {
+  transaction_id: string;
+  date: dayjs.Dayjs;
+  payee: string;
+  account: string;
+  amount: number;
+  note: string;
+  file_name: string;
+  transaction_begin_line: number;
+  source: "tag" | "transaction" | "account";
+  category: string;
+}
+
+export interface TaxOverviewCategory {
+  key: string;
+  label: string;
+  total: number;
+  postings: TaxOverviewPosting[];
+}
+
+export interface TaxOverviewSection {
+  key: string;
+  label: string;
+  form: string;
+  total: number;
+  posting_count: number;
+  categories: TaxOverviewCategory[];
+}
+
+export interface TaxOverviewSummary {
+  expense_candidates: number;
+  matched_expense_posting_count: number;
+  capital_income_booked: number;
+  capital_income_calculated: number;
+  diagnostic_count: number;
+}
+
+export interface TaxOverviewCoverageAccount {
+  account: string;
+  unmatched_posting_count: number;
+}
+
+export interface TaxOverviewCoverage {
+  accounts_with_unmatched_postings: number;
+  unmatched_posting_count: number;
+  accounts: TaxOverviewCoverageAccount[];
+}
+
+export interface TaxOverviewCapitalIncomeAccount {
+  account: string;
+  realized_gain: number;
+}
+
+export interface TaxOverviewCapitalIncome {
+  realized_gains: number;
+  realized_losses: number;
+  dividends: number;
+  interest: number;
+  taxes_booked: number;
+  sales: number;
+  accounts: TaxOverviewCapitalIncomeAccount[];
+}
+
+export interface TaxOverviewDiagnostic {
+  level: string;
+  summary: string;
+  details: string;
+}
+
+export interface TaxOverview {
+  years: string[];
+  selected_year: string;
+  summary: TaxOverviewSummary;
+  sections: TaxOverviewSection[];
+  coverage: TaxOverviewCoverage;
+  capital_income: TaxOverviewCapitalIncome;
+  diagnostics: TaxOverviewDiagnostic[];
+}
+
 export interface Issue {
   level: string;
   summary: string;
@@ -652,6 +731,8 @@ export function ajax(
 export function ajax(
   route: "/api/capital_income_tax"
 ): Promise<{ tax_years: Record<string, GermanyTaxYear> }>;
+export function ajax(route: "/api/tax_overview"): Promise<TaxOverview>;
+export function ajax(route: `/api/tax_overview?year=${string}`): Promise<TaxOverview>;
 export function ajax(route: "/api/schedule_al"): Promise<{
   schedule_als: Record<string, ScheduleAL>;
 }>;
