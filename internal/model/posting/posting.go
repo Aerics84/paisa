@@ -35,6 +35,8 @@ type Posting struct {
 	Status               string          `json:"status"`
 	TagRecurring         string          `json:"tag_recurring"`
 	TagPeriod            string          `json:"tag_period"`
+	TaxCategory          string          `json:"tax_category"`
+	TaxCategoryLegacy    string          `json:"tax_category_legacy"`
 	TransactionBeginLine uint64          `json:"transaction_begin_line"`
 	TransactionEndLine   uint64          `json:"transaction_end_line"`
 	FileName             string          `json:"file_name"`

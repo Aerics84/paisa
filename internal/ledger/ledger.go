@@ -670,8 +670,10 @@ func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, 
 		TagPeriod
 		Note
 		TransactionNote
+		TaxCategory
+		TaxCategoryLegacy
 	)
-	args := append(append([]string{"--args-only", "-f", journalPath}, flags...), "csv", "--csv-format", "%(quoted(date)),%(quoted(payee)),%(quoted(display_account)),%(quoted(commodity(scrub(display_amount)))),%(quoted(quantity(scrub(display_amount)))),%(quoted(quantity(scrub(market(amount,date,'"+config.DefaultCurrency()+"') * 100000000)))),%(quoted(xact.filename)),%(quoted(xact.id)),%(quoted(cleared ? \"*\" : (pending ? \"!\" : \"\"))),%(quoted(xact.beg_line)),%(quoted(xact.end_line)),%(quoted(quantity(lot_price(amount)))),%(quoted(commodity(lot_price(amount)))),%(quoted(tag('Recurring'))),%(quoted(tag('Period'))),%(quoted(note)),%(quoted(xact.note))\n")
+	args := append(append([]string{"--args-only", "-f", journalPath}, flags...), "csv", "--csv-format", "%(quoted(date)),%(quoted(payee)),%(quoted(display_account)),%(quoted(commodity(scrub(display_amount)))),%(quoted(quantity(scrub(display_amount)))),%(quoted(quantity(scrub(market(amount,date,'"+config.DefaultCurrency()+"') * 100000000)))),%(quoted(xact.filename)),%(quoted(xact.id)),%(quoted(cleared ? \"*\" : (pending ? \"!\" : \"\"))),%(quoted(xact.beg_line)),%(quoted(xact.end_line)),%(quoted(quantity(lot_price(amount)))),%(quoted(commodity(lot_price(amount)))),%(quoted(tag('Recurring'))),%(quoted(tag('Period'))),%(quoted(note)),%(quoted(xact.note)),%(quoted(tag('tax_category'))),%(quoted(tag('TaxRelevant')))\n")
 
 	ledgerPath, err := binary.LedgerBinaryPath()
 	if err != nil {
@@ -804,7 +806,9 @@ func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, 
 			Forecast:             forecast,
 			FileName:             fileName,
 			Note:                 note,
-			TransactionNote:      transactionNote}
+			TransactionNote:      transactionNote,
+			TaxCategory:          record[TaxCategory],
+			TaxCategoryLegacy:    record[TaxCategoryLegacy]}
 		postings = append(postings, &posting)
 
 	}
