@@ -39,6 +39,27 @@ labelled `Keine Buchungen`.
 | Spenden und Mitgliedsbeiträge  | Hauptvordruck          | Spenden und Mitgliedsbeiträge                                                                                                                                       |
 | Kapitalerträge                 | Anlage KAP             | generated, not taggable                                                                                                                                             |
 
+### Category keys
+
+Use these values for `tax_category`:
+
+| Key                   | Label                           |
+| --------------------- | ------------------------------- |
+| `work_equipment`      | Arbeitsmittel                   |
+| `work_training`       | Fortbildung und Fachliteratur   |
+| `work_travel`         | Reisekosten                     |
+| `work_commute`        | Wege zur Arbeit                 |
+| `work_home_office`    | Homeoffice                      |
+| `work_phone_internet` | Telefon und Internet            |
+| `tax_advice`          | Steuerberatung und -software    |
+| `work_other`          | Sonstige Werbungskosten         |
+| `health_insurance`    | Kranken- und Pflegeversicherung |
+| `other_insurance`     | Sonstige Versicherungen         |
+| `health`              | Krankheitskosten                |
+| `household_service`   | Haushaltsnahe Dienstleistungen  |
+| `craftsman`           | Handwerkerleistungen            |
+| `donation`            | Spenden und Mitgliedsbeiträge   |
+
 ## Tagging postings
 
 `tax_category` on the expense posting is the canonical form.
@@ -70,9 +91,26 @@ To exclude a posting that an account rule would match, tag it with
 `tax_category: "none"`. The posting is then shown in neither the
 sections nor the coverage row.
 
-The legacy `TaxRelevant` tag is never applied. Postings that still carry
-it are reported in a diagnostic and must be migrated to `tax_category`
-manually.
+The legacy `TaxRelevant` tag is never applied. In ledger and hledger,
+postings that still carry it are reported in a diagnostic and must be
+migrated to `tax_category` manually. Legacy values are not category keys:
+`TaxRelevant: Auto` and
+`TaxRelevant: Work` are personal markers, not valid `tax_category`
+values. Replace the tag name and choose a key from the table above:
+
+```ledger
+2025/06/02 * ADAC ; Mitgliedschaft
+    Assets:Checking:ING                       -41,00 EUR ; tax_category: work_other
+    Expenses:Car:Memberships                   41,00 EUR
+
+2025/09/09 * PayPal ; Bürostuhl
+    Assets:Checking:ING                      -699,00 EUR ; tax_category: work_equipment
+    Expenses:Household:Goods                  699,00 EUR
+```
+
+The tag may stay on the bank line when the transaction has exactly one
+expense posting. Put it directly on the expense posting when a
+transaction splits the expense across several accounts.
 
 ## Account rules
 

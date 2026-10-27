@@ -12,4 +12,26 @@ describe("TaxOverviewPage year changes", () => {
     const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
     expect(source).toContain("loadSequence");
   });
+
+  test("starts with every section collapsed", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
+    expect(source).toContain("data.sections.map((s) => [s.key, false])");
+  });
+});
+
+describe("TaxOverviewSection rendering", () => {
+  test("skips categories without postings", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewSection.svelte"), "utf-8");
+    expect(source).toContain("category.postings.length > 0");
+  });
+
+  test("uses a fixed table layout so columns align across categories", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewSection.svelte"), "utf-8");
+    expect(source).toContain("table-layout: fixed");
+  });
+
+  test("does not use the light tag that turns white in the dark theme", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewSection.svelte"), "utf-8");
+    expect(source).not.toContain("tag is-light");
+  });
 });

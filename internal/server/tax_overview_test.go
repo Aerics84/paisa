@@ -96,6 +96,7 @@ func TestBuildTaxOverviewUnknownCategoryIsDiagnosed(t *testing.T) {
 		taxOverviewPosting("t1", "2025-05-01", "Expenses:Health", "100", "made_up", ""),
 	}, "2025", nil)
 	assert.Contains(t, diagnosticSummaries(overview), "Unbekannte Steuerkategorie")
+	assert.Contains(t, overview.Diagnostics[0].Details, "work_equipment")
 	assert.Equal(t, 0, overview.Coverage.UnmatchedPostingCount)
 	assert.True(t, overview.Summary.ExpenseCandidates.IsZero())
 }
@@ -178,6 +179,8 @@ func TestBuildTaxOverviewLegacyTagIsIgnored(t *testing.T) {
 	assert.True(t, overview.Summary.ExpenseCandidates.IsZero())
 	assert.Equal(t, 1, overview.Coverage.UnmatchedPostingCount)
 	assert.Contains(t, diagnosticSummaries(overview), "TaxRelevant")
+	require.Len(t, overview.Diagnostics, 1)
+	assert.Contains(t, overview.Diagnostics[0].Details, "work_equipment")
 }
 
 func TestBuildTaxOverviewLegacyTagDoesNotOverrideAccountRule(t *testing.T) {

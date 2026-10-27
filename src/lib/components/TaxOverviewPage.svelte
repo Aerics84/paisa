@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { ajax, formatCurrency } from "$lib/utils";
-  import type { TaxOverview } from "$lib/utils";
+  import type { TaxOverview, TaxOverviewCoverage } from "$lib/utils";
   import { downloadTaxOverview } from "$lib/tax_overview_export";
   import TaxOverviewSection from "./TaxOverviewSection.svelte";
   import TaxOverviewCapitalIncome from "./TaxOverviewCapitalIncome.svelte";
@@ -16,7 +16,18 @@
   function apply(data: TaxOverview) {
     overview = data;
     selectedYear = data.selected_year;
-    expandedSections = Object.fromEntries(data.sections.map((s) => [s.key, s.posting_count > 0]));
+    expandedSections = Object.fromEntries(data.sections.map((s) => [s.key, false]));
+  }
+
+  function coverageSummary(coverage: TaxOverviewCoverage): string {
+    const postings = `${coverage.unmatched_posting_count} ${
+      coverage.unmatched_posting_count === 1 ? "Posting" : "Postings"
+    }`;
+    const accounts = `${coverage.accounts_with_unmatched_postings} ${
+      coverage.accounts_with_unmatched_postings === 1 ? "Ausgabenkonto" : "Ausgabenkonten"
+    }`;
+    const verb = coverage.unmatched_posting_count === 1 ? "ist" : "sind";
+    return `Abdeckung: ${postings} in ${accounts} ${verb} nicht zugeordnet.`;
   }
 
   async function load(year?: string) {
@@ -135,13 +146,11 @@
           type="button"
           class="is-flex is-justify-content-space-between is-align-items-center"
           style="width: 100%; border: 0; background: transparent; padding: 0; cursor: pointer; color: inherit;"
+          aria-expanded={coverageExpanded}
           on:click={() => (coverageExpanded = !coverageExpanded)}
         >
-          <span>
-            Abdeckung: {overview.coverage.unmatched_posting_count} Postings in {overview.coverage
-              .accounts_with_unmatched_postings} Ausgabenkonten sind nicht zugeordnet.
-          </span>
-          <span class="icon is-small">
+          <span>{coverageSummary(overview.coverage)}</span>
+          <span class="icon is-small" aria-hidden="true">
             <i class={coverageExpanded ? "fas fa-chevron-down" : "fas fa-chevron-right"}></i>
           </span>
         </button>

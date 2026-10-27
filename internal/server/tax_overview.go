@@ -114,11 +114,15 @@ type taxResolution struct {
 
 const negativePostingDiagnostic = "Negative Aufwandsposten erkannt. Diese können Erstattungen oder Korrekturen sein. Die steuerliche Behandlung von Erstattungen in einem anderen Jahr hängt von der Art der Ausgabe und den Umständen ab. Bitte manuell prüfen; Paisa bestimmt nicht das richtige Steuerjahr."
 
+func validCategoryKeys() string {
+	return strings.Join(taxcategory.CategoryKeys(), ", ")
+}
+
 func unknownCategoryDiagnostic(value string, count int, examples string) TaxOverviewDiagnostic {
 	return TaxOverviewDiagnostic{
 		Level:   "warning",
 		Summary: fmt.Sprintf("Unbekannte Steuerkategorie `%s` bei %d Postings; nicht angezeigt.", value, count),
-		Details: examples,
+		Details: fmt.Sprintf("%s. Gültige Schlüssel: %s", examples, validCategoryKeys()),
 	}
 }
 
@@ -354,8 +358,8 @@ func BuildTaxOverview(postings []posting.Posting, year string, rules []config.Ta
 	if len(legacy) > 0 {
 		overview.Diagnostics = append(overview.Diagnostics, TaxOverviewDiagnostic{
 			Level:   "warning",
-			Summary: fmt.Sprintf("%d Postings verwenden noch das Legacy-Tag `TaxRelevant`; bitte auf `tax_category` umstellen.", len(legacy)),
-			Details: taxPostingExamples(legacy, 5),
+			Summary: fmt.Sprintf("%d Postings verwenden noch das Legacy-Tag `TaxRelevant`; es wird nicht ausgewertet. Bitte auf `tax_category` umstellen.", len(legacy)),
+			Details: fmt.Sprintf("%s. Gültige Schlüssel: %s", taxPostingExamples(legacy, 5), validCategoryKeys()),
 		})
 	}
 

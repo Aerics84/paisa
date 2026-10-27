@@ -4,7 +4,7 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
-### Unreleased
+### 8.5.1 (2026-10-27)
 
 - Fix accessibility warnings in the navbar and on the demo button.
 - Handle relative `source` names reported by hledger without aborting the
@@ -12,6 +12,11 @@ document the upstream releases this fork builds on; the short-lived
 - Rename accounts in CRLF ledgers from the editor.
 - Polish the Germany tax overview: show amounts in diagnostics, restore
   the year label after a failed load, and ignore stale responses.
+- Collapse all tax overview sections on open, hide categories without
+  postings, align table columns across categories, and fix the source
+  label in the dark theme.
+- List the valid `tax_category` keys in the legacy-tag and
+  unknown-category diagnostics.
 
 ### 8.5 (2026-10-27)
 
