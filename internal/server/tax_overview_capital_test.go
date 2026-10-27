@@ -115,3 +115,33 @@ func TestCapitalIncomeIgnoresOtherYears(t *testing.T) {
 	assert.True(t, result.Dividends.Equal(decimal.RequireFromString("100")))
 	require.Len(t, diagnostics, 1)
 }
+
+func TestCapitalIncomeWarnsAboutSalesWithoutPurchases(t *testing.T) {
+	postings := []posting.Posting{
+		func() posting.Posting {
+			p := germanyTaxPosting("2025-02-01", "Assets:Equity:VWCE", "VWCE", "-2", "-300")
+			p.TransactionID = "orphan"
+			return p
+		}(),
+	}
+	result, diagnostics := ComputeTaxOverviewCapitalIncome(postings, nil, nil, "2025")
+	assert.True(t, result.RealizedGains.IsZero())
+	assert.True(t, result.RealizedLosses.IsZero())
+	require.Len(t, diagnostics, 1)
+	assert.Contains(t, diagnostics[0].Summary, "ohne passende Anschaffung")
+}
+
+func TestCapitalIncomeWarnsAboutPartiallyMatchedSales(t *testing.T) {
+	postings := []posting.Posting{
+		germanyTaxPosting("2025-01-01", "Assets:Equity:VWCE", "VWCE", "1", "100"),
+		func() posting.Posting {
+			p := germanyTaxPosting("2025-02-01", "Assets:Equity:VWCE", "VWCE", "-2", "-300")
+			p.TransactionID = "partial"
+			return p
+		}(),
+	}
+	result, diagnostics := ComputeTaxOverviewCapitalIncome(postings, nil, nil, "2025")
+	assert.True(t, result.RealizedGains.Equal(decimal.RequireFromString("50")))
+	require.Len(t, diagnostics, 1)
+	assert.Contains(t, diagnostics[0].Summary, "ohne passende Anschaffung")
+}

@@ -147,7 +147,13 @@ func buildGermanyTaxYear(
 }
 
 func computeGermanyTaxByYear(account string, postings []posting.Posting) map[string]GermanyTaxAccount {
+	byYear, _ := computeGermanyTaxByYearWithUnmatched(account, postings)
+	return byYear
+}
+
+func computeGermanyTaxByYearWithUnmatched(account string, postings []posting.Posting) (map[string]GermanyTaxAccount, map[string][]posting.Posting) {
 	byYear := make(map[string]GermanyTaxAccount)
+	unmatched := make(map[string][]posting.Posting)
 	var available []posting.Posting
 
 	for _, currentPosting := range postings {
@@ -205,7 +211,12 @@ func computeGermanyTaxByYear(account string, postings []posting.Posting) map[str
 			})
 			byYear[taxYear] = yearCapitalIncome
 		}
+
+		if remaining.GreaterThan(decimal.Zero) {
+			taxYear := currentPosting.Date.Format("2006")
+			unmatched[taxYear] = append(unmatched[taxYear], currentPosting.WithQuantity(remaining.Neg()))
+		}
 	}
 
-	return byYear
+	return byYear, unmatched
 }

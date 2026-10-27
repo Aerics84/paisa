@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/ananthakumaran/paisa/internal/config"
 	c "github.com/ananthakumaran/paisa/internal/model/commodity"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -28,9 +30,11 @@ func ComputeTaxOverviewCapitalIncome(investmentPostings, incomePostings, withhol
 	byAccount := lo.GroupBy(investmentPostings, func(p posting.Posting) string { return p.Account })
 	sellTransactionIDs := map[string]bool{}
 	individualSales := 0
+	unmatchedSells := []posting.Posting{}
 
 	for _, account := range utils.SortedKeys(byAccount) {
-		byYear := computeGermanyTaxByYear(account, byAccount[account])
+		byYear, unmatchedByYear := computeGermanyTaxByYearWithUnmatched(account, byAccount[account])
+		unmatchedSells = append(unmatchedSells, unmatchedByYear[year]...)
 		capitalIncome, ok := byYear[year]
 		if !ok {
 			continue
@@ -86,6 +90,14 @@ func ComputeTaxOverviewCapitalIncome(investmentPostings, incomePostings, withhol
 			Level:   "warning",
 			Summary: "Dividendeneingänge ohne gebuchte Steuern; der Betrag kann netto sein. Bitte Broker-Abrechnung prüfen.",
 			Details: "Für das ausgewählte Jahr gibt es Dividenden- oder Zinseingänge, aber keine Postings auf Expenses:Broker:Taxes. Paisa bruttoiert den Betrag nicht und klassifiziert keine Steuerart.",
+		})
+	}
+
+	if len(unmatchedSells) > 0 {
+		diagnostics = append(diagnostics, TaxOverviewDiagnostic{
+			Level:   "warning",
+			Summary: fmt.Sprintf("%d Verkaufspostings ohne passende Anschaffung; realisierte Gewinne/Verluste sind unvollständig.", len(unmatchedSells)),
+			Details: "Für diese Verkäufe fehlen passende Kaufpostings im Ledger. Paisa bezieht nur gematchte Käufe in die realisierten Gewinne und Verluste ein: " + taxPostingExamples(unmatchedSells, 5),
 		})
 	}
 

@@ -43,7 +43,9 @@ time_zone: Europe/Berlin
 	postings, err := (Beancount{}).Parse(journal, nil)
 	require.NoError(t, err)
 
+	seen := map[string]bool{}
 	for _, p := range postings {
+		seen[p.Account] = true
 		if p.Account == "Expenses:Household:Goods" {
 			assert.Equal(t, "work_equipment", p.TaxCategory)
 		}
@@ -51,4 +53,7 @@ time_zone: Europe/Berlin
 			assert.Empty(t, p.TaxCategory, "transaction metadata must not leak onto postings")
 		}
 	}
+	require.True(t, seen["Expenses:Household:Goods"], "expected tagged posting was not parsed")
+	require.True(t, seen["Expenses:Health"], "expected split posting was not parsed")
+	require.True(t, seen["Expenses:Health:Medicine"], "expected split posting was not parsed")
 }

@@ -62,7 +62,11 @@ export function taxOverviewCSVRows(overview: TaxOverview): Array<Record<string, 
 
 export function taxOverviewCSV(overview: TaxOverview): string {
   return (
-    "\uFEFF" + Papa.unparse(taxOverviewCSVRows(overview), { columns: TAX_OVERVIEW_CSV_COLUMNS })
+    "\uFEFF" +
+    Papa.unparse(taxOverviewCSVRows(overview), {
+      columns: TAX_OVERVIEW_CSV_COLUMNS,
+      escapeFormulae: true
+    })
   );
 }
 

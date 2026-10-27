@@ -106,4 +106,22 @@ describe("tax overview CSV", () => {
     });
     expect(Number(negative[0].amount)).toBe(-45);
   });
+
+  test("escapes formula-like fields", () => {
+    const csv = taxOverviewCSV({
+      ...overview,
+      sections: [
+        {
+          ...overview.sections[0],
+          categories: [
+            {
+              ...overview.sections[0].categories[0],
+              postings: [{ ...overview.sections[0].categories[0].postings[0], payee: "=SUM(1,2)" }]
+            }
+          ]
+        }
+      ]
+    });
+    expect(csv).toContain("'=SUM(1,2)");
+  });
 });
