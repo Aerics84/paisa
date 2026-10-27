@@ -313,8 +313,9 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		Status
 		TagRecurring
 		TagPeriod
+		TaxCategory
 	)
-	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,units(position),cost(position),filename,location,id,flag,ANY_META('recurring'),ANY_META('period')"}
+	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,units(position),cost(position),filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
 
 	path, err := binary.LookPath("bean-query")
 	if err != nil {
@@ -412,6 +413,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 			Status:        status,
 			TagRecurring:  strings.TrimSpace(record[TagRecurring]),
 			TagPeriod:     strings.TrimSpace(record[TagPeriod]),
+			TaxCategory:   utils.UnQuote(strings.TrimSpace(record[TaxCategory])),
 			Forecast:      false,
 			FileName:      fileName}
 		postings = append(postings, &posting)
@@ -904,6 +906,15 @@ func execHLedgerCommand(journalPath string, prices []price.Price, flags []string
 	return postings, nil
 }
 
+func tagValue(tags [][]string, key string) string {
+	for _, tag := range tags {
+		if len(tag) == 2 && tag[0] == key {
+			return tag[1]
+		}
+	}
+	return ""
+}
+
 func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map[string]*btree.BTree, date time.Time) ([]*posting.Posting, error) {
 	forecast := false
 	postings := []*posting.Posting{}
@@ -923,7 +934,6 @@ func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map
 				forecast = true
 			}
 		}
-		break
 	}
 
 	for _, tag := range p.Tags {
@@ -934,8 +944,10 @@ func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map
 		if len(tag) == 2 && tag[0] == "Period" {
 			tagPeriod = tag[1]
 		}
-		break
 	}
+
+	taxCategory := tagValue(p.Tags, "tax_category")
+	taxCategoryLegacy := tagValue(p.Tags, "TaxRelevant")
 
 	dir := filepath.Dir(config.GetJournalPath())
 	var fileName string
@@ -1000,6 +1012,8 @@ func buildHLedgerPostings(p HLedgerPosting, t HLedgerTransaction, pricesTree map
 			Status:               strings.ToLower(t.Status),
 			TagRecurring:         tagRecurring,
 			TagPeriod:            tagPeriod,
+			TaxCategory:          taxCategory,
+			TaxCategoryLegacy:    taxCategoryLegacy,
 			TransactionBeginLine: t.TSourcePos[0].SourceLine,
 			TransactionEndLine:   t.TSourcePos[1].SourceLine,
 			Forecast:             forecast,
