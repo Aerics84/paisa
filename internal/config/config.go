@@ -88,6 +88,15 @@ type GermanyTaxConfig struct {
 	ChurchTaxRate           float64 `json:"church_tax_rate" yaml:"church_tax_rate"`
 }
 
+type TaxDeductionAccount struct {
+	Account  string `json:"account" yaml:"account"`
+	Category string `json:"category" yaml:"category"`
+}
+
+type TaxDeductionsConfig struct {
+	Accounts *[]TaxDeductionAccount `json:"accounts,omitempty" yaml:"accounts,omitempty"`
+}
+
 type Price struct {
 	Provider string `json:"provider" yaml:"provider"`
 	Code     string `json:"code" yaml:"code"`
@@ -184,6 +193,8 @@ type Config struct {
 
 	GermanyTax GermanyTaxConfig `json:"germany_tax" yaml:"germany_tax"`
 
+	TaxDeductions *TaxDeductionsConfig `json:"tax_deductions,omitempty" yaml:"tax_deductions,omitempty"`
+
 	ScheduleALs []ScheduleAL `json:"schedule_al" yaml:"schedule_al"`
 
 	AllocationTargets []AllocationTarget `json:"allocation_targets" yaml:"allocation_targets"`
@@ -239,6 +250,21 @@ var defaultConfig = Config{
 	Goals:                      Goals{Retirement: []RetirementGoal{}, Savings: []SavingsGoal{}},
 	UserAccounts:               []UserAccount{},
 	CreditCards:                []CreditCard{},
+}
+
+var defaultTaxDeductionAccounts = []TaxDeductionAccount{
+	{Account: "Expenses:Health:Insurance", Category: "health_insurance"},
+	{Account: "Expenses:Health", Category: "health"},
+	{Account: "Expenses:Insurance", Category: "other_insurance"},
+	{Account: "Expenses:Tax:Preparation", Category: "tax_advice"},
+}
+
+func TaxDeductionAccounts() []TaxDeductionAccount {
+	rules := defaultTaxDeductionAccounts
+	if config.TaxDeductions != nil && config.TaxDeductions.Accounts != nil {
+		rules = *config.TaxDeductions.Accounts
+	}
+	return append([]TaxDeductionAccount(nil), rules...)
 }
 
 func regionalProfileDefaults(profile RegionalProfileType) Config {

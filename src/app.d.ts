@@ -34,6 +34,9 @@ interface UserConfig {
     solidarity_surcharge_rate: number;
     church_tax_rate: number;
   };
+  tax_deductions?: {
+    accounts?: { account: string; category: string }[];
+  };
   default_currency: string;
   readonly: boolean;
   locale: string;

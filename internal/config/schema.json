@@ -936,6 +936,49 @@
       },
       "additionalProperties": false
     },
+    "tax_deductions": {
+      "type": "object",
+      "description": "Account rules for the Germany tax overview. When unset, built-in rules for health insurance, health costs, other insurance and tax advice are used. An empty accounts list disables account matching; an explicit list replaces the defaults. Matching is done on whole account segments; the longest prefix wins.",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "ui:header": "account",
+            "properties": {
+              "account": {
+                "type": "string",
+                "pattern": "^Expenses:[^:*]+(:[^:*]+)*$",
+                "description": "Expense account prefix, for example Expenses:Health. Wildcards are not allowed."
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "work_equipment",
+                  "work_training",
+                  "work_travel",
+                  "work_commute",
+                  "work_home_office",
+                  "work_phone_internet",
+                  "tax_advice",
+                  "work_other",
+                  "health_insurance",
+                  "other_insurance",
+                  "health",
+                  "household_service",
+                  "craftsman",
+                  "donation"
+                ],
+                "description": "Tax category from the Germany catalog."
+              }
+            },
+            "required": ["account", "category"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "schedule_al": {
       "description": "Schedule AL configuration",
       "type": "array",
