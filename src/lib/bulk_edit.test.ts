@@ -32,4 +32,25 @@ describe("bulk_editor", () => {
       }
     });
   });
+
+  test("rename_account preserves CRLF line endings", () => {
+    const toCRLF = (text: string) => text.replace(/\r?\n/g, "\r\n");
+    const args = JSON.parse(
+      fs.readFileSync("fixture/bulk_edit/rename_account/simple.json").toString()
+    );
+    const ledgerFile: LedgerFile = {
+      type: "file",
+      name: "main.ledger",
+      content: toCRLF(before.toString()),
+      versions: []
+    };
+    const {
+      newFiles: [newLedgerFile],
+      updatedTransactionsCount
+    } = applyChanges([ledgerFile], transactions, "rename_account", args);
+    const after = fs.readFileSync("fixture/bulk_edit/rename_account/simple.ledger").toString();
+
+    expect(updatedTransactionsCount).toBe(2);
+    expect(_.trim(newLedgerFile.content)).toBe(_.trim(toCRLF(after)));
+  });
 });

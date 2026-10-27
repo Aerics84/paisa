@@ -17,8 +17,10 @@ export function applyChanges(
   const transactionsGrouped = _.groupBy(transactions, (t) => t.fileName);
   const newFiles = _.map(files, (file) => {
     const transactions = transactionsGrouped[file.name] || [];
+    const eol = file.content.includes("\r\n") ? "\r\n" : "\n";
+    const normalizedContent = file.content.replace(/\r\n/g, "\n");
 
-    const lines = file.content.split("\n");
+    const lines = normalizedContent.split("\n");
     const sortedTransactions = _.sortBy(transactions, (t) => t.beginLine);
     let lastLine = 0;
     const newLines: string[] = [];
@@ -41,7 +43,9 @@ export function applyChanges(
 
     newLines.push(...lines.slice(lastLine));
 
-    return _.merge({}, file, { content: newLines.join("\n") });
+    return _.merge({}, file, {
+      content: newLines.join("\n").replace(/\n/g, eol)
+    });
   });
 
   return {
