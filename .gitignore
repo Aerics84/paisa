@@ -29,6 +29,10 @@ fonts/*
 /result
 brand/*.png
 
+# Local docs that should stay out of the remote repo
+/docs/superpowers/
+/docs/images/ux/
+
 # Local graphify artifacts
 /graphify-out/
 
