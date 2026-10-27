@@ -3,14 +3,17 @@ package server
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
+	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/taxcategory"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type TaxOverview struct {
@@ -442,4 +445,53 @@ func taxPostingExamples(ps []posting.Posting, limit int) string {
 		joined += "; …"
 	}
 	return joined
+}
+
+func taxOverviewYear(requested string, now time.Time) (string, error) {
+	if requested == "" {
+		return now.AddDate(-1, 0, 0).Format("2006"), nil
+	}
+	if len(requested) != 4 {
+		return "", fmt.Errorf("invalid year: %q", requested)
+	}
+	value, err := strconv.Atoi(requested)
+	if err != nil || value < 1900 || value > 2100 {
+		return "", fmt.Errorf("invalid year: %q", requested)
+	}
+	return requested, nil
+}
+
+func GetTaxOverview(db *gorm.DB, requestedYear string) (TaxOverview, error) {
+	if !config.SupportsGermanyTaxFeatures() {
+		return TaxOverview{
+			Years:         []string{},
+			Sections:      []TaxOverviewSection{},
+			Coverage:      TaxOverviewCoverage{Accounts: []TaxOverviewCoverageAccount{}},
+			Diagnostics:   []TaxOverviewDiagnostic{},
+			CapitalIncome: TaxOverviewCapitalIncome{Accounts: []TaxOverviewCapitalIncomeAccount{}},
+		}, nil
+	}
+
+	postings := query.Init(db).All()
+	now := utils.Now()
+	years := TaxOverviewYears(postings, now)
+	year, err := taxOverviewYear(requestedYear, now)
+	if err != nil {
+		return TaxOverview{}, err
+	}
+
+	overview := BuildTaxOverview(postings, year, config.TaxDeductionAccounts())
+	overview.Years = years
+	overview.SelectedYear = year
+
+	investment, income, withholding := collectGermanyTaxPostings(db)
+	capitalIncome, capitalDiagnostics := ComputeTaxOverviewCapitalIncome(investment, income, withholding, year)
+	overview.CapitalIncome = capitalIncome
+	overview.Diagnostics = append(overview.Diagnostics, capitalDiagnostics...)
+	overview.Summary.CapitalIncomeBooked = overview.CapitalIncome.Dividends.
+		Add(overview.CapitalIncome.Interest)
+	overview.Summary.CapitalIncomeCalculated = overview.CapitalIncome.RealizedGains.
+		Sub(overview.CapitalIncome.RealizedLosses)
+	overview.Summary.DiagnosticCount = len(overview.Diagnostics)
+	return overview, nil
 }

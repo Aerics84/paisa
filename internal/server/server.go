@@ -265,6 +265,15 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, GetGermanyTax(db))
 	})
 
+	router.GET("/api/tax_overview", func(c *gin.Context) {
+		overview, err := GetTaxOverview(db, c.Query("year"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, overview)
+	})
+
 	router.GET("/api/schedule_al", func(c *gin.Context) {
 		c.JSON(200, GetScheduleAL(db))
 	})
