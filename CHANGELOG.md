@@ -1,26 +1,131 @@
 # CHANGELOG
 
+Releases from 0.8 onwards are fork releases. The 0.7.x sections below
+document the upstream releases this fork builds on; the short-lived
+0.7.5–0.7.6.1 fork bumps are folded into 0.8.
+
+### Unreleased
+
+- Fix accessibility warnings in the navbar and on the demo button.
+- Handle relative `source` names reported by hledger without aborting the
+  parse.
+- Rename accounts in CRLF ledgers from the editor.
+- Polish the Germany tax overview: show amounts in diagnostics, restore
+  the year label after a failed load, and ignore stale responses.
+
+### 8.5 (2026-10-27)
+
+- Add a Germany [tax overview](https://github.com/Aerics84/paisa/blob/master/docs/reference/tax/deductions.md)
+  page that groups deductible-expense candidates by tax return section,
+  reports coverage gaps, and shows raw Anlage KAP values.
+- Add a `tax_category` posting tag for ledger, hledger and beancount,
+  plus configurable account rules for tax deductions.
+- Add CSV export of the tax overview and surface sales without matching
+  purchase lots.
+- Fix saving import templates terminating the server when
+  `salary_income_accounts` is unset; save errors are now returned to the
+  UI instead of killing the process.
+- Make regression snapshots deterministic with stable query ordering and
+  timezone-aware month boundaries.
+- Match transfer account globs against subaccounts, and keep WAL and
+  `busy_timeout` settings when the connection pool grows.
+- Use a theme-aware warning color for the savings rate.
+- Polish the preview dashboard layout, currency formatting and month
+  selector styling.
+
+### 8.4 (2026-10-25)
+
+- Add total and invested savings rates to the yearly investment cards,
+  with a 20 % guideline highlight and documented formulas.
+- Exclude internal asset transfers from the savings rate, and interest
+  from the retirement goal's investment basis.
+- Classify payroll income and allow configuring the salary income
+  accounts used by the savings rate and monthly review.
+- Add a preview dashboard with a selected-month financial review: net
+  income trend, top/flop positions, checking account history and Sankey
+  flows.
+- Index postings and prices, and compute cash flow from a single posting
+  query.
+- Remove untrusted HTML rendering and rate-limit requests per client IP.
+- Enable SQLite WAL, prune old editor backups and make the price cache
+  concurrency-safe.
+- Authenticate Yahoo requests with a cookie and crumb, and normalize
+  GBp/GBX prices to GBP.
+- Keep journal dates in the configured timezone across the API, CSV
+  export and running balance.
+- Read hledger `acost` for cost basis, and fix mixed positive and
+  negative account globs.
+- Handle empty import template lists and preserve decimal precision when
+  importing.
+- Fix Svelte 5 runtime errors, restore the classic dashboard tile layout,
+  and repair dark-theme card backgrounds and chart sizing.
+- Merge upstream v0.7.8, including the path traversal fix.
+- Bump Go to 1.26, build separate Intel and Apple Silicon macOS releases,
+  and restore the CI, Docker and docs workflows.
+- Upgrade the bundled ledger to 3.4.1.
+
+### 8.2 (2026-04-29)
+
+- Modernize the frontend stack: Svelte 5, Bulma 1, Vite 8 and Bun 1.3,
+  with an npm 11 lockfile.
+- Rework the dashboard overview layout on Bulma 1.
+- Add repo-local formatting hooks and check gofmt only on changed files.
+- Normalize imported broker quantities.
+- Fix import formatting on Windows.
+- Fix Docker npm preparation and clean npm installs in CI.
+- Harden regression tests when the ledger binary is missing.
+
+### 8.1 (2026-04-28)
+
+- Add built-in import templates for Trade Republic and Scalable Capital
+  trade and cash CSV exports.
+- Add CSV export for the Germany capital income report.
+- Extend the Germany capital income report with partial exemption,
+  withholding tax credits and review diagnostics.
+- Fix CAMT parsing and Europe import template rendering.
+- Add a pre-push test preflight.
+
+### 0.8 (2026-04-28)
+
+- Add the Germany tax regime with a capital income report: annual
+  allowance, capital income tax, solidarity surcharge and optional church
+  tax.
+- Add Germany/EU starter configuration and sample journals to
+  `paisa init`.
+- Add import templates for CAMT.053 and MT940 bank statements, plus
+  generic Germany/EU broker trade and cash exports.
+- Add a Yahoo-based European metal price provider
+  (`com-yahoo-eu-metal`) with EUR per gram prices.
+- Add expense subcategory drilldown and separate monthly expense scopes.
+- Improve retirement goal forecasting.
+- Centralize version management in `VERSION`, including the About page
+  and the version reported by Docker images.
+- Support Indian and decimal-comma digit grouping in amount parsing.
+- Trim Yahoo stock history to the available FX range.
+- Publish Docker images at `ghcr.io/aerics84/paisa`.
+- Build with Node 24 in CI and Nix.
+
 ### 0.7.8 (2026-10-21)
 
-* Fix path traversal allowing file reads and backup deletion outside the ledger and sheet directories ([#420](https://github.com/ananthakumaran/paisa/issues/420)).
-* Treat filenames literally when finding and deleting backups.
+- Fix path traversal allowing file reads and backup deletion outside the ledger and sheet directories ([#420](https://github.com/ananthakumaran/paisa/issues/420)).
+- Treat filenames literally when finding and deleting backups.
 
 ### 0.7.7 (2026-10-18)
 
-* Allow configuring the server bind host.
-* Ignore null Yahoo prices instead of treating them as zero.
-* Show relative file paths and line ranges in Ledger sync errors.
-* Add separate Intel and Apple Silicon macOS builds.
+- Allow configuring the server bind host.
+- Ignore null Yahoo prices instead of treating them as zero.
+- Show relative file paths and line ranges in Ledger sync errors.
+- Add separate Intel and Apple Silicon macOS builds.
 
 ### 0.7.6 (2026-09-06)
 
-* Include transaction id in the export
-* Update Node.js and Go versions and remove Bun.
-* Fix the ledger formula and update fonts.
+- Include transaction id in the export
+- Update Node.js and Go versions and remove Bun.
+- Fix the ledger formula and update fonts.
 
 ### 0.7.5 (2025-12-02)
 
-* Build fixes
+- Build fixes
 
 ### 0.7.4 (2025-02-23)
 
