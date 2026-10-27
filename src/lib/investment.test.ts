@@ -197,7 +197,7 @@ describe("yearly investment card colors", () => {
     render(yearlyCard({ overall_savings_rate: 15.21 }));
 
     expect(hasColorClass("Total Surplus", "has-text-success")).toBe(true);
-    expect(hasColorClass("Total Savings Rate", "has-text-warning-dark")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-app-warning")).toBe(true);
     expect(hasColorClass("Total Savings Rate", "has-text-success")).toBe(false);
   });
 
@@ -218,7 +218,7 @@ describe("yearly investment card colors", () => {
     for (const color of ["has-text-success", "has-text-danger"]) {
       expect(hasColorClass("Total Surplus", color)).toBe(false);
     }
-    expect(hasColorClass("Total Savings Rate", "has-text-warning-dark")).toBe(true);
+    expect(hasColorClass("Total Savings Rate", "has-text-app-warning")).toBe(true);
   });
 
   test("keeps unavailable values and the investment rate neutral", () => {
@@ -236,7 +236,7 @@ describe("yearly investment card colors", () => {
     );
 
     for (const label of ["Total Surplus", "Total Savings Rate", "Investment Rate"]) {
-      for (const color of ["has-text-success", "has-text-danger", "has-text-warning-dark"]) {
+      for (const color of ["has-text-success", "has-text-danger", "has-text-app-warning"]) {
         expect(hasColorClass(label, color)).toBe(false);
       }
     }

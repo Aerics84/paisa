@@ -48,7 +48,7 @@ function savingsRateColor(available: boolean, value: number) {
     return "has-text-danger";
   }
   if (value < TARGET_SAVINGS_RATE) {
-    return "has-text-warning-dark";
+    return "has-text-app-warning";
   }
   return "has-text-success";
 }

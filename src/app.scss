@@ -263,6 +263,13 @@ svg[width="100%"] {
   background-color: $white-ter !important;
 }
 
+// Bulma's `has-text-warning-dark` uses a dark amber that is unreadable on the
+// dark theme. Use the theme-aware warning token for values that need a
+// warning color in both themes.
+.has-text-app-warning {
+  color: var(--app-warning) !important;
+}
+
 .svg-text-grey-light {
   fill: $grey-light;
 }
