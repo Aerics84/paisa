@@ -145,3 +145,16 @@ func TestCapitalIncomeWarnsAboutPartiallyMatchedSales(t *testing.T) {
 	require.Len(t, diagnostics, 1)
 	assert.Contains(t, diagnostics[0].Summary, "ohne passende Anschaffung")
 }
+
+func TestCapitalIncomeDoesNotWarnWhenTaxPostingsNetToZero(t *testing.T) {
+	incomePostings := []posting.Posting{
+		germanyTaxPosting("2025-06-01", "Income:Dividend:VWCE", "", "0", "-100"),
+	}
+	withholding := []posting.Posting{
+		germanyTaxPosting("2025-06-01", "Expenses:Broker:Taxes", "", "0", "25"),
+		germanyTaxPosting("2025-06-02", "Expenses:Broker:Taxes", "", "0", "-25"),
+	}
+	result, diagnostics := ComputeTaxOverviewCapitalIncome(nil, incomePostings, withholding, "2025")
+	assert.True(t, result.TaxesBooked.IsZero())
+	assert.Empty(t, diagnostics, "existing tax postings must not trigger the no-postings wording")
+}

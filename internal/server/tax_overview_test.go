@@ -200,6 +200,14 @@ func TestBuildTaxOverviewNegativePostingReducesTotal(t *testing.T) {
 	c := findCategory(t, overview, "extraordinary", "health")
 	assert.True(t, c.Total.Equal(decimal.RequireFromString("55")))
 	assert.Contains(t, diagnosticSummaries(overview), "Negative Aufwandsposten")
+	found := false
+	for _, diagnostic := range overview.Diagnostics {
+		if strings.Contains(diagnostic.Summary, "Negative Aufwandsposten") {
+			found = true
+			assert.Contains(t, diagnostic.Details, "-45")
+		}
+	}
+	assert.True(t, found, "negative posting diagnostic missing")
 }
 
 func TestBuildTaxOverviewCoverageGroupsByAccount(t *testing.T) {

@@ -438,7 +438,7 @@ func taxPostingExamples(ps []posting.Posting, limit int) string {
 		if i >= limit {
 			break
 		}
-		examples = append(examples, fmt.Sprintf("%s %s (%s)", p.Date.Format("2006-01-02"), p.Payee, p.Account))
+		examples = append(examples, fmt.Sprintf("%s %s (%s) %s", p.Date.Format("2006-01-02"), p.Payee, p.Account, p.Amount.String()))
 	}
 	joined := strings.Join(examples, "; ")
 	if len(ps) > limit {

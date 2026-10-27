@@ -76,16 +76,18 @@ func ComputeTaxOverviewCapitalIncome(investmentPostings, incomePostings, withhol
 		}
 	}
 
+	hasWithholdingTaxPostings := false
 	for _, p := range withholdingTaxPostings {
 		if p.Date.Format("2006") != year {
 			continue
 		}
 		if utils.IsSameOrParent(p.Account, "Expenses:Broker:Taxes") {
+			hasWithholdingTaxPostings = true
 			result.TaxesBooked = result.TaxesBooked.Add(p.Amount)
 		}
 	}
 
-	if hasIncome && result.TaxesBooked.IsZero() {
+	if hasIncome && !hasWithholdingTaxPostings {
 		diagnostics = append(diagnostics, TaxOverviewDiagnostic{
 			Level:   "warning",
 			Summary: "Dividendeneingänge ohne gebuchte Steuern; der Betrag kann netto sein. Bitte Broker-Abrechnung prüfen.",

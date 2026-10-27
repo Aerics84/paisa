@@ -11,6 +11,7 @@
   let expandedSections: Record<string, boolean> = {};
   let coverageExpanded = false;
   let error = "";
+  let loadSequence = 0;
 
   function apply(data: TaxOverview) {
     overview = data;
@@ -19,10 +20,21 @@
   }
 
   async function load(year?: string) {
+    const sequence = ++loadSequence;
     error = "";
     try {
-      apply(await ajax(year ? `/api/tax_overview?year=${year}` : "/api/tax_overview"));
+      const data = await ajax(year ? `/api/tax_overview?year=${year}` : "/api/tax_overview");
+      if (sequence !== loadSequence) {
+        return;
+      }
+      apply(data);
     } catch {
+      if (sequence !== loadSequence) {
+        return;
+      }
+      if (overview) {
+        selectedYear = overview.selected_year;
+      }
       error = "Die Steuerübersicht konnte nicht geladen werden.";
     }
   }
