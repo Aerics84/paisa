@@ -155,11 +155,10 @@
   }
 
   if (supportsGermanyTaxFeatures(USER_CONFIG)) {
-    tax.children.push({
-      label: "Capital Income",
-      href: "/capital_income",
-      help: "tax"
-    });
+    tax.children.push(
+      { label: "Overview", href: "/overview", help: "tax" },
+      { label: "Capital Income", href: "/capital_income", help: "tax" }
+    );
   }
 
   if (supportsScheduleAL(USER_CONFIG)) {
