@@ -5,7 +5,7 @@
 
   const links = [
     { name: "Chat", href: "https://matrix.to/#/#paisa:matrix.org", icon: "fa-solid fa-headset" },
-    { name: "Issue", href: "https://github.com/ananthakumaran/paisa/issues", icon: "fas fa-bug" },
+    { name: "Issue", href: "https://github.com/Aerics84/paisa/issues", icon: "fas fa-bug" },
     {
       name: "Discussions",
       href: "https://github.com/ananthakumaran/paisa/discussions",
@@ -13,19 +13,24 @@
     },
     {
       name: "Source Code",
-      href: "https://github.com/ananthakumaran/paisa",
+      href: "https://github.com/Aerics84/paisa",
       icon: "fa-solid fa-code"
     },
     { name: "Documentation", href: "https://paisa.fyi", icon: "fa-solid fa-book" },
     {
       name: "Releases",
-      href: "https://github.com/ananthakumaran/paisa/releases",
+      href: "https://github.com/Aerics84/paisa/releases",
       icon: "fa-solid fa-download"
     },
     {
-      name: "Demo",
+      name: "Demo (upstream)",
       href: "https://demo.paisa.fyi",
       icon: "fa-solid fa-video"
+    },
+    {
+      name: "Upstream project",
+      href: "https://github.com/ananthakumaran/paisa",
+      icon: "fa-solid fa-code-branch"
     }
   ];
 
@@ -53,6 +58,18 @@
           <div class="is-size-3 is-primary-color">Paisa</div>
           <div>
             Version: <b>{version}</b>
+          </div>
+          <div class="is-size-7 mt-2">
+            Fork of <a
+              href="https://github.com/ananthakumaran/paisa"
+              on:click|preventDefault={(_e) =>
+                externalLink("https://github.com/ananthakumaran/paisa")}>ananthakumaran/paisa</a
+            >, maintained by
+            <a
+              href="https://github.com/Aerics84/paisa"
+              on:click|preventDefault={(_e) => externalLink("https://github.com/Aerics84/paisa")}
+              >Aerics84</a
+            >
           </div>
         </div>
 
