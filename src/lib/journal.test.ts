@@ -3,7 +3,7 @@ import { format } from "./journal";
 import fs from "fs";
 
 function readFixture(name: string) {
-  return fs.readFileSync(`fixture/${name}`).toString();
+  return fs.readFileSync(`fixture/${name}`).toString().replace(/\r\n/g, "\n");
 }
 
 describe("journal", () => {

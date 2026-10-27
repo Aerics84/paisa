@@ -1199,6 +1199,49 @@
         "enum": ["", "india", "germany-eu"],
         "default": "india"
       },
+      "tax_deductions": {
+        "additionalProperties": false,
+        "description": "Account rules for the Germany tax overview. When unset, built-in rules for health insurance, health costs, other insurance and tax advice are used. An empty accounts list disables account matching; an explicit list replaces the defaults. Matching is done on whole account segments; the longest prefix wins.",
+        "properties": {
+          "accounts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "account": {
+                  "description": "Expense account prefix, for example Expenses:Health. Wildcards are not allowed.",
+                  "pattern": "^Expenses:[^:*]+(:[^:*]+)*$",
+                  "type": "string"
+                },
+                "category": {
+                  "description": "Tax category from the Germany catalog.",
+                  "enum": [
+                    "work_equipment",
+                    "work_training",
+                    "work_travel",
+                    "work_commute",
+                    "work_home_office",
+                    "work_phone_internet",
+                    "tax_advice",
+                    "work_other",
+                    "health_insurance",
+                    "other_insurance",
+                    "health",
+                    "household_service",
+                    "craftsman",
+                    "donation"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": ["account", "category"],
+              "type": "object",
+              "ui:header": "account"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "tax_regime": {
         "type": "string",
         "description": "Selects the tax ruleset and region-specific tax UI. This is independent of default currency.",

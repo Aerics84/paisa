@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -69,23 +70,25 @@ func TestOpenDBAppliesPragmasToEveryConnection(t *testing.T) {
 }
 
 func TestBuildSubPath(t *testing.T) {
-	path, err := BuildSubPath("/usr/home/john/paisa", "main.ledger")
+	baseDirectory := filepath.FromSlash("/usr/home/john/paisa")
+
+	path, err := BuildSubPath(baseDirectory, "main.ledger")
 	assert.Nil(t, err)
-	assert.Equal(t, "/usr/home/john/paisa/main.ledger", path)
+	assert.Equal(t, filepath.Join(baseDirectory, "main.ledger"), path)
 
-	path, err = BuildSubPath("/usr/home/john/paisa", "subfolder/main.ledger")
+	path, err = BuildSubPath(baseDirectory, "subfolder/main.ledger")
 	assert.Nil(t, err)
-	assert.Equal(t, "/usr/home/john/paisa/subfolder/main.ledger", path)
+	assert.Equal(t, filepath.Join(baseDirectory, "subfolder", "main.ledger"), path)
 
-	path, err = BuildSubPath("/usr/home/john/paisa", "../../../subfolder/travel.ledger")
+	path, err = BuildSubPath(baseDirectory, "../../../subfolder/travel.ledger")
 	assert.Error(t, err)
 
-	path, err = BuildSubPath("/usr/home/john/paisa", "..")
+	path, err = BuildSubPath(baseDirectory, "..")
 	assert.Error(t, err)
 
-	path, err = BuildSubPath("/usr/home/john/paisa", "./..")
+	path, err = BuildSubPath(baseDirectory, "./..")
 	assert.Error(t, err)
 
-	path, err = BuildSubPath("/usr/home/john/paisa", "./../test.ledger")
+	path, err = BuildSubPath(baseDirectory, "./../test.ledger")
 	assert.Error(t, err)
 }
