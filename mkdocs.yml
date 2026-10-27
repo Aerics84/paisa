@@ -33,6 +33,7 @@ nav:
       - reference/dependency-maintenance.md
       - "Tax":
           - reference/tax/index.md
+          - reference/tax/deductions.md
           - reference/tax/capital-income.md
           - reference/tax/tax-harvesting.md
           - reference/tax/capital-gains.md

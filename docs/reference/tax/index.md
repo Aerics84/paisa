@@ -8,6 +8,9 @@ optimization.
 - `india` tax regime: tax harvesting, capital gains, and Schedule AL.
 - `germany` tax regime: capital income reporting with annual allowance,
   capital income tax, solidarity surcharge, and optional church tax.
+- `germany` tax regime: annual [tax overview](deductions.md) with
+  deductible-expense candidates grouped by return section, coverage
+  checks, raw Anlage KAP values and CSV export.
 
 ## Disclaimer
 

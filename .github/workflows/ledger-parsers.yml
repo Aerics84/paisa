@@ -1,0 +1,19 @@
+name: Ledger Parsers
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  parsers:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: sudo apt-get update && sudo apt-get install -y ledger hledger pipx
+      - run: pipx install beancount==2.3.6
+      - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: ledger --version && hledger --version && bean-query --version
+      - run: go test ./internal/ledger -run 'TestLedgerCLIParsesTaxCategoryAndLegacyTag|TestBeancountReadsPostingMetaOnly|TestHLedgerReadsTaxCategoryAfterRecurringTag' -count=1 -v
