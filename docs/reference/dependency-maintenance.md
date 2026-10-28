@@ -150,6 +150,12 @@ The parser output also changes. On `tests/fixture/inr-beancount/main.beancount`,
 
 Decision: this branch stays on **beancount 2.3.6** (CI and both Docker variants). A follow-up spike must replace `bean-report` with bean-query queries, add `beanquery` to CI and the images, and review the valuation delta before switching.
 
+## Font Generator
+
+`tools/fontgen/package-lock.json` is intentionally separate from the root lockfile: `tools/fontgen` is an independent package directory whose dependencies resolve on their own. It defines **no** separate Node runtime; the generator uses the repository baseline Node 24.22.1, which satisfies `svgicons2svgfont`'s `>=24.14.0` engine requirement. A dedicated runtime would only be acceptable if it were declared here and used by CI.
+
+`tools/fontgen/generate-font.js` passes `ts: 0` to `svg2ttf`. Without it, svg2ttf stamps the TTF `head` table with the current time and every regenerated `woff2` differs; with the fixed timestamp two consecutive runs produce identical font hashes.
+
 ## CI Runners
 
 `ledger-parsers.yml` runs on `ubuntu-24.04`. The release workflows (`linux-app`, `linux-cli`) stay on `ubuntu-22.04` because Wails needs `libwebkit2gtk-4.0-dev`; moving those runners is a separate migration.

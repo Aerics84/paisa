@@ -73,7 +73,10 @@ async function createFont(font) {
     id: font,
     familyname: font,
     fullname: font,
-    version: "1.0"
+    version: "1.0",
+    // Reproducible builds: svg2ttf otherwise stamps head.created/modified
+    // with the current time, which changes every woff2 hash.
+    ts: 0
   });
   const ttfBuffer = Buffer.from(ttf.buffer);
   const woff2 = ttf2woff2(ttfBuffer);
@@ -82,7 +85,7 @@ async function createFont(font) {
   writeFileSync(join(outputDir, `${font}.woff2`), woff2);
   writeFileSync(
     join(outputDir, `${font}-info.json`),
-    JSON.stringify({ codepoints: infoData }),
+    JSON.stringify({ codepoints: infoData }, null, 2) + "\n",
     "utf8"
   );
 
