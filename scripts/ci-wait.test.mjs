@@ -29,7 +29,7 @@ function clock() {
     now: () => value,
     sleep: async (ms) => {
       value += ms;
-    },
+    }
   };
 }
 
@@ -43,7 +43,7 @@ async function wait(overrides = {}) {
     now,
     sleep,
     runGh: ghStub([run(1, "Test", "completed", "success")], { 1: [job("test")] }),
-    ...overrides,
+    ...overrides
   });
 }
 
@@ -58,7 +58,7 @@ test("all expected workflows and jobs green exits 0", async () => {
 test("missing workflow times out with exit 1", async () => {
   const result = await wait({
     expectWorkflows: ["Test", "Ledger Parsers"],
-    runGh: ghStub([run(1, "Test", "completed", "success")], { 1: [job("test")] }),
+    runGh: ghStub([run(1, "Test", "completed", "success")], { 1: [job("test")] })
   });
 
   assert.equal(result.exitCode, 1);
@@ -67,7 +67,9 @@ test("missing workflow times out with exit 1", async () => {
 
 test("a completed non-success run exits 1", async () => {
   const result = await wait({
-    runGh: ghStub([run(1, "Test", "completed", "failure")], { 1: [job("test", "completed", "failure")] }),
+    runGh: ghStub([run(1, "Test", "completed", "failure")], {
+      1: [job("test", "completed", "failure")]
+    })
   });
 
   assert.equal(result.exitCode, 1);
@@ -78,8 +80,8 @@ test("an expected job that failed exits 1", async () => {
   const result = await wait({
     expectJobs: ["test"],
     runGh: ghStub([run(1, "Test", "completed", "success")], {
-      1: [job("test", "completed", "failure")],
-    }),
+      1: [job("test", "completed", "failure")]
+    })
   });
 
   assert.equal(result.exitCode, 1);
@@ -89,7 +91,7 @@ test("an expected job that failed exits 1", async () => {
 test("an expected job that is absent exits 1", async () => {
   const result = await wait({
     expectJobs: ["matrix-job"],
-    runGh: ghStub([run(1, "Test", "completed", "success")], { 1: [job("test")] }),
+    runGh: ghStub([run(1, "Test", "completed", "success")], { 1: [job("test")] })
   });
 
   assert.equal(result.exitCode, 1);
@@ -109,7 +111,7 @@ test("passes --repo to every gh command when configured", async () => {
         return JSON.stringify({ jobs: [job("test")] });
       }
       throw new Error(`unexpected gh args: ${args.join(" ")}`);
-    },
+    }
   });
 
   assert.equal(result.exitCode, 0);
@@ -124,10 +126,10 @@ test("the newest run for a commit wins", async () => {
     runGh: ghStub(
       [
         run(2, "Test", "completed", "success", "2026-10-28T11:00:00Z"),
-        run(1, "Test", "completed", "failure", "2026-10-28T10:00:00Z"),
+        run(1, "Test", "completed", "failure", "2026-10-28T10:00:00Z")
       ],
-      { 2: [job("test")] },
-    ),
+      { 2: [job("test")] }
+    )
   });
 
   assert.equal(result.exitCode, 0);

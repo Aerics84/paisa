@@ -7,12 +7,12 @@ const DEFAULT_INTERVAL_SECONDS = 10;
 function defaultRunGh(args) {
   const result = spawnSync("gh", args, {
     encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
+    maxBuffer: 64 * 1024 * 1024
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(
-      `gh ${args.join(" ")} failed (${result.status}): ${result.stderr?.trim() || "unknown error"}`,
+      `gh ${args.join(" ")} failed (${result.status}): ${result.stderr?.trim() || "unknown error"}`
     );
   }
   return result.stdout;
@@ -48,7 +48,7 @@ async function listRuns({ commit, branch, workflow, repo, runGh }) {
     "--limit",
     "100",
     "--json",
-    "databaseId,workflowName,status,conclusion,headBranch,createdAt",
+    "databaseId,workflowName,status,conclusion,headBranch,createdAt"
   ];
   if (repo) args.push("--repo", repo);
   if (branch) args.push("--branch", branch);
@@ -86,7 +86,7 @@ export async function waitForRuns({
   intervalMs = DEFAULT_INTERVAL_SECONDS * 1000,
   runGh = defaultRunGh,
   sleep = defaultSleep,
-  now = Date.now,
+  now = Date.now
 }) {
   const startedAt = now();
   const summary = {
@@ -99,7 +99,7 @@ export async function waitForRuns({
     missing: [],
     failed: [],
     errors: [],
-    timed_out: false,
+    timed_out: false
   };
 
   while (true) {
@@ -132,7 +132,7 @@ export async function waitForRuns({
         workflowName: name,
         databaseId: run.databaseId,
         status: run.status,
-        conclusion: run.conclusion,
+        conclusion: run.conclusion
       });
       if (run.status === "completed" && run.conclusion !== "success") {
         summary.failed.push({ workflow: name, conclusion: run.conclusion });
@@ -144,8 +144,7 @@ export async function waitForRuns({
     }
 
     const allCompleted =
-      summary.missing.length === 0 &&
-      expectedRuns.every((run) => run.status === "completed");
+      summary.missing.length === 0 && expectedRuns.every((run) => run.status === "completed");
 
     if (allCompleted) {
       let jobFailure = false;
@@ -172,7 +171,7 @@ export async function waitForRuns({
               workflow: run.workflowName,
               name: job.name,
               status: job.status,
-              conclusion: job.conclusion,
+              conclusion: job.conclusion
             });
             if (job.status !== "completed") {
               jobPending = true;
@@ -213,7 +212,7 @@ function parseArgs(argv) {
     expectWorkflows: [],
     expectJobs: [],
     timeoutMs: DEFAULT_TIMEOUT_SECONDS * 1000,
-    intervalMs: DEFAULT_INTERVAL_SECONDS * 1000,
+    intervalMs: DEFAULT_INTERVAL_SECONDS * 1000
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -254,8 +253,8 @@ async function main() {
     console.log(
       [
         "usage: node scripts/ci-wait.mjs --commit <sha> [--repo <owner/name>] [--branch <b>] [--workflow <name>]",
-        "  --expect-workflow <name>... [--expect-job <name>...] [--timeout 1800] [--interval 10]",
-      ].join("\n"),
+        "  --expect-workflow <name>... [--expect-job <name>...] [--timeout 1800] [--interval 10]"
+      ].join("\n")
     );
     return;
   }
