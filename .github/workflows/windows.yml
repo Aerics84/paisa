@@ -29,13 +29,12 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-gmp
-            mingw-w64-x86_64-libedit
             mingw-w64-x86_64-make
             mingw-w64-x86_64-mpfr
             mingw-w64-x86_64-python
             mingw-w64-x86_64-texinfo
             mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-utfcpp
+            mingw-w64-x86_64-utf8cpp
       - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
