@@ -70,32 +70,17 @@ function makeRow(cells: TextItemWithPosition[]): string[] {
 }
 
 /**
- * Loads a PDF file and returns text values arranged into a
- * 2d array.
+ * Arrange the text items of a list of pages into rows of cells.
  *
- * @param data
+ * This is the pure row-building part of PDF extraction; it performs no I/O.
  */
-export async function pdf2array(data: ArrayBuffer): Promise<string[][]> {
-  const pdfjs = await getPdfJs();
-  const loader = pdfjs.getDocument(data);
-  loader.onPassword = (cb: any) => {
-    const password = prompt(
-      "Please enter the password to open this PDF file. Press cancel to exit."
-    );
-    if (password === null) {
-      throw new Error("Password required.");
-    }
-    cb(password);
-  };
-  const doc = await loader.promise;
-
+export function rowsFromPages(
+  pages: { page: number; items: TextItem[] }[]
+): string[][] {
   const rows: Row[] = [];
   let currentRow: Row = undefined;
 
-  for (let i = 0; i < doc.numPages; ++i) {
-    const page = await doc.getPage(i + 1);
-    const text = await page.getTextContent();
-
+  for (const { page: pageNumber, items: pageItems } of pages) {
     // Start a new row for this page
     if (currentRow !== undefined) {
       rows.push(currentRow);
@@ -103,7 +88,7 @@ export async function pdf2array(data: ArrayBuffer): Promise<string[][]> {
     }
 
     // Get the position of each item in page space first and remove any zero size items
-    const items: TextItemWithPosition[] = (text.items as TextItem[])
+    const items: TextItemWithPosition[] = pageItems
       .filter((item) => item.width > 0 && item.height > 0)
       .map((item) => {
         const [left, top] = _transform(0, 0, item.transform);
@@ -149,7 +134,7 @@ export async function pdf2array(data: ArrayBuffer): Promise<string[][]> {
 
         // And start a new row
         currentRow = {
-          page: i,
+          page: pageNumber,
           rowNumber: rows.length,
           y: item.y,
           xs: [item.x],
@@ -169,4 +154,40 @@ export async function pdf2array(data: ArrayBuffer): Promise<string[][]> {
   }
 
   return rows.map((row) => makeRow(row.items));
+}
+
+/**
+ * Loads a PDF file and returns text values arranged into a
+ * 2d array.
+ *
+ * @param data
+ * @param loadPdfJs
+ */
+export async function pdf2array(
+  data: ArrayBuffer,
+  loadPdfJs: () => Promise<PdfJsModule> = getPdfJs
+): Promise<string[][]> {
+  const pdfjs = await loadPdfJs();
+  // pdfjs 6 requires a parameter object instead of a raw ArrayBuffer.
+  const loader = pdfjs.getDocument({ data });
+  loader.onPassword = (cb: any) => {
+    const password = prompt(
+      "Please enter the password to open this PDF file. Press cancel to exit."
+    );
+    if (password === null) {
+      throw new Error("Password required.");
+    }
+    cb(password);
+  };
+  const doc = await loader.promise;
+
+  const pages: { page: number; items: TextItem[] }[] = [];
+
+  for (let i = 0; i < doc.numPages; ++i) {
+    const page = await doc.getPage(i + 1);
+    const text = await page.getTextContent();
+    pages.push({ page: i, items: text.items as TextItem[] });
+  }
+
+  return rowsFromPages(pages);
 }
