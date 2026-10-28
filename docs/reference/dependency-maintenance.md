@@ -13,6 +13,20 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 
 GitHub Actions, local development, and Nix-based workflows should converge on this baseline unless a workflow documents a deliberate exception.
 
+## npm 12 (deferred)
+
+npm 12 is **not** part of this refresh. It was pre-checked locally on 2026-10-28 with `npx -y npm@12.2.1` (`--version`, `ci`, `run check`, `run build`): all exited 0 and `git diff --exit-code package-lock.json` stayed clean. Full `npm run lint` remains red on the Windows checkout because of the pre-existing CRLF Prettier diff across 241 files; the changed-file gate used by CI is unaffected. This pre-check is informative only, not a binding gate.
+
+npm 11.19 remains the supported package manager for this branch. npm 12 is upgraded in its own follow-up PR **after** this refresh merges:
+
+1. `workflow_dispatch` workflows must be registered on the default branch. An `npm12-gate.yml` created only on a temporary branch is not a reliable trigger and can fail with `gh workflow run --ref`.
+2. Add `npm12-gate.yml` with `workflow_dispatch` on the default branch.
+3. Matrix: `ubuntu-latest`, `windows-latest`, `macos-latest`.
+4. Acceptance: `npm -v` reports `12.2.1` on all three platforms; `package-lock.json` stays unchanged; P-JS, P-REG and P-PDF are green; all three matrix jobs are found and report `success`.
+5. Only then switch `packageManager`, workflows and Dockerfiles, and inventory every npm call site.
+
+"Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms". npm 12 does not block the completion of the remaining phases.
+
 ## Routine Refreshes
 
 These changes are safe to batch together when they stay within the current major version:
