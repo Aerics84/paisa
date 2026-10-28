@@ -48,11 +48,17 @@ npm run test:regression
 
 For local change safety, `git push` also runs the critical subset automatically via [`scripts/preflight-critical.mjs`](../../scripts/preflight-critical.mjs): changed-file formatting, `npm run check`, import and regression tests, `npm run build`, and a Go build.
 
-If the Nix dependency snapshot is expected to stay in sync with `package-lock.json`, regenerate it after the lockfile changes:
+The web assets and the Go binary are built from the flake. When `package-lock.json` or `go.sum` changes, refresh the flake inputs and let Nix report the new hashes:
 
 ```bash
-npx node2nix --development --input package.json --lock package-lock.json --node-env ./flake/node-env.nix --composition ./flake/default.nix --output ./flake/node-package.nix
+nix flake update nixpkgs
+nix build .#paisa-web
+nix build .#default
 ```
+
+`buildNpmPackage` reads the root `package-lock.json`; node2nix is no longer used. A Nix hash mismatch reports the expected `npmDepsHash`/`vendorHash`, which is then written into `flake.nix` and the build is repeated. There is no separate generated dependency snapshot to keep in sync.
+
+The flake pins `nixpkgs` to `nixos-26.05`. That stable branch is supported until 2026-12-31; the next refresh targets `nixos-26.11` within two weeks of its release (owner: repository maintainer).
 
 ## Major Upgrade Waves
 

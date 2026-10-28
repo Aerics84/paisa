@@ -84,11 +84,3 @@ fixture/main.transactions.json:
 generate-fonts:
 	npm --prefix tools/fontgen install
 	npm --prefix tools/fontgen run generate-fonts
-
-node2nix:
-	npm install --lockfile-version 2
-	node2nix --development -18 --input package.json \
-	--lock package-lock.json \
-	--node-env ./flake/node-env.nix \
-	--composition ./flake/default.nix \
-	--output ./flake/node-package.nix

@@ -1,5 +1,6 @@
 {
   description = "paisa";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   # Pin hldeger to 1.32.x; 1.40 has a bug related to chained price calculation
   # https://github.com/simonmichael/hledger/issues/2254
   inputs.hledger-pkgs.url =
@@ -22,11 +23,6 @@
           buildInputs = [ pkgs.stdenv.cc.cc.lib ];
           preBuild = "autoPatchelf .";
           npmDepsHash = "sha256-NDIyTkTBHjUBYbukCp6HZoVyCRNNdwbz4nf4+URc30M=";
-          # nixpkgs at this pin ships npm 11.3, which rejects the npm 11.19 lockfile
-          # ("Missing: picomatch@ from lock file"). The peer graph is already
-          # materialized in package-lock.json, so legacy resolution is safe here.
-          # Re-evaluate after the nixpkgs pin update in Task 22.
-          npmFlags = [ "--legacy-peer-deps" ];
           npmBuildScript = "build";
           installPhase = ''
             runHook preInstall
@@ -50,7 +46,7 @@
 
             src = ./.;
 
-            vendorHash = "sha256-5jrxI+zSKbopGs5GmGVyqQcMHNZJbCsiFEH/LPXWxpk=";
+            vendorHash = "sha256-Cjqnoju7klZzFDVBa7m8RpQo6DqJruCO246zNGMAN1o=";
 
             env = {
               CGO_ENABLED = 1;

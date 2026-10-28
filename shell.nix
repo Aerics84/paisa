@@ -2,21 +2,18 @@
 
 pkgs.mkShell {
   nativeBuildInputs = [
-    # The nixpkgs pin still ships node2nix. Moving this to Go 1.26 requires
-    # migrating the flake to buildNpmPackage first, since nixpkgs 26.11
-    # removed node2nix.
-    pkgs.go_1_24
+    # Go 1.26 matches go.mod; nixpkgs 26.05 provides go_1_26.
+    pkgs.go_1_26
     pkgs.gotools
     pkgs.gopls
     pkgs.sqlite
     pkgs.nodejs_24
     pkgs.libuuid
     pkgs.bun
-    pkgs.node2nix
     # pkgs.pkgsCross.mingwW64.buildPackages.gcc
 
-    pkgs.python312Packages.mkdocs-material
-    pkgs.python312Packages.beancount_2
+    pkgs.python3Packages.mkdocs-material
+    pkgs.python3Packages.beancount_2
 
     # test
     pkgs.ledger
