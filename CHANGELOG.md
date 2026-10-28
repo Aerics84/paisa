@@ -4,7 +4,7 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
-### Unreleased
+### 0.8.5.3 (2026-10-28)
 
 - Refresh the toolchain baseline: Node 24.22.1, npm 11.19.1, Bun 1.4.4,
   Go 1.26.10, Alpine 3.24.
