@@ -4,6 +4,16 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.5.2 (2026-10-28)
+
+- Move the tax pages from `/more/tax` to `/tax`, so they are reachable
+  directly from the top-level navigation.
+- Remove the help question marks from the breadcrumb.
+- Correct the fork release history to `0.8.1`, `0.8.2`, `0.8.4` and
+  `0.8.5.1`.
+- Hide the India-only portfolio analysis page and the mutual-fund
+  portfolio sync action outside the `india` regional profile.
+
 ### 0.8.5.1 (2026-10-27)
 
 - Fix accessibility warnings in the navbar and on the demo button.
