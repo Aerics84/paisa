@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Actions from "$lib/components/Actions.svelte";
   import { month, year, dateMax, dateMin, dateRangeOption } from "../../store";
   import {
@@ -189,7 +189,7 @@
   let selectedSubSubLink: Link = null;
   let openMobileDropdown: string = null;
 
-  $: normalizedPath = $page.url.pathname?.replace(/(.+)\/$/, "");
+  $: normalizedPath = page.url.pathname?.replace(/(.+)\/$/, "");
 
   $: if (normalizedPath) {
     selectedSubLink = null;

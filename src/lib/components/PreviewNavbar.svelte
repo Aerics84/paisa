@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import Actions from "$lib/components/Actions.svelte";
   import { month, year, dateMax, dateMin, dateRangeOption } from "../../store";
   import {
@@ -254,7 +254,7 @@
   let selectedSubLink: Link = null;
   let selectedSubSubLink: Link = null;
 
-  $: pathname = $page.url.pathname?.replace(/(.+)\/$/, "") || prefix;
+  $: pathname = page.url.pathname?.replace(/(.+)\/$/, "") || prefix;
   $: normalizedPath =
     pathname === prefix
       ? "/"

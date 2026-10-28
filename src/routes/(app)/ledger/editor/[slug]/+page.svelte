@@ -20,7 +20,7 @@
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
   import FileModal from "$lib/components/FileModal.svelte";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
 
   export let data: PageData;
   let editorDom: Element;
@@ -68,7 +68,7 @@
   });
 
   async function navigate(url: string) {
-    await goto(url, { noScroll: true });
+    await goto(url, { reset: false });
     if (cancelled) {
       cancelled = false;
       return false;
@@ -78,7 +78,7 @@
 
   onMount(async () => {
     loadFiles(data.name);
-    const line = _.toNumber($page.url.hash.substring(1));
+    const line = _.toNumber(page.url.hash.substring(1));
     if (_.isNumber(line)) {
       lineNumber = line;
     }

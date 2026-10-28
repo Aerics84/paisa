@@ -1,4 +1,6 @@
 import { sveltekit } from "@sveltejs/kit/vite";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import adapter from "@sveltejs/adapter-static";
 
 /** @type {import('vite').UserConfig} */
 const config = {
@@ -41,7 +43,24 @@ const config = {
       }
     }
   },
-  plugins: [sveltekit()],
+  plugins: [
+    sveltekit({
+      alias: { $lib: "src/lib" },
+      preprocess: vitePreprocess(),
+
+      onwarn: (warning, handler) => {
+        if (warning.code.startsWith("a11y-")) return;
+        handler(warning);
+      },
+
+      adapter: adapter({
+        pages: "web/static",
+        assets: "web/static",
+        out: "web/static",
+        fallback: "index.html"
+      })
+    })
+  ],
   server: {
     proxy: {
       "/api": {
