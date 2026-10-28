@@ -14,15 +14,15 @@ jobs:
   linux-app-binary:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixos-24.11
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: npm
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.26.10"
       - uses: vegardit/fast-apt-mirror.sh@v1
@@ -46,7 +46,7 @@ jobs:
           cd ..
           mv "desktop/paisa_${VERSION}_amd64.deb" paisa-app-linux-amd64.deb
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           files: |
