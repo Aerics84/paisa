@@ -11,41 +11,63 @@
         pkgs = nixpkgs.legacyPackages.${system};
         hledger = hledger-pkgs.legacyPackages.${system};
         version = builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile ./VERSION);
-        nodeDependencies = (pkgs.callPackage ./flake/override.nix {
+        paisaWeb = pkgs.buildNpmPackage {
+          pname = "paisa-web";
+          inherit version;
+          src = ./.;
           nodejs = pkgs.nodejs_24;
-        }).nodeDependencies;
+          # sass-embedded ships a prebuilt Dart binary; without patching it is
+          # bound to the FHS loader and dies with ENOENT on NixOS.
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = [ pkgs.stdenv.cc.cc.lib ];
+          preBuild = "autoPatchelf .";
+          npmDepsHash = "sha256-NDIyTkTBHjUBYbukCp6HZoVyCRNNdwbz4nf4+URc30M=";
+          # nixpkgs at this pin ships npm 11.3, which rejects the npm 11.19 lockfile
+          # ("Missing: picomatch@ from lock file"). The peer graph is already
+          # materialized in package-lock.json, so legacy resolution is safe here.
+          # Re-evaluate after the nixpkgs pin update in Task 22.
+          npmFlags = [ "--legacy-peer-deps" ];
+          npmBuildScript = "build";
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out
+            cp -r web/static $out/static
+            runHook postInstall
+          '';
+        };
       in {
         devShells.default = import ./shell.nix {
           inherit pkgs;
           inherit hledger;
         };
 
-        packages.default = pkgs.buildGoModule {
-          pname = "paisa-cli";
-          meta.mainProgram = "paisa";
-          inherit version;
-          ldflags = [ "-X github.com/ananthakumaran/paisa/internal/version.current=${version}" ];
+        packages = {
+          default = pkgs.buildGoModule {
+            pname = "paisa-cli";
+            meta.mainProgram = "paisa";
+            inherit version;
+            ldflags = [ "-X github.com/ananthakumaran/paisa/internal/version.current=${version}" ];
 
-          src = ./.;
+            src = ./.;
 
-          nativeBuildInputs = [ pkgs.nodejs_24 ];
+            vendorHash = "sha256-5jrxI+zSKbopGs5GmGVyqQcMHNZJbCsiFEH/LPXWxpk=";
 
-          vendorHash = "sha256-5jrxI+zSKbopGs5GmGVyqQcMHNZJbCsiFEH/LPXWxpk=";
+            env = {
+              CGO_ENABLED = 1;
+            };
 
-          env = {
-            CGO_ENABLED = 1;
+            doCheck = false;
+
+            subPackages = [ "." ];
+
+            preConfigure = ''
+              rm -rf web/static
+              cp -r ${paisaWeb}/static web/static
+            '';
+
           };
 
-          doCheck = false;
-
-          subPackages = [ "." ];
-
-          preConfigure = ''
-            ln -s ${nodeDependencies}/lib/node_modules ./node_modules
-            export PATH="${nodeDependencies}/.bin:$PATH"
-            npm run build
-          '';
-
+          "paisa-web" = paisaWeb;
         };
       });
 }
