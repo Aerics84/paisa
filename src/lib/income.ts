@@ -56,9 +56,7 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
     month: string;
     [key: string]: number | string | dayjs.Dayjs;
   }
-  let points: Point[] = [];
-
-  points = _.map(incomes, (i) => {
+  const points: Point[] = _.map(incomes, (i) => {
     const values = _.chain(i.postings)
       .groupBy((p) => incomeGroup(p))
       .flatMap((postings, key) => [[key, _.sumBy(postings, (p) => -p.amount)]])

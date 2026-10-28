@@ -4,6 +4,26 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### Unreleased
+
+- Refresh the toolchain baseline: Node 24.22.1, npm 11.19.1, Bun 1.4.4,
+  Go 1.26.10, Alpine 3.24.
+- Upgrade the frontend stack: Svelte 5.57, SvelteKit 3.1, Vite 8.3,
+  TypeScript 6.0, ESLint 10, Prettier 3.9, Font Awesome 7, Tabulator 6.7,
+  and the numeric/color/format libraries.
+- Upgrade the Go stack (Gin 1.12, GORM 1.31, Wails 2.17, SQLite) and
+  close the `golang.org/x/net` and `x/crypto` security findings.
+- Upgrade hledger to 1.52.4 and add a chained-price regression test;
+  keep beancount 2.3.6 because v3 removes `bean-report` and moves
+  `bean-query` to the separate `beanquery` package.
+- Move the Nix web build to `buildNpmPackage`, update the flake to
+  `nixos-26.05`, and remove node2nix.
+- Add a machine-readable dependency audit gate (npm + govulncheck) to CI
+  and weekly Dependabot updates; the gate blocks confirmed critical/high
+  findings. npm 12 is deferred to a default-branch follow-up PR.
+- Freeze the refreshed dependency set and record the verified commit in
+  `docs/reference/dependency-freeze.md`.
+
 ### 0.8.5.2 (2026-10-28)
 
 - Move the tax pages from `/more/tax` to `/tax`, so they are reachable

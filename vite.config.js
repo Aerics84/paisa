@@ -1,4 +1,5 @@
 import { sveltekit } from "@sveltejs/kit/vite";
+import svelteConfig from "./svelte.config.shared.js";
 
 /** @type {import('vite').UserConfig} */
 const config = {
@@ -41,7 +42,7 @@ const config = {
       }
     }
   },
-  plugins: [sveltekit()],
+  plugins: [sveltekit(svelteConfig)],
   server: {
     proxy: {
       "/api": {

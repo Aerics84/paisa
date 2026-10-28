@@ -22,7 +22,7 @@ class SchedulePreview extends WidgetType {
   }
 
   toDOM() {
-    let text = "";
+    let text: string;
     try {
       const cron = parse(prefixMinutesSeconds(this.period), { hasSeconds: false });
       const schedules = getFutureMatches(cron, {

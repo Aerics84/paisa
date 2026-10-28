@@ -1,4 +1,4 @@
-import type { HandleClientError } from "@sveltejs/kit";
+import type { HandleClientError } from "@sveltejs/kit/hooks";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
@@ -37,9 +37,9 @@ import { formatError, isResizeObserverLoopError } from "$lib/error";
 import * as toast from "bulma-toast";
 import _ from "lodash";
 
-import "@formatjs/intl-numberformat/polyfill";
-import "@formatjs/intl-numberformat/locale-data/de";
-import "@formatjs/intl-numberformat/locale-data/en";
+import "@formatjs/intl-numberformat/polyfill.js";
+import "@formatjs/intl-numberformat/locale-data/de.js";
+import "@formatjs/intl-numberformat/locale-data/en.js";
 
 Handlebars.registerHelper(
   _.mapValues(helpers, (helper, name) => {
@@ -65,12 +65,24 @@ globalThis.USER_CONFIG = {} as any;
 
 export async function init() {}
 
-export const handleError: HandleClientError = async ({ error, status, message }) => {
-  let stack = null;
-  if (error instanceof Error) {
-    stack = error.stack;
+export const handleError: HandleClientError = async ({ error, kind }) => {
+  if (kind === "framework") {
+    return { message: error.message, status: error.status };
   }
-  return { message, stack, status, detail: error.toString() };
+
+  if (kind === "app") {
+    return {
+      message: error.message,
+      status: error.status ?? 500,
+      stack: error.stack
+    };
+  }
+
+  return {
+    message: formatError(error),
+    status: 500,
+    stack: error instanceof Error ? error.stack : undefined
+  };
 };
 
 const footer = `

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
 </script>
 
 <section class="section">
   <div class="container is-fluid">
     <div class="columns">
       <div class="column is-4 is-offset-4 mt-5">
-        {#if $page.error.status === 404}
+        {#if page.error.status === 404}
           <article class="message invertable is-danger">
             <div class="message-header">Page not found</div>
             <div class="message-body">
@@ -22,9 +22,9 @@
             <div class="message-header">Something Went Wrong</div>
             <div class="message-body">
               <p>Paisa has encountered a critical error</p>
-              <p class="mt-2">{$page.error.message}</p>
-              {#if $page.error.stack}
-                <pre class="mt-2">{$page.error.stack}</pre>
+              <p class="mt-2">{page.error.message}</p>
+              {#if page.error.stack}
+                <pre class="mt-2">{page.error.stack}</pre>
               {/if}
               <p class="mt-5">
                 Please report this issue at <a href="https://github.com/ananthakumaran/paisa/issues"

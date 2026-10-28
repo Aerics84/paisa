@@ -2,6 +2,7 @@
 .PHONY: fixture/main.transactions.json
 .PHONY: preflight-critical
 .PHONY: prepush
+.PHONY: audit
 
 VERSION := $(shell cat VERSION)
 GO_VERSION_LDFLAGS := -ldflags "-X github.com/ananthakumaran/paisa/internal/version.current=$(VERSION)"
@@ -37,6 +38,9 @@ lint:
 	npm run check:format:changed
 	npm run check
 	bash ./scripts/gofmt-changed.sh
+
+audit:
+	node scripts/security-gate.mjs
 
 preflight-critical:
 	GO_VERSION_LDFLAGS='$(GO_VERSION_LDFLAGS)' bash ./scripts/preflight-critical.sh
@@ -84,11 +88,3 @@ fixture/main.transactions.json:
 generate-fonts:
 	npm --prefix tools/fontgen install
 	npm --prefix tools/fontgen run generate-fonts
-
-node2nix:
-	npm install --lockfile-version 2
-	node2nix --development -18 --input package.json \
-	--lock package-lock.json \
-	--node-env ./flake/node-env.nix \
-	--composition ./flake/default.nix \
-	--output ./flake/node-package.nix

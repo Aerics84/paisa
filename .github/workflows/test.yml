@@ -13,20 +13,20 @@ jobs:
     env:
       PRETTIER_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: npm
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.26.10"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: ".bun-version"
-      - uses: nixbuild/nix-quick-install-action@v31
+      - uses: nixbuild/nix-quick-install-action@v35
       - uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
@@ -40,5 +40,18 @@ jobs:
           npm run test:investment
           npm run test:monthly
           npm run build
-          nix develop --command bash -lc 'go build && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
+          nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && bun --version && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
+      - name: Install govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          command -v govulncheck
+      - name: Audit dependencies
+        run: node scripts/security-gate.mjs --report .cache/security
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: .cache/security
+          retention-days: 90

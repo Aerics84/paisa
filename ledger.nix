@@ -2,9 +2,12 @@
 
 with pkgs;
 
+let
+  version = "3.4.1";
+in
 pkgsStatic.stdenv.mkDerivation {
   pname = "ledger";
-  version = "3.4.1";
+  inherit version;
 
   src = fetchFromGitHub {
     owner = "ledger";
@@ -16,6 +19,8 @@ pkgsStatic.stdenv.mkDerivation {
   outputs = [ "out" "dev" ];
 
   buildInputs = [ pkgsStatic.gmp pkgsStatic.mpfr gnused pkgsStatic.boost ];
+  # nixpkgs 26.05 no longer propagates gmp through mpfr for static links.
+  NIX_LDFLAGS = "-lgmp";
 
   nativeBuildInputs = [ cmake tzdata ];
 

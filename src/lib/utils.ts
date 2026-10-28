@@ -44,6 +44,7 @@ function getUserConfig(): UserConfig {
 export interface AutoCompleteItem {
   label: string;
   id: string;
+  [key: string]: unknown;
 }
 
 export interface AutoCompleteField {
@@ -659,6 +660,7 @@ export interface ImportTemplate {
   name: string;
   content: string;
   template_type: string;
+  [key: string]: unknown;
 }
 
 export interface Log {
@@ -1505,8 +1507,8 @@ export function svgUrl(identifier: string) {
 export function dueDateIcon(dueDate: dayjs.Dayjs, clearedDate: dayjs.Dayjs) {
   let icon = "fa-circle-check";
   let glyph = iconGlyph("fa6-solid:circle-check");
-  let color = "has-text-success";
-  let svgColor = "svg-text-success";
+  let color: string;
+  let svgColor: string;
 
   if (!clearedDate) {
     if (dueDate.isBefore(now(), "day")) {

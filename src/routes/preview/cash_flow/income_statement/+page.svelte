@@ -25,13 +25,7 @@
   let years: string[] = [];
 
   type AccountGroupName =
-    | "income"
-    | "interest"
-    | "equity"
-    | "pnl"
-    | "liabilities"
-    | "tax"
-    | "expenses";
+    "income" | "interest" | "equity" | "pnl" | "liabilities" | "tax" | "expenses";
   interface AccountGroup {
     key: AccountGroupName;
     accounts: string[];

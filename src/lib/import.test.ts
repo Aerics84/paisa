@@ -43,7 +43,11 @@ Handlebars.registerHelper(
 describe("import", () => {
   fs.readdirSync("fixture/import").forEach((dir) => {
     test(dir, async () => {
-      const files = fs.readdirSync(`fixture/import/${dir}`);
+      // JSON files in a fixture directory are goldens (e.g. monthly.rows.json),
+      // not import inputs.
+      const files = fs
+        .readdirSync(`fixture/import/${dir}`)
+        .filter((file) => !file.endsWith(".json"));
       for (const file of files) {
         const [name, extension] = file.split(".");
         if (extension === "ledger") {

@@ -10,19 +10,22 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: write
+
 jobs:
   linux-app-binary:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
         with:
-          nix_path: nixpkgs=channel:nixos-24.11
-      - uses: actions/setup-node@v6
+          nix_path: nixpkgs=channel:nixos-26.05
+      - uses: actions/setup-node@v7
         with:
           node-version-file: ".nvmrc"
           cache: npm
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.26.10"
       - uses: vegardit/fast-apt-mirror.sh@v1
@@ -32,12 +35,12 @@ jobs:
           npm run sync-version
           npm run build
           nix-build ledger.nix
-          cp ./result/bin/ledger internal/binary/ledger
+          install -m 755 ./result/bin/ledger internal/binary/ledger
           ./internal/binary/ledger --version
           VERSION=$(cat VERSION)
           LDFLAGS="-X github.com/ananthakumaran/paisa/internal/version.current=${VERSION}"
           cd desktop
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
           wails doctor
           wails build -tags webkit2_40 -ldflags "${LDFLAGS}"
           cp build/bin/Paisa build/linux/usr/local/bin
@@ -46,7 +49,7 @@ jobs:
           cd ..
           mv "desktop/paisa_${VERSION}_amd64.deb" paisa-app-linux-amd64.deb
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           files: |

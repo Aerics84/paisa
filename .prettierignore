@@ -19,3 +19,9 @@ src/lib/search/parser/parser.js
 src/lib/sheet/parser.terms.js
 src/lib/sheet/parser.js
 internal/model/template/templates
+docs/superpowers
+
+# Generated artifacts
+desktop/frontend/wailsjs
+fonts/*.scss
+fixture/import/SBI Credit Card Statement/monthly.rows.json

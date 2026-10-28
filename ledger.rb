@@ -39,7 +39,7 @@ class Ledger < Formula
       )
       # Ledger's optional edit support links Apple's dynamic libedit.tbd.
       s.gsub!(
-        "check_library_exists(edit readline \"\" HAVE_EDIT)",
+        'check_library_exists(edit add_history "" HAVE_EDIT)',
         "set(HAVE_EDIT 0)",
       )
     end
