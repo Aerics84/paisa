@@ -48,6 +48,34 @@ jobs:
         with:
           bun-version-file: ".bun-version"
 
+      # P-REG needs ledger, hledger and beancount in the versions the goldens
+      # were generated with. Linux uses the repository's Nix dev shell; macOS
+      # uses Homebrew (ledger 3.4.1, hledger 1.52.4) plus beancount 2.3.6.
+      # Windows runs with the regression test's documented tolerance for
+      # missing ledger CLIs.
+      - uses: nixbuild/nix-quick-install-action@v35
+        if: runner.os == 'Linux'
+
+      - uses: nix-community/cache-nix-action@v7
+        if: runner.os == 'Linux'
+        with:
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ runner.arch }}
+
+      - uses: actions/setup-python@v6
+        if: runner.os == 'macOS'
+        with:
+          python-version: "3.11"
+
+      - name: Install ledger tooling (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ledger hledger
+          python -m pip install beancount==2.3.6
+          ledger --version
+          hledger --version
+          bean-query --version
+
       - name: Install npm 12.2.1
         shell: bash
         run: |
@@ -77,7 +105,14 @@ jobs:
         shell: bash
         run: bun test src/lib/pdf.test.ts
 
+      - name: P-REG (Nix dev shell)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
+
       - name: P-REG
+        if: runner.os != 'Linux'
         shell: bash
         env:
           TZ: UTC
