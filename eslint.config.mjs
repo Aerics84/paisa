@@ -4,7 +4,7 @@ import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import svelte from "eslint-plugin-svelte";
-import svelteConfig from "./svelte.config.js";
+import svelteConfig from "./svelte.config.shared.js";
 
 export default [
   {
@@ -48,6 +48,13 @@ export default [
         extraFileExtensions: [".svelte"],
         svelteConfig
       }
+    },
+    rules: {
+      // Svelte reactive assignments and template-only `let` bindings are
+      // compiler inputs, not dead JavaScript stores; ESLint 10's new core
+      // rules cannot see the template usage.
+      "no-useless-assignment": "off",
+      "no-unassigned-vars": "off"
     }
   },
   {

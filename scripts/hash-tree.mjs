@@ -72,7 +72,7 @@ function compare(beforeFile, afterFile) {
     try {
       return JSON.parse(fs.readFileSync(file, "utf8"));
     } catch (error) {
-      throw new Error(`cannot read manifest ${file}: ${error.message}`);
+      throw new Error(`cannot read manifest ${file}: ${error.message}`, { cause: error });
     }
   };
 

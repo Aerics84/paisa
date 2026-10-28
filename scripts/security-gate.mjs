@@ -114,7 +114,9 @@ export function parseGovulncheckStream(text) {
     try {
       parsed = JSON.parse(line);
     } catch (error) {
-      throw new Error(`govulncheck object ${index + 1} is not valid JSON: ${error.message}`);
+      throw new Error(`govulncheck object ${index + 1} is not valid JSON: ${error.message}`, {
+        cause: error,
+      });
     }
 
     if (parsed?.config && !config) {
