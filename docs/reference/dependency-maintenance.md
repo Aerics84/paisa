@@ -4,8 +4,8 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 
 ## Runtime Baseline
 
-- Primary JavaScript runtime: Node 24
-- Primary package manager: npm 11
+- Primary JavaScript runtime: Node 24.22.1
+- Primary package manager: npm 11.19
 - Local version source of truth: [`.nvmrc`](../../.nvmrc)
 - Repository metadata source of truth: [`package.json`](../../package.json)
 - Secondary runtime: Bun 1.3.13, used only for the targeted import and regression test commands already defined in `package.json`
