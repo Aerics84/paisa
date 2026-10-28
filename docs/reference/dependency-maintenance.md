@@ -114,6 +114,22 @@ Paisa removed these direct dependencies because they are not part of the active 
 
 If one of them becomes necessary again, reintroduce it with a documented reason.
 
+## Go Module Pins
+
+As of 2026-10-28 all **direct** Go modules are at their upgraded versions; `go list -m -u` reports no direct module with a newer release. The security floors are `golang.org/x/net >= v0.62.0`, `golang.org/x/crypto >= v0.58.0`, `github.com/gin-gonic/gin >= v1.12.0`, `gorm.io/gorm >= v1.31.2` and `github.com/wailsapp/wails/v2 >= v2.17.0`.
+
+Indirect modules are **not** mass-updated (`go get -u ./...` is an approved-exception path, not the default). At the end of the Go refresh, 73 indirect modules still had newer releases. Representative examples:
+
+- `github.com/go-redis/redis/v8` v8.4.2 → v8.11.5
+- `github.com/go-git/go-git/v5` v5.19.2 → v5.19.3
+- `github.com/alecthomas/chroma/v2` v2.14.0 → v2.27.0
+- `github.com/charmbracelet/glamour` v0.8.0 → v1.0.0 (major)
+- `github.com/charmbracelet/lipgloss` v0.12.1 → v1.1.0 (major)
+- `github.com/jaypipes/ghw` v0.21.3 → v0.26.0
+- `github.com/itchyny/gojq` v0.12.13 → v0.12.19
+
+The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phase2.txt` (not committed). These updates stay deferred until a concrete security or bugfix need justifies the wider module-graph change.
+
 ## Container Base Images
 
 `Dockerfile` and `Dockerfile.demo` build on Alpine 3.24 and install JavaScript dependencies with `npm ci` from the committed `package-lock.json`.
