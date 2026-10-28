@@ -40,7 +40,7 @@ jobs:
           npm run test:investment
           npm run test:monthly
           npm run build
-          nix develop --command bash -lc 'go build && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
+          nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && bun --version && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
       - name: Install govulncheck
         run: |

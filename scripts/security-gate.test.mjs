@@ -8,7 +8,7 @@ import {
   classifyGovulncheckFindings,
   parseGovulncheckStream,
   runGate,
-  summarizeNpmAudit,
+  summarizeNpmAudit
 } from "./security-gate.mjs";
 
 const MAIN_MODULE = "github.com/ananthakumaran/paisa";
@@ -25,7 +25,7 @@ function npmAudit(vulnerabilities, exitCode = 0) {
   return {
     exitCode,
     stdout: JSON.stringify({ metadata: { vulnerabilities } }),
-    stderr: "",
+    stderr: ""
   };
 }
 
@@ -35,7 +35,7 @@ const noNpmFindings = {
   moderate: 0,
   high: 0,
   critical: 0,
-  total: 0,
+  total: 0
 };
 
 function govulncheck(config, findings = [], exitCode = 0) {
@@ -43,7 +43,7 @@ function govulncheck(config, findings = [], exitCode = 0) {
   return {
     exitCode,
     stdout: lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
-    stderr: "",
+    stderr: ""
   };
 }
 
@@ -53,7 +53,7 @@ const CONFIG = {
   scanner_version: "v1.9.0",
   db: "https://vuln.go.dev",
   go_version: "go1.26.10",
-  db_last_modified: "2026-10-27T00:00:00Z",
+  db_last_modified: "2026-10-27T00:00:00Z"
 };
 
 const calledFinding = {
@@ -62,9 +62,9 @@ const calledFinding = {
     {
       module: MAIN_MODULE,
       package: "github.com/ananthakumaran/paisa/internal/server",
-      function: "Serve",
-    },
-  ],
+      function: "Serve"
+    }
+  ]
 };
 
 const notCalledFinding = {
@@ -73,9 +73,9 @@ const notCalledFinding = {
     {
       module: "golang.org/x/net",
       package: "golang.org/x/net/http2",
-      function: "ConfigureServer",
-    },
-  ],
+      function: "ConfigureServer"
+    }
+  ]
 };
 
 async function gate(overrides = {}) {
@@ -85,17 +85,13 @@ async function gate(overrides = {}) {
     mainModule: MAIN_MODULE,
     runNpmAudit: async () => npmAudit(noNpmFindings),
     runGovulncheck: async () => govulncheck(CONFIG),
-    ...overrides,
+    ...overrides
   });
 }
 
 test("npm audit with critical/high findings exits 1", async () => {
   const result = await gate({
-    runNpmAudit: async () =>
-      npmAudit(
-        { ...noNpmFindings, high: 2, critical: 1, total: 3 },
-        1,
-      ),
+    runNpmAudit: async () => npmAudit({ ...noNpmFindings, high: 2, critical: 1, total: 3 }, 1)
   });
 
   assert.equal(result.exitCode, 1);
@@ -108,8 +104,8 @@ test("npm audit registry failure with invalid output exits 2", async () => {
     runNpmAudit: async () => ({
       exitCode: 1,
       stdout: "",
-      stderr: "EAI_AGAIN registry.npmjs.org",
-    }),
+      stderr: "EAI_AGAIN registry.npmjs.org"
+    })
   });
 
   assert.equal(result.exitCode, 2);
@@ -118,7 +114,7 @@ test("npm audit registry failure with invalid output exits 2", async () => {
 
 test("govulncheck called finding exits 1", async () => {
   const result = await gate({
-    runGovulncheck: async () => govulncheck(CONFIG, [calledFinding], 1),
+    runGovulncheck: async () => govulncheck(CONFIG, [calledFinding], 0)
   });
 
   assert.equal(result.exitCode, 1);
@@ -128,7 +124,7 @@ test("govulncheck called finding exits 1", async () => {
 
 test("govulncheck not-called findings alone exit 0", async () => {
   const result = await gate({
-    runGovulncheck: async () => govulncheck(CONFIG, [notCalledFinding], 1),
+    runGovulncheck: async () => govulncheck(CONFIG, [notCalledFinding], 0)
   });
 
   assert.equal(result.exitCode, 0);
@@ -143,9 +139,9 @@ test("missing govulncheck tool exits 2", async () => {
       stdout: "",
       stderr: "",
       error: Object.assign(new Error("spawn govulncheck ENOENT"), {
-        code: "ENOENT",
-      }),
-    }),
+        code: "ENOENT"
+      })
+    })
   });
 
   assert.equal(result.exitCode, 2);
@@ -157,8 +153,8 @@ test("invalid or config-less govulncheck JSON exits 2", async () => {
     runGovulncheck: async () => ({
       exitCode: 1,
       stdout: "not json\n",
-      stderr: "",
-    }),
+      stderr: ""
+    })
   });
   assert.equal(invalid.exitCode, 2);
 
@@ -166,8 +162,8 @@ test("invalid or config-less govulncheck JSON exits 2", async () => {
     runGovulncheck: async () => ({
       exitCode: 1,
       stdout: JSON.stringify({ finding: calledFinding }) + "\n",
-      stderr: "",
-    }),
+      stderr: ""
+    })
   });
   assert.equal(noConfig.exitCode, 2);
 });
@@ -183,13 +179,46 @@ test("both scans valid and clean exit 0", async () => {
 
 test("npm audit exit 1 due to findings is not a scanner error", async () => {
   const result = await gate({
-    runNpmAudit: async () =>
-      npmAudit({ ...noNpmFindings, moderate: 1, total: 1 }, 1),
+    runNpmAudit: async () => npmAudit({ ...noNpmFindings, moderate: 1, total: 1 }, 1)
   });
 
   assert.equal(result.exitCode, 0);
   assert.deepEqual(result.summary.errors, []);
   assert.equal(result.raw.npm[0].exitCode, 1);
+});
+
+test("npm audit scanner failure with valid JSON exits 2", async () => {
+  const result = await gate({
+    runNpmAudit: async () => npmAudit(noNpmFindings, 2)
+  });
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.summary.errors.join("\n"), /npm audit.*exit/i);
+});
+
+test("govulncheck scanner failure with valid output exits 2", async () => {
+  const result = await gate({
+    runGovulncheck: async () => govulncheck(CONFIG, [], 1)
+  });
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.summary.errors.join("\n"), /govulncheck.*exit/i);
+});
+
+test("govulncheck error records exit 2", async () => {
+  const result = await gate({
+    runGovulncheck: async () => ({
+      exitCode: 0,
+      stdout:
+        [JSON.stringify({ config: CONFIG }), JSON.stringify({ error: "scan interrupted" })].join(
+          "\n"
+        ) + "\n",
+      stderr: ""
+    })
+  });
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.summary.errors.join("\n"), /govulncheck/);
 });
 
 test("multiple npm projects are summarized and a missing lockfile exits 2", async () => {
@@ -198,15 +227,12 @@ test("multiple npm projects are summarized and a missing lockfile exits 2", asyn
   const missing = tmpProject("missing", false);
 
   const result = await gate({
-    npmDirs: [first, second],
+    npmDirs: [first, second]
   });
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.summary.npm.length, 2);
-  assert.deepEqual(
-    result.summary.npm.map((entry) => entry.dir).sort(),
-    [first, second].sort(),
-  );
+  assert.deepEqual(result.summary.npm.map((entry) => entry.dir).sort(), [first, second].sort());
 
   const broken = await gate({ npmDirs: [first, missing] });
   assert.equal(broken.exitCode, 2);
@@ -222,9 +248,9 @@ test("summarizeNpmAudit reads metadata.vulnerabilities", () => {
         moderate: 3,
         high: 4,
         critical: 5,
-        total: 15,
-      },
-    },
+        total: 15
+      }
+    }
   });
 
   assert.deepEqual(summary, {
@@ -233,7 +259,7 @@ test("summarizeNpmAudit reads metadata.vulnerabilities", () => {
     moderate: 3,
     high: 4,
     critical: 5,
-    total: 15,
+    total: 15
   });
 });
 
@@ -241,7 +267,7 @@ test("parseGovulncheckStream handles concatenated pretty-printed objects", () =>
   const stream = [
     JSON.stringify({ config: CONFIG }, null, 2),
     JSON.stringify({ finding: calledFinding }, null, 2),
-    JSON.stringify({ finding: notCalledFinding }, null, 2),
+    JSON.stringify({ finding: notCalledFinding }, null, 2)
   ].join("\n");
 
   const parsed = parseGovulncheckStream(stream);
@@ -255,7 +281,7 @@ test("parseGovulncheckStream deduplicates findings by OSV id", () => {
     { config: CONFIG },
     { finding: calledFinding },
     { finding: notCalledFinding },
-    { finding: calledFinding },
+    { finding: calledFinding }
   ]
     .map((line) => JSON.stringify(line))
     .join("\n");
@@ -270,11 +296,17 @@ test("classifyGovulncheckFindings separates called from not-called", () => {
   const findings = [
     { osv: "GO-1", trace: [{ module: MAIN_MODULE }] },
     { osv: "GO-2", trace: [{ module: "golang.org/x/net" }] },
-    { osv: "GO-1", trace: [{ module: "golang.org/x/net" }] },
+    { osv: "GO-1", trace: [{ module: "golang.org/x/net" }] }
   ];
 
   const classified = classifyGovulncheckFindings(findings, MAIN_MODULE);
 
-  assert.deepEqual(classified.called.map((finding) => finding.osv), ["GO-1"]);
-  assert.deepEqual(classified.notCalled.map((finding) => finding.osv), ["GO-2"]);
+  assert.deepEqual(
+    classified.called.map((finding) => finding.osv),
+    ["GO-1"]
+  );
+  assert.deepEqual(
+    classified.notCalled.map((finding) => finding.osv),
+    ["GO-2"]
+  );
 });

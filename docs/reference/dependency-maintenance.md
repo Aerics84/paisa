@@ -15,7 +15,7 @@ GitHub Actions, local development, and Nix-based workflows should converge on th
 
 ## Refresh Status (2026-10-28)
 
-- Phases 0–5 are complete; phase 6 adds the audit gate and the freeze report.
+- Phases 0–6 are complete; the audit gate and the freeze report are in place.
 - hledger is on 1.52.4 (Hackage source override; issue #2254 was fixed in 1.41).
 - beancount stays on 2.3.6: v3 removes `bean-report` and moves `bean-query` to a separate package (see [Parser Tooling](#parser-tooling)).
 - npm 12 is deferred to a default-branch follow-up (see [npm 12](#npm-12-deferred)).

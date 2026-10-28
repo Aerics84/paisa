@@ -123,6 +123,12 @@ export function parseGovulncheckStream(text) {
       config = parsed.config;
     }
 
+    if (parsed?.error) {
+      const message =
+        typeof parsed.error === "string" ? parsed.error : JSON.stringify(parsed.error);
+      throw new Error(`govulncheck reported an error: ${message}`);
+    }
+
     const finding = parsed?.finding;
     if (!finding) continue;
 
@@ -351,6 +357,12 @@ export async function runGate({
       continue;
     }
 
+    const npmExitCode = result?.exitCode ?? null;
+    if (npmExitCode !== 0 && npmExitCode !== 1) {
+      errors.push(`npm audit in "${dir}" exited with status ${npmExitCode}`);
+      continue;
+    }
+
     let parsed;
     try {
       parsed = JSON.parse(result?.stdout ?? "");
@@ -379,6 +391,11 @@ export async function runGate({
 
     if (result?.error) {
       throw new Error(`govulncheck could not run: ${result.error.message}`);
+    }
+
+    const govulncheckExitCode = result?.exitCode ?? null;
+    if (govulncheckExitCode !== 0) {
+      throw new Error(`govulncheck exited with status ${govulncheckExitCode}`);
     }
 
     const parsed = parseGovulncheckStream(result?.stdout ?? "");
