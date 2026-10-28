@@ -114,6 +114,10 @@ Paisa removed these direct dependencies because they are not part of the active 
 
 If one of them becomes necessary again, reintroduce it with a documented reason.
 
+## CI Runners
+
+`ledger-parsers.yml` runs on `ubuntu-24.04`. The release workflows (`linux-app`, `linux-cli`) stay on `ubuntu-22.04` because Wails needs `libwebkit2gtk-4.0-dev`; moving those runners is a separate migration.
+
 ## Go Module Pins
 
 As of 2026-10-28 all **direct** Go modules are at their upgraded versions; `go list -m -u` reports no direct module with a newer release. The security floors are `golang.org/x/net >= v0.62.0`, `golang.org/x/crypto >= v0.58.0`, `github.com/gin-gonic/gin >= v1.12.0`, `gorm.io/gorm >= v1.31.2` and `github.com/wailsapp/wails/v2 >= v2.17.0`.
