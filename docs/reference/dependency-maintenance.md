@@ -5,13 +5,37 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 ## Runtime Baseline
 
 - Primary JavaScript runtime: Node 24.22.1
-- Primary package manager: npm 11.19
+- Primary package manager: npm 11.19.1
 - Local version source of truth: [`.nvmrc`](../../.nvmrc)
 - Repository metadata source of truth: [`package.json`](../../package.json)
 - Secondary runtime: Bun 1.4.4, used only for the targeted import and regression test commands already defined in `package.json`
 - Secondary runtime version source of truth: [`.bun-version`](../../.bun-version)
 
 GitHub Actions, local development, and Nix-based workflows should converge on this baseline unless a workflow documents a deliberate exception.
+
+## Refresh Status (2026-10-28)
+
+- Phases 0–5 are complete; phase 6 adds the audit gate and the freeze report.
+- hledger is on 1.52.4 (Hackage source override; issue #2254 was fixed in 1.41).
+- beancount stays on 2.3.6: v3 removes `bean-report` and moves `bean-query` to a separate package (see [Parser Tooling](#parser-tooling)).
+- npm 12 is deferred to a default-branch follow-up (see [npm 12](#npm-12-deferred)).
+- Nix uses `nixos-26.05`, `buildNpmPackage` for the web assets, and no longer uses node2nix.
+
+## Dependency Audit Gate
+
+CI runs `node scripts/security-gate.mjs --report .cache/security` after the test steps and uploads the report for 90 days. `make audit` is the local equivalent.
+
+Exit codes:
+
+- `0`: no confirmed finding.
+- `1`: a confirmed security finding (npm critical/high or Go called findings).
+- `2`: scanner or target error (invalid JSON, missing `metadata`, unavailable tool, unreadable lockfile). Exit 2 is **not** a clean security result.
+
+The report must contain npm entries for both the repository root and `tools/fontgen`. Moderate/low findings are reported in `summary.json`, evaluated in the freeze report, and do not fail the gate.
+
+## Dependabot
+
+Dependabot checks npm (root and `tools/fontgen`), gomod, GitHub Actions and Docker weekly, with five open PRs per ecosystem. TypeScript major updates are ignored deliberately because the surrounding toolchain (typescript-eslint, SvelteKit, svelte-check) does not accept TypeScript 7 yet; security updates stay enabled. The audit gate intentionally blocks PRs with confirmed critical/high findings.
 
 ## npm 12 (deferred)
 

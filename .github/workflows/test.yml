@@ -42,8 +42,16 @@ jobs:
           npm run build
           nix develop --command bash -lc 'go build && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
-        env:
-          # The Nix dev shell still ships Go 1.24 while go.mod requires 1.26;
-          # allow the toolchain directive to download 1.26.10 until Task 22
-          # updates the flake.
-          GOTOOLCHAIN: auto
+      - name: Install govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          command -v govulncheck
+      - name: Audit dependencies
+        run: node scripts/security-gate.mjs --report .cache/security
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: .cache/security
+          retention-days: 90
