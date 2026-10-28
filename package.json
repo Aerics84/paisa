@@ -71,7 +71,7 @@
     "svelte-local-storage-store": "^0.6.0",
     "svelte-select": "^6.0.0",
     "svelte-tiny-virtual-list": "^4.0.0",
-    "tabulator-tables": "^6.4.0",
+    "tabulator-tables": "^6.7.1",
     "textures": "^1.2.3",
     "tippy.js": "^6.3.7"
   },
@@ -92,7 +92,7 @@
     "@types/lodash": "^4.17.24",
     "@types/papaparse": "^5.5.2",
     "@types/sprintf-js": "^1.1.2",
-    "@types/tabulator-tables": "^5.32.1",
+    "@types/tabulator-tables": "^6.3.6",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^8.72.1",
     "axios": "^1.15.2",
