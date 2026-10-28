@@ -32,7 +32,7 @@ jobs:
           npm run sync-version
           npm run build
           nix-build ledger.nix
-          cp ./result/bin/ledger internal/binary/ledger
+          install -m 755 ./result/bin/ledger internal/binary/ledger
           ./internal/binary/ledger --version
           VERSION=$(cat VERSION)
           LDFLAGS="-X github.com/ananthakumaran/paisa/internal/version.current=${VERSION}"

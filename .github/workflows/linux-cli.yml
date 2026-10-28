@@ -33,7 +33,7 @@ jobs:
           npm ci
           npm run build
           nix-build ledger.nix
-          cp ./result/bin/ledger internal/binary/ledger
+          install -m 755 ./result/bin/ledger internal/binary/ledger
           ./internal/binary/ledger --version
           go build -ldflags "${LDFLAGS}"
           cp paisa paisa-cli-linux-amd64
