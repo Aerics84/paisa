@@ -39,7 +39,7 @@ function newestRunPerWorkflow(runs) {
   return newest;
 }
 
-async function listRuns({ commit, branch, workflow, runGh }) {
+async function listRuns({ commit, branch, workflow, repo, runGh }) {
   const args = [
     "run",
     "list",
@@ -50,6 +50,7 @@ async function listRuns({ commit, branch, workflow, runGh }) {
     "--json",
     "databaseId,workflowName,status,conclusion,headBranch,createdAt",
   ];
+  if (repo) args.push("--repo", repo);
   if (branch) args.push("--branch", branch);
   if (workflow) args.push("--workflow", workflow);
 
@@ -60,8 +61,10 @@ async function listRuns({ commit, branch, workflow, runGh }) {
   return parsed;
 }
 
-async function readJobs(runGh, run) {
-  const parsed = JSON.parse(await runGh(["run", "view", String(run.databaseId), "--json", "jobs"]));
+async function readJobs(runGh, run, repo) {
+  const args = ["run", "view", String(run.databaseId), "--json", "jobs"];
+  if (repo) args.push("--repo", repo);
+  const parsed = JSON.parse(await runGh(args));
   if (!Array.isArray(parsed?.jobs)) {
     throw new Error(`gh run view ${run.databaseId} did not return jobs`);
   }
@@ -76,6 +79,7 @@ export async function waitForRuns({
   commit,
   branch = null,
   workflow = null,
+  repo = null,
   expectWorkflows = [],
   expectJobs = [],
   timeoutMs = DEFAULT_TIMEOUT_SECONDS * 1000,
@@ -88,6 +92,7 @@ export async function waitForRuns({
   const summary = {
     commit,
     branch,
+    repo,
     checked_at: null,
     runs: [],
     jobs: [],
@@ -107,7 +112,7 @@ export async function waitForRuns({
 
     let runs;
     try {
-      runs = await listRuns({ commit, branch, workflow, runGh });
+      runs = await listRuns({ commit, branch, workflow, repo, runGh });
     } catch (error) {
       summary.errors.push(error.message);
       return { exitCode: 1, summary };
@@ -150,7 +155,7 @@ export async function waitForRuns({
       for (const run of expectedRuns) {
         let jobs;
         try {
-          jobs = await readJobs(runGh, run);
+          jobs = await readJobs(runGh, run, repo);
         } catch (error) {
           summary.errors.push(error.message);
           return { exitCode: 1, summary };
@@ -204,6 +209,7 @@ function parseArgs(argv) {
     commit: null,
     branch: null,
     workflow: null,
+    repo: null,
     expectWorkflows: [],
     expectJobs: [],
     timeoutMs: DEFAULT_TIMEOUT_SECONDS * 1000,
@@ -222,6 +228,7 @@ function parseArgs(argv) {
     if (arg === "--commit") options.commit = value();
     else if (arg === "--branch") options.branch = value();
     else if (arg === "--workflow") options.workflow = value();
+    else if (arg === "--repo") options.repo = value();
     else if (arg === "--expect-workflow") options.expectWorkflows.push(value());
     else if (arg === "--expect-job") options.expectJobs.push(value());
     else if (arg === "--timeout") options.timeoutMs = Number(value()) * 1000;
@@ -246,7 +253,7 @@ async function main() {
   if (options.help) {
     console.log(
       [
-        "usage: node scripts/ci-wait.mjs --commit <sha> [--branch <b>] [--workflow <name>]",
+        "usage: node scripts/ci-wait.mjs --commit <sha> [--repo <owner/name>] [--branch <b>] [--workflow <name>]",
         "  --expect-workflow <name>... [--expect-job <name>...] [--timeout 1800] [--interval 10]",
       ].join("\n"),
     );

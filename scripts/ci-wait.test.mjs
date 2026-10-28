@@ -96,6 +96,29 @@ test("an expected job that is absent exits 1", async () => {
   assert.deepEqual(result.summary.missing, ["job:matrix-job"]);
 });
 
+test("passes --repo to every gh command when configured", async () => {
+  const seen = [];
+  const result = await wait({
+    repo: "Aerics84/paisa",
+    runGh: async (args) => {
+      seen.push(args);
+      if (args[0] === "run" && args[1] === "list") {
+        return JSON.stringify([run(1, "Test", "completed", "success")]);
+      }
+      if (args[0] === "run" && args[1] === "view") {
+        return JSON.stringify({ jobs: [job("test")] });
+      }
+      throw new Error(`unexpected gh args: ${args.join(" ")}`);
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.ok(seen.length >= 1);
+  for (const args of seen) {
+    assert.equal(args[args.indexOf("--repo") + 1], "Aerics84/paisa");
+  }
+});
+
 test("the newest run for a commit wins", async () => {
   const result = await wait({
     runGh: ghStub(
