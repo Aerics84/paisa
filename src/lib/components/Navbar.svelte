@@ -13,7 +13,6 @@
   import {
     financialYear,
     forEachFinancialYear,
-    helpUrl,
     isMobile,
     now,
     supportsScheduleAL,
@@ -358,17 +357,6 @@
       <ul>
         <li>
           <span class="is-inactive">{selectedLink.label}</span>
-          {#if selectedLink.help}
-            <a
-              style="margin-left: -10px;"
-              class="p-0"
-              href={helpUrl(selectedLink.help)}
-              aria-label="Help for {selectedLink.label}"
-              ><span class="icon is-small">
-                <i class="fas fa-question fa-border" aria-hidden="true"></i>
-              </span></a
-            >
-          {/if}
 
           {#if selectedLink.tag}
             <span style="font-size: 0.6rem" class="tag is-rounded is-warning"
@@ -379,18 +367,6 @@
         {#if selectedSubLink}
           <li>
             <span class="is-inactive">{selectedSubLink.label}</span>
-
-            {#if selectedSubLink.help}
-              <a
-                style="margin-left: -10px;"
-                class="p-0"
-                href={helpUrl(selectedSubLink.help)}
-                aria-label="Help for {selectedSubLink.label}"
-                ><span class="icon is-small">
-                  <i class="fas fa-question fa-border" aria-hidden="true"></i>
-                </span></a
-              >
-            {/if}
 
             {#if selectedSubLink.tag}
               <span style="font-size: 0.6rem" class="tag is-rounded is-warning mr-2"
@@ -480,9 +456,3 @@
     {/if}
   </div>
 </div>
-
-<style lang="scss">
-  li a span.icon {
-    margin-top: -5px;
-  }
-</style>
