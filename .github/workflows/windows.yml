@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: msys2/setup-msys2@v2
+        id: msys2
         with:
           msystem: MINGW64
           update: true
@@ -53,8 +54,10 @@ jobs:
           git clone --branch v3.4.1 --depth 1 https://github.com/ledger/ledger.git .\ledger-src
           $MSYS_WORKSPACE = $env:GITHUB_WORKSPACE -replace '\\','/'
           $MSYS_WORKSPACE = $MSYS_WORKSPACE -replace '^([A-Za-z]):','/$1'
-          C:\msys64\usr\bin\bash -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src; cmake -S . -B build -G 'MSYS Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_PYTHON=OFF -DUSE_GPGME=OFF -DBUILD_LIBRARY=OFF -DBUILD_DOCS=OFF"
-          C:\msys64\usr\bin\bash -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src/build; make -j2"
+          & "$env:MSYS2_LOCATION\usr\bin\bash.exe" -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src; cmake -S . -B build -G 'MSYS Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_PYTHON=OFF -DUSE_GPGME=OFF -DBUILD_LIBRARY=OFF -DBUILD_DOCS=OFF"
+          & "$env:MSYS2_LOCATION\usr\bin\bash.exe" -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src/build; make -j2"
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
           cp .\ledger-src\build\ledger.exe internal/binary/ledger
           .\ledger-src\build\ledger.exe --version
           go build -ldflags $LDFLAGS
