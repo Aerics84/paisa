@@ -68,6 +68,15 @@ npm 11.19 remains the supported package manager for this branch. npm 12 is upgra
 4. Acceptance: `npm -v` reports `12.2.1` on all three platforms; `package-lock.json` stays unchanged; P-JS, P-REG and P-PDF are green; all three matrix jobs are found and report `success`.
 5. Only then switch `packageManager`, workflows and Dockerfiles, and inventory every npm call site.
 
+The gate itself is `.github/workflows/npm12-gate.yml`. It is manual (`workflow_dispatch`) and must be started from the default branch:
+
+```bash
+gh workflow run npm12-gate.yml --ref master
+gh run list --workflow npm12-gate.yml --limit 1
+```
+
+Each matrix job installs npm 12.2.1 over the runner's bundled npm, runs `npm ci`, asserts that `package-lock.json` is unchanged, and then runs P-JS (`check`, `build`, imports, investment, monthly), P-PDF (`src/lib/pdf.test.ts`) and P-REG (`go build`, `TZ=UTC bun test tests/regression.test.ts`). A green run on all three platforms is the evidence required by step 4; the run URL is recorded here once it passes.
+
 "Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms". npm 12 does not block the completion of the remaining phases.
 
 ## Routine Refreshes

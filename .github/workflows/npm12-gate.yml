@@ -1,0 +1,86 @@
+name: npm 12 gate
+
+# Manual gate for the npm 12 upgrade. It must be registered on the default
+# branch so `gh workflow run npm12-gate.yml --ref master` is reliable.
+# Acceptance: npm 12.2.1 on all three platforms, package-lock.json unchanged,
+# P-JS, P-REG and P-PDF green. Only then switch packageManager, workflows and
+# Dockerfiles.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NPM12_VERSION: "12.2.1"
+
+concurrency:
+  group: npm12-gate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.10"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
+
+      - name: Install npm 12.2.1
+        shell: bash
+        run: |
+          npm install -g "npm@${NPM12_VERSION}"
+          npm --version
+          test "$(npm --version)" = "${NPM12_VERSION}"
+
+      - name: Install dependencies with npm 12
+        shell: bash
+        run: |
+          git diff --exit-code -- package-lock.json
+          npm ci
+          npm --version
+          test "$(npm --version)" = "${NPM12_VERSION}"
+          git diff --exit-code -- package-lock.json
+
+      - name: P-JS
+        shell: bash
+        run: |
+          npm run check
+          npm run build
+          npm run test:imports
+          npm run test:investment
+          npm run test:monthly
+
+      - name: P-PDF
+        shell: bash
+        run: bun test src/lib/pdf.test.ts
+
+      - name: P-REG
+        shell: bash
+        env:
+          TZ: UTC
+        run: |
+          go build .
+          bun test tests/regression.test.ts
