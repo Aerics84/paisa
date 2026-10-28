@@ -9,7 +9,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
  * to the ESLint Svelte parser without re-introducing the removed file.
  */
 const svelteConfig = {
-  alias: { "$lib": "src/lib" },
+  alias: { $lib: "src/lib" },
   preprocess: vitePreprocess(),
 
   onwarn: (warning, handler) => {

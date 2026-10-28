@@ -37,7 +37,7 @@ function hashPaths(paths) {
 
   const manifest = {};
   const keys = sortPaths(
-    files.map((file) => toPosix(path.relative(process.cwd(), path.resolve(file)))),
+    files.map((file) => toPosix(path.relative(process.cwd(), path.resolve(file))))
   );
   for (const key of keys) {
     if (manifest[key]) continue;
@@ -53,7 +53,7 @@ function gitFiles(paths) {
   const result = spawnSync("git", args, {
     cwd: process.cwd(),
     encoding: "utf8",
-    maxBuffer: 128 * 1024 * 1024,
+    maxBuffer: 128 * 1024 * 1024
   });
 
   if (result.error) throw result.error;
@@ -99,8 +99,8 @@ function usage() {
     [
       "usage:",
       "  node scripts/hash-tree.mjs [--git] <path...>",
-      "  node scripts/hash-tree.mjs --compare <before.json> <after.json>",
-    ].join("\n"),
+      "  node scripts/hash-tree.mjs --compare <before.json> <after.json>"
+    ].join("\n")
   );
 }
 
@@ -133,10 +133,11 @@ function main(argv) {
   const manifest = git
     ? {
         files: Object.fromEntries(
-          sortPaths(files.map((file) => toPosix(path.relative(process.cwd(), file)))).map(
-            (key) => [key, hashFile(path.resolve(process.cwd(), key))],
-          ),
-        ),
+          sortPaths(files.map((file) => toPosix(path.relative(process.cwd(), file)))).map((key) => [
+            key,
+            hashFile(path.resolve(process.cwd(), key))
+          ])
+        )
       }
     : hashPaths(paths);
 
