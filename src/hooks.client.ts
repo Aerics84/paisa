@@ -37,9 +37,9 @@ import { formatError, isResizeObserverLoopError } from "$lib/error";
 import * as toast from "bulma-toast";
 import _ from "lodash";
 
-import "@formatjs/intl-numberformat/polyfill";
-import "@formatjs/intl-numberformat/locale-data/de";
-import "@formatjs/intl-numberformat/locale-data/en";
+import "@formatjs/intl-numberformat/polyfill.js";
+import "@formatjs/intl-numberformat/locale-data/de.js";
+import "@formatjs/intl-numberformat/locale-data/en.js";
 
 Handlebars.registerHelper(
   _.mapValues(helpers, (helper, name) => {
