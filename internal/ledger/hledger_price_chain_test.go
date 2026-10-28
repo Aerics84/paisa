@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -21,6 +22,9 @@ P 2024-01-01 EUR 90 INR
 
 func setupChainJournal(t *testing.T) string {
 	t.Helper()
+	if _, err := exec.LookPath("hledger"); err != nil {
+		t.Skip("hledger executable is not installed")
+	}
 	dir := t.TempDir()
 	journal := filepath.Join(dir, "main.ledger")
 	require.NoError(t, os.WriteFile(journal, []byte(chainJournal), 0o644))
