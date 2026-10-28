@@ -46,12 +46,12 @@ export function renderHarvestables(harvestables: Harvestable[]) {
         .on("input", (event) => {
           const [units, amount, taxableGain] = unitsRequiredFromAmount(
             h,
-            parseInt(event.srcElement.value)
+            parseInt((event.srcElement as HTMLInputElement).value)
           );
 
           unitsSpan.text(formatFloat(units));
           (taxableGainInput.node() as HTMLInputElement).value = round(taxableGain).toString();
-          event.srcElement.value = round(amount);
+          (event.srcElement as HTMLInputElement).value = round(amount).toString();
         });
 
       if (currencyCode) {
@@ -68,10 +68,10 @@ export function renderHarvestables(harvestables: Harvestable[]) {
         .on("input", (event) => {
           const [units, amount, taxableGain] = unitsRequiredFromGain(
             h,
-            parseInt(event.srcElement.value)
+            parseInt((event.srcElement as HTMLInputElement).value)
           );
           unitsSpan.text(formatFloat(units));
-          event.srcElement.value = round(taxableGain);
+          (event.srcElement as HTMLInputElement).value = round(taxableGain).toString();
           (amountInput.node() as HTMLInputElement).value = round(amount).toString();
         });
 
