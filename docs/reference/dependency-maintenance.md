@@ -134,6 +134,22 @@ Paisa removed these direct dependencies because they are not part of the active 
 
 If one of them becomes necessary again, reintroduce it with a documented reason.
 
+## Parser Tooling
+
+### Beancount (deferred)
+
+The 2026-10-28 spike installed `beancount==3.2.3` (current PyPI release) in an isolated venv:
+
+- `bean-check` works and reports the fixture cleanly.
+- `bean-query` is **no longer shipped** by beancount; it moved to the separate `beanquery` package (0.2.0).
+- `bean-report` was **removed** in beancount 3.
+
+Paisa depends on both removed entry points: `Beancount.Parse` calls `bean-query`, while `Beancount.ValidateFile` and `Beancount.Prices` call `bean-report` (`bal` and `pricesdb`). Even with `beanquery` installed, `bean-report` has no v3 replacement, so `pricesdb` and the balance text would need new query-based implementations.
+
+The parser output also changes. On `tests/fixture/inr-beancount/main.beancount`, `bean-query "SELECT account, sum(position) GROUP BY account"` returns `22000.0` / `-109.76562772 USD` under 2.3.6 but `22000` / `-110 USD` under 3.2.3 — a valuation/formatting difference that needs a domain review, not a mechanical port. `bean-report ... pricesdb` output is unavailable in v3, so the existing prices comparison cannot be reproduced.
+
+Decision: this branch stays on **beancount 2.3.6** (CI and both Docker variants). A follow-up spike must replace `bean-report` with bean-query queries, add `beanquery` to CI and the images, and review the valuation delta before switching.
+
 ## CI Runners
 
 `ledger-parsers.yml` runs on `ubuntu-24.04`. The release workflows (`linux-app`, `linux-cli`) stay on `ubuntu-22.04` because Wails needs `libwebkit2gtk-4.0-dev`; moving those runners is a separate migration.
