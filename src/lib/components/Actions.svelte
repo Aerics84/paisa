@@ -1,6 +1,6 @@
 <script lang="ts">
   import { sync } from "$lib/sync";
-  import { isLoggedIn, isMobile, logout } from "$lib/utils";
+  import { isLoggedIn, isMobile, logout, supportsPortfolioAnalysis } from "$lib/utils";
   import { refresh } from "../../store";
   import { obscure } from "../../persisted_store";
   import { goto } from "$app/navigation";
@@ -59,16 +59,18 @@
         </span>
         <span>Update Prices</span>
       </button>
-      <button
-        on:click={(_e) => syncWithLoader({ portfolios: true })}
-        class="dropdown-item icon-text button-reset w-full has-text-left"
-        type="button"
-      >
-        <span class="icon is-small">
-          <i class="fas fa-layer-group"></i>
-        </span>
-        <span>Update Mutual Fund Portfolios</span>
-      </button>
+      {#if supportsPortfolioAnalysis(USER_CONFIG)}
+        <button
+          on:click={(_e) => syncWithLoader({ portfolios: true })}
+          class="dropdown-item icon-text button-reset w-full has-text-left"
+          type="button"
+        >
+          <span class="icon is-small">
+            <i class="fas fa-layer-group"></i>
+          </span>
+          <span>Update Mutual Fund Portfolios</span>
+        </button>
+      {/if}
       <hr class="dropdown-divider" />
       <div class="dropdown-item icon-text">
         <label for={obscureId} class="cursor-pointer w-full inline-block">

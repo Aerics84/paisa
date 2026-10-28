@@ -1083,6 +1083,10 @@ export function supportsScheduleAL(config: UserConfig = getUserConfig()) {
   return config.tax_regime === "india";
 }
 
+export function supportsPortfolioAnalysis(config: UserConfig = getUserConfig()) {
+  return config.regional_profile === "india";
+}
+
 export function setNow(value: dayjs.Dayjs) {
   if (value) {
     globalThis.__now = value;

@@ -18,7 +18,8 @@
     supportsScheduleAL,
     supportsTaxFeatures,
     supportsGermanyTaxFeatures,
-    supportsIndiaTaxFeatures
+    supportsIndiaTaxFeatures,
+    supportsPortfolioAnalysis
   } from "$lib/utils";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
@@ -236,6 +237,15 @@
   if (supportsTaxFeatures(USER_CONFIG) && tax.children.length > 0) {
     tax.sidebarHref = "/tax" + tax.children[0].href;
     links.splice(links.length - 1, 0, tax);
+  }
+
+  if (!supportsPortfolioAnalysis(USER_CONFIG)) {
+    for (const link of links) {
+      if (link.children) {
+        link.children = link.children.filter((child) => child.href !== "/analysis");
+      }
+    }
+    _.remove(links, (link) => link.href === "/assets/analysis");
   }
 
   _.last(links).children.push({ label: "About", href: "/about" });

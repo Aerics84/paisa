@@ -14,6 +14,11 @@ The Analysis page unwraps the container and shows you what securities
 you own along with their amount and percentage. It also categorizes
 the securities by their industry and rating.
 
+!!! note "India only"
+This page is only available for the `india` regional profile. It is
+hidden elsewhere because the portfolio data comes from Indian mutual
+funds via the `in-mfapi` price provider.
+
 !!! example "Experimental"
 The data that powers this page comes from various sources and might
 not be 100% accurate. Before you make any decision based on this
