@@ -56,8 +56,6 @@ jobs:
           $MSYS_WORKSPACE = $MSYS_WORKSPACE -replace '^([A-Za-z]):','/$1'
           & "$env:MSYS2_LOCATION\usr\bin\bash.exe" -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src; cmake -S . -B build -G 'MSYS Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_PYTHON=OFF -DUSE_GPGME=OFF -DBUILD_LIBRARY=OFF -DBUILD_DOCS=OFF"
           & "$env:MSYS2_LOCATION\usr\bin\bash.exe" -lc "export PATH=/mingw64/bin:$PATH; cd $MSYS_WORKSPACE/ledger-src/build; make -j2"
-        env:
-          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
           cp .\ledger-src\build\ledger.exe internal/binary/ledger
           .\ledger-src\build\ledger.exe --version
           go build -ldflags $LDFLAGS
@@ -68,6 +66,8 @@ jobs:
           wails build -tags webkit2_40 -nsis -webview2 embed -ldflags $LDFLAGS
           cd ..
           cp .\desktop\build\bin\paisa-amd64-installer.exe paisa-app-windows-amd64.exe
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
