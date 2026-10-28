@@ -198,7 +198,13 @@
     }
   ];
 
-  const tax: Link = { label: "Tax", href: "/tax", help: "tax", children: [] };
+  const tax: Link = {
+    label: "Tax",
+    href: "/tax",
+    icon: "fa-receipt",
+    help: "tax",
+    children: []
+  };
 
   function withPrefix(path: string) {
     return path === "/" ? prefix : `${prefix}${path}`;
@@ -227,8 +233,9 @@
     });
   }
 
-  if (supportsTaxFeatures(USER_CONFIG)) {
-    _.last(links).children.push(tax);
+  if (supportsTaxFeatures(USER_CONFIG) && tax.children.length > 0) {
+    tax.sidebarHref = "/tax" + tax.children[0].href;
+    links.splice(links.length - 1, 0, tax);
   }
 
   _.last(links).children.push({ label: "About", href: "/about" });

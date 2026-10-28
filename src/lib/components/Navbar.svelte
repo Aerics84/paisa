@@ -171,7 +171,7 @@
   }
 
   if (supportsTaxFeatures(USER_CONFIG)) {
-    _.last(links).children.push(tax);
+    links.splice(links.length - 1, 0, tax);
   }
 
   const about = { label: "About", href: "/about" };

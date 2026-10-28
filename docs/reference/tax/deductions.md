@@ -2,7 +2,7 @@
 
 This page is available for the `germany` tax regime. Open it from
 **Tax → Overview**; the preview tree has the same page at
-`/preview/more/tax/overview`.
+`/preview/tax/overview`.
 
 The page is a handover sheet for the German income tax return. It lists
 ledger **candidates** grouped by the form section they belong to. It is
