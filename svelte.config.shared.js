@@ -1,5 +1,11 @@
 import adapter from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { readFileSync } from "node:fs";
+
+// SvelteKit writes a build timestamp into `_app/version.json` by default, so
+// two builds of the same source produce different assets. Pinning the version
+// to the release version makes `web/static` reproducible for the freeze.
+const version = readFileSync(new URL("./VERSION", import.meta.url), "utf8").trim();
 
 /**
  * Shared Svelte/SvelteKit configuration.
@@ -10,6 +16,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
  */
 const svelteConfig = {
   alias: { $lib: "src/lib" },
+  version: { name: version },
   preprocess: vitePreprocess(),
 
   onwarn: (warning, handler) => {
