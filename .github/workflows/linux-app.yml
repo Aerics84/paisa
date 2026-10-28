@@ -37,7 +37,7 @@ jobs:
           VERSION=$(cat VERSION)
           LDFLAGS="-X github.com/ananthakumaran/paisa/internal/version.current=${VERSION}"
           cd desktop
-          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
           wails doctor
           wails build -tags webkit2_40 -ldflags "${LDFLAGS}"
           cp build/bin/Paisa build/linux/usr/local/bin
