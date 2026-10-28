@@ -4,6 +4,34 @@ $fa-font-path: "../node_modules/@fortawesome/fontawesome-free/webfonts";
 @import "@fortawesome/fontawesome-free/scss/regular.scss";
 @import "@fortawesome/fontawesome-free/scss/solid.scss";
 
+// Font Awesome 7 configures its font path inside a Sass module (v.$font-path),
+// so the legacy global $fa-font-path override no longer applies. Re-declare the
+// faces with the repository-local webfont path; later declarations win.
+@font-face {
+  font-family: "Font Awesome 7 Free";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("../node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "Font Awesome 7 Free";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2")
+    format("woff2");
+}
+@font-face {
+  font-family: "Font Awesome 7 Brands";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2")
+    format("woff2");
+}
+
 @import "../fonts/arcticons.scss";
 @import "../fonts/fa6-brands.scss";
 @import "../fonts/fa6-regular.scss";

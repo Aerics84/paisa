@@ -975,9 +975,9 @@ nav.breadcrumb .is-inactive {
 }
 
 .breadcrumb.has-chevron-separator li + li::before {
-  font-family: "Font Awesome 6 Free";
+  font-family: "Font Awesome 7 Free";
   font-weight: 900;
-  content: unquote('"#{ $fa-var-chevron-right }"');
+  content: "\f054";
   color: $link;
 }
 
