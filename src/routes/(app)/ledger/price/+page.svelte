@@ -142,24 +142,24 @@
                     <td colspan="2" class="p-0">
                       <div>
                         <VirtualList
+                          scrollDirection="vertical"
                           width="100%"
                           height={_.min([ITEM_SIZE * prices[commodity].length, ITEM_SIZE * 20])}
                           itemCount={prices[commodity].length}
                           itemSize={ITEM_SIZE}
                         >
-                          <div
-                            slot="item"
-                            let:index
-                            let:style
-                            {style}
-                            class="small-box is-flex is-flex-wrap-wrap is-justify-content-space-between is-size-7"
-                          >
+                          {#snippet item({ index, style })}
                             {@const p = prices[commodity][index]}
-                            <div class="pl-1">{p.date.format("DD MMM YYYY")}</div>
-                            <div class="pr-1 has-text-right">
-                              {formatCurrency(p.value, 4)}
+                            <div
+                              {style}
+                              class="small-box is-flex is-flex-wrap-wrap is-justify-content-space-between is-size-7"
+                            >
+                              <div class="pl-1">{p.date.format("DD MMM YYYY")}</div>
+                              <div class="pr-1 has-text-right">
+                                {formatCurrency(p.value, 4)}
+                              </div>
                             </div>
-                          </div>
+                          {/snippet}
                         </VirtualList>
                       </div>
                     </td>

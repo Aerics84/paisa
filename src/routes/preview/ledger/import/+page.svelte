@@ -318,20 +318,26 @@
                 searchable={true}
                 clearable={false}
                 floatingConfig={{ strategy: "fixed" }}
-                on:change={(_e) => {
+                onchange={() => {
                   saveAsName = selectedTemplate.name;
                 }}
               >
-                <div slot="selection" let:selection>
-                  {selection.name}
-                  <span class="tag is-small is-link invertable is-light"
-                    >{selection.template_type}</span
-                  >
-                </div>
-                <div slot="item" let:item>
-                  <span class="name">{item.name}</span>
-                  <span class="tag is-small is-link invertable is-light">{item.template_type}</span>
-                </div>
+                {#snippet selection({ selection })}
+                  <div>
+                    {selection.name}
+                    <span class="tag is-small is-link invertable is-light"
+                      >{selection.template_type}</span
+                    >
+                  </div>
+                {/snippet}
+                {#snippet item({ item })}
+                  <div>
+                    <span class="name">{item.name}</span>
+                    <span class="tag is-small is-link invertable is-light"
+                      >{item.template_type}</span
+                    >
+                  </div>
+                {/snippet}
               </Select>
             </p>
           </div>

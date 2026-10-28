@@ -113,20 +113,23 @@
       <div class="field">
         <div class="control" style="max-width: 350px">
           <Select
-            bind:justValue={value}
+            bind:value
             class="icon-select is-small"
-            {value}
             showChevron={true}
             loadOptions={searchIcons}
             searchable={true}
             clearable={!required}
           >
-            <div class="custom-icon" slot="selection" let:selection>
-              <span>{iconGlyph(selection.value)} {selection.value}</span>
-            </div>
-            <div class="custom-icon" slot="item" let:item>
-              <span class="name">{iconGlyph(item.value)} {item.value}</span>
-            </div>
+            {#snippet selection({ selection })}
+              <div class="custom-icon">
+                <span>{iconGlyph(selection.value as string)} {selection.value}</span>
+              </div>
+            {/snippet}
+            {#snippet item({ item })}
+              <div class="custom-icon">
+                <span class="name">{iconGlyph(item.value as string)} {item.value}</span>
+              </div>
+            {/snippet}
           </Select>
         </div>
       </div>

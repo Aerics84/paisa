@@ -109,49 +109,49 @@
               <div class="has-text-right">CAGR</div>
             </div>
             <VirtualList
+              scrollDirection="vertical"
               height={window.innerHeight - 245}
               itemCount={filteredPostings.length}
               itemSize={27}
             >
-              <div
-                slot="item"
-                class="px-3 pt-1 grid grid-cols-7x gap-1 posting-row items-baseline is-hoverable"
-                let:index
-                let:style
-                {style}
-              >
+              {#snippet item({ index, style })}
                 {@const p = filteredPostings[index]}
                 {@const c = change(p)}
-                <div>{p.date.format("DD MMM YYYY")}</div>
-                <div class="is-size-7 truncate" title={p.payee}>
-                  <PostingStatus posting={p} />
-                  <PostingNote posting={p} />
-                  <a class="secondary-link" href={postingUrl(p)}>{p.payee}</a>
-                </div>
-                <div class="custom-icon truncate" title={p.account}>
-                  <div class="flex">
-                    <span class="mr-1" style={accountColorStyle(firstName(p.account))}
-                      >{iconText(p.account)}</span
-                    >
-                    {p.account}
+                <div
+                  class="px-3 pt-1 grid grid-cols-7x gap-1 posting-row items-baseline is-hoverable"
+                  {style}
+                >
+                  <div>{p.date.format("DD MMM YYYY")}</div>
+                  <div class="is-size-7 truncate" title={p.payee}>
+                    <PostingStatus posting={p} />
+                    <PostingNote posting={p} />
+                    <a class="secondary-link" href={postingUrl(p)}>{p.payee}</a>
+                  </div>
+                  <div class="custom-icon truncate" title={p.account}>
+                    <div class="flex">
+                      <span class="mr-1" style={accountColorStyle(firstName(p.account))}
+                        >{iconText(p.account)}</span
+                      >
+                      {p.account}
+                    </div>
+                  </div>
+                  <div class="has-text-right">{formatCurrency(p.amount, 2)}</div>
+                  <div class="has-text-right">{formatCurrency(p.balance, 2)}</div>
+                  <div class="has-text-right">{unlessDefault(p, formatFloat(p.quantity, 4))}</div>
+                  <div class="has-text-right">
+                    {unlessDefault(p, formatCurrency(Math.abs(p.amount / p.quantity), 4))}
+                  </div>
+                  <div class="has-text-right">
+                    {unlessDefault(p, unlessZero(c.days, formatCurrency(p.market_amount)))}
+                  </div>
+                  <div class="has-text-right {c.class}">
+                    {unlessZero(c.value, formatCurrency(c.value))}
+                  </div>
+                  <div class="has-text-right {c.class}">
+                    {unlessZero(c.percentage, formatFloat(c.percentage))}
                   </div>
                 </div>
-                <div class="has-text-right">{formatCurrency(p.amount, 2)}</div>
-                <div class="has-text-right">{formatCurrency(p.balance, 2)}</div>
-                <div class="has-text-right">{unlessDefault(p, formatFloat(p.quantity, 4))}</div>
-                <div class="has-text-right">
-                  {unlessDefault(p, formatCurrency(Math.abs(p.amount / p.quantity), 4))}
-                </div>
-                <div class="has-text-right">
-                  {unlessDefault(p, unlessZero(c.days, formatCurrency(p.market_amount)))}
-                </div>
-                <div class="has-text-right {c.class}">
-                  {unlessZero(c.value, formatCurrency(c.value))}
-                </div>
-                <div class="has-text-right {c.class}">
-                  {unlessZero(c.percentage, formatFloat(c.percentage))}
-                </div>
-              </div>
+              {/snippet}
             </VirtualList>
           </div>
         </div>

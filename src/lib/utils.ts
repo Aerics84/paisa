@@ -44,6 +44,7 @@ function getUserConfig(): UserConfig {
 export interface AutoCompleteItem {
   label: string;
   id: string;
+  [key: string]: unknown;
 }
 
 export interface AutoCompleteField {
@@ -659,6 +660,7 @@ export interface ImportTemplate {
   name: string;
   content: string;
   template_type: string;
+  [key: string]: unknown;
 }
 
 export interface Log {

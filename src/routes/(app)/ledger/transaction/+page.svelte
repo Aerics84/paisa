@@ -183,15 +183,18 @@
         <div class="column is-12">
           <div class="box">
             <VirtualList
+              scrollDirection="vertical"
               width="100%"
               height={window.innerHeight - 150}
               itemCount={filtered.length}
               {itemSize}
             >
-              <div slot="item" let:index let:style {style}>
+              {#snippet item({ index, style })}
                 {@const t = filtered[index]}
-                <Transaction {t} />
-              </div>
+                <div {style}>
+                  <Transaction {t} />
+                </div>
+              {/snippet}
             </VirtualList>
           </div>
         </div>

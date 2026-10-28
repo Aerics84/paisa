@@ -20,19 +20,19 @@
     label: account
   }));
 
-  function handleFilter(e: any) {
+  function handleFilter(items: any[]) {
     if (accountItems?.find((i) => i.label === filterText)) return;
-    if (e.detail.length === 0 && filterText.length > 0) {
+    if (items.length === 0 && filterText.length > 0) {
       const prev = allAccountItems.filter((i) => !i.created);
       allAccountItems = [...prev, { value: filterText, label: filterText, created: true }];
     }
   }
 
-  function handleChange(e: any) {
-    if (e.type === "clear") {
-      accountItems = _.without(accountItems, e.detail);
+  function handleChange(value: any, cleared = false) {
+    if (cleared) {
+      accountItems = _.without(accountItems, value);
     } else {
-      accountItems = _.cloneDeep(e.detail);
+      accountItems = _.cloneDeep(value);
     }
 
     accounts = accountItems.map((i) => i.value);
@@ -48,16 +48,20 @@
   showChevron={true}
   searchable={true}
   clearable={false}
-  on:change={handleChange}
-  on:clear={handleChange}
-  on:filter={handleFilter}
+  onchange={(value) => handleChange(value)}
+  onclear={(value) => handleChange(value, true)}
+  onfilter={(items) => handleFilter(items)}
   bind:filterText
 >
-  <div slot="selection" let:selection>
-    <span>{iconify(selection.label)}</span>
-  </div>
-  <div slot="item" let:item>
-    {item.created ? "Add: " : ""}
-    {iconify(item.label)}
-  </div>
+  {#snippet selection({ selection })}
+    <div>
+      <span>{iconify(selection.label as string)}</span>
+    </div>
+  {/snippet}
+  {#snippet item({ item })}
+    <div>
+      {item.created ? "Add: " : ""}
+      {iconify(item.label as string)}
+    </div>
+  {/snippet}
 </Select>
