@@ -48,7 +48,6 @@ export function renderBudget(element: Element, accountBudget: AccountBudget) {
 
   renderLine(accountBudget.forecast, texture.url());
   let yellow = 0;
-  let green = 0;
   let red = 0;
 
   if (accountBudget.rollover > 0 && accountBudget.actual > accountBudget.forecast) {
@@ -66,7 +65,7 @@ export function renderBudget(element: Element, accountBudget: AccountBudget) {
     }
   }
 
-  green = _.min([accountBudget.forecast, accountBudget.actual]);
+  const green = _.min([accountBudget.forecast, accountBudget.actual]);
 
   renderLine(green + yellow + red, darkLightColor(COLORS.danger, COLORS.loss));
   renderLine(green + yellow, darkLightColor(COLORS.warnText, COLORS.warn));

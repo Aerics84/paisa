@@ -177,8 +177,7 @@
               rows="5"
               bind:value
               spellcheck="false"
-              data-enable-grammarly="false"
-            ></textarea>
+              data-enable-grammarly="false"></textarea>
           {:else}
             <input
               {disabled}

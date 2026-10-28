@@ -1505,8 +1505,8 @@ export function svgUrl(identifier: string) {
 export function dueDateIcon(dueDate: dayjs.Dayjs, clearedDate: dayjs.Dayjs) {
   let icon = "fa-circle-check";
   let glyph = iconGlyph("fa6-solid:circle-check");
-  let color = "has-text-success";
-  let svgColor = "svg-text-success";
+  let color: string;
+  let svgColor: string;
 
   if (!clearedDate) {
     if (dueDate.isBefore(now(), "day")) {

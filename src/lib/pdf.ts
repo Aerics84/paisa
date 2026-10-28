@@ -74,11 +74,9 @@ function makeRow(cells: TextItemWithPosition[]): string[] {
  *
  * This is the pure row-building part of PDF extraction; it performs no I/O.
  */
-export function rowsFromPages(
-  pages: { page: number; items: TextItem[] }[]
-): string[][] {
+export function rowsFromPages(pages: { page: number; items: TextItem[] }[]): string[][] {
   const rows: Row[] = [];
-  let currentRow: Row = undefined;
+  let currentRow: Row;
 
   for (const { page: pageNumber, items: pageItems } of pages) {
     // Start a new row for this page
@@ -129,7 +127,6 @@ export function rowsFromPages(
         // Add the current row to the list of rows
         if (currentRow !== undefined) {
           rows.push(currentRow);
-          currentRow = undefined;
         }
 
         // And start a new row

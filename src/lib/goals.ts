@@ -122,7 +122,7 @@ export function estimateTargetDate(
 
   const today = now().startOf("month");
   const monthlyRate = rate / (100 * 12);
-  let periods = 0;
+  let periods: number;
 
   if (monthlyRate === 0) {
     periods = (targetSavings - savingsTotal) / monthlyContribution;

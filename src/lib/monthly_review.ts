@@ -89,11 +89,7 @@ export function hasRecordedActivity(review: MonthlyReviewResponse | null): boole
 }
 
 export type SurplusState =
-  | "ready"
-  | "no-activity"
-  | "income-missing"
-  | "expense-missing"
-  | "no-income-or-expense";
+  "ready" | "no-activity" | "income-missing" | "expense-missing" | "no-income-or-expense";
 
 /**
  * A surplus is only shown when the month has both recorded income and recorded
