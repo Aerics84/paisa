@@ -138,11 +138,11 @@ The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phas
 
 `Dockerfile` and `Dockerfile.demo` build on Alpine 3.24 and install JavaScript dependencies with `npm ci` from the committed `package-lock.json`.
 
-| Base image | Digest (documented, not pinned) |
-|---|---|
-| `node:24.22.1-alpine3.24` | `sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53` |
+| Base image                  | Digest (documented, not pinned)                                           |
+| --------------------------- | ------------------------------------------------------------------------- |
+| `node:24.22.1-alpine3.24`   | `sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53` |
 | `golang:1.26.10-alpine3.24` | `sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308` |
-| `alpine:3.24.3` | `sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a` |
+| `alpine:3.24.3`             | `sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a` |
 
 The Dockerfiles keep the tags. Digests are recorded for auditability only, so builds are maintainable but not bit-for-bit reproducible; a tag can point to a different image later. Pin the digests in a separate change if strict reproducibility is required.
 
