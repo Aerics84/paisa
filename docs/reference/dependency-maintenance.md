@@ -77,6 +77,8 @@ gh run list --workflow npm12-gate.yml --limit 1
 
 Each matrix job installs npm 12.2.1 over the runner's bundled npm, runs `npm ci`, asserts that `package-lock.json` is unchanged, and then runs P-JS (`check`, `build`, imports, investment, monthly), P-PDF (`src/lib/pdf.test.ts`) and P-REG (`go build`, `TZ=UTC bun test tests/regression.test.ts`). A green run on all three platforms is the evidence required by step 4; the run URL is recorded here once it passes.
 
+The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6); macOS used the same versions from Homebrew and pip. Windows used the regression test's built-in tolerance for missing ledger CLIs.
+
 "Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms". npm 12 does not block the completion of the remaining phases.
 
 ## Routine Refreshes

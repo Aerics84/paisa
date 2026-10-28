@@ -7,7 +7,8 @@ document the upstream releases this fork builds on; the short-lived
 ### Unreleased
 
 - Add the manual `npm 12 gate` workflow that verifies npm 12.2.1 on Linux,
-  Windows and macOS before the package manager is switched.
+  Windows and macOS before the package manager is switched. The first run
+  passed on all three platforms.
 
 ### 0.8.5.3 (2026-10-28)
 
