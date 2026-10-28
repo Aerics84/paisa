@@ -8,7 +8,7 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 - Primary package manager: npm 11.19
 - Local version source of truth: [`.nvmrc`](../../.nvmrc)
 - Repository metadata source of truth: [`package.json`](../../package.json)
-- Secondary runtime: Bun 1.3.13, used only for the targeted import and regression test commands already defined in `package.json`
+- Secondary runtime: Bun 1.4.4, used only for the targeted import and regression test commands already defined in `package.json`
 - Secondary runtime version source of truth: [`.bun-version`](../../.bun-version)
 
 GitHub Actions, local development, and Nix-based workflows should converge on this baseline unless a workflow documents a deliberate exception.
