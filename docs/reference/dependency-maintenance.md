@@ -21,6 +21,25 @@ GitHub Actions, local development, and Nix-based workflows should converge on th
 - npm 12 is deferred to a default-branch follow-up (see [npm 12](#npm-12-deferred)).
 - Nix uses `nixos-26.05`, `buildNpmPackage` for the web assets, and no longer uses node2nix.
 
+## Freeze Snapshot (2026-10-28)
+
+Validated end state before the freeze commit:
+
+| Component                                             | Version                                |
+| ----------------------------------------------------- | -------------------------------------- |
+| Node / npm                                            | 24.22.1 / 11.19.1                      |
+| Bun / bun-types                                       | 1.4.4 / 1.4.4                          |
+| Go                                                    | 1.26.10                                |
+| hledger                                               | 1.52.4 (Hackage override)              |
+| beancount                                             | 2.3.6 (v3 deferred)                    |
+| Svelte / SvelteKit / Vite                             | 5.57.3 / 3.1.0 / 8.3.5                 |
+| TypeScript / ESLint / Prettier                        | 6.0.3 / 10.13.0 / 3.9.10               |
+| Tabulator / bignumber / chroma / formatjs / financial | 6.7.1 / 11.1.5 / 3.2.0 / 9.4.3 / 0.2.4 |
+
+`npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. `go list -m -u all` reports 73 indirect module updates; all direct modules are current and the indirect list is documented above.
+
+Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are npm 12 (default-branch gate), beancount 3 (bean-report replacement), the indirect Go module set, and the NixOS 26.11 refresh within two weeks of its release.
+
 ## Dependency Audit Gate
 
 CI runs `node scripts/security-gate.mjs --report .cache/security` after the test steps and uploads the report for 90 days. `make audit` is the local equivalent.

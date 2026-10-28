@@ -21,6 +21,8 @@ document the upstream releases this fork builds on; the short-lived
 - Add a machine-readable dependency audit gate (npm + govulncheck) to CI
   and weekly Dependabot updates; the gate blocks confirmed critical/high
   findings. npm 12 is deferred to a default-branch follow-up PR.
+- Freeze the refreshed dependency set and record the verified commit in
+  `docs/reference/dependency-freeze.md`.
 
 ### 0.8.5.2 (2026-10-28)
 
