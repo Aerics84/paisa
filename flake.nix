@@ -1,16 +1,37 @@
 {
   description = "paisa";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-  # Pin hldeger to 1.32.x; 1.40 has a bug related to chained price calculation
+  # hledger is gated on the chained-price regression; pin to the nixpkgs rev
+  # that carries the candidate release.
   # https://github.com/simonmichael/hledger/issues/2254
-  inputs.hledger-pkgs.url =
-    "github:NixOS/nixpkgs/ebe4301cbd8f81c4f8d3244b3632338bbeb6d49c";
+  inputs.hledger-pkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
   outputs = { self, nixpkgs, flake-utils, hledger-pkgs }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        hledger = hledger-pkgs.legacyPackages.${system};
+        hledgerPkgs = hledger-pkgs.legacyPackages.${system};
+        # nixpkgs 26.05 (and master) still package hledger 1.52; pin the
+        # 1.52.4 patch release from Hackage. Issue #2254 is fixed since 1.41.
+        hledgerPackages = hledgerPkgs.haskellPackages.override {
+          overrides = self: super: {
+            hledger-lib = super.hledger-lib.overrideAttrs (old: {
+              version = "1.52.4";
+              src = pkgs.fetchurl {
+                url = "mirror://hackage/hledger-lib-1.52.4.tar.gz";
+                hash = "sha256-xwnEt/DBiC4i7EfB8x5cV0a/ISbLmY9gNqCZN/sb5s0=";
+              };
+            });
+            hledger = super.hledger.overrideAttrs (old: {
+              version = "1.52.4";
+              src = pkgs.fetchurl {
+                url = "mirror://hackage/hledger-1.52.4.tar.gz";
+                hash = "sha256-e9HTlouijTPYF4Dk7QexKG87VP/+w7xNRHcLCTSukVg=";
+              };
+            });
+          };
+        };
+        hledger = hledgerPackages;
         version = builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile ./VERSION);
         paisaWeb = pkgs.buildNpmPackage {
           pname = "paisa-web";
