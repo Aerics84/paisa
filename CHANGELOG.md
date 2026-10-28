@@ -4,7 +4,7 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
-### 8.5.1 (2026-10-27)
+### 0.8.5.1 (2026-10-27)
 
 - Fix accessibility warnings in the navbar and on the demo button.
 - Handle relative `source` names reported by hledger without aborting the
@@ -18,7 +18,7 @@ document the upstream releases this fork builds on; the short-lived
 - List the valid `tax_category` keys in the legacy-tag and
   unknown-category diagnostics.
 
-### 8.5 (2026-10-27)
+### 0.8.5 (2026-10-27)
 
 - Add a Germany [tax overview](https://github.com/Aerics84/paisa/blob/master/docs/reference/tax/deductions.md)
   page that groups deductible-expense candidates by tax return section,
@@ -38,7 +38,7 @@ document the upstream releases this fork builds on; the short-lived
 - Polish the preview dashboard layout, currency formatting and month
   selector styling.
 
-### 8.4 (2026-10-25)
+### 0.8.4 (2026-10-25)
 
 - Add total and invested savings rates to the yearly investment cards,
   with a 20 % guideline highlight and documented formulas.
@@ -69,7 +69,7 @@ document the upstream releases this fork builds on; the short-lived
   and restore the CI, Docker and docs workflows.
 - Upgrade the bundled ledger to 3.4.1.
 
-### 8.2 (2026-04-29)
+### 0.8.2 (2026-04-29)
 
 - Modernize the frontend stack: Svelte 5, Bulma 1, Vite 8 and Bun 1.3,
   with an npm 11 lockfile.
@@ -80,7 +80,7 @@ document the upstream releases this fork builds on; the short-lived
 - Fix Docker npm preparation and clean npm installs in CI.
 - Harden regression tests when the ledger binary is missing.
 
-### 8.1 (2026-04-28)
+### 0.8.1 (2026-04-28)
 
 - Add built-in import templates for Trade Republic and Scalable Capital
   trade and cash CSV exports.
