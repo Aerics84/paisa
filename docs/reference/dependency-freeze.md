@@ -116,6 +116,9 @@ shell (`node -v`, `go version`, `mkdocs build`) and a served
 - **Windows release dry run:** re-run the `ci/windows-*` workflow after the
   hosted-runner stall; the workflow fixes are committed but no green Windows
   run exists yet.
+- **PDF worker-path coverage:** the fixture golden verifies extraction; a
+  browser-level upload test that exercises the production worker URL remains a
+  follow-up.
 
 ## Docker Base Images
 
@@ -126,6 +129,23 @@ Digests recorded at freeze time (tags stay in the Dockerfiles):
 | `node:24.22.1-alpine3.24`   | `sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53` |
 | `golang:1.26.10-alpine3.24` | `sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308` |
 | `alpine:3.24.3`             | `sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a` |
+
+## Post-Freeze Review Fixes
+
+A whole-branch review after the freeze produced one Critical and four Important
+findings. Fix commit `bd62c3ab9a31b55fabc185d143b905d0eff95caa`:
+
+- Treats npm audit exit codes other than 0/1, and any nonzero govulncheck exit
+  in `-json` mode, as scanner errors (exit 2); govulncheck error records are
+  rejected too. `scripts/security-gate.test.mjs` covers each failure path.
+- Runs the CI regression test with the `.bun-version` Bun (1.4.4) inside the
+  Nix shell instead of the Nix-packaged 1.3.13.
+- Narrows the P-UI claim to route-level verification and corrects the phase
+  status wording.
+
+The dependency state is unchanged: the lockfile, artifact and fixture
+manifests still match the freeze hashes above. The PDF worker-path test and the
+Windows release dry run remain recorded follow-ups.
 
 ## Release Dry Run
 
