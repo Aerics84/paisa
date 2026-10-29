@@ -4,7 +4,7 @@
       "date": "2022-01-01T00:00:00Z",
       "postings": [
         {
-          "id": 76,
+          "id": 151,
           "transaction_id": "40de9038769ea6b052d64cd17b412c57",
           "date": "2022-01-01T00:00:00Z",
           "payee": "Salary",
@@ -27,7 +27,7 @@
           "balance": 0
         },
         {
-          "id": 80,
+          "id": 155,
           "transaction_id": "989b8dbd604bd75c355590145f179991",
           "date": "2022-01-06T00:00:00Z",
           "payee": "Bonus",
@@ -50,7 +50,7 @@
           "balance": 0
         },
         {
-          "id": 89,
+          "id": 164,
           "transaction_id": "825a68f1fadeaf2f4e1c330630270edb",
           "date": "2022-01-10T00:00:00Z",
           "payee": "Sell",
@@ -73,7 +73,7 @@
           "balance": 0
         },
         {
-          "id": 99,
+          "id": 174,
           "transaction_id": "e79744dc0672288ba8ea6f57c8e28b29",
           "date": "2022-01-31T00:00:00Z",
           "payee": "Interest",
@@ -109,7 +109,7 @@
       "end_date": "2022-03-31T23:59:59.999999999Z",
       "postings": [
         {
-          "id": 76,
+          "id": 151,
           "transaction_id": "40de9038769ea6b052d64cd17b412c57",
           "date": "2022-01-01T00:00:00Z",
           "payee": "Salary",
@@ -132,7 +132,7 @@
           "balance": 0
         },
         {
-          "id": 80,
+          "id": 155,
           "transaction_id": "989b8dbd604bd75c355590145f179991",
           "date": "2022-01-06T00:00:00Z",
           "payee": "Bonus",
@@ -155,7 +155,7 @@
           "balance": 0
         },
         {
-          "id": 89,
+          "id": 164,
           "transaction_id": "825a68f1fadeaf2f4e1c330630270edb",
           "date": "2022-01-10T00:00:00Z",
           "payee": "Sell",
@@ -178,7 +178,7 @@
           "balance": 0
         },
         {
-          "id": 99,
+          "id": 174,
           "transaction_id": "e79744dc0672288ba8ea6f57c8e28b29",
           "date": "2022-01-31T00:00:00Z",
           "payee": "Interest",

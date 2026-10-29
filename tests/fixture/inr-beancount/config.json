@@ -52,7 +52,7 @@
     "user_accounts": [],
     "credit_cards": []
   },
-  "now": "2022-02-06T23:00:00Z",
+  "now": "2022-02-07T00:00:00Z",
   "schema": {
     "$id": "https://paisa.fyi/schema.json",
     "$schema": "https://json-schema.org/draft/2020-12/schema",

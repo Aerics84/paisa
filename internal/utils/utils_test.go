@@ -23,6 +23,17 @@ func TestNowUsesConfiguredTimeZone(t *testing.T) {
 	assert.Equal(t, "Europe/Berlin", Now().Location().String())
 }
 
+func TestSetNowUsesUTC(t *testing.T) {
+	require.NoError(t, config.LoadConfig([]byte(
+		"journal_path: test.ledger\ndb_path: test.db\ntime_zone: Europe/Berlin\n",
+	), ""))
+	now = time.Time{}
+	t.Cleanup(func() { now = time.Time{} })
+
+	SetNow("2022-02-07")
+	assert.Equal(t, "2022-02-07T00:00:00Z", Now().UTC().Format(time.RFC3339))
+}
+
 func TestOpenDBUsesWALAndBusyTimeout(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, config.LoadConfig([]byte(fmt.Sprintf(

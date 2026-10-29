@@ -118,7 +118,7 @@ func EndOfDay(date time.Time) time.Time {
 var now time.Time
 
 func SetNow(date string) {
-	t, err := time.ParseInLocation("2006-01-02", date, config.TimeZone())
+	t, err := time.ParseInLocation("2006-01-02", date, time.UTC)
 	if err != nil {
 		log.Fatal(err)
 	}
