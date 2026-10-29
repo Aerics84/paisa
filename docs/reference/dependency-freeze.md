@@ -95,7 +95,7 @@ with the next routine refresh.
 | P-CONTAINER (`Dockerfile`, `Dockerfile.demo`, `paisa version`) | Pass                                                                                                                                                   |
 | P-DESKTOP (`wails build`)                                      | Pass, `Paisa.exe` built                                                                                                                                |
 | P-NIX (offline builds, dev shell, mkdocs, clean source)        | Pass                                                                                                                                                   |
-| P-RELEASE (`ci/*` draft-release dry run)                       | Linux App/CLI and macOS AMD64/ARM64 pass; Windows cancelled after the hosted runner stalled in `setup-node` (infrastructure). See below.               |
+| P-RELEASE (`ci/*` draft-release dry run)                       | Linux App/CLI, macOS AMD64/ARM64 and Windows pass. The Windows re-run on 2026-10-29 built the CLI and NSIS installer. See below.                       |
 | P-LINT (`npm run lint`)                                        | Known Windows-only failure: Prettier CRLF diff in 231 untouched files; `eslint .` reports 0 errors (11 warnings). CI validates changed files on Linux. |
 
 P-NIX was verified on the frozen source without a local `web/static`, with
@@ -148,8 +148,8 @@ findings. Fix commit `bd62c3ab9a31b55fabc185d143b905d0eff95caa`:
   status wording.
 
 The dependency state is unchanged: the lockfile, artifact and fixture
-manifests still match the freeze hashes above. The PDF worker-path test and the
-Windows release dry run remain recorded follow-ups.
+manifests still match the freeze hashes above. The PDF worker-path test remains
+a recorded follow-up.
 
 ## Release Dry Run
 
@@ -160,12 +160,7 @@ difference from the freeze commit is `.github/workflows/windows.yml`):
 - **Linux CLI Release:** success.
 - **Mac OS AMD64 Release:** success (ledger 3.4.1 from the corrected Homebrew formula).
 - **Mac OS ARM64 Release:** success.
-- **Windows Release:** not green in this session. Three pre-existing workflow
-  defects were fixed and committed (MSYS2 package renames, the setup-msys2
-  installation path, and PowerShell `$PATH` expansion in the bash calls). The
-  final run reached the MSYS2 setup step but the hosted Windows runner then
-  stalled in `setup-node` for over an hour; the run was cancelled. Follow-up:
-  re-run the `ci/windows-*` dry run when the runner is healthy.
+- **Windows Release:** pass on 2026-10-29 at commit `efa696b` ([run 40856347900](https://github.com/Aerics84/paisa/actions/runs/40856347900)). The run built `paisa-cli-windows-amd64.exe` (80.7 MB) and `paisa-app-windows-amd64.exe` (24.9 MB, NSIS installer). Two ledger 3.4.1 MinGW build defects had to be fixed in the workflow: `BYTE_ORDER` is undefined under MinGW (`-DBYTE_ORDER=1234 -DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321`) and the detected readline/libedit did not declare `history_expand`, so the embedded CLI is built with `-DHAVE_EDIT=0 -DHAVE_READLINE=0`. The draft release was deleted afterwards.
 
 The release action created one draft release with an empty tag; it was deleted
 after the run. **No tags were pushed.** Logs are in
