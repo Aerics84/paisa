@@ -76,7 +76,7 @@ docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
 
 ### From source
 
-Build requirements: Go 1.24+, Node 24+, npm and a C toolchain for SQLite (`gcc`/`clang`).
+Build requirements: Go 1.24+, Node 24+, npm 12+ and a C toolchain for SQLite (`gcc`/`clang`).
 
 ```bash
 git clone https://github.com/Aerics84/paisa.git

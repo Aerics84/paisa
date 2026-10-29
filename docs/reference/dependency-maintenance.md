@@ -5,7 +5,7 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 ## Runtime Baseline
 
 - Primary JavaScript runtime: Node 24.22.1
-- Primary package manager: npm 11.19.1
+- Primary package manager: npm 12.2.1
 - Local version source of truth: [`.nvmrc`](../../.nvmrc)
 - Repository metadata source of truth: [`package.json`](../../package.json)
 - Secondary runtime: Bun 1.4.4, used only for the targeted import and regression test commands already defined in `package.json`
@@ -18,7 +18,7 @@ GitHub Actions, local development, and Nix-based workflows should converge on th
 - Phases 0–6 are complete; the audit gate and the freeze report are in place.
 - hledger is on 1.52.4 (Hackage source override; issue #2254 was fixed in 1.41).
 - beancount stays on 2.3.6: v3 removes `bean-report` and moves `bean-query` to a separate package (see [Parser Tooling](#parser-tooling)).
-- npm 12 is deferred to a default-branch follow-up (see [npm 12](#npm-12-deferred)).
+- npm 12.2.1 was adopted after the refresh merged; the default-branch gate passed on 2026-10-28 (see [npm 12](#npm-12)).
 - Nix uses `nixos-26.05`, `buildNpmPackage` for the web assets, and no longer uses node2nix.
 
 ## Freeze Snapshot (2026-10-28)
@@ -38,7 +38,9 @@ Validated end state before the freeze commit:
 
 `npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. `go list -m -u all` reports 73 indirect module updates; all direct modules are current and the indirect list is documented above.
 
-Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are npm 12 (default-branch gate), beancount 3 (bean-report replacement), the indirect Go module set, and the NixOS 26.11 refresh within two weeks of its release.
+This snapshot is historical: npm moved to 12.2.1 on 2026-10-29 after the default-branch gate passed. All other rows remain current.
+
+Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are beancount 3 (bean-report replacement), the indirect Go module set, and the NixOS 26.11 refresh within two weeks of its release.
 
 ## Dependency Audit Gate
 
@@ -56,11 +58,13 @@ The report must contain npm entries for both the repository root and `tools/font
 
 Dependabot checks npm (root and `tools/fontgen`), gomod, GitHub Actions and Docker weekly, with five open PRs per ecosystem. TypeScript major updates are ignored deliberately because the surrounding toolchain (typescript-eslint, SvelteKit, svelte-check) does not accept TypeScript 7 yet; security updates stay enabled. The audit gate intentionally blocks PRs with confirmed critical/high findings.
 
-## npm 12 (deferred)
+## npm 12
 
-npm 12 is **not** part of this refresh. It was pre-checked locally on 2026-10-28 with `npx -y npm@12.2.1` (`--version`, `ci`, `run check`, `run build`): all exited 0 and `git diff --exit-code package-lock.json` stayed clean. Full `npm run lint` remains red on the Windows checkout because of the pre-existing CRLF Prettier diff across 241 files; the changed-file gate used by CI is unaffected. This pre-check is informative only, not a binding gate.
+npm 12.2.1 is the supported package manager since 2026-10-29. The refresh itself stayed on npm 11.19 because `workflow_dispatch` workflows must be registered on the default branch, so the gate was built afterwards, run green, and only then were `packageManager`, `engines`, workflows and Dockerfiles switched.
 
-npm 11.19 remains the supported package manager for this branch. npm 12 is upgraded in its own follow-up PR **after** this refresh merges:
+The historical local pre-check on 2026-10-28 used `npx -y npm@12.2.1` (`--version`, `ci`, `run check`, `run build`): all exited 0 and `git diff --exit-code package-lock.json` stayed clean. Full `npm run lint` remains red on the Windows checkout because of the pre-existing CRLF Prettier diff across 241 files; the changed-file gate used by CI is unaffected. This pre-check was informative only, not a binding gate.
+
+The upgrade sequence was:
 
 1. `workflow_dispatch` workflows must be registered on the default branch. An `npm12-gate.yml` created only on a temporary branch is not a reliable trigger and can fail with `gh workflow run --ref`.
 2. Add `npm12-gate.yml` with `workflow_dispatch` on the default branch.
@@ -79,7 +83,9 @@ Each matrix job installs npm 12.2.1 over the runner's bundled npm, runs `npm ci`
 
 The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6); macOS used the same versions from Homebrew and pip. Windows used the regression test's built-in tolerance for missing ledger CLIs.
 
-"Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms". npm 12 does not block the completion of the remaining phases.
+"Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms".
+
+Adoption (2026-10-29): `packageManager` and `engines.npm` pin `12.2.1`, `Test` and the four release workflows install npm 12.2.1 before `npm ci`, and `Dockerfile` / `Dockerfile.demo` do the same before building the web assets. `tools/fontgen` shares that npm because it is driven through `npm --prefix`. The Nix `buildNpmPackage` derivation is the documented exception: it keeps the npm bundled with `pkgs.nodejs_24`, reads the same lockfile and produces the same asset tree. Re-run `npm12-gate.yml` after any change to the npm baseline or to `package-lock.json`.
 
 ## Routine Refreshes
 
@@ -232,7 +238,7 @@ The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phas
 
 ## Container Base Images
 
-`Dockerfile` and `Dockerfile.demo` build on Alpine 3.24 and install JavaScript dependencies with `npm ci` from the committed `package-lock.json`.
+`Dockerfile` and `Dockerfile.demo` build on Alpine 3.24, install npm 12.2.1 globally and then install JavaScript dependencies with `npm ci` from the committed `package-lock.json`.
 
 | Base image                  | Digest (documented, not pinned)                                           |
 | --------------------------- | ------------------------------------------------------------------------- |

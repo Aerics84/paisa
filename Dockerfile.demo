@@ -1,7 +1,9 @@
 ﻿FROM node:24.22.1-alpine3.24 AS web
 WORKDIR /usr/src/paisa
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install -g npm@12.2.1 \
+    && npm --version \
+    && npm ci
 COPY . .
 RUN npm run build
 

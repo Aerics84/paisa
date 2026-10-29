@@ -22,6 +22,10 @@ is the durable summary.
 | Docker      | 29.8.1           |
 | govulncheck | v1.9.0           |
 
+This table records the freeze state. npm was switched to 12.2.1 on 2026-10-29
+after the default-branch gate passed; see
+[dependency-maintenance.md](dependency-maintenance.md#npm-12).
+
 Nix uses `nixos-26.05`; its dev shell provides Node 24.21.0, Go 1.26.10 and Bun
 1.3.13, so CI Bun steps intentionally use `.bun-version` (1.4.4).
 

@@ -9,6 +9,9 @@ document the upstream releases this fork builds on; the short-lived
 - Add the manual `npm 12 gate` workflow that verifies npm 12.2.1 on Linux,
   Windows and macOS before the package manager is switched. The first run
   passed on all three platforms.
+- Switch the package manager to npm 12.2.1 after the gate passed:
+  `packageManager`, `engines`, the GitHub workflows and the Docker web
+  builds now use npm 12.2.1.
 
 ### 0.8.5.3 (2026-10-28)
 
