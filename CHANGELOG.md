@@ -12,6 +12,9 @@ document the upstream releases this fork builds on; the short-lived
 - Switch the package manager to npm 12.2.1 after the gate passed:
   `packageManager`, `engines`, the GitHub workflows and the Docker web
   builds now use npm 12.2.1.
+- Upgrade beancount to 3.2.3 with the official `beanquery` 0.2.0 package;
+  replace the removed `bean-report` reports with BQL queries and preserve
+  exact posting precision through nested query columns.
 
 ### 0.8.5.3 (2026-10-28)
 

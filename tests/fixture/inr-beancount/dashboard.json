@@ -1,19 +1,23 @@
 {
+  "availableMonthRange": {
+    "from": "2022-01-01T00:00:00Z",
+    "to": "2022-02-01T00:00:00Z"
+  },
   "budget": {
-    "availableForBudgeting": 13230.816768,
+    "availableForBudgeting": 13170.22810619763,
     "budgetsByMonth": {},
-    "checkingBalance": 13230.816768
+    "checkingBalance": 13170.22810619763
   },
   "cashFlows": [
     {
       "date": "2022-01-01T00:00:00Z",
-      "income": 121027,
+      "income": 121027.3,
       "expenses": 20100,
       "liabilities": 0,
-      "investment": 88768.183232,
+      "investment": 88829.77189380238,
       "tax": 0,
-      "checking": 13230.816768,
-      "balance": 13230.816768
+      "checking": 13170.22810619763,
+      "balance": 13170.22810619763
     },
     {
       "date": "2022-02-01T00:00:00Z",
@@ -23,7 +27,14 @@
       "investment": 0,
       "tax": 0,
       "checking": 0,
-      "balance": 13230.816768
+      "balance": 13170.22810619763
+    }
+  ],
+  "checkingBalanceTimeline": [
+    {
+      "month": "2022-01-01T00:00:00Z",
+      "account": "Assets:Checking",
+      "balance": 13170.22810619763
     }
   ],
   "checkingBalances": {
@@ -32,8 +43,8 @@
   "expenses": {
     "2022-01": [
       {
-        "id": 4,
-        "transaction_id": "e394cb30478d81c4c513297a4a9ef020",
+        "id": 79,
+        "transaction_id": "81fe966d689158999e4f5d0c23615ee1",
         "date": "2022-01-03T00:00:00Z",
         "payee": "Rent",
         "account": "Expenses:Rent",
@@ -43,6 +54,8 @@
         "status": "cleared",
         "tag_recurring": "",
         "tag_period": "",
+        "tax_category": "",
+        "tax_category_legacy": "",
         "transaction_begin_line": 28,
         "transaction_end_line": 31,
         "file_name": "main.beancount",
@@ -53,8 +66,8 @@
         "balance": 0
       },
       {
-        "id": 16,
-        "transaction_id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+        "id": 91,
+        "transaction_id": "8c8fd6fac21686ade476d1e9846bf36b",
         "date": "2022-01-11T00:00:00Z",
         "payee": "Multi Currency Debit",
         "account": "Expenses:Charges",
@@ -64,6 +77,8 @@
         "status": "cleared",
         "tag_recurring": "",
         "tag_period": "",
+        "tax_category": "",
+        "tax_category_legacy": "",
         "transaction_begin_line": 55,
         "transaction_end_line": 59,
         "file_name": "main.beancount",
@@ -79,25 +94,25 @@
   "networth": {
     "networth": {
       "date": "2022-02-07T23:59:59.999999999Z",
-      "investmentAmount": 229867.183232,
-      "withdrawalAmount": 128895.183232,
-      "gainAmount": 1183.8113381976295,
-      "balanceAmount": 102155.81133819763,
+      "investmentAmount": 229929.77189380236,
+      "withdrawalAmount": 128957.07189380236,
+      "gainAmount": 1245.7,
+      "balanceAmount": 102218.4,
       "balanceUnits": 0,
-      "netInvestmentAmount": 100972
+      "netInvestmentAmount": 100972.7
     },
-    "xirr": 12.14
+    "xirr": 12.81
   },
   "transactionSequences": [],
   "transactions": [
     {
-      "id": "5e31c18d8b6da4f8b27ee2eee680e3ed",
+      "id": "e79744dc0672288ba8ea6f57c8e28b29",
       "date": "2022-01-31T00:00:00Z",
       "payee": "Interest",
       "postings": [
         {
-          "id": 25,
-          "transaction_id": "5e31c18d8b6da4f8b27ee2eee680e3ed",
+          "id": 100,
+          "transaction_id": "e79744dc0672288ba8ea6f57c8e28b29",
           "date": "2022-01-31T00:00:00Z",
           "payee": "Interest",
           "account": "Assets:Checking",
@@ -107,6 +122,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 69,
           "transaction_end_line": 72,
           "file_name": "main.beancount",
@@ -117,8 +134,8 @@
           "balance": 0
         },
         {
-          "id": 24,
-          "transaction_id": "5e31c18d8b6da4f8b27ee2eee680e3ed",
+          "id": 99,
+          "transaction_id": "e79744dc0672288ba8ea6f57c8e28b29",
           "date": "2022-01-31T00:00:00Z",
           "payee": "Interest",
           "account": "Income:Interest:Checking",
@@ -128,6 +145,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 69,
           "transaction_end_line": 72,
           "file_name": "main.beancount",
@@ -146,24 +165,26 @@
       "note": ""
     },
     {
-      "id": "ab7ce9cc56fadc16bd1ed6e908d9aacf",
+      "id": "b2b6f720d24d30ddcc8c4b5e8d4a6598",
       "date": "2022-01-29T00:00:00Z",
       "payee": "(Padding inserted for Balance of 21000 INR for difference 1072.7 INR)",
       "postings": [
         {
-          "id": 22,
-          "transaction_id": "ab7ce9cc56fadc16bd1ed6e908d9aacf",
+          "id": 97,
+          "transaction_id": "b2b6f720d24d30ddcc8c4b5e8d4a6598",
           "date": "2022-01-29T00:00:00Z",
           "payee": "(Padding inserted for Balance of 21000 INR for difference 1072.7 INR)",
           "account": "Assets:Checking",
           "commodity": "INR",
           "quantity": 1072.7,
-          "amount": 1072,
+          "amount": 1072.7,
           "status": "unmarked",
           "tag_recurring": "",
           "tag_period": "",
-          "transaction_begin_line": 0,
-          "transaction_end_line": 1,
+          "tax_category": "",
+          "tax_category_legacy": "",
+          "transaction_begin_line": 64,
+          "transaction_end_line": 66,
           "file_name": "main.beancount",
           "forecast": false,
           "note": "",
@@ -172,19 +193,21 @@
           "balance": 0
         },
         {
-          "id": 23,
-          "transaction_id": "ab7ce9cc56fadc16bd1ed6e908d9aacf",
+          "id": 98,
+          "transaction_id": "b2b6f720d24d30ddcc8c4b5e8d4a6598",
           "date": "2022-01-29T00:00:00Z",
           "payee": "(Padding inserted for Balance of 21000 INR for difference 1072.7 INR)",
           "account": "Equity:OpeningBalances",
           "commodity": "INR",
           "quantity": -1072.7,
-          "amount": -1072,
+          "amount": -1072.7,
           "status": "unmarked",
           "tag_recurring": "",
           "tag_period": "",
-          "transaction_begin_line": 0,
-          "transaction_end_line": 1,
+          "tax_category": "",
+          "tax_category_legacy": "",
+          "transaction_begin_line": 64,
+          "transaction_end_line": 66,
           "file_name": "main.beancount",
           "forecast": false,
           "note": "",
@@ -195,28 +218,30 @@
       ],
       "tag_recurring": "",
       "tag_period": "",
-      "beginLine": 0,
-      "endLine": 1,
+      "beginLine": 64,
+      "endLine": 66,
       "fileName": "main.beancount",
       "note": ""
     },
     {
-      "id": "94f04e44ad603231840b705870e6467a",
+      "id": "2ff91f111292d45e1da148c77081dff4",
       "date": "2022-01-12T00:00:00Z",
       "payee": "Purchased 0.00000001 BTC",
       "postings": [
         {
-          "id": 21,
-          "transaction_id": "94f04e44ad603231840b705870e6467a",
+          "id": 95,
+          "transaction_id": "2ff91f111292d45e1da148c77081dff4",
           "date": "2022-01-12T00:00:00Z",
           "payee": "Purchased 0.00000001 BTC",
-          "account": "Assets:Checking",
-          "commodity": "USD",
-          "quantity": -0.00042772,
-          "amount": 0,
+          "account": "Assets:Coinbase:BTC",
+          "commodity": "BTC",
+          "quantity": 1e-8,
+          "amount": 0.03440667277056,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 60,
           "transaction_end_line": 63,
           "file_name": "main.beancount",
@@ -227,17 +252,19 @@
           "balance": 0
         },
         {
-          "id": 20,
-          "transaction_id": "94f04e44ad603231840b705870e6467a",
+          "id": 96,
+          "transaction_id": "2ff91f111292d45e1da148c77081dff4",
           "date": "2022-01-12T00:00:00Z",
           "payee": "Purchased 0.00000001 BTC",
-          "account": "Assets:Coinbase:BTC",
-          "commodity": "BTC",
-          "quantity": 1e-8,
-          "amount": 0,
+          "account": "Assets:Checking",
+          "commodity": "USD",
+          "quantity": -0.00042772,
+          "amount": -0.03440667277056,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 60,
           "transaction_end_line": 63,
           "file_name": "main.beancount",
@@ -256,13 +283,13 @@
       "note": ""
     },
     {
-      "id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+      "id": "8c8fd6fac21686ade476d1e9846bf36b",
       "date": "2022-01-11T00:00:00Z",
       "payee": "Multi Currency Debit",
       "postings": [
         {
-          "id": 18,
-          "transaction_id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+          "id": 93,
+          "transaction_id": "8c8fd6fac21686ade476d1e9846bf36b",
           "date": "2022-01-11T00:00:00Z",
           "payee": "Multi Currency Debit",
           "account": "Assets:Dollar",
@@ -272,6 +299,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 55,
           "transaction_end_line": 59,
           "file_name": "main.beancount",
@@ -282,8 +311,8 @@
           "balance": 0
         },
         {
-          "id": 16,
-          "transaction_id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+          "id": 91,
+          "transaction_id": "8c8fd6fac21686ade476d1e9846bf36b",
           "date": "2022-01-11T00:00:00Z",
           "payee": "Multi Currency Debit",
           "account": "Expenses:Charges",
@@ -293,6 +322,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 55,
           "transaction_end_line": 59,
           "file_name": "main.beancount",
@@ -303,8 +334,8 @@
           "balance": 0
         },
         {
-          "id": 19,
-          "transaction_id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+          "id": 94,
+          "transaction_id": "8c8fd6fac21686ade476d1e9846bf36b",
           "date": "2022-01-11T00:00:00Z",
           "payee": "Multi Currency Debit",
           "account": "Assets:Checking",
@@ -314,6 +345,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 55,
           "transaction_end_line": 59,
           "file_name": "main.beancount",
@@ -324,8 +357,8 @@
           "balance": 0
         },
         {
-          "id": 17,
-          "transaction_id": "25cfdd99926f1f27ca89c0eaa4b96a3a",
+          "id": 92,
+          "transaction_id": "8c8fd6fac21686ade476d1e9846bf36b",
           "date": "2022-01-11T00:00:00Z",
           "payee": "Multi Currency Debit",
           "account": "Assets:Checking",
@@ -335,6 +368,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 55,
           "transaction_end_line": 59,
           "file_name": "main.beancount",
@@ -353,22 +388,24 @@
       "note": ""
     },
     {
-      "id": "3b252f03f4e42a4cd3861e6b3dc6b8f1",
+      "id": "825a68f1fadeaf2f4e1c330630270edb",
       "date": "2022-01-10T00:00:00Z",
       "payee": "Sell",
       "postings": [
         {
-          "id": 15,
-          "transaction_id": "3b252f03f4e42a4cd3861e6b3dc6b8f1",
+          "id": 90,
+          "transaction_id": "825a68f1fadeaf2f4e1c330630270edb",
           "date": "2022-01-10T00:00:00Z",
           "payee": "Sell",
           "account": "Assets:Checking",
           "commodity": "INR",
           "quantity": 10027.3,
-          "amount": 10027,
+          "amount": 10027.3,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 48,
           "transaction_end_line": 52,
           "file_name": "main.beancount",
@@ -379,17 +416,19 @@
           "balance": 0
         },
         {
-          "id": 14,
-          "transaction_id": "3b252f03f4e42a4cd3861e6b3dc6b8f1",
+          "id": 89,
+          "transaction_id": "825a68f1fadeaf2f4e1c330630270edb",
           "date": "2022-01-10T00:00:00Z",
           "payee": "Sell",
           "account": "Income:CapitalGains:Equity:AAPL",
           "commodity": "INR",
           "quantity": -27.3,
-          "amount": -27,
+          "amount": -27.3,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 48,
           "transaction_end_line": 52,
           "file_name": "main.beancount",
@@ -400,8 +439,8 @@
           "balance": 0
         },
         {
-          "id": 13,
-          "transaction_id": "3b252f03f4e42a4cd3861e6b3dc6b8f1",
+          "id": 88,
+          "transaction_id": "825a68f1fadeaf2f4e1c330630270edb",
           "date": "2022-01-10T00:00:00Z",
           "payee": "Sell",
           "account": "Assets:Equity:AAPL",
@@ -411,6 +450,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 48,
           "transaction_end_line": 52,
           "file_name": "main.beancount",
@@ -429,13 +470,13 @@
       "note": ""
     },
     {
-      "id": "bb27c9f651527e62d2528e13b9fb7c8b",
+      "id": "10671c0d0cee9661ab069b1ce1088bc1",
       "date": "2022-01-09T00:00:00Z",
       "payee": "Buy Apple",
       "postings": [
         {
-          "id": 11,
-          "transaction_id": "bb27c9f651527e62d2528e13b9fb7c8b",
+          "id": 86,
+          "transaction_id": "10671c0d0cee9661ab069b1ce1088bc1",
           "date": "2022-01-09T00:00:00Z",
           "payee": "Buy Apple",
           "account": "Assets:Equity:AAPL",
@@ -445,6 +486,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 44,
           "transaction_end_line": 47,
           "file_name": "main.beancount",
@@ -455,8 +498,8 @@
           "balance": 0
         },
         {
-          "id": 12,
-          "transaction_id": "bb27c9f651527e62d2528e13b9fb7c8b",
+          "id": 87,
+          "transaction_id": "10671c0d0cee9661ab069b1ce1088bc1",
           "date": "2022-01-09T00:00:00Z",
           "payee": "Buy Apple",
           "account": "Assets:Checking",
@@ -466,6 +509,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 44,
           "transaction_end_line": 47,
           "file_name": "main.beancount",
@@ -484,22 +529,24 @@
       "note": ""
     },
     {
-      "id": "c50a3b3ee30033764df6b4a179e09f8d",
+      "id": "cae9ee3817e091cc98e9aa719b09d120",
       "date": "2022-01-08T00:00:00Z",
       "payee": "Buy ABNB",
       "postings": [
         {
-          "id": 9,
-          "transaction_id": "c50a3b3ee30033764df6b4a179e09f8d",
+          "id": 84,
+          "transaction_id": "cae9ee3817e091cc98e9aa719b09d120",
           "date": "2022-01-08T00:00:00Z",
           "payee": "Buy ABNB",
           "account": "Assets:Equity:ABNB",
           "commodity": "ABNB",
           "quantity": 0.76,
-          "amount": 7963.762752,
+          "amount": 8025.3170071296,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 40,
           "transaction_end_line": 43,
           "file_name": "main.beancount",
@@ -510,17 +557,19 @@
           "balance": 0
         },
         {
-          "id": 10,
-          "transaction_id": "c50a3b3ee30033764df6b4a179e09f8d",
+          "id": 85,
+          "transaction_id": "cae9ee3817e091cc98e9aa719b09d120",
           "date": "2022-01-08T00:00:00Z",
           "payee": "Buy ABNB",
           "account": "Assets:Checking",
           "commodity": "USD",
           "quantity": -99.7652,
-          "amount": -7963.762752,
+          "amount": -8025.3170071296,
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 40,
           "transaction_end_line": 43,
           "file_name": "main.beancount",
@@ -539,13 +588,13 @@
       "note": ""
     },
     {
-      "id": "d14e425ba0d573ba0388d100bda5eb80",
+      "id": "4763fa46b5b4235f3c2d383998d16628",
       "date": "2022-01-07T00:00:00Z",
       "payee": "Investment",
       "postings": [
         {
-          "id": 8,
-          "transaction_id": "d14e425ba0d573ba0388d100bda5eb80",
+          "id": 83,
+          "transaction_id": "4763fa46b5b4235f3c2d383998d16628",
           "date": "2022-01-07T00:00:00Z",
           "payee": "Investment",
           "account": "Assets:Equity:NIFTY",
@@ -555,6 +604,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 36,
           "transaction_end_line": 39,
           "file_name": "main.beancount",
@@ -565,8 +616,8 @@
           "balance": 0
         },
         {
-          "id": 7,
-          "transaction_id": "d14e425ba0d573ba0388d100bda5eb80",
+          "id": 82,
+          "transaction_id": "4763fa46b5b4235f3c2d383998d16628",
           "date": "2022-01-07T00:00:00Z",
           "payee": "Investment",
           "account": "Assets:Checking",
@@ -576,6 +627,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 36,
           "transaction_end_line": 39,
           "file_name": "main.beancount",
@@ -594,13 +647,13 @@
       "note": ""
     },
     {
-      "id": "9c2c3e31540bad2f24f873c46def370b",
+      "id": "989b8dbd604bd75c355590145f179991",
       "date": "2022-01-06T00:00:00Z",
       "payee": "Bonus",
       "postings": [
         {
-          "id": 6,
-          "transaction_id": "9c2c3e31540bad2f24f873c46def370b",
+          "id": 81,
+          "transaction_id": "989b8dbd604bd75c355590145f179991",
           "date": "2022-01-06T00:00:00Z",
           "payee": "Bonus",
           "account": "Assets:Checking",
@@ -610,6 +663,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 32,
           "transaction_end_line": 35,
           "file_name": "main.beancount",
@@ -620,8 +675,8 @@
           "balance": 0
         },
         {
-          "id": 5,
-          "transaction_id": "9c2c3e31540bad2f24f873c46def370b",
+          "id": 80,
+          "transaction_id": "989b8dbd604bd75c355590145f179991",
           "date": "2022-01-06T00:00:00Z",
           "payee": "Bonus",
           "account": "Income:Salary:Acme",
@@ -631,6 +686,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 32,
           "transaction_end_line": 35,
           "file_name": "main.beancount",
@@ -649,13 +706,13 @@
       "note": ""
     },
     {
-      "id": "e394cb30478d81c4c513297a4a9ef020",
+      "id": "81fe966d689158999e4f5d0c23615ee1",
       "date": "2022-01-03T00:00:00Z",
       "payee": "Rent",
       "postings": [
         {
-          "id": 4,
-          "transaction_id": "e394cb30478d81c4c513297a4a9ef020",
+          "id": 79,
+          "transaction_id": "81fe966d689158999e4f5d0c23615ee1",
           "date": "2022-01-03T00:00:00Z",
           "payee": "Rent",
           "account": "Expenses:Rent",
@@ -665,6 +722,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 28,
           "transaction_end_line": 31,
           "file_name": "main.beancount",
@@ -675,8 +734,8 @@
           "balance": 0
         },
         {
-          "id": 3,
-          "transaction_id": "e394cb30478d81c4c513297a4a9ef020",
+          "id": 78,
+          "transaction_id": "81fe966d689158999e4f5d0c23615ee1",
           "date": "2022-01-03T00:00:00Z",
           "payee": "Rent",
           "account": "Assets:Checking",
@@ -686,6 +745,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 28,
           "transaction_end_line": 31,
           "file_name": "main.beancount",
@@ -704,13 +765,13 @@
       "note": ""
     },
     {
-      "id": "425e0d0e256e24cddcbad886738d57bb",
+      "id": "40de9038769ea6b052d64cd17b412c57",
       "date": "2022-01-01T00:00:00Z",
       "payee": "Salary",
       "postings": [
         {
-          "id": 2,
-          "transaction_id": "425e0d0e256e24cddcbad886738d57bb",
+          "id": 77,
+          "transaction_id": "40de9038769ea6b052d64cd17b412c57",
           "date": "2022-01-01T00:00:00Z",
           "payee": "Salary",
           "account": "Assets:Checking",
@@ -720,6 +781,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 24,
           "transaction_end_line": 27,
           "file_name": "main.beancount",
@@ -730,8 +793,8 @@
           "balance": 0
         },
         {
-          "id": 1,
-          "transaction_id": "425e0d0e256e24cddcbad886738d57bb",
+          "id": 76,
+          "transaction_id": "40de9038769ea6b052d64cd17b412c57",
           "date": "2022-01-01T00:00:00Z",
           "payee": "Salary",
           "account": "Income:Salary:Acme",
@@ -741,6 +804,8 @@
           "status": "cleared",
           "tag_recurring": "",
           "tag_period": "",
+          "tax_category": "",
+          "tax_category_legacy": "",
           "transaction_begin_line": 24,
           "transaction_end_line": 27,
           "file_name": "main.beancount",
@@ -758,16 +823,5 @@
       "fileName": "main.beancount",
       "note": ""
     }
-  ],
-  "checkingBalanceTimeline": [
-    {
-      "month": "2022-01-01T00:00:00Z",
-      "account": "Assets:Checking",
-      "balance": 13230.816768
-    }
-  ],
-  "availableMonthRange": {
-    "from": "2022-01-01T00:00:00Z",
-    "to": "2022-02-01T00:00:00Z"
-  }
+  ]
 }

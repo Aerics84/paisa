@@ -42,7 +42,7 @@ async function recordAndVerify(dir: string, route: string, name: string) {
       expect().fail(diff);
     }
   }
-  fs.writeFileSync(filename, JSON.stringify(data, null, 2));
+  fs.writeFileSync(filename, JSON.stringify(data, null, 2) + "\n");
 }
 
 async function verifyApi(dir: string) {

@@ -76,7 +76,7 @@ docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
 
 ### From source
 
-Build requirements: Go 1.24+, Node 24+, npm 12+ and a C toolchain for SQLite (`gcc`/`clang`).
+Build requirements: Go 1.24+, Node 24+, npm 12+ and a C toolchain for SQLite (`gcc`/`clang`). Beancount journals additionally require `beancount>=3.2.3` and `beanquery>=0.2.0` on `PATH` (`bean-check` and `bean-query`).
 
 ```bash
 git clone https://github.com/Aerics84/paisa.git

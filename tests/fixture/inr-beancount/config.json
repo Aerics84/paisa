@@ -19,40 +19,40 @@
     "sheets_directory": "",
     "readonly": false,
     "ledger_cli": "beancount",
+    "regional_profile": "india",
+    "tax_regime": "india",
     "default_currency": "INR",
     "display_precision": 0,
     "amount_alignment_column": 52,
     "locale": "en-IN",
-    "time_zone": "",
+    "time_zone": "UTC",
     "financial_year_starting_month": 4,
     "week_starting_day": 0,
     "strict": "no",
     "budget": {
       "rollover": "yes"
     },
-    "schedule_al": [],
-    "allocation_targets": [],
-    "commodities": [],
-    "import_templates": [],
-    "accounts": [],
-    "goals": {
-      "retirement": [],
-      "savings": []
-    },
-    "user_accounts": [],
-    "credit_cards": [],
-    "regional_profile": "india",
-    "tax_regime": "india",
     "germany_tax": {
       "annual_allowance": 1000,
       "capital_income_tax_rate": 0.25,
       "solidarity_surcharge_rate": 0.055,
       "church_tax_rate": 0
     },
+    "schedule_al": [],
+    "allocation_targets": [],
+    "commodities": [],
+    "import_templates": [],
     "salary_income_accounts": null,
-    "transfer_accounts": []
+    "transfer_accounts": [],
+    "accounts": [],
+    "goals": {
+      "retirement": [],
+      "savings": []
+    },
+    "user_accounts": [],
+    "credit_cards": []
   },
-  "now": "2022-02-07T00:00:00Z",
+  "now": "2022-02-06T23:00:00Z",
   "schema": {
     "$id": "https://paisa.fyi/schema.json",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -80,17 +80,23 @@
               "type": "string"
             }
           },
-          "required": ["name"],
+          "required": [
+            "name"
+          ],
           "type": "object",
           "ui:header": "name"
         },
-        "itemsUniqueProperties": ["name"],
+        "itemsUniqueProperties": [
+          "name"
+        ],
         "type": "array"
       },
       "allocation_targets": {
         "default": [
           {
-            "accounts": ["Assets:Debt:*"],
+            "accounts": [
+              "Assets:Debt:*"
+            ],
             "name": "Debt",
             "target": 20
           }
@@ -99,7 +105,9 @@
           "additionalProperties": false,
           "properties": {
             "accounts": {
-              "default": ["Assets:Debt:*"],
+              "default": [
+                "Assets:Debt:*"
+              ],
               "description": "List of accounts to consider for this target",
               "items": {
                 "type": "string"
@@ -117,11 +125,17 @@
               "type": "integer"
             }
           },
-          "required": ["name", "target", "accounts"],
+          "required": [
+            "name",
+            "target",
+            "accounts"
+          ],
           "type": "object",
           "ui:header": "name"
         },
-        "itemsUniqueProperties": ["name"],
+        "itemsUniqueProperties": [
+          "name"
+        ],
         "type": "array"
       },
       "amount_alignment_column": {
@@ -136,7 +150,11 @@
         "properties": {
           "rollover": {
             "description": "Rollover unspent money to next month",
-            "enum": ["", "yes", "no"],
+            "enum": [
+              "",
+              "yes",
+              "no"
+            ],
             "type": "string",
             "ui:widget": "boolean"
           }
@@ -157,6 +175,12 @@
         "items": {
           "additionalProperties": false,
           "properties": {
+            "germany_partial_exemption_rate": {
+              "description": "Optional Germany-specific partial exemption rate for eligible funds or ETFs. Set to 0 for assets that are explicitly not eligible.",
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
             "harvest": {
               "type": "integer"
             },
@@ -167,7 +191,10 @@
             "price": {
               "properties": {
                 "code": {
-                  "type": ["string", "integer"]
+                  "type": [
+                    "string",
+                    "integer"
+                  ]
                 },
                 "provider": {
                   "enum": [
@@ -181,30 +208,46 @@
                   "type": "string"
                 }
               },
-              "required": ["provider", "code"],
+              "required": [
+                "provider",
+                "code"
+              ],
               "type": "object",
               "ui:widget": "price"
             },
             "tax_category": {
-              "enum": ["", "debt", "equity", "equity65", "equity35", "unlisted_equity"],
+              "enum": [
+                "",
+                "debt",
+                "equity",
+                "equity65",
+                "equity35",
+                "unlisted_equity"
+              ],
               "type": "string"
             },
-            "germany_partial_exemption_rate": {
-              "description": "Optional Germany-specific partial exemption rate for eligible funds or ETFs. Set to 0 for assets that are explicitly not eligible.",
-              "maximum": 1,
-              "minimum": 0,
-              "type": "number"
-            },
             "type": {
-              "enum": ["mutualfund", "stock", "nps", "metal", "unknown"],
+              "enum": [
+                "mutualfund",
+                "stock",
+                "nps",
+                "metal",
+                "unknown"
+              ],
               "type": "string"
             }
           },
-          "required": ["name", "type", "price"],
+          "required": [
+            "name",
+            "type",
+            "price"
+          ],
           "type": "object",
           "ui:header": "name"
         },
-        "itemsUniqueProperties": ["name"],
+        "itemsUniqueProperties": [
+          "name"
+        ],
         "type": "array"
       },
       "credit_cards": {
@@ -241,7 +284,15 @@
             },
             "network": {
               "description": "Network of the card",
-              "enum": ["visa", "mastercard", "dinersclub", "amex", "rupay", "jcb", "discover"],
+              "enum": [
+                "visa",
+                "mastercard",
+                "dinersclub",
+                "amex",
+                "rupay",
+                "jcb",
+                "discover"
+              ],
               "type": "string"
             },
             "number": {
@@ -270,7 +321,9 @@
           "type": "object",
           "ui:header": "account"
         },
-        "itemsUniqueProperties": ["account"],
+        "itemsUniqueProperties": [
+          "account"
+        ],
         "type": "array"
       },
       "db_path": {
@@ -293,15 +346,48 @@
         "minimum": 1,
         "type": "integer"
       },
+      "germany_tax": {
+        "description": "Configuration for Germany-focused capital-income tax reporting.",
+        "properties": {
+          "annual_allowance": {
+            "description": "Annual tax-free allowance applied against realized capital income before Germany tax is calculated.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "capital_income_tax_rate": {
+            "description": "Capital income tax rate applied to taxable capital income.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "church_tax_rate": {
+            "description": "Optional church tax rate applied on top of the capital income tax.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "solidarity_surcharge_rate": {
+            "description": "Solidarity surcharge rate applied on top of the capital income tax.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "goals": {
         "description": "Goals configuration",
         "properties": {
           "retirement": {
             "default": [
               {
-                "expenses": ["Expenses:*"],
+                "expenses": [
+                  "Expenses:*"
+                ],
                 "name": "Retirement",
-                "savings": ["Assets:*"],
+                "savings": [
+                  "Assets:*"
+                ],
                 "swr": 4,
                 "yearly_expenses": 0
               }
@@ -311,7 +397,9 @@
               "description": "Retirement Goal configuration",
               "properties": {
                 "expenses": {
-                  "default": ["Expenses:Utilities"],
+                  "default": [
+                    "Expenses:Utilities"
+                  ],
                   "description": "List of expense accounts",
                   "items": {
                     "type": "string"
@@ -334,7 +422,9 @@
                   "type": "integer"
                 },
                 "savings": {
-                  "default": ["Assets:Equity"],
+                  "default": [
+                    "Assets:Equity"
+                  ],
                   "description": "List of accounts where you keep retirement savings",
                   "items": {
                     "type": "string"
@@ -354,17 +444,26 @@
                   "type": "integer"
                 }
               },
-              "required": ["name", "icon", "swr", "savings"],
+              "required": [
+                "name",
+                "icon",
+                "swr",
+                "savings"
+              ],
               "type": "object",
               "ui:header": "name"
             },
-            "itemsUniqueProperties": ["name"],
+            "itemsUniqueProperties": [
+              "name"
+            ],
             "type": "array"
           },
           "savings": {
             "default": [
               {
-                "accounts": ["Assets:*"],
+                "accounts": [
+                  "Assets:*"
+                ],
                 "name": "Emergency Fund",
                 "target": 1000000
               }
@@ -372,12 +471,16 @@
             "items": {
               "additionalProperties": false,
               "dependentRequired": {
-                "target_date": ["rate"]
+                "target_date": [
+                  "rate"
+                ]
               },
               "description": "Savings Goal configuration",
               "properties": {
                 "accounts": {
-                  "default": ["Assets:Equity"],
+                  "default": [
+                    "Assets:Equity"
+                  ],
                   "description": "List of savings accounts",
                   "items": {
                     "type": "string"
@@ -420,18 +523,27 @@
                       "format": "date"
                     },
                     {
-                      "enum": [""],
+                      "enum": [
+                        ""
+                      ],
                       "type": "string"
                     }
                   ],
                   "type": "string"
                 }
               },
-              "required": ["name", "icon", "target", "accounts"],
+              "required": [
+                "name",
+                "icon",
+                "target",
+                "accounts"
+              ],
               "type": "object",
               "ui:header": "name"
             },
-            "itemsUniqueProperties": ["name"],
+            "itemsUniqueProperties": [
+              "name"
+            ],
             "type": "array"
           }
         },
@@ -457,11 +569,15 @@
               "type": "string"
             }
           },
-          "required": ["name"],
+          "required": [
+            "name"
+          ],
           "type": "object",
           "ui:header": "name"
         },
-        "itemsUniqueProperties": ["name"],
+        "itemsUniqueProperties": [
+          "name"
+        ],
         "type": "array"
       },
       "journal_path": {
@@ -470,7 +586,12 @@
       },
       "ledger_cli": {
         "description": "The ledger client to use",
-        "enum": ["", "ledger", "hledger", "beancount"],
+        "enum": [
+          "",
+          "ledger",
+          "hledger",
+          "beancount"
+        ],
         "type": "string"
       },
       "locale": {
@@ -483,14 +604,36 @@
         "type": "boolean",
         "ui:widget": "hidden"
       },
+      "regional_profile": {
+        "default": "india",
+        "description": "Optional regional profile that applies sensible defaults for locale, currency, calendar, and related settings when those fields are not explicitly set.",
+        "enum": [
+          "",
+          "india",
+          "germany-eu"
+        ],
+        "type": "string"
+      },
       "retirement": {
         "type": "object",
         "ui:widget": "hidden"
       },
+      "salary_income_accounts": {
+        "description": "Income accounts classified as salary. When unset, Income:Salary and Income:Payroll are used. An empty list disables salary classification; an explicit list replaces the defaults. Matching is done on whole account segments.",
+        "items": {
+          "pattern": "^Income:[^:*]+(:[^:*]+)*$",
+          "type": "string"
+        },
+        "type": "array",
+        "ui:widget": "accounts",
+        "uniqueItems": true
+      },
       "schedule_al": {
         "default": [
           {
-            "accounts": ["Assets:Checking"],
+            "accounts": [
+              "Assets:Checking"
+            ],
             "code": "bank"
           }
         ],
@@ -499,7 +642,9 @@
           "additionalProperties": false,
           "properties": {
             "accounts": {
-              "default": ["Assets:Checking"],
+              "default": [
+                "Assets:Checking"
+              ],
               "items": {
                 "type": "string"
               },
@@ -523,11 +668,16 @@
               "type": "string"
             }
           },
-          "required": ["code", "accounts"],
+          "required": [
+            "code",
+            "accounts"
+          ],
           "type": "object",
           "ui:header": "code"
         },
-        "itemsUniqueProperties": ["code"],
+        "itemsUniqueProperties": [
+          "code"
+        ],
         "type": "array"
       },
       "sheets_directory": {
@@ -536,9 +686,69 @@
       },
       "strict": {
         "description": "When strict mode is enabled, all the accounts and commodities should be defined before use.",
-        "enum": ["", "yes", "no"],
+        "enum": [
+          "",
+          "yes",
+          "no"
+        ],
         "type": "string",
         "ui:widget": "boolean"
+      },
+      "tax_deductions": {
+        "additionalProperties": false,
+        "description": "Account rules for the Germany tax overview. When unset, built-in rules for health insurance, health costs, other insurance and tax advice are used. An empty accounts list disables account matching; an explicit list replaces the defaults. Matching is done on whole account segments; the longest prefix wins.",
+        "properties": {
+          "accounts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "account": {
+                  "description": "Expense account prefix, for example Expenses:Health. Wildcards are not allowed.",
+                  "pattern": "^Expenses:[^:*]+(:[^:*]+)*$",
+                  "type": "string"
+                },
+                "category": {
+                  "description": "Tax category from the Germany catalog.",
+                  "enum": [
+                    "work_equipment",
+                    "work_training",
+                    "work_travel",
+                    "work_commute",
+                    "work_home_office",
+                    "work_phone_internet",
+                    "tax_advice",
+                    "work_other",
+                    "health_insurance",
+                    "other_insurance",
+                    "health",
+                    "household_service",
+                    "craftsman",
+                    "donation"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "account",
+                "category"
+              ],
+              "type": "object",
+              "ui:header": "account"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "tax_regime": {
+        "default": "india",
+        "description": "Selects the tax ruleset and region-specific tax UI. This is independent of default currency.",
+        "enum": [
+          "",
+          "india",
+          "germany"
+        ],
+        "type": "string"
       },
       "time_zone": {
         "description": "The time zone used to parse and format dates. If not set, system time zone will be used.",
@@ -1155,6 +1365,15 @@
         ],
         "type": "string"
       },
+      "transfer_accounts": {
+        "description": "Asset accounts that mark internal transfers. A transaction counts as an internal transfer when all its legs belong to Assets and at least one leg matches one of these globs. A plain account name also matches its subaccounts; use * for a wildcard. Internal transfers are excluded from savings rate calculations.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array",
+        "ui:widget": "accounts",
+        "uniqueItems": true
+      },
       "user_accounts": {
         "default": [
           {
@@ -1182,11 +1401,16 @@
               "ui:order": 1
             }
           },
-          "required": ["username", "password"],
+          "required": [
+            "username",
+            "password"
+          ],
           "type": "object",
           "ui:header": "username"
         },
-        "itemsUniqueProperties": ["username"],
+        "itemsUniqueProperties": [
+          "username"
+        ],
         "type": "array"
       },
       "week_starting_day": {
@@ -1194,112 +1418,12 @@
         "maximum": 6,
         "minimum": 0,
         "type": "integer"
-      },
-      "regional_profile": {
-        "type": "string",
-        "description": "Optional regional profile that applies sensible defaults for locale, currency, calendar, and related settings when those fields are not explicitly set.",
-        "enum": ["", "india", "germany-eu"],
-        "default": "india"
-      },
-      "tax_deductions": {
-        "additionalProperties": false,
-        "description": "Account rules for the Germany tax overview. When unset, built-in rules for health insurance, health costs, other insurance and tax advice are used. An empty accounts list disables account matching; an explicit list replaces the defaults. Matching is done on whole account segments; the longest prefix wins.",
-        "properties": {
-          "accounts": {
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "account": {
-                  "description": "Expense account prefix, for example Expenses:Health. Wildcards are not allowed.",
-                  "pattern": "^Expenses:[^:*]+(:[^:*]+)*$",
-                  "type": "string"
-                },
-                "category": {
-                  "description": "Tax category from the Germany catalog.",
-                  "enum": [
-                    "work_equipment",
-                    "work_training",
-                    "work_travel",
-                    "work_commute",
-                    "work_home_office",
-                    "work_phone_internet",
-                    "tax_advice",
-                    "work_other",
-                    "health_insurance",
-                    "other_insurance",
-                    "health",
-                    "household_service",
-                    "craftsman",
-                    "donation"
-                  ],
-                  "type": "string"
-                }
-              },
-              "required": ["account", "category"],
-              "type": "object",
-              "ui:header": "account"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "tax_regime": {
-        "type": "string",
-        "description": "Selects the tax ruleset and region-specific tax UI. This is independent of default currency.",
-        "enum": ["", "india", "germany"],
-        "default": "india"
-      },
-      "germany_tax": {
-        "description": "Configuration for Germany-focused capital-income tax reporting.",
-        "properties": {
-          "annual_allowance": {
-            "description": "Annual tax-free allowance applied against realized capital income before Germany tax is calculated.",
-            "minimum": 0,
-            "type": "number"
-          },
-          "capital_income_tax_rate": {
-            "description": "Capital income tax rate applied to taxable capital income.",
-            "maximum": 1,
-            "minimum": 0,
-            "type": "number"
-          },
-          "church_tax_rate": {
-            "description": "Optional church tax rate applied on top of the capital income tax.",
-            "maximum": 1,
-            "minimum": 0,
-            "type": "number"
-          },
-          "solidarity_surcharge_rate": {
-            "description": "Solidarity surcharge rate applied on top of the capital income tax.",
-            "maximum": 1,
-            "minimum": 0,
-            "type": "number"
-          }
-        },
-        "type": "object"
-      },
-      "salary_income_accounts": {
-        "description": "Income accounts classified as salary. When unset, Income:Salary and Income:Payroll are used. An empty list disables salary classification; an explicit list replaces the defaults. Matching is done on whole account segments.",
-        "items": {
-          "pattern": "^Income:[^:*]+(:[^:*]+)*$",
-          "type": "string"
-        },
-        "type": "array",
-        "ui:widget": "accounts",
-        "uniqueItems": true
-      },
-      "transfer_accounts": {
-        "description": "Asset accounts that mark internal transfers. A transaction counts as an internal transfer when all its legs belong to Assets and at least one leg matches one of these globs. A plain account name also matches its subaccounts; use * for a wildcard. Internal transfers are excluded from savings rate calculations.",
-        "items": {
-          "type": "string"
-        },
-        "type": "array",
-        "ui:widget": "accounts",
-        "uniqueItems": true
       }
     },
-    "required": ["journal_path", "db_path"],
+    "required": [
+      "journal_path",
+      "db_path"
+    ],
     "title": "Paisa",
     "type": "object"
   }

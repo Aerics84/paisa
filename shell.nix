@@ -13,7 +13,8 @@ pkgs.mkShell {
     # pkgs.pkgsCross.mingwW64.buildPackages.gcc
 
     pkgs.python3Packages.mkdocs-material
-    pkgs.python3Packages.beancount_2
+    pkgs.python3Packages.beancount
+    pkgs.python3Packages.beanquery
 
     # test
     pkgs.ledger

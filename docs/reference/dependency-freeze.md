@@ -23,8 +23,9 @@ is the durable summary.
 | govulncheck | v1.9.0           |
 
 This table records the freeze state. npm was switched to 12.2.1 on 2026-10-29
-after the default-branch gate passed; see
-[dependency-maintenance.md](dependency-maintenance.md#npm-12).
+after the default-branch gate passed, and beancount moved to 3.2.3 the same
+day; see [dependency-maintenance.md](dependency-maintenance.md#npm-12) and
+[Parser Tooling](dependency-maintenance.md#parser-tooling).
 
 Nix uses `nixos-26.05`; its dev shell provides Node 24.21.0, Go 1.26.10 and Bun
 1.3.13, so CI Bun steps intentionally use `.bun-version` (1.4.4).
@@ -104,10 +105,9 @@ shell (`node -v`, `go version`, `mkdocs build`) and a served
 
 ## Deliberate Pins and Follow-ups
 
-- **beancount 2.3.6:** still pinned. The v3 migration is prepared:
-  `bean-report` is replaced by BQL (`BALANCES`, `SELECT ... FROM prices`) and
-  `bean-query` comes from the official `beanquery` package. See
-  [Dependency Maintenance](dependency-maintenance.md#parser-tooling).
+- **beancount 3.2.3:** adopted on 2026-10-29 with `beanquery` 0.2.0.
+  `bean-report` is replaced by BQL (`BALANCES`, `SELECT ... FROM prices`).
+  See [Dependency Maintenance](dependency-maintenance.md#parser-tooling).
 - **npm 12.2.1:** adopted on 2026-10-29 after the default-branch gate passed;
   see [Dependency Maintenance](dependency-maintenance.md#npm-12).
 - **TypeScript 7.0.2:** intentionally ignored for major updates until the

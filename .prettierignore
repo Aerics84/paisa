@@ -21,6 +21,9 @@ src/lib/sheet/parser.js
 internal/model/template/templates
 docs/superpowers
 
+# Generated snapshots
+tests/fixture/**/*.json
+
 # Generated artifacts
 desktop/frontend/wailsjs
 fonts/*.scss

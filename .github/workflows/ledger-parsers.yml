@@ -13,7 +13,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: sudo apt-get update && sudo apt-get install -y ledger hledger pipx
-      - run: pipx install beancount==2.3.6
+      - run: pipx install beancount==3.2.3 && pipx install beanquery==0.2.0
       - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - run: ledger --version && hledger --version && bean-query --version
-      - run: go test ./internal/ledger -run 'TestLedgerCLIParsesTaxCategoryAndLegacyTag|TestBeancountReadsPostingMetaOnly|TestHLedgerReadsTaxCategoryAfterRecurringTag' -count=1 -v
+      - run: ledger --version && hledger --version && bean-check --version && bean-query --version
+      - run: go test ./internal/ledger -run 'TestLedgerCLIParsesTaxCategoryAndLegacyTag|TestBeancount|TestHLedgerReadsTaxCategoryAfterRecurringTag|TestParseBeancountPricesCSV' -count=1 -v

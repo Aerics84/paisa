@@ -1,7 +1,11 @@
 ARG BASE_IMAGE=ghcr.io/aerics84/paisa:latest
 FROM ${BASE_IMAGE}
 
-RUN apk --no-cache add beancount
+RUN apk --no-cache add python3 py3-pip \
+    && apk --no-cache add --virtual .beancount-build-deps gcc musl-dev bison flex meson ninja python3-dev \
+    && pip install --break-system-packages --no-cache-dir beancount==3.2.3 beanquery==0.2.0 \
+    && apk del .beancount-build-deps \
+    && rm -rf /root/.cache
 
 WORKDIR /root/
 

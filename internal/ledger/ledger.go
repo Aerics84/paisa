@@ -258,12 +258,12 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 	err = utils.Exec(path, &output, &error, journalPath)
 	if err == nil {
 
-		path, err = binary.LookPath("bean-report")
+		path, err = binary.LookPath("bean-query")
 		if err != nil {
 			return errors, "", err
 		}
 
-		err = utils.Exec(path, &output, &error, journalPath, "bal")
+		err = utils.Exec(path, &output, &error, "-f", "text", journalPath, "BALANCES")
 		if err != nil {
 			log.Error(error.String())
 			return nil, "", err
@@ -307,6 +307,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		Commodity
 		Quantity
 		Amount
+		CostCurrency
 		FileName
 		Location
 		TransactionID
@@ -315,7 +316,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		TagPeriod
 		TaxCategory
 	)
-	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,units(position),cost(position),filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
+	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,units(position).number,cost(position).number,cost(position).currency,filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
 
 	path, err := binary.LookPath("bean-query")
 	if err != nil {
@@ -345,14 +346,21 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 			return nil, err
 		}
 
-		_, quantity, err := parseAmount(strings.TrimSpace(record[Quantity]))
+		quantity, err := decimal.NewFromString(strings.TrimSpace(record[Quantity]))
 		if err != nil {
 			return nil, err
 		}
 
-		costCurrency, amount, err := parseAmount(strings.TrimSpace(record[Amount]))
-		if err != nil {
-			return nil, err
+		amountText := strings.TrimSpace(record[Amount])
+		costCurrency := utils.UnQuote(strings.TrimSpace(record[CostCurrency]))
+		amount := quantity
+		if amountText != "" {
+			amount, err = decimal.NewFromString(amountText)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			costCurrency = utils.UnQuote(strings.TrimSpace(record[Commodity]))
 		}
 
 		if costCurrency != config.DefaultCurrency() {
@@ -432,14 +440,14 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 
 func (Beancount) Prices(journalPath string) ([]price.Price, error) {
 	var prices []price.Price
-	path, err := binary.LookPath("bean-report")
+	path, err := binary.LookPath("bean-query")
 	if err != nil {
 		log.Error(err)
 		return prices, err
 	}
 
 	var output, error bytes.Buffer
-	err = utils.Exec(path, &output, &error, journalPath, "pricesdb")
+	err = utils.Exec(path, &output, &error, "-f", "csv", journalPath, "SELECT date, currency, amount.number, amount.currency FROM prices")
 	if err != nil {
 		log.Error(error.String())
 		return prices, err
@@ -535,33 +543,42 @@ func parseHLedgerPrices(output string, defaultCurrency string) ([]price.Price, e
 
 func parseBeancountPrices(output string, defaultCurrency string) ([]price.Price, error) {
 	var prices []price.Price
-	re := regexp.MustCompile(`(\d{4}-\d{2}-\d{2}) price ([^ ]+)\s*([^\n]+)\n`)
-	matches := re.FindAllStringSubmatch(output, -1)
+	records, err := csv.NewReader(strings.NewReader(output)).ReadAll()
+	if err != nil {
+		return nil, err
+	}
 
-	for _, match := range matches {
-		target, value, err := parseAmount(match[3])
+	if len(records) == 0 {
+		return prices, nil
+	}
+
+	for _, record := range records[1:] {
+		if len(record) < 4 {
+			return nil, fmt.Errorf("unexpected beancount price row: %v", record)
+		}
+
+		date, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(record[0]), config.TimeZone())
 		if err != nil {
 			return nil, err
 		}
 
-		commodity := utils.UnQuote(match[2])
+		commodity := utils.UnQuote(strings.TrimSpace(record[1]))
+		value, err := decimal.NewFromString(strings.TrimSpace(record[2]))
+		if err != nil {
+			return nil, err
+		}
+		target := utils.UnQuote(strings.TrimSpace(record[3]))
+
 		if target != defaultCurrency {
 			if commodity == defaultCurrency && !value.Equal(decimal.Zero) {
 				commodity = target
-				target = defaultCurrency
 				value = decimal.NewFromInt(1).Div(value)
 			} else {
 				continue
 			}
 		}
 
-		date, err := time.ParseInLocation("2006-01-02", match[1], config.TimeZone())
-		if err != nil {
-			return nil, err
-		}
-
 		prices = append(prices, price.Price{Date: date, CommodityName: commodity, CommodityID: commodity, CommodityType: config.Unknown, Value: value})
-
 	}
 	return prices, nil
 }

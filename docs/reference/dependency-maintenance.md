@@ -17,7 +17,7 @@ GitHub Actions, local development, and Nix-based workflows should converge on th
 
 - Phases 0–6 are complete; the audit gate and the freeze report are in place.
 - hledger is on 1.52.4 (Hackage source override; issue #2254 was fixed in 1.41).
-- beancount stays on 2.3.6: v3 removes `bean-report` and moves `bean-query` to a separate package (see [Parser Tooling](#parser-tooling)).
+- beancount is on 3.2.3 with `beanquery` 0.2.0 providing `bean-query` (see [Parser Tooling](#parser-tooling)).
 - npm 12.2.1 was adopted after the refresh merged; the default-branch gate passed on 2026-10-28 (see [npm 12](#npm-12)).
 - Nix uses `nixos-26.05`, `buildNpmPackage` for the web assets, and no longer uses node2nix.
 
@@ -38,9 +38,9 @@ Validated end state before the freeze commit:
 
 `npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. `go list -m -u all` reports 73 indirect module updates; all direct modules are current and the indirect list is documented above.
 
-This snapshot is historical: npm moved to 12.2.1 on 2026-10-29 after the default-branch gate passed. All other rows remain current.
+This snapshot is historical: npm moved to 12.2.1 on 2026-10-29 and beancount moved to 3.2.3 on the same day. All other rows remain current.
 
-Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are beancount 3 (bean-report replacement), the indirect Go module set, and the NixOS 26.11 refresh within two weeks of its release.
+Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are the indirect Go module set and the NixOS 26.11 refresh within two weeks of its release.
 
 ## Dependency Audit Gate
 
@@ -81,7 +81,7 @@ gh run list --workflow npm12-gate.yml --limit 1
 
 Each matrix job installs npm 12.2.1 over the runner's bundled npm, runs `npm ci`, asserts that `package-lock.json` is unchanged, and then runs P-JS (`check`, `build`, imports, investment, monthly), P-PDF (`src/lib/pdf.test.ts`) and P-REG (`go build`, `TZ=UTC bun test tests/regression.test.ts`). A green run on all three platforms is the evidence required by step 4; the run URL is recorded here once it passes.
 
-The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6); macOS used the same versions from Homebrew and pip. Windows used the regression test's built-in tolerance for missing ledger CLIs.
+The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6 at the time; the dev shell now provides beancount 3.2.3); macOS used the same versions from Homebrew and pip. Windows used the regression test's built-in tolerance for missing ledger CLIs.
 
 "Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms".
 
@@ -196,21 +196,21 @@ If one of them becomes necessary again, reintroduce it with a documented reason.
 
 ## Parser Tooling
 
-### Beancount (migration prepared)
+### Beancount 3
 
-The 2026-10-28 spike installed `beancount==3.2.3` (current PyPI release) in an isolated venv. A 2026-10-29 follow-up reproduced the behaviour in containers (beancount 2.3.6/Python 3.10 versus 3.2.3 + beanquery 0.2.0/Python 3.12):
+Beancount 3.2.3 with `beanquery` 0.2.0 replaced beancount 2.3.6 on 2026-10-29. The migration was prepared by the 2026-10-28/29 spikes; the findings still matter because v3 changes both the CLI surface and the rendered precision.
 
-- `bean-check` works in both; v3 keeps the `file:line: message` format that `Beancount.ValidateFile` parses.
-- `bean-query` moved to the separate `beanquery` package. This is not a rewrite: `beanquery` is the v2 `beancount/query` engine extracted into the official `beancount` organisation package (same authors, full query test suite, active development). The 0.x version reflects the new standalone package, not the maturity of BQL.
-- `bean-report` is gone by design. The Vnext design document says custom reports and `bean-web` should be removed because Fava subsumes the web UI and BQL filters can replace the custom reports; `beancount/reports` was deleted. The underlying APIs (`beancount.core.prices`, `beancount.core.realization.dump_balances`) remain.
-- Both paisa report calls have direct BQL equivalents:
-  - `pricesdb` → `SELECT date, currency, amount.number, amount.currency FROM prices`
-  - `bal` → `BALANCES`
-- Important precision detail: v3's bare `units(position)` and `cost(position)` apply display rounding (`-99.7652` becomes `-100`, `-0.00042772` becomes `-0`). The nested forms `units(position).number`, `units(position).currency`, `cost(position).number` and `cost(position).currency` return the exact values. On `tests/fixture/inr-beancount/main.beancount` the units of all 25 postings match v2 exactly with the nested form. The `sum(position)` delta from the first spike (`22000.0`/`-109.76562772` versus `22000`/`-110`) is this display rounding, not a data change, and paisa does not use that query.
-- The only data change is that v3's exact `cost(position)` is more precise than v2's rounded cost (`99` versus `99.7652 USD`, `0` versus `0.00042772 USD`); the `inr-beancount` goldens still need a domain review before switching.
-- Availability: PyPI, Homebrew and nixpkgs 26.05 ship 3.2.3 and beanquery 0.2.0. Alpine 3.24 only packages 2.3.6, so the beancount Docker variants need a Python + pip layer (verified on Alpine 3.24 with Python 3.14; build dependencies are required, runtime packages are about 5.5 MB). beancount 2.3.6 installs on Python 3.12 but fails on 3.13; 3.2.3 works on 3.13 and 3.14.
+Upstream removed `bean-report` by design. The Vnext design document says custom reports and `bean-web` should be removed because Fava subsumes the web UI and BQL filters can replace the custom reports; `beancount/reports` was deleted. The underlying APIs (`beancount.core.prices`, `beancount.core.realization.dump_balances`) remain. `bean-query` moved to the official `beanquery` package, which is the v2 `beancount/query` engine extracted into its own repository (same authors, full query test suite, active development). The 0.x version reflects the new standalone package, not the maturity of BQL.
 
-Decision: this branch stays on **beancount 2.3.6** until that migration is implemented. The migration is now a concrete, small change (two functions, packaging and fixture review), not a parser rewrite.
+Paisa now uses:
+
+- `Beancount.Parse`: `bean-query -f csv` with the nested columns `units(position).number`, `cost(position).number` and `cost(position).currency`.
+- `Beancount.Prices`: `bean-query -f csv` with `SELECT date, currency, amount.number, amount.currency FROM prices`.
+- `Beancount.ValidateFile`: `bean-check` for errors and `bean-query -f text … BALANCES` for the editor balance preview.
+
+Precision: v3's bare `units(position)` and `cost(position)` apply display rounding (`-99.7652` becomes `-100`, `-0.00042772` becomes `-0`). The nested forms return exact values. On `tests/fixture/inr-beancount/main.beancount` the units of all 25 postings match v2 exactly; `cost` is more precise than v2's rounded value. The fixture snapshot was regenerated with `time_zone: UTC` so the timestamps are platform-independent, and `tests/regression.test.ts` now writes snapshots with a trailing newline.
+
+Packaging: the Nix dev shell takes `python3Packages.beancount` and `python3Packages.beanquery` from nixpkgs 26.05; `ledger-parsers.yml` pins 3.2.3/0.2.0 through pipx. Alpine 3.24 still packages 2.3.6, so `Dockerfile.beancount` and `Dockerfile.all` install the pinned Python packages with a temporary build-dependency set. Homebrew and PyPI provide the same versions. beancount 2.3.6 no longer builds from PyPI on Python 3.13; 3.2.3 works on 3.13 and 3.14.
 
 ## Font Generator
 
