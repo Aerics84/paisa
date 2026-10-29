@@ -51,7 +51,7 @@
   let monthHasExpenses = false;
   let detailScopeLabel = "Expenses";
 
-  $: {
+  $: if (grouped_expenses && z) {
     current_month_expenses = _.chain(
       filterExpenseScope(grouped_expenses?.[$month] || [], $detailScope)
     )
