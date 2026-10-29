@@ -112,8 +112,9 @@ shell (`node -v`, `go version`, `mkdocs build`) and a served
   see [Dependency Maintenance](dependency-maintenance.md#npm-12).
 - **TypeScript 7.0.2:** intentionally ignored for major updates until the
   surrounding toolchain accepts it.
-- **73 indirect Go modules:** have newer releases; deferred until a concrete
-  need. Direct modules are current.
+- **Remaining tooling-only Go modules:** 53 modules outside the import graph
+  still have newer releases. The 20 compiled-graph modules were refreshed on
+  2026-10-29; direct modules are current.
 - **NixOS 26.11:** next refresh within two weeks of release.
 - **hledger 1.52.4:** pinned through a Hackage source override because nixpkgs
   (26.05 and master) still packages 1.52; issue #2254 is fixed since 1.41.

@@ -36,11 +36,11 @@ Validated end state before the freeze commit:
 | TypeScript / ESLint / Prettier                        | 6.0.3 / 10.13.0 / 3.9.10               |
 | Tabulator / bignumber / chroma / formatjs / financial | 6.7.1 / 11.1.5 / 3.2.0 / 9.4.3 / 0.2.4 |
 
-`npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. `go list -m -u all` reports 73 indirect module updates; all direct modules are current and the indirect list is documented above.
+`npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. After the 2026-10-29 transitive refresh, `go list -m -u all` reports 53 tooling/optional-backend updates outside the import graph; all direct modules and the compiled module graph are current.
 
 This snapshot is historical: npm moved to 12.2.1 on 2026-10-29 and beancount moved to 3.2.3 on the same day. All other rows remain current.
 
-Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are the indirect Go module set and the NixOS 26.11 refresh within two weeks of its release.
+Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are the remaining tooling-only Go modules and the NixOS 26.11 refresh within two weeks of its release.
 
 ## Dependency Audit Gate
 
@@ -228,17 +228,18 @@ Packaging: the Nix dev shell takes `python3Packages.beancount` and `python3Packa
 
 As of 2026-10-28 all **direct** Go modules are at their upgraded versions; `go list -m -u` reports no direct module with a newer release. The security floors are `golang.org/x/net >= v0.62.0`, `golang.org/x/crypto >= v0.58.0`, `github.com/gin-gonic/gin >= v1.12.0`, `gorm.io/gorm >= v1.31.2` and `github.com/wailsapp/wails/v2 >= v2.17.0`.
 
-Indirect modules are **not** mass-updated (`go get -u ./...` is an approved-exception path, not the default). At the end of the Go refresh, 73 indirect modules still had newer releases. Representative examples:
+Indirect modules are **not** mass-updated by default (`go get -u ./...` is an approved-exception path). On 2026-10-29 the compiled import graph was refreshed: 20 indirect modules moved (among them `quic-go`, `mongo-driver`, `go-playground/validator`, `goccy/go-json` and `protobuf`). `go build ./...`, `go test ./...` and `govulncheck` stayed clean. After that refresh, 53 tooling/optional-backend modules outside the import graph still have newer releases. Representative examples:
 
-- `github.com/go-redis/redis/v8` v8.4.2 → v8.11.5
-- `github.com/go-git/go-git/v5` v5.19.2 → v5.19.3
+- `atomicgo.dev/keyboard` v0.2.9 → v0.2.10
+- `github.com/Microsoft/go-winio` v0.6.2 → v0.6.4
+- `github.com/ProtonMail/go-crypto` v1.1.6 → v1.5.2
 - `github.com/alecthomas/chroma/v2` v2.14.0 → v2.27.0
 - `github.com/charmbracelet/glamour` v0.8.0 → v1.0.0 (major)
 - `github.com/charmbracelet/lipgloss` v0.12.1 → v1.1.0 (major)
 - `github.com/jaypipes/ghw` v0.21.3 → v0.26.0
 - `github.com/itchyny/gojq` v0.12.13 → v0.12.19
 
-The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phase2.txt` (not committed). These updates stay deferred until a concrete security or bugfix need justifies the wider module-graph change.
+The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phase2.txt` (not committed). The remaining updates stay deferred until a concrete security or bugfix need justifies the wider module-graph change.
 
 ## Container Base Images
 
