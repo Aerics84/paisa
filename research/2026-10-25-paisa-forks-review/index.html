@@ -1,0 +1,3485 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Paisa is an open source personal finance manager. It helps you with tracking investments like mutual funds, stocks etc. It helps with expenses categorization, budgeting and money management in general.">
+      
+      
+        <meta name="author" content="Anantha Kumaran">
+      
+      
+        <link rel="canonical" href="https://paisa.fyi/research/2026-10-25-paisa-forks-review/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Paisa-Fork-Review – Stand 25.10.2026 - Paisa</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/device-frames.min.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-NL7XFHE65Z"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-NL7XFHE65Z",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-NL7XFHE65Z",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>if("undefined"!=typeof __md_analytics){var consent=__md_get("__consent");consent&&consent.analytics&&__md_analytics()}</script>
+  
+
+    
+     
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#paisa-fork-review-stand-25102026" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </button>
+            
+            
+<p>
+  <span
+    >Prefer a simpler way to manage double-entry accounting without editing text files? Try </span
+  ><a class="finbodhi" href="https://finbodhi.com" target="_blank">FinBodhi</a>
+</p>
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Paisa" class="md-header__button md-logo" aria-label="Paisa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><g><g><g transform="rotate(360, 12, 12)"><path d="M12 12Z" fill="none" stroke="#b388ff" stroke-width="4" stroke-linecap="round"></path></g></g><g><g transform="rotate(0, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#aeea00" stroke-width="4"></path></g><g transform="rotate(72, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#ff1744" stroke-width="4"></path></g><g transform="rotate(144, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#d500f9" stroke-width="4"></path></g><g transform="rotate(216, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#ffab00" stroke-width="4"></path></g><g transform="rotate(288, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#00b0ff" stroke-width="4"></path></g><g transform="rotate(72, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#aeea00" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(144, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#ff1744" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(216, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#d500f9" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(288, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#ffab00" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(360, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#00b0ff" stroke-width="4.2" stroke-linecap="round"></path></g></g></g></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Paisa
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Paisa-Fork-Review – Stand 25.10.2026
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 12a10 10 0 0 0 13 9.54 10 10 0 0 1 0-19.08A10 10 0 0 0 2 12"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ananthakumaran/paisa" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ananthakumaran/paisa
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/accounts/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://demo.paisa.fyi" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Demo
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../manifesto/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Manifesto
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQs
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../blog/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Paisa" class="md-nav__button md-logo" aria-label="Paisa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><g><g><g transform="rotate(360, 12, 12)"><path d="M12 12Z" fill="none" stroke="#b388ff" stroke-width="4" stroke-linecap="round"></path></g></g><g><g transform="rotate(0, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#aeea00" stroke-width="4"></path></g><g transform="rotate(72, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#ff1744" stroke-width="4"></path></g><g transform="rotate(144, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#d500f9" stroke-width="4"></path></g><g transform="rotate(216, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#ffab00" stroke-width="4"></path></g><g transform="rotate(288, 12, 12)"><path d="M 21.510565162951536 8.909830056250526 A 10 10 0 0 0 12 6" fill="none" stroke="#00b0ff" stroke-width="4"></path></g><g transform="rotate(72, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#aeea00" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(144, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#ff1744" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(216, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#d500f9" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(288, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#ffab00" stroke-width="4.2" stroke-linecap="round"></path></g><g transform="rotate(360, 12, 12)"><path d="M12.59 5.88Z" fill="none" stroke="#00b0ff" stroke-width="4.2" stroke-linecap="round"></path></g></g></g></svg>
+
+    </a>
+    Paisa
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ananthakumaran/paisa" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ananthakumaran/paisa
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/accounts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accounts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/commodities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commodities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/journal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/allocation-targets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Allocation Targets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/budget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Budget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/bulk-edit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bulk Edit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/recurring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recurring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sheets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sheets
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--new" title="Recently added">
+    </span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_11" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/goals/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Goals
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_11" id="__nav_3_11_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Goals
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/goals/retirement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retirement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/goals/savings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Savings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ledger-cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ledger CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/editor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Editor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/user-authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/credit-cards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Credit Cards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/investment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/dependency-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JavaScript Toolchain Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_19" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/tax/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tax
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_19" id="__nav_3_19_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_19">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tax
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tax/deductions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Germany Tax Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tax/capital-income/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capital Income
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tax/tax-harvesting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tax Harvesting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tax/capital-gains/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capital Gains
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tax/schedule-al/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Schedule AL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://demo.paisa.fyi" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manifesto/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifesto
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../blog/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Blog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Archive
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Archive
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/archive/2024/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2024
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Categories
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Categories
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/gold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/locale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    locale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/price/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    price
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/sgb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sgb
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/category/sovereign-gold-bond/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sovereign-gold-bond
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#kurzfazit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kurzfazit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methode-und-datenstand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methode und Datenstand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unser-ausgangspunkt-nicht-erneut-bauen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unser Ausgangspunkt (nicht erneut bauen)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-landschaft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Landschaft
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Landschaft">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-groebreite-forks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Große/breite Forks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-fokussierte-fix-feature-forks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Fokussierte Fix-/Feature-Forks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-nur-sync-merge-oder-bots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Nur Sync, Merge oder Bots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-sofort-ubernehmen-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Sofort übernehmen (P1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Sofort übernehmen (P1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p1-01-zeitzonen-und-datums-korrektheit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-01 Zeitzonen- und Datums-Korrektheit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-02-hledger-acost-unterstutzen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-02 hledger-acost unterstützen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-03-filterbyglob-semantik-korrigieren" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-03 FilterByGlob-Semantik korrigieren
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-04-gehaltsklassifikation-und-konfigurierbare-salary-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-04 Gehaltsklassifikation und konfigurierbare Salary-Accounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-05-interne-transfers-aus-sparquoteinvestment-timeline-ausschlieen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-05 Interne Transfers aus Sparquote/Investment-Timeline ausschließen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-06-yahoo-cookiecrumb-und-gbppence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-06 Yahoo: Cookie/Crumb und GBp/Pence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-07-tooltip-kurzung-bei-groen-ledgern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-07 Tooltip-Kürzung bei großen Ledgern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-08-ui-stabilitat-navbar-und-globaler-error-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-08 UI-Stabilität: Navbar und globaler Error-Handler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-09-importtemplate-fehler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-09 Import/Template-Fehler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-10-sqlite-wal-und-backup-pruning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-10 SQLite-WAL und Backup-Pruning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-11-performance-security-batch-von-sarath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-11 Performance-/Security-Batch von Sarath
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-12-retirement-ziel-zinsen-nicht-als-investment-basis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-12 Retirement-Ziel: Zinsen nicht als Investment-Basis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-13-kleine-ui-chart-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-13 Kleine UI-/Chart-Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-14-optional-import-dezimalensonderfalle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1-14 Optional: Import-Dezimalen/Sonderfälle
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-roadmap-relevant-p2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Roadmap-relevant (P2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Roadmap-relevant (P2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p2-01-monatsruckblick-insights-monatsvergleiche-segment-sankey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-01 Monatsrückblick: Insights, Monatsvergleiche, Segment-Sankey
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-02-net-worth-konsistenz-fx-und-preis-frische" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-02 Net-Worth-Konsistenz, FX und Preis-Frische
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-03-net-worth-projektion-fire" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-03 Net-Worth-Projektion / FIRE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-04-rebalancing-allocation-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-04 Rebalancing / Allocation-Targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-05-import-framework-und-validierung" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-05 Import-Framework und Validierung
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-06-doctor-datenqualitat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-06 Doctor / Datenqualität
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-07-editor-sicherheit-git-historie-verschlusselung" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-07 Editor-Sicherheit: Git-Historie, Verschlüsselung
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-08-pwamobile-mcpai-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2-08 PWA/Mobile, MCP/AI (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-nicht-ubernehmen-p3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Nicht übernehmen (P3)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-vorgeschlagene-reihenfolge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Vorgeschlagene Reihenfolge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-hinweise-zum-ubernehmen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Hinweise zum Übernehmen
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-kompakter-commit-index-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Kompakter Commit-Index (P1)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-offene-punkte-fur-uns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Offene Punkte für uns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-quellen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Quellen
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="paisa-fork-review-stand-25102026">Paisa-Fork-Review – Stand 25.10.2026<a class="headerlink" href="#paisa-fork-review-stand-25102026" title="Permanent link">&para;</a></h1>
+<p><strong>Frage:</strong> Welche Forks von <code>ananthakumaran/paisa</code> hatten in den letzten sechs Monaten neue Commits, was wurde dort geändert, und welche Themen/Commits sind für unseren Fork (<code>Aerics84/paisa</code>) relevant und sollten übernommen werden?</p>
+<h2 id="kurzfazit">Kurzfazit<a class="headerlink" href="#kurzfazit" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>36 Forks</strong> hatten seit dem 25.04.2026 Pushes – inklusive unserem eigenen (<code>Aerics84/paisa</code>). Von den <strong>35 anderen</strong> sind <strong>34 erreichbar</strong> (<code>sandeepbazar/paisa</code> ist inzwischen 404).</li>
+<li><strong>22 der 34 erreichbaren Fremd-Forks</strong> enthalten eigene Commits, die nicht in <code>upstream/master</code> sind. <strong>7</strong> haben nur den Upstream-Stand synchronisiert, <strong>3</strong> nur einen Sync-Merge ohne neue eigene Arbeit, <strong>2</strong> nur Bot-Branches (Dependabot/ImgBot).</li>
+<li>Vier Forks tragen den Großteil der Arbeit: <strong>nextxm</strong> (309 eigene Commits), <strong>Sarath234</strong> (142 + Branch-Arbeit), <strong>1Feng</strong> (136) und <strong>Pratap-kute</strong> (69). Nur die ersten drei enthalten für uns direkt verwertbare Änderungen; Pratap ist ein weitgehender Stack-Umbau (Deno/ECharts, ohne Bulma/D3) und für uns nicht als Ganzes übernehmbar.</li>
+<li>Der größte unmittelbare Nutzen liegt <strong>nicht</strong> in den großen Feature-Branches, sondern in etwa <strong>15 kleinen Korrektheits- und Robustheits-Commits</strong>: Zeitzonen/Datum, hledger-<code>acost</code>, <code>FilterByGlob</code>, Gehaltsklassifikation, interne Transfers, Yahoo-Crumb/GBp, Tooltips, Template-/Import-Fehler, SQLite-WAL, Backup-Pruning, Preis-Cache/XSS.</li>
+<li>Für den laufenden <strong>Monatsrückblick</strong> liefern Sarath (Insights, effektiver Monat, Segment-Sankey) und nextxm (Net-Worth-Konsistenz, FX, Monatsvergleich) wertvolle Ideen und Tests. Eine 1:1-Übernahme verbietet sich aber, weil unsere Spezifikation strenger ist (TWR, Kursfrische, keine erfundenen Nullen, keine falschen Erfolgszustände).</li>
+<li><strong>Nicht übernehmen:</strong> Indien-/China-spezifische Scraper und Importe, SMS-/Gmail-/Telegram-Agenten, Kite/Coin-Integrationen, Deno/ECharts-Komplettumbau, MCP/LLM-Spielereien, der nextxm-Architekturumbau (Auth/SQLc/Connect/Job-Queue) als Ganzes.</li>
+</ul>
+<h2 id="methode-und-datenstand">Methode und Datenstand<a class="headerlink" href="#methode-und-datenstand" title="Permanent link">&para;</a></h2>
+<ul>
+<li>GitHub-API <code>/repos/ananthakumaran/paisa/forks?per_page=100&amp;sort=newest</code> (222 Forks), Filter auf <code>pushed_at &gt;= 2026-04-25</code> → 36 Forks.</li>
+<li>Für jeden Fork: Vergleich <code>master...&lt;owner&gt;:&lt;default_branch&gt;</code> gegen <code>upstream/master</code> (<code>18ecd7d</code>, 21.10.2026), zusätzlich Prüfung <strong>aller</strong> Branches per <code>git ls-remote</code> und Branch-Compares. Reine Upstream-Sync-Merges werden nicht als eigene Arbeit gezählt.</li>
+<li>„Eigene Commits“ = Commits, die nicht in <code>upstream/master</code> enthalten sind. Bei großen, rebasten Forks (nextxm) gibt es dieselben Änderungen teils unter mehreren SHAs; die Zahlen sind daher Näherungen.</li>
+<li>Für die inhaltliche Bewertung wurden <strong>alle eigenen Commits</strong> der aktiven Forks angesehen, nicht nur die seit dem Stichtag. Die Spalte „6 Mon.“ zählt ausschließlich die Commits im Fenster; einzelne empfohlene Fixes (z. B. <code>FilterByGlob</code>, Verschlüsselung) sind älter, stehen aber in Forks, die im Fenster aktiv waren.</li>
+<li>Unser Stand: <code>master</code> = <code>f738e0c</code> (25.10.2026) auf Basis von upstream <code>v0.7.8</code>, mit laufender Monatsrückblick-Arbeit (<code>internal/server/monthly_review.go</code>, <code>src/lib/monthly_review.ts</code>). Die Empfehlungen sind mit diesem laufenden Arbeitsstand abzugleichen.</li>
+<li>Zeilennummern in diesem Dokument sind Orientierung; durch die laufende Monatsrückblick-Arbeit können sie sich verschieben. Maßgeblich sind die genannten Funktionen/Dateien.</li>
+</ul>
+<h2 id="unser-ausgangspunkt-nicht-erneut-bauen">Unser Ausgangspunkt (nicht erneut bauen)<a class="headerlink" href="#unser-ausgangspunkt-nicht-erneut-bauen" title="Permanent link">&para;</a></h2>
+<p>Damit die Empfehlungen nicht Doppelarbeit erzeugen, hier der relevante Ist-Stand unseres Forks:</p>
+<ul>
+<li><code>/preview</code> mit Net-Worth-, Checking-, Expense-, Insight- und Goal-Modulen; klassisches Dashboard bleibt separat.</li>
+<li>Gesamt-Sparquote vs. Investitionsquote (V1) auf den Investment-Jahreskarten.</li>
+<li>Laufender Monatsrückblick: <code>internal/server/monthly_review.go</code>, <code>monthly_performance.go</code>, <code>src/lib/monthly_review.ts</code> (Flow-Graph, Nettoeinkommens-Trend, Top/Flop-Performance, Checking-Historie).</li>
+<li>Jahres- und Monats-Sankey, Germany/EU-Import-Templates (CAMT, Trade Republic, Scalable, Germany Broker) und Germany-Tax-Code.</li>
+<li>Svelte 5, Bulma 1, D3, Go/GORM/SQLite; keine Cloud-/Bank-Sync-Abhängigkeit.</li>
+</ul>
+<p>Viele Fork-Features (z. B. Saraths Insights, nextxms Monats-Widgets, Prataps Allocation-UI) überschneiden sich damit. Übernommen werden deshalb primär <strong>Korrektheits- und Randfall-Verbesserungen</strong>, nicht komplette UI-Module.</p>
+<h2 id="1-landschaft">1. Landschaft<a class="headerlink" href="#1-landschaft" title="Permanent link">&para;</a></h2>
+<h3 id="11-groebreite-forks">1.1 Große/breite Forks<a class="headerlink" href="#11-groebreite-forks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Fork</th>
+<th>Letzter Push</th>
+<th style="text-align: right;">Eigene Commits</th>
+<th>Schwerpunkt</th>
+<th>Für uns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/nextxm/paisa">nextxm/paisa</a></td>
+<td>25.10.2026</td>
+<td style="text-align: right;">309 (169 seit Apr.)</td>
+<td>Sankey, FX-Seite, Net-Worth-/Preis-Fixes, Performance, PWA, Auth/Sessions, Doctor V2/V3, Projektion/FIRE, Import, Asset-Allokation</td>
+<td>Nur gezielt einzelne Fixes/Ideen; kein Merge des <code>develop</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/Sarath234/paisa">Sarath234/paisa</a></td>
+<td>11.08.2026 (Branches), Master 06.06.2026</td>
+<td style="text-align: right;">142 + Branch-Arbeit</td>
+<td>Insights, Sparquoten-Widget, Net-Worth-Projektion, Rebalancing, Quick Entry, Suche, Segment-Sankey, Statement-/Agent-Funktionen</td>
+<td>Selektiv: Monatslogik, Insights, Projektion, Rebalancing; Agent/Indien nicht</td>
+</tr>
+<tr>
+<td><a href="https://github.com/1Feng/paisa">1Feng/paisa</a></td>
+<td>21.10.2026</td>
+<td style="text-align: right;">136</td>
+<td>Mehrwährung/FX, Gehaltsklassifikation, Transfers, Import-Framework, China-Scraper, i18n, Mortgage, Receivables</td>
+<td>Selektiv: generische Korrektheits-Fixes und Import-Framework; China-spezifisches nicht</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Pratap-kute/paisa">Pratap-kute/paisa</a></td>
+<td>21.09.2026</td>
+<td style="text-align: right;">69</td>
+<td>Deno, ECharts 6, Design-Tokens, Vorhersagen, Goals, Budgets, Insights, Healthcheck, Backup/Export, Rebalancing, Importer</td>
+<td>Feature-Ideen; Code passt nicht zu unserem Svelte-5/Bulma/D3-Stack</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-fokussierte-fix-feature-forks">1.2 Fokussierte Fix-/Feature-Forks<a class="headerlink" href="#12-fokussierte-fix-feature-forks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Fork</th>
+<th>Letzter Push</th>
+<th style="text-align: right;">Eigene Commits (6 Mon.)</th>
+<th>Was wurde geändert</th>
+<th>Empfehlung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/gvijayakumar-16/paisa">gvijayakumar-16/paisa</a></td>
+<td>23.10.2026</td>
+<td style="text-align: right;">9</td>
+<td>Parallele Kursabfragen, UI-Violett, Pakete entfernt, Speed, Einkommen aggregiert, Export (CSV); ältere Branch: Verschlüsselung at rest</td>
+<td>Export/Preis-Parallelität prüfen; Verschlüsselung nur bei Bedarf</td>
+</tr>
+<tr>
+<td><a href="https://github.com/matthiasdebernardini/paisa">matthiasdebernardini/paisa</a></td>
+<td>07.06.2026</td>
+<td style="text-align: right;">7</td>
+<td>Zeitzonen/Datum, exakte Dezimalen, Yahoo-/Recurring-/Upcoming-Fixes, <code>os.Exit</code> in Handlern, Ajax-/Import-/Scraper-Härtung, XIRR, Journal-Includes, Swiss-Reskin</td>
+<td><strong>Ja, Fix-Batch priorisiert</strong>; Design nur Inspiration</td>
+</tr>
+<tr>
+<td><a href="https://github.com/swapnildahiphale/paisa">swapnildahiphale/paisa</a></td>
+<td>31.08.2026</td>
+<td style="text-align: right;">15</td>
+<td>MCP-Server + AI-REST, Import-Renderer/Preview, validiertes Speichern, Dedupe, ICICI-Template, UPI-Narration, CC-Clearing</td>
+<td>Generische Import-Validierung/Dedupe später; Indien-Template nicht</td>
+</tr>
+<tr>
+<td><a href="https://github.com/manishtanwar/paisa-app">manishtanwar/paisa-app</a></td>
+<td>22.07.2026</td>
+<td style="text-align: right;">9 (+4 Import)</td>
+<td>Import-CLI, XLSX-Offset, Vim-Modus, Goal-Allokationen, <code>FilterByGlob</code>-Bug, Kite/Coin (Indien), Drilldowns, Navbar-/ResizeObserver-Fixes</td>
+<td><strong>Glob- und Stabilitäts-Fixes ja</strong>; Rest überwiegend Indien</td>
+</tr>
+<tr>
+<td><a href="https://github.com/d093w1z/paisa">d093w1z/paisa</a></td>
+<td>28.07.2026</td>
+<td style="text-align: right;">5</td>
+<td>Git-basierte Ledger-Versionshistorie (lokales Repo, Credentials, OAuth)</td>
+<td>Später: lokale Git-Historie als Backup-Ersatz, ohne Cloud-Zwang</td>
+</tr>
+<tr>
+<td><a href="https://github.com/mbeutelspacher/paisa">mbeutelspacher/paisa</a></td>
+<td>13.07.2026</td>
+<td style="text-align: right;">3</td>
+<td>Leere Checking-Konten ausblenden, „Guthaben“-Bereich, Dev-Umgebung</td>
+<td>Einzelne Idee prüfen; widerspricht teils unserer „No-activity“-Entscheidung</td>
+</tr>
+<tr>
+<td><a href="https://github.com/coffmant/paisa">coffmant/paisa</a></td>
+<td>11.09.2026</td>
+<td style="text-align: right;">2</td>
+<td>Journal-gestützte Reconciliation-API + Workflow-Seite</td>
+<td>Später, read-only; passt zu „keine automatischen Buchungen“</td>
+</tr>
+<tr>
+<td><a href="https://github.com/stan-ely/paisa">stan-ely/paisa</a></td>
+<td>04.09.2026</td>
+<td style="text-align: right;">1</td>
+<td>Yahoo-Cookie/Crumb-Authentifizierung, Retry, robuste Fehler</td>
+<td><strong>Ja, mit GBp-Fix kombinieren</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/St-Gonne/paisa">St-Gonne/paisa</a></td>
+<td>22.10.2026</td>
+<td style="text-align: right;">1</td>
+<td><code>negate</code> erhält Dezimalnotation beim Import (BigNumber)</td>
+<td><strong>Ja, kleiner Import-Fix</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/mrkstwrt/paisa-source">mrkstwrt/paisa-source</a></td>
+<td>05.06.2026</td>
+<td style="text-align: right;">1</td>
+<td>Yahoo GBp/GBX → GBP (Pence-Faktor 0,01)</td>
+<td><strong>Ja, wichtig für LSE-ETFs</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/sean0407/paisa">sean0407/paisa</a></td>
+<td>18.10.2026</td>
+<td style="text-align: right;">1</td>
+<td>Zins-Postings nicht als Investment-Basis im Retirement-Ziel</td>
+<td><strong>Ja, winziger Fix mit Test</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/bellussi1/paisa">bellussi1/paisa</a></td>
+<td>14.10.2026</td>
+<td style="text-align: right;">2</td>
+<td>Tooltip-Zeilen am Viewport kürzen, Summenzeile erhalten</td>
+<td><strong>Ja, mit Test</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/savinmikhail/paisa-app">savinmikhail/paisa-app</a></td>
+<td>03.09.2026</td>
+<td style="text-align: right;">1</td>
+<td>Gleicher Tooltip-Fix (Alternative)</td>
+<td>Nur eine Variante übernehmen</td>
+</tr>
+<tr>
+<td><a href="https://github.com/vivekmittal/paisa.fyi">vivekmittal/paisa.fyi</a></td>
+<td>17.10.2026</td>
+<td style="text-align: right;">2 (+ ältere Perf.)</td>
+<td>Net-Worth/XIRR/Timeline in Zusatzwährungen, Währungs-Dropdown, Asset-Pie, parallele Scraper</td>
+<td>Später im FX-/Mehrwährungs-Spike prüfen</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nightconcept/paisa">nightconcept/paisa</a></td>
+<td>27.08.2026</td>
+<td style="text-align: right;">2</td>
+<td>hledger <code>acost</code> zusätzlich zu <code>aprice</code>; Dockerfile.hledger aus Source</td>
+<td><strong><code>acost</code> ja</strong>; Docker später</td>
+</tr>
+<tr>
+<td><a href="https://github.com/TuDatTr/paisa">TuDatTr/paisa</a></td>
+<td>04.10.2026</td>
+<td style="text-align: right;">2</td>
+<td>Zwei Doctor-Regeln entfernt; <code>hide_zero_checking_balances</code></td>
+<td>Doctor-Regeln diskutieren; Checking-Option prüfen</td>
+</tr>
+<tr>
+<td><a href="https://github.com/panuozzo77/paisa">panuozzo77/paisa</a></td>
+<td>06.06.2026</td>
+<td style="text-align: right;">1</td>
+<td>Monatsverschiebung in Cashflow-Charts (Dayjs-Zeitzone)</td>
+<td><strong>Ja, Teil des Zeitzonen-Fixes</strong></td>
+</tr>
+<tr>
+<td><a href="https://github.com/ramkrishna757575/paisa">ramkrishna757575/paisa</a></td>
+<td>09.05.2026</td>
+<td style="text-align: right;">2</td>
+<td>MCP-Server und AI-REST-Endpunkte, Datumsfilter</td>
+<td>Optional/später; nicht Kern</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-nur-sync-merge-oder-bots">1.3 Nur Sync, Merge oder Bots<a class="headerlink" href="#13-nur-sync-merge-oder-bots" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Nur Upstream synchronisiert:</strong> <code>kp-forks/paisa</code>, <code>adeyholar/paisa</code>, <code>InameChayote/paisa</code>, <code>shrvansudhakara/paisa</code>, <code>jainChetan81/paisa</code>, <code>parthvzala/paisa</code>, <code>blombergniklas/paisa</code>.</li>
+<li><strong>Nur Sync-Merge, keine neue eigene Arbeit:</strong> <code>rgksugan/paisa</code>, <code>altanozlu/paisa</code>, <code>tonypius/paisa-txs</code>.</li>
+<li><strong>Bots:</strong> <code>mikeg98/paisa</code> (Dependabot), <code>annihilatorrrr/paisa</code> (ImgBot), <code>St-Gonne/paisa</code> zusätzlich Dependabot.</li>
+<li><strong>Nicht mehr erreichbar:</strong> <code>sandeepbazar/paisa</code> (404).</li>
+</ul>
+<blockquote>
+<p>Hinweis: <code>tonypius</code> (Regex-Account-Regeln), <code>altanozlu</code> (ETF-GraphQL) und <code>rgksugan</code> (alte Monatsfixes) haben interessante ältere Branch-Arbeit, aber im Sechs-Monats-Fenster keine neuen eigenen Commits. Sie sind unten unter „Beobachten“ erwähnt.</p>
+</blockquote>
+<h2 id="2-sofort-ubernehmen-p1">2. Sofort übernehmen (P1)<a class="headerlink" href="#2-sofort-ubernehmen-p1" title="Permanent link">&para;</a></h2>
+<p>Die Reihenfolge ist bewusst: zuerst Korrektheit unserer Zahlen (besonders für den laufenden Monatsrückblick), dann Robustheit/Performance, dann UI-Politur.</p>
+<h3 id="p1-01-zeitzonen-und-datums-korrektheit">P1-01 Zeitzonen- und Datums-Korrektheit<a class="headerlink" href="#p1-01-zeitzonen-und-datums-korrektheit" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/matthiasdebernardini/paisa/commit/ef719408">matthiasdebernardini/paisa@ef719408</a> – „transaction dates render/export one day off in other timezones“ (06.06.2026)</li>
+<li><a href="https://github.com/panuozzo77/paisa/commit/67a2fa8a">panuozzo77/paisa@67a2fa8a</a> – gleicher Dayjs-Fix für Monatscharts (06.06.2026)</li>
+</ul>
+<p><strong>Was</strong></p>
+<ul>
+<li><code>utils.Now()</code> läuft in <code>config.TimeZone()</code> statt in der Server-Zeitzone; neue <code>BeginningOfDay()</code>-Hilfe.</li>
+<li><code>RunningBalance</code> normalisiert den Starttag, damit Postings am Tagesrand nicht in den falschen Bucket fallen.</li>
+<li><code>ajax()</code> parst Datumsstrings als Kalendertag (<code>value.slice(0, 10)</code>), nicht als vollen Instant.</li>
+<li>CSV-Export nutzt <code>format("YYYY-MM-DD")</code> statt <code>toISOString()</code>.</li>
+</ul>
+<p><strong>Warum bei uns</strong></p>
+<ul>
+<li>Unser Default-Profil ist <code>Europe/Berlin</code> (<code>internal/config/config.go:246</code>), aber <code>utils.Now()</code> nutzt <code>time.Now()</code> (<code>internal/utils/utils.go:129</code>). Im Docker-/UTC-Betrieb ist „heute“ damit falsch.</li>
+<li><code>RunningBalance</code> startet mit <code>postings[0].Date</code> ohne Normalisierung (<code>internal/accounting/accounting.go:164</code>).</li>
+<li><code>ajax()</code> konvertiert <code>2026-06-06T00:00:00+02:00</code> in die Browser-Zeitzone (<code>src/lib/utils.ts:915</code>); der Export nutzt <code>toISOString()</code> (<code>src/lib/export.ts:8</code>). Das ist genau der Off-by-one-Fehler, der deutsche Nutzer trifft.</li>
+<li>Betrifft Monatsrückblick, Net-Worth-Timeline, Cashflow, CSV-Export und Regressionstests.</li>
+</ul>
+<p><strong>Ziel bei uns:</strong> <code>internal/utils/utils.go</code>, <code>internal/accounting/accounting.go</code>, <code>src/lib/utils.ts</code>, <code>src/lib/export.ts</code>. Tests mit Grenzpostings um 00:00 Europe/Berlin und Browser in UTC.</p>
+<p><strong>Aufwand/Risiko:</strong> S, niedrig. <code>67a2fa8a</code> ist im Wesentlichen derselbe Fix; nur einmal übernehmen.</p>
+<h3 id="p1-02-hledger-acost-unterstutzen">P1-02 hledger-<code>acost</code> unterstützen<a class="headerlink" href="#p1-02-hledger-acost-unterstutzen" title="Permanent link">&para;</a></h3>
+<p><strong>Commit:</strong> <a href="https://github.com/nightconcept/paisa/commit/40743ba1">nightconcept/paisa@40743ba1</a> (26.08.2026)</p>
+<p><strong>Was:</strong> <code>HLedgerPosting</code> bekommt zusätzlich <code>Cost</code> (<code>acost</code>); <code>buildHLedgerPostings</code> bevorzugt <code>acost</code> vor <code>aprice</code> und behandelt <code>TotalCost</code>/<code>UnitCost</code> wie <code>TotalPrice</code>/<code>UnitPrice</code>. Tests für moderne hledger-Ausgaben.</p>
+<p><strong>Warum bei uns:</strong> Unser Parser liest nur <code>aprice</code> (<code>internal/ledger/ledger.go:816-833</code>). Neuere hledger-Versionen liefern Kosten als <code>acost</code>; ohne das sind Einstandswerte, Gains, XIRR und ggf. Steuerberechnungen falsch oder null.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/ledger/ledger.go</code> + Tests. Die Workflow-Änderungen aus dem Commit (Release/CI) nicht übernehmen.</p>
+<p><strong>Aufwand/Risiko:</strong> S, niedrig.</p>
+<h3 id="p1-03-filterbyglob-semantik-korrigieren">P1-03 <code>FilterByGlob</code>-Semantik korrigieren<a class="headerlink" href="#p1-03-filterbyglob-semantik-korrigieren" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/manishtanwar/paisa-app/commit/122f9eb3">manishtanwar/paisa-app@122f9eb3</a> – positive Muster OR, negative Muster ausschließend (31.03.2026)</li>
+<li><a href="https://github.com/Sarath234/paisa/commit/b5a3d091">Sarath234/paisa@b5a3d091</a> – Muster ohne <code>*</code> matchen auch Unterkonten (24.05.2026)</li>
+</ul>
+<p><strong>Was:</strong> Statt „sobald irgendein <code>!</code> vorkommt, alle Muster AND“ wird sauber getrennt: Positive Muster werden ODER-verknüpft, negative Muster schließen aus; ohne positive Muster gilt „alles außer negativ“. Zusätzlich Prefix-Matching für Muster ohne Wildcard.</p>
+<p><strong>Warum bei uns:</strong> <code>internal/accounting/accounting.go:40-80</code> hat die alte Logik. Bei Kombinationen wie <code>["Assets:*", "!Assets:Bank", "Assets:Bank:Checking"]</code> ist das Ergebnis heute falsch. Betroffen sind Retirement-/Savings-Ziele, Allocation-Targets und die neue Transfer-Konfiguration.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/accounting/accounting.go</code> + Tests für gemischte Muster, leere Strings und Capital-Gains-Sonderfälle.</p>
+<p><strong>Aufwand/Risiko:</strong> S, <strong>mittel</strong> wegen Semantikänderung. Vor dem Merge Regression-Fixtures laufen lassen und die Prefix-Regel in <code>docs/reference/config.md</code> dokumentieren.</p>
+<h3 id="p1-04-gehaltsklassifikation-und-konfigurierbare-salary-accounts">P1-04 Gehaltsklassifikation und konfigurierbare Salary-Accounts<a class="headerlink" href="#p1-04-gehaltsklassifikation-und-konfigurierbare-salary-accounts" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/1Feng/paisa/commit/df35cad3">1Feng/paisa@df35cad3</a> – <code>Income:Payroll</code> zählt als Gehalt; ganze Account-Segmente statt <code>HasPrefix</code> (13.10.2026)</li>
+<li><a href="https://github.com/1Feng/paisa/commit/b31b02bb">1Feng/paisa@b31b02bb</a> – <code>salary_income_accounts</code>-Konfiguration (20.10.2026)</li>
+</ul>
+<p><strong>Was:</strong> <code>isSalaryIncome</code> prüft <code>Income:Salary</code> <strong>und</strong> <code>Income:Payroll</code> per <code>utils.IsSameOrParent</code>; <code>Income:SalaryOther</code> ist damit kein Gehalt mehr. Neue optionale Konfiguration: <code>null</code> = Legacy-Defaults, <code>[]</code> = keine Gehälter, Liste = exakte Ersetzung. Schema, Doku und Tests sind enthalten.</p>
+<p><strong>Warum bei uns:</strong> <code>internal/server/investment.go:89-100</code> nutzt <code>strings.HasPrefix(..., "Income:Salary")</code>; <code>internal/server/monthly_review.go:66</code> ebenso. Deutsche Nutzer buchen oft <code>Income:Gehalt</code>, <code>Income:Payroll</code> oder <code>Income:Employment:*</code>. Unsere neue Gesamt-Sparquote und der Monatsrückblick würden diese Einkommen sonst als „Other Income“ zählen. Lookalike-Prefixe sind ebenfalls ein Bug.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/server/investment.go</code>, <code>internal/server/monthly_review.go</code>, <code>internal/config/config.go</code> + <code>schema.json</code> + Fixtures.</p>
+<p><strong>Aufwand/Risiko:</strong> M (Config-Schema/Fixtures), fachlich niedrig.</p>
+<h3 id="p1-05-interne-transfers-aus-sparquoteinvestment-timeline-ausschlieen">P1-05 Interne Transfers aus Sparquote/Investment-Timeline ausschließen<a class="headerlink" href="#p1-05-interne-transfers-aus-sparquoteinvestment-timeline-ausschlieen" title="Permanent link">&para;</a></h3>
+<p><strong>Commit:</strong> <a href="https://github.com/1Feng/paisa/commit/80b0ae5f">1Feng/paisa@80b0ae5f</a> (27.05.2026)</p>
+<p><strong>Was:</strong> Neue Konfiguration <code>transfer_accounts</code> (Globs). Eine Transaktion gilt als interner Transfer, wenn <strong>alle</strong> Legs unter <code>Assets:*</code> liegen und <strong>mindestens ein</strong> Leg auf ein konfiguriertes Transfer-Konto passt. Solche Transaktionen werden aus Investment-Timeline und Sparquote entfernt, bleiben aber im Cashflow sichtbar. Der Patch lädt dafür die vollständigen Transaktions-Legs nach.</p>
+<p><strong>Warum bei uns:</strong> <code>GetInvestment</code> (<code>internal/server/investment.go:40-42</code>) schließt Checking und Liabilities-Transaktionen aus, aber nicht Assets→Assets-Umbuchungen (z. B. <code>Assets:Tagessgeld</code> → <code>Assets:Depot</code>). Diese können die neue Sparquote künstlich erhöhen. <code>doublestar/v4</code> ist bei uns bereits in <code>go.mod</code>.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/accounting/transfer.go</code> (neu), <code>internal/config/config.go</code> + Schema, <code>internal/server/investment.go</code>; zusätzlich in der Berechnung der Investment-Beiträge im Monatsrückblick berücksichtigen.</p>
+<p><strong>Aufwand/Risiko:</strong> M, mittel (Config + Tests). Tests: echter Transfer vs. Gehalt/Ausgabe mit einem passenden Leg.</p>
+<h3 id="p1-06-yahoo-cookiecrumb-und-gbppence">P1-06 Yahoo: Cookie/Crumb und GBp/Pence<a class="headerlink" href="#p1-06-yahoo-cookiecrumb-und-gbppence" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/stan-ely/paisa/commit/25859f7d">stan-ely/paisa@25859f7d</a> – Yahoo-Session mit Cookie-Jar, Crumb, Retry bei 401/403/429, robuste Fehler (04.09.2026)</li>
+<li><a href="https://github.com/mrkstwrt/paisa-source/commit/7f4bd850">mrkstwrt/paisa-source@7f4bd850</a> – <code>GBp</code>/<code>GBX</code> → <code>GBP</code> mit Faktor 0,01 vor der FX-Umrechnung (05.06.2026)</li>
+<li><a href="https://github.com/matthiasdebernardini/paisa/commit/10bc64e1">matthiasdebernardini/paisa@10bc64e1</a> – Yahoo-Nullwerte/Panics, Upcoming-/Recurring-Guards (06.06.2026)</li>
+</ul>
+<p><strong>Warum bei uns:</strong> <code>internal/scraper/stock/yahoo.go</code> hat weder Cookie/Crumb noch eine GBp-Normalisierung. LSE-ETFs werden in Pence gehandelt; ohne Normalisierung schlägt die FX-Suche fehl oder der Wert ist um Faktor 100 falsch. Yahoo antwortet zudem zunehmend mit 401/429 auf nackte Requests. Unsere <code>UnmarshalJSON</code>-Behandlung für fehlende Closes ist bereits vorhanden (Upstream <code>402076f</code>); diesen Teil nicht regressieren.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/scraper/stock/yahoo.go</code> + Tests. Der Crumb-Patch muss an unseren injizierbaren <code>yahooHTTPClient</code> angepasst werden, damit Tests offline bleiben.</p>
+<p><strong>Aufwand/Risiko:</strong> M, mittel (Netzwerk, Retry-Logik). GBp-Fix zuerst, Crumb danach.</p>
+<h3 id="p1-07-tooltip-kurzung-bei-groen-ledgern">P1-07 Tooltip-Kürzung bei großen Ledgern<a class="headerlink" href="#p1-07-tooltip-kurzung-bei-groen-ledgern" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/bellussi1/paisa/commit/5ad11187">bellussi1/paisa@5ad11187</a> + <a href="https://github.com/bellussi1/paisa/commit/4ad755ff">4ad755ff</a> (14.10.2026)</li>
+<li>Alternative: <a href="https://github.com/savinmikhail/paisa-app/commit/d1f9ee13">savinmikhail/paisa-app@d1f9ee13</a> (03.09.2026)</li>
+</ul>
+<p><strong>Was:</strong> Tooltip berücksichtigt Viewport-Höhe, kürzt die List auf die letzten Zeilen, zeigt „N earlier rows omitted“ und behält die Summenzeile. Ausgelagert nach <code>src/lib/tooltip.ts</code> mit Tests.</p>
+<p><strong>Warum bei uns:</strong> <code>src/lib/utils.ts:1217</code> hängt ungekürzt alle Zeilen an; bei vielen Kategorien/Konten verschwindet die Summe aus dem Viewport. Betrifft Expense-, Cashflow- und Sankey-Charts im Monatsrückblick.</p>
+<p><strong>Ziel bei uns:</strong> <code>src/lib/utils.ts</code> / neue <code>src/lib/tooltip.ts</code>. Eine der beiden Varianten übernehmen, nicht beide.</p>
+<p><strong>Aufwand/Risiko:</strong> S, niedrig.</p>
+<h3 id="p1-08-ui-stabilitat-navbar-und-globaler-error-handler">P1-08 UI-Stabilität: Navbar und globaler Error-Handler<a class="headerlink" href="#p1-08-ui-stabilitat-navbar-und-globaler-error-handler" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/manishtanwar/paisa-app/commit/4295944c">manishtanwar/paisa-app@4295944c</a> – Null-Check vor <code>selectedSubLink.children</code> (10.07.2026)</li>
+<li><a href="https://github.com/manishtanwar/paisa-app/commit/0220739b">manishtanwar/paisa-app@0220739b</a> – <code>formatError(null)</code> und ResizeObserver-Loop ignorieren (10.07.2026)</li>
+</ul>
+<p><strong>Warum bei uns:</strong> <code>src/lib/components/Navbar.svelte:207</code> dereferenziert <code>selectedSubLink.children</code> ohne Null-Check; bei Routen ohne passenden Sub-Link (z. B. neue <code>/preview</code>-Routen) crasht die Navigation. <code>src/hooks.client.ts:75/111</code> crasht bei <code>null</code>-Fehlern und zeigt ResizeObserver-Warnungen als Error-Toast.</p>
+<p><strong>Ziel bei uns:</strong> beide Dateien, je 1–5 Zeilen.</p>
+<p><strong>Aufwand/Risiko:</strong> XS, niedrig.</p>
+<h3 id="p1-09-importtemplate-fehler">P1-09 Import/Template-Fehler<a class="headerlink" href="#p1-09-importtemplate-fehler" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/1Feng/paisa/commit/0ca8d474">1Feng/paisa@0ca8d474</a> – leere Template-Liste liefert <code>[]</code> statt <code>null</code>; UI guardet <code>templates[0]</code> (28.05.2026)</li>
+<li><a href="https://github.com/1Feng/paisa/commit/3ea8aab0">1Feng/paisa@3ea8aab0</a> – nur <code>.handlebars</code>-Dateien als Builtins listen (27.05.2026)</li>
+<li><a href="https://github.com/1Feng/paisa/commit/63b10690">1Feng/paisa@63b10690</a> – <code>amount_alignment_column</code>-Fallback bei partieller <code>USER_CONFIG</code> (27.05.2026)</li>
+<li><a href="https://github.com/St-Gonne/paisa/commit/f046d740">St-Gonne/paisa@f046d740</a> – <code>negate</code> erhält Dezimalnotation via BigNumber (20.09.2026)</li>
+</ul>
+<p><strong>Warum bei uns:</strong> <code>internal/model/template/template.go:29</code> gibt bei leerer Liste <code>nil</code> zurück; <code>src/routes/(app)/ledger/import/+page.svelte:49/112</code> greift ungeprüft auf <code>templates[0]</code> zu. <code>src/lib/journal.ts:25</code> setzt <code>amount_alignment_column</code> ungeprüft. <code>src/lib/template_helpers.ts</code> negiert per <code>parseAmount * -1</code> und verliert kleine Dezimalstellen – relevant für deutsche Broker-/Bank-CSV-Templates.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/model/template/template.go</code>, Import-Page, <code>src/lib/journal.ts</code>, <code>src/lib/template_helpers.ts</code> + Tests.</p>
+<p><strong>Aufwand/Risiko:</strong> S, niedrig.</p>
+<h3 id="p1-10-sqlite-wal-und-backup-pruning">P1-10 SQLite-WAL und Backup-Pruning<a class="headerlink" href="#p1-10-sqlite-wal-und-backup-pruning" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/Sarath234/paisa/commit/22abf928">Sarath234/paisa@22abf928</a> – <code>PRAGMA journal_mode=WAL</code>, <code>busy_timeout=5000</code> (07.05.2026)</li>
+<li><a href="https://github.com/Sarath234/paisa/commit/43b52794">Sarath234/paisa@43b52794</a> – nur die letzten 10 Editor-Backups behalten (07.05.2026)</li>
+</ul>
+<p><strong>Warum bei uns:</strong> <code>internal/utils/utils.go:279</code> öffnet SQLite ohne PRAGMAs; parallele Sync-/Preview-Requests können „database is locked“ erzeugen. <code>internal/server/editor.go</code> erzeugt bei jedem Speichern ein Backup (<code>:95</code>, <code>:122</code>) und löscht nie; bei häufigem Speichern wächst das Verzeichnis unbegrenzt.</p>
+<p><strong>Ziel bei uns:</strong> <code>OpenDB</code>, <code>SaveFile</code>/<code>SaveSheet</code> + Tests.</p>
+<p><strong>Aufwand/Risiko:</strong> XS, niedrig.</p>
+<h3 id="p1-11-performance-security-batch-von-sarath">P1-11 Performance-/Security-Batch von Sarath<a class="headerlink" href="#p1-11-performance-security-batch-von-sarath" title="Permanent link">&para;</a></h3>
+<p><strong>Commits</strong></p>
+<ul>
+<li><a href="https://github.com/Sarath234/paisa/commit/6b730f51">Sarath234/paisa@6b730f51</a> – Batch-Queries, FIFO O(n), DB-Indizes, XSS, Rate-Limit-Key (18.04.2026)</li>
+<li><a href="https://github.com/Sarath234/paisa/commit/fdb5c1eb">Sarath234/paisa@fdb5c1eb</a> – Folgefix: <code>postings</code>-Variable in <code>computeCashFlow</code> (18.04.2026)</li>
+</ul>
+<p><strong>Was (Auszug)</strong></p>
+<ul>
+<li><code>accounting.FIFO</code> ohne wiederholtes Reslicing (Head-Index statt <code>available = available[1:]</code>), weniger Allokationen/Kopien.</li>
+<li>Indizes auf <code>postings.date</code>, <code>postings.account</code>, <code>postings.commodity</code>, <code>prices.date</code>, <code>prices.commodity_name</code>.</li>
+<li><code>computeCashFlow</code>: eine DB-Abfrage statt sechs, Filterung in-memory.</li>
+<li>Preis-Cache: <code>sync.Once</code> + mutable global → atomarer Pointer/Mutex; fehlender Kurs → Warnung statt <code>log.Fatal</code>.</li>
+<li>Potenzielle HTML-Injection-Fläche: <code>{@html}</code> in <code>LevelItem.svelte</code> und <code>PriceCodeSearchModal.svelte</code> entfernt.</li>
+<li>Rate-Limit pro Client-IP statt globalem Schlüssel <code>"user"</code>.</li>
+</ul>
+<p><strong>Warum bei uns:</strong> Alle genannten Stellen sind bei uns identisch vorhanden: <code>internal/accounting/accounting.go</code> (FIFO), <code>internal/model/posting/posting.go</code>/<code>price.go</code> (keine Indizes), <code>internal/server/cash_flow.go</code> (mehrere Queries), <code>internal/service/market.go</code> (<code>sync.Once</code>, <code>log.Fatal</code>), <code>src/lib/components/LevelItem.svelte:22</code>, <code>PriceCodeSearchModal.svelte:99/143</code>, <code>internal/server/server.go:478/499</code>.</p>
+<p><strong>Wichtig:</strong> Der Zwischenstand von <code>6b730f51</code> enthält einen Bug (<code>postings[0]</code> nach Refactor nicht definiert), der erst mit <code>fdb5c1eb</code> behoben wurde. <strong>Nur den Endstand übernehmen</strong> und in getrennte PRs aufteilen (Perf, Security, Cache).</p>
+<p><strong>Aufwand/Risiko:</strong> M, mittel. Indizes brauchen eine Migration/AutoMigrate-Prüfung; XSS-Fix ist trivial.</p>
+<h3 id="p1-12-retirement-ziel-zinsen-nicht-als-investment-basis">P1-12 Retirement-Ziel: Zinsen nicht als Investment-Basis<a class="headerlink" href="#p1-12-retirement-ziel-zinsen-nicht-als-investment-basis" title="Permanent link">&para;</a></h3>
+<p><strong>Commit:</strong> <a href="https://github.com/sean0407/paisa/commit/6b12ddf0">sean0407/paisa@6b12ddf0</a> (18.10.2026)</p>
+<p><strong>Was:</strong> Beim Retirement-Detail werden Zins-Postings aus der <code>CostBalance</code> ausgeschlossen, bevor der Gain berechnet wird. Test enthalten.</p>
+<p><strong>Warum bei uns:</strong> <code>internal/server/goal/retirement.go:52-53</code> nimmt <code>accounting.CostBalance(savings)</code> inklusive Zinsen. Dadurch wird der ausgewiesene Gain zu niedrig. Prüfen, ob <code>goal/savings.go</code> dasselbe Muster hat.</p>
+<p><strong>Ziel bei uns:</strong> <code>internal/server/goal/retirement.go</code> (+ ggf. <code>savings.go</code>) + Test.</p>
+<p><strong>Aufwand/Risiko:</strong> XS, niedrig.</p>
+<h3 id="p1-13-kleine-ui-chart-fixes">P1-13 Kleine UI-/Chart-Fixes<a class="headerlink" href="#p1-13-kleine-ui-chart-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://github.com/1Feng/paisa/commit/4de04c31">1Feng/paisa@4de04c31</a> – Gain-Chart: linken Rand an längste Kontobezeichnung anpassen, statt fix 150 px (28.05.2026). Unser <code>src/lib/gain.ts:38</code> nutzt fix 150 px; lange deutsche Kontonamen werden abgeschnitten. <strong>XS.</strong></li>
+<li><a href="https://github.com/1Feng/paisa/commit/1404e357">1Feng/paisa@1404e357</a> / <a href="https://github.com/1Feng/paisa/commit/257b131d">257b131d</a> – <code>chartWidth</code>-Null-Guard für Chart-Container (02.06.2026). Relevant, wenn Charts in versteckten Tabs/beim Monatswechsel gerendert werden. <strong>XS/S.</strong></li>
+<li><a href="https://github.com/1Feng/paisa/commit/0ca8d474">1Feng/paisa@0ca8d474</a> – siehe P1-09.</li>
+</ul>
+<h3 id="p1-14-optional-import-dezimalensonderfalle">P1-14 Optional: Import-Dezimalen/Sonderfälle<a class="headerlink" href="#p1-14-optional-import-dezimalensonderfalle" title="Permanent link">&para;</a></h3>
+<p><strong>Commit:</strong> <a href="https://github.com/matthiasdebernardini/paisa/commit/7c89e0be">matthiasdebernardini/paisa@7c89e0be</a> (06.06.2026)</p>
+<p><strong>Was:</strong> Exakte Dezimalbehandlung im Ledger-/Template-Code, wissenschaftliche Notation, Spalten jenseits Z, Template-Lint, Spreadsheet-Helfer. Betrifft <code>internal/ledger/ledger.go</code>, <code>src/lib/spreadsheet.ts</code>, <code>src/lib/template_editor.ts</code>, <code>src/lib/template_helpers.ts</code>.</p>
+<p><strong>Warum bei uns:</strong> Deutsche Broker-CSVs enthalten oft viele Nachkommastellen und Spalten jenseits Z. Der Patch ist größer als die anderen P1-Fixes und sollte nach P1-09 separat bewertet werden. <strong>M.</strong></p>
+<h2 id="3-roadmap-relevant-p2">3. Roadmap-relevant (P2)<a class="headerlink" href="#3-roadmap-relevant-p2" title="Permanent link">&para;</a></h2>
+<p>Diese Themen sind wertvoll, aber entweder größer, spezifikationsabhängig oder erst nach dem Monatsrückblick sinnvoll.</p>
+<h3 id="p2-01-monatsruckblick-insights-monatsvergleiche-segment-sankey">P2-01 Monatsrückblick: Insights, Monatsvergleiche, Segment-Sankey<a class="headerlink" href="#p2-01-monatsruckblick-insights-monatsvergleiche-segment-sankey" title="Permanent link">&para;</a></h3>
+<p><strong>Sarath234</strong></p>
+<ul>
+<li><code>427a8b94</code> – serverseitige Insights (5 Typen) + <code>4c00145b</code>, <code>e96e314b</code>, <code>07097d5b</code>, <code>41fb6bec</code>, <code>4d0a3ce4</code>, <code>ddd9f190</code>, <code>4bb0381f</code></li>
+<li><code>d3ac3a9f</code> – Sparquoten-Widget, mit Folgefixes <code>3606a5aa</code>, <code>bb2c0e11</code>, <code>48edea44</code>, <code>db9785a1</code>, <code>adf3c6c0</code>, <code>c37e1d84</code> (effektiver Monat, Gehaltseingang, Fallback)</li>
+<li><code>b56daaef</code> – Segment-Cashflow, <code>ec2d9241</code> Depth-Filter, <code>90e5c095</code>/<code>ac0309cf</code> Navigation, <code>4d180431</code> Multi-Commodity-Merge, <code>2341640c</code> Refunds/Returns im Segment-Sankey</li>
+</ul>
+<p><strong>nextxm</strong></p>
+<ul>
+<li><code>910c0309</code> – Month-over-Month-Spending-Trends</li>
+<li><code>7c21e9de</code> – Multi-Year-Expense/Income-APIs + YoY-Charts</li>
+<li><code>2f42d50f</code> – Monthly-Breakdown-Widget</li>
+<li><code>8b43a53e</code> – Expense-Heatmap / Daily-Seasonality</li>
+</ul>
+<p><strong>Empfehlung:</strong> Nur Algorithmen, Randfall-Tests und Datenformen übernehmen. Unsere Spezifikation ist maßgeblich: TWR statt Lifetime-XIRR, Kursfrische ≤ 7 Tage, keine 0-%-Rendite aus einem einzigen Kurs, keine erfundenen Cash-Reste. Saraths „effektiver Monat“-Heuristik ist eine gute Vorlage für Gehaltseingang, aber nicht ungeprüft übernehmen. Unser <code>monthly_review.go</code>/<code>monthly_performance.go</code> deckt Flow-Graph, Nettoeinkommens-Trend und Top/Flop bereits ab; Doppelarbeit vermeiden.</p>
+<h3 id="p2-02-net-worth-konsistenz-fx-und-preis-frische">P2-02 Net-Worth-Konsistenz, FX und Preis-Frische<a class="headerlink" href="#p2-02-net-worth-konsistenz-fx-und-preis-frische" title="Permanent link">&para;</a></h3>
+<p><strong>nextxm</strong></p>
+<ul>
+<li><code>40c23d8c</code>, <code>44866748</code>, <code>5b2a3f66</code>, <code>4ded9496</code> – Dashboard- vs. Timeline-Net-Worth synchronisieren, heutige Transaktionen/Preise einbeziehen</li>
+<li><code>0de4ec5d</code> – Same-Day-Preis/Rate-Race mit <code>EndOfDay</code>-Pivot</li>
+<li><code>c1f2cb61</code> – Preis-Lookup am Tagesende</li>
+<li><code>427934c6</code> – Yahoo-Null-Closes überspringen</li>
+<li><code>b2241973</code> / <code>89b1b866</code> – FX-Rates-Seite mit abgeleiteten Kursen</li>
+<li><code>38b6ce71</code> – FX-Zerlegung der Net-Worth-Entwicklung + Currency-Exposure-API/UI</li>
+<li><code>3988a1d4</code> – <code>currencies</code>-Config zur Unterscheidung von Währungen und Wertpapieren</li>
+</ul>
+<p><strong>1Feng</strong></p>
+<ul>
+<li><code>59f7ff6b</code> – Journal-Quotes mit historischer FX-Abdeckung wiederherstellen, Valuation-Notice</li>
+<li><code>1da0a8fb</code> – nicht-positive Cross-Currency-Rates als fehlend markieren</li>
+<li><code>4ed3a329</code> – Multi-Currency mit <code>base_currency</code>, FX-Scrapern und Gain-Attribution (großer Branch)</li>
+</ul>
+<p><strong>vivekmittal</strong></p>
+<ul>
+<li><code>6c44eb6f</code> – Net-Worth/XIRR/Timeline in Zusatzwährungen</li>
+<li><code>11488091</code> – Asset-Pie im Net-Worth</li>
+</ul>
+<p><strong>Empfehlung:</strong> P2-Spike, eine Methode wählen, nicht mischen. Für unseren Monatsrückblick zählen vor allem: konsistente Timeline, EOD-Preise, explizite FX-Abdeckung und „not available“ statt stiller Null. nextxm baut dafür bereits eine Rate-Cache-/<code>dcPricesTree</code>-Struktur, die wir nicht haben; der Code ist nicht direkt cherry-pickbar, die Tests und Semantik sind aber wertvoll.</p>
+<h3 id="p2-03-net-worth-projektion-fire">P2-03 Net-Worth-Projektion / FIRE<a class="headerlink" href="#p2-03-net-worth-projektion-fire" title="Permanent link">&para;</a></h3>
+<p><strong>Sarath234</strong></p>
+<ul>
+<li><code>1fd9353a</code> – <code>monthlySavings</code> (12-Monats-Durchschnitt) in <code>/api/networth</code></li>
+<li><code>31d86c3a</code> – D3-Projektionsrenderer; <code>4d67ae3e</code> – Projektionsseite; <code>48f697c3</code> – letzte 12 Monate tatsächlich + „Today“-Marker; <code>8ab1a0e5</code> – Start an echtem Heute statt Monatsanfang</li>
+</ul>
+<p><strong>nextxm</strong></p>
+<ul>
+<li><code>434223c4</code> – Net-Worth-Projektion + FIRE-Rechner</li>
+<li><code>7acb00a3</code>, <code>47316754</code>, <code>80c5e7e1</code>, <code>e55bb858</code> – Simulations-API, Life Goals, What-If-Szenarien, tax-aware Drawdown</li>
+</ul>
+<p><strong>Empfehlung:</strong> Sarath ist die kleinere, verständlichere Variante und passt zu unseren bestehenden Goals. nextxm ist ein eigenes Produktmodul (Szenarien, Drawdown, Inflation) – erst nach eigener Spezifikation. Nicht in den Monatsrückblick einbauen.</p>
+<h3 id="p2-04-rebalancing-allocation-targets">P2-04 Rebalancing / Allocation-Targets<a class="headerlink" href="#p2-04-rebalancing-allocation-targets" title="Permanent link">&para;</a></h3>
+<p><strong>Sarath234</strong></p>
+<ul>
+<li><code>d0aae4ad</code> – Rebalancing-Rechner auf der Allocation-Seite</li>
+<li><code>2658958e</code>, <code>36e0a143</code>, <code>b5a3d091</code>, <code>6e5b9940</code>, <code>9b68574d</code> – Toleranz, Null-Guards, Parent-Prefix-Matching, Leaf-Market-Amount, Managed-Assets-Basis</li>
+</ul>
+<p><strong>Weitere</strong></p>
+<ul>
+<li>nextxm <code>feature/assetalloc</code> (Branch, Okt. 2026) und <code>04f40522</code> – Asset-Allocation/Rebalance</li>
+<li>Pratap <code>04f40522</code> – gleiches Thema, aber ECharts/Deno-Stack</li>
+<li>vivek <code>d7719bc7</code> – Allocation-Target im UI deaktivierbar</li>
+</ul>
+<p><strong>Empfehlung:</strong> Saraths Variante als Basis, weil sie auf unserer Allocation-Seite und D3 aufsetzt. Die Leaf-Market-Amount-Fixes sind auch ohne Rebalancing nützlich.</p>
+<h3 id="p2-05-import-framework-und-validierung">P2-05 Import-Framework und Validierung<a class="headerlink" href="#p2-05-import-framework-und-validierung" title="Permanent link">&para;</a></h3>
+<p><strong>1Feng</strong></p>
+<ul>
+<li><code>e7636237</code> – pluggable Importer (Registry, Stub, <code>/api/import</code>-Preview, UI)</li>
+<li><code>cbc6fc43</code> – Review-Fixes</li>
+<li><code>1e7eaed9</code>, <code>763fde4a</code>, <code>eb6e0041</code>, <code>eb8b0f19</code> – China-spezifische Importer (nicht übernehmen)</li>
+</ul>
+<p><strong>swapnildahiphale</strong></p>
+<ul>
+<li><code>519dfd49</code> – CSV-Handlebars-Renderer für Import</li>
+<li><code>08673844</code> – generische Template-Liste/Preview</li>
+<li><code>98cdce40</code> – validiertes Speichern mit Dedupe</li>
+<li><code>40ea4d2d</code> – Fehler, wenn Journal-Sync keine Postings lädt</li>
+<li><code>577ed9fc</code>, <code>8547aaa1</code>, <code>96cf1e98</code> – Narrations-Parsing, CC-Dedupe, Clearing-Konto (Indien-spezifisch, aber Muster relevant)</li>
+</ul>
+<p><strong>manishtanwar</strong></p>
+<ul>
+<li><code>bb750e6e</code> – <code>paisa import</code>-CLI; <code>c0ffa351</code> – XLSX-Spaltenoffset</li>
+</ul>
+<p><strong>Empfehlung:</strong> Unser Deutschland/EU-Import ist ein Differenzierungsmerkmal. Zuerst Preview + Validierung + Dedupe (ohne neue Importer), dann CLI. Keine Indien-Templates.</p>
+<h3 id="p2-06-doctor-datenqualitat">P2-06 Doctor / Datenqualität<a class="headerlink" href="#p2-06-doctor-datenqualitat" title="Permanent link">&para;</a></h3>
+<ul>
+<li>1Feng <code>c3de5245</code> – Severity-Level im Doctor, Refund-Debit auf „info“ (27.05.2026)</li>
+<li>Sarath <code>ba2f9456</code> – Duplicate- &amp; Anomaly-Erkennung; <code>838596a5</code>/<code>47a2795d</code> – Doctor-UX/Suche/Pagination</li>
+<li>Pratap <code>d04c7429</code> – Healthcheck/Triage-Workspace</li>
+<li>coffmant <code>bee64418</code> + <code>911d094c</code> – Reconciliation-API + Workflow-Seite</li>
+<li>TuDatTr <code>6fe7cda1</code> – Negative-Balance-/Debit-Entry-Regeln entfernt (Design-Diskussion)</li>
+</ul>
+<p><strong>Empfehlung:</strong> Severity + Duplicate/Anomaly passt zu unserer Transparenz-Haltung. Reconciliation ist read-only später interessant; keine automatischen Journal-Änderungen.</p>
+<h3 id="p2-07-editor-sicherheit-git-historie-verschlusselung">P2-07 Editor-Sicherheit: Git-Historie, Verschlüsselung<a class="headerlink" href="#p2-07-editor-sicherheit-git-historie-verschlusselung" title="Permanent link">&para;</a></h3>
+<p><strong>d093w1z</strong> <code>989cee37</code> – optionale Git-Versionshistorie für das Journal (lokales Repo, Credentials, OAuth; 23 Dateien). <strong>Empfehlung:</strong> Nur lokale Git-History ohne Cloud/OAuth, als Ergänzung zum Backup-Pruning.</p>
+<p><strong>gvijayakumar</strong> <code>c46598ad</code> + 13 Folgecommits (Feb.–März 2026) – Verschlüsselung at rest mit In-App-Passwort, Unlock-Gate, Config-Handling. <strong>Empfehlung:</strong> P3, nur wenn wir den Server exponiert betreiben; ältere Basis, Konfliktrisiko.</p>
+<h3 id="p2-08-pwamobile-mcpai-optional">P2-08 PWA/Mobile, MCP/AI (optional)<a class="headerlink" href="#p2-08-pwamobile-mcpai-optional" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Sarath <code>feat/mobile-pwa</code> (Branch, 229 Commits), nextxm <code>1f694ec7</code>, <code>61a27e00</code>, <code>9e5db47b</code> – PWA/Service-Worker/Mobile-Nav.</li>
+<li>ramkrishna <code>7c07f2f0</code>, <code>bbbb277b</code>; swapnil <code>import-mcp</code> – MCP-Server + AI-REST.</li>
+<li>nextxm <code>c2348e67</code> – Command Palette; <code>ac1600d9</code>/<code>6b475487</code> – NLP-Transaction-Parsing.</li>
+</ul>
+<p><strong>Empfehlung:</strong> Nicht jetzt. PWA ist nice-to-have; MCP/LLM widerspricht unserem lokalen, nachvollziehbaren Standard, solange es keine klare Produktentscheidung gibt.</p>
+<h2 id="4-nicht-ubernehmen-p3">4. Nicht übernehmen (P3)<a class="headerlink" href="#4-nicht-ubernehmen-p3" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Quelle</th>
+<th>Warum nicht</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nextxm <code>develop</code> als Ganzes (309 Commits)</td>
+<td>Auth/Sessions, Migration-Framework, SQLc, Connect/Protobuf, persistente Job-Queue, PWA, Doctor V3, zahlreiche Produktmodule; zu großer Divergenz- und Wartungsaufwand. Nur isolierte Fixes (P1/P2).</td>
+</tr>
+<tr>
+<td>Pratap-kute</td>
+<td>Deno statt npm, ECharts 6 statt D3/Bulma, umfangreiche UI-Neustrukturierung; passt nicht zu unserem Stack. Feature-Ideen (Healthcheck, Backup/Export, Importer) separat prüfen.</td>
+</tr>
+<tr>
+<td>1Feng China-spezifisch</td>
+<td>OKX/Eastmoney/TTJJ/Yahoo-HK-Scraper, zh-CN-i18n, Receivables, Mortgage, Löschung der Indien-Codebasis.</td>
+</tr>
+<tr>
+<td>Sarath234 Agent/Indien</td>
+<td>SMS-Parser indischer Banken, Gmail/PDF-Statements, Telegram-Bot, Credit-Card-Truth, Axis/ICICI/HDFC-Parser, LLM-Fallback. Widerspricht Local-First und ist fachlich nicht übertragbar.</td>
+</tr>
+<tr>
+<td>manishtanwar Indien</td>
+<td>Kite/Coin-Integration, Gold-ETF-Tax, Advanced-Expense-UI. (Ausnahmen: Glob-Fix, Import-CLI, kleine UI-Fixes.)</td>
+</tr>
+<tr>
+<td>matthias Swiss-Reskin / „Ask Claude“</td>
+<td>Design-Inspiration; Deep-Link zu externem LLM ist keine Kernfunktion. Fix-Batch dagegen übernehmen.</td>
+</tr>
+<tr>
+<td>ramkrishna/swapnil MCP</td>
+<td>Experimentell; nur bei klarer AI-Strategie.</td>
+</tr>
+<tr>
+<td>altanozlu ETF-GraphQL, tonypius Regex-Regeln, rgksugan</td>
+<td>Keine neuen eigenen Commits im Fenster; ältere, unmerged Experimente. <strong>Beobachten:</strong> ETF-Metadaten (TER/Look-through) und Regex-Account-Prediction könnten für Roadmap #2/#4 relevant werden.</td>
+</tr>
+<tr>
+<td>Bots/Sync-only</td>
+<td>Keine eigene Arbeit.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-vorgeschlagene-reihenfolge">5. Vorgeschlagene Reihenfolge<a class="headerlink" href="#5-vorgeschlagene-reihenfolge" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Vor Abschluss des Monatsrückblicks (P1-01 bis P1-05):</strong> Zeitzonen/Datum, hledger-<code>acost</code>, <code>FilterByGlob</code>, Gehaltsklassifikation, Transfer-Ausschluss. Diese vier verändern die Zahlen des Rückblicks direkt.</li>
+<li><strong>Danach (P1-06 bis P1-14):</strong> Yahoo (GBp zuerst), Tooltip, Navbar/Error-Handler, Template-/Import-Fixes, WAL/Backup-Pruning, Sarath-Perf-/Security-Batch, Retirement-Zins, Chart-Margin.</li>
+<li><strong>Monatsrückblick-Härtung (P2-01, P2-02):</strong> Sarath-/nextxm-Tests und Randfälle gegen unsere Spezifikation prüfen; FX-/Preis-Frische-Spike.</li>
+<li><strong>Später (P2-03 bis P2-08):</strong> Projektion, Rebalancing, Import-Framework, Doctor, Git-Historie; Verschlüsselung/PWA/MCP nur bei Produktentscheidung.</li>
+</ol>
+<h2 id="6-hinweise-zum-ubernehmen">6. Hinweise zum Übernehmen<a class="headerlink" href="#6-hinweise-zum-ubernehmen" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Cherry-Pick:</strong> <code>git fetch https://github.com/&lt;fork&gt;.git &lt;sha&gt;</code> und <code>git cherry-pick -x &lt;sha&gt;</code>. <code>-x</code> dokumentiert die Herkunft; Paisa ist AGPL-3.0, unser Fork steht unter derselben Lizenz.</li>
+<li><strong>Keine Merge-Commits</strong> übernehmen; immer die eigentlichen Feature-/Fix-Commits.</li>
+<li><strong>Branch-only-Arbeit</strong> (z. B. <code>matthias</code>, <code>stan-ely</code>, <code>coffmant</code>, <code>d093w1z</code>, <code>Sarath</code>-Feature-Branches) per SHA oder Branch fetchen. GitHub erlaubt <code>git fetch &lt;url&gt; &lt;sha&gt;</code> für erreichbare Commits.</li>
+<li><strong>Konflikte erwarten:</strong> Unser Baum ist gegenüber Juni/Juli 2026 deutlich weiter (Svelte 5, Bulma 1, Monatsrückblick, Deutschland/EU). Kleine Patches manuell portieren; Tests aus dem Fork mitnehmen und an unsere Fixtures anpassen.</li>
+<li><strong>Sarath <code>6b730f51</code>:</strong> unbedingt den Endstand inkl. <code>fdb5c1eb</code> nehmen; der Zwischenstand hat einen Compile-/Logikfehler.</li>
+<li><strong>nextxm:</strong> viele Commits sind rebast/dupliziert. Nicht den Branch mergen; einzelne commits über <code>git show</code> prüfen. Die Struktur (<code>dcPricesTree</code>, Rate-Cache) existiert bei uns nicht.</li>
+<li><strong>1Feng:</strong> Der Master enthält viele Merge- und China-Commits; nur die genannten Einzelcommits picken.</li>
+<li><strong>Verifikation:</strong> <code>go test ./...</code>, <code>npm run check</code>, <code>npm run test:prepush</code>, <code>npm run test:regression</code>; bei Preis-/Datumsänderungen zusätzlich die Deutschland/EU-Fixtures neu prüfen.</li>
+</ul>
+<h2 id="7-kompakter-commit-index-p1">7. Kompakter Commit-Index (P1)<a class="headerlink" href="#7-kompakter-commit-index-p1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Thema</th>
+<th>Fork</th>
+<th>Commit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zeitzonen/Datum</td>
+<td>matthiasdebernardini</td>
+<td><a href="https://github.com/matthiasdebernardini/paisa/commit/ef719408"><code>ef719408</code></a></td>
+</tr>
+<tr>
+<td>Monatsverschiebung</td>
+<td>panuozzo77</td>
+<td><a href="https://github.com/panuozzo77/paisa/commit/67a2fa8a"><code>67a2fa8a</code></a></td>
+</tr>
+<tr>
+<td>hledger <code>acost</code></td>
+<td>nightconcept</td>
+<td><a href="https://github.com/nightconcept/paisa/commit/40743ba1"><code>40743ba1</code></a></td>
+</tr>
+<tr>
+<td><code>FilterByGlob</code> OR/AND</td>
+<td>manishtanwar</td>
+<td><a href="https://github.com/manishtanwar/paisa-app/commit/122f9eb3"><code>122f9eb3</code></a></td>
+</tr>
+<tr>
+<td><code>FilterByGlob</code> Prefix</td>
+<td>Sarath234</td>
+<td><a href="https://github.com/Sarath234/paisa/commit/b5a3d091"><code>b5a3d091</code></a></td>
+</tr>
+<tr>
+<td>Payroll/Gehalt</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/df35cad3"><code>df35cad3</code></a></td>
+</tr>
+<tr>
+<td>Salary-Accounts-Config</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/b31b02bb"><code>b31b02bb</code></a></td>
+</tr>
+<tr>
+<td>Interne Transfers</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/80b0ae5f"><code>80b0ae5f</code></a></td>
+</tr>
+<tr>
+<td>Yahoo Crumb</td>
+<td>stan-ely</td>
+<td><a href="https://github.com/stan-ely/paisa/commit/25859f7d"><code>25859f7d</code></a></td>
+</tr>
+<tr>
+<td>Yahoo GBp</td>
+<td>mrkstwrt</td>
+<td><a href="https://github.com/mrkstwrt/paisa-source/commit/7f4bd850"><code>7f4bd850</code></a></td>
+</tr>
+<tr>
+<td>Tooltip</td>
+<td>bellussi1</td>
+<td><a href="https://github.com/bellussi1/paisa/commit/5ad11187"><code>5ad11187</code></a>, <a href="https://github.com/bellussi1/paisa/commit/4ad755ff"><code>4ad755ff</code></a></td>
+</tr>
+<tr>
+<td>Navbar-Crash</td>
+<td>manishtanwar</td>
+<td><a href="https://github.com/manishtanwar/paisa-app/commit/4295944c"><code>4295944c</code></a></td>
+</tr>
+<tr>
+<td>Error-Handler</td>
+<td>manishtanwar</td>
+<td><a href="https://github.com/manishtanwar/paisa-app/commit/0220739b"><code>0220739b</code></a></td>
+</tr>
+<tr>
+<td>Template-Liste</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/0ca8d474"><code>0ca8d474</code></a></td>
+</tr>
+<tr>
+<td>Nur <code>.handlebars</code></td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/3ea8aab0"><code>3ea8aab0</code></a></td>
+</tr>
+<tr>
+<td>Amount-Alignment</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/63b10690"><code>63b10690</code></a></td>
+</tr>
+<tr>
+<td><code>negate</code> Dezimalen</td>
+<td>St-Gonne</td>
+<td><a href="https://github.com/St-Gonne/paisa/commit/f046d740"><code>f046d740</code></a></td>
+</tr>
+<tr>
+<td>SQLite WAL</td>
+<td>Sarath234</td>
+<td><a href="https://github.com/Sarath234/paisa/commit/22abf928"><code>22abf928</code></a></td>
+</tr>
+<tr>
+<td>Backup-Pruning</td>
+<td>Sarath234</td>
+<td><a href="https://github.com/Sarath234/paisa/commit/43b52794"><code>43b52794</code></a></td>
+</tr>
+<tr>
+<td>Perf/Security</td>
+<td>Sarath234</td>
+<td><a href="https://github.com/Sarath234/paisa/commit/6b730f51"><code>6b730f51</code></a> + <a href="https://github.com/Sarath234/paisa/commit/fdb5c1eb"><code>fdb5c1eb</code></a></td>
+</tr>
+<tr>
+<td>Retirement-Zins</td>
+<td>sean0407</td>
+<td><a href="https://github.com/sean0407/paisa/commit/6b12ddf0"><code>6b12ddf0</code></a></td>
+</tr>
+<tr>
+<td>Gain-Margin</td>
+<td>1Feng</td>
+<td><a href="https://github.com/1Feng/paisa/commit/4de04c31"><code>4de04c31</code></a></td>
+</tr>
+<tr>
+<td>Import-Dezimalen</td>
+<td>matthiasdebernardini</td>
+<td><a href="https://github.com/matthiasdebernardini/paisa/commit/7c89e0be"><code>7c89e0be</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-offene-punkte-fur-uns">8. Offene Punkte für uns<a class="headerlink" href="#8-offene-punkte-fur-uns" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Saldo-/Gehaltsdefinition:</strong> Wollen wir <code>salary_income_accounts</code> als Config (1Feng) oder eine breitere Heuristik (Sarath: „salary“ im Kontonamen)? Die Config ist expliziter und testbar; die Heuristik ist bequemer, aber fehleranfälliger. Empfehlung: Config, Default <code>Income:Salary</code> + <code>Income:Payroll</code>.</li>
+<li><strong>Transfer-Globs:</strong> Welche Konten sind bei unseren Nutzern typische interne Transfers? Ohne Defaults (<code>transfer_accounts: []</code>) bleibt das Verhalten unverändert; wir brauchen eine Dokumentation mit Beispielen (<code>Assets:Tagesgeld</code>, <code>Assets:Depot:Verrechnung</code>).</li>
+<li><strong>Yahoo-Crumb:</strong> Ist der zusätzliche Cookie-/Crumb-Tanz in unserer Umgebung nötig, oder reicht der GBp-Fix? Vor der Implementierung einen kleinen Netzwerktest mit LSE-/US-Tickern machen.</li>
+<li><strong>Monatsrückblick-Insights:</strong> Welche Sarath-Insights sind mit unserer TWR-/Frische-Spezifikation vereinbar? Nicht einfach die UI übernehmen; zuerst die Datenregeln abgleichen.</li>
+<li><strong>Rebalancing/Projektion:</strong> Beide sind P2, aber sie konkurrieren um dieselbe Allocation-/Goals-UI. Erst nach dem Monatsrückblick entscheiden.</li>
+</ul>
+<h2 id="9-quellen">9. Quellen<a class="headerlink" href="#9-quellen" title="Permanent link">&para;</a></h2>
+<ul>
+<li>GitHub-Forks: <a href="https://github.com/ananthakumaran/paisa/forks">https://github.com/ananthakumaran/paisa/forks</a></li>
+<li>Upstream-Stand: <code>18ecd7d</code> (21.10.2026)</li>
+<li>Unser Stand: <code>f738e0c</code> (25.10.2026) + laufende Monatsrückblick-Arbeit</li>
+<li>Einzelcommits sind in den Tabellen verlinkt.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page was helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 9v12H1V9zm4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21zm0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03z"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 15V3h4v12zM15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3zm0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97z"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback!
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback! Help us improve this page by using our <a href="https://docs.google.com/forms/d/e/1FAIpQLSejpTiljuhsviEvXFBN-Z5rJZ_dkXHV5RaZzqpyCAZF1nIFiQ/viewform?usp=pp_url&entry.1125403938=/research/2026-10-25-paisa-forks-review/" target="_blank" rel="noopener">feedback form</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © 2022 - 2026 Anantha Kumaran <br \> <a href="#__consent">Change cookie settings</a>
+
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ananthakumaran/paisa" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://matrix.to/#/#paisa:matrix.org" target="_blank" rel="noopener" title="matrix.to" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M.632.55v22.9H2.28V24H0V0h2.28v.55zm7.043 7.26v1.157h.033a3.3 3.3 0 0 1 1.117-1.024c.433-.245.936-.365 1.5-.365q.81.002 1.481.314c.448.208.785.582 1.02 1.108q.382-.562 1.034-.992.651-.43 1.546-.43.679 0 1.26.167c.388.11.716.286.993.53.276.245.489.559.646.951q.229.587.23 1.417v5.728h-2.349V11.52q0-.43-.032-.812a1.8 1.8 0 0 0-.18-.66 1.1 1.1 0 0 0-.438-.448q-.292-.165-.785-.166-.498 0-.803.189a1.4 1.4 0 0 0-.48.499 2 2 0 0 0-.231.696 5.6 5.6 0 0 0-.06.785v4.768h-2.35v-4.8q.002-.38-.018-.752a2.1 2.1 0 0 0-.143-.688 1.05 1.05 0 0 0-.415-.503c-.194-.125-.476-.19-.854-.19q-.168 0-.439.074c-.18.051-.36.143-.53.282a1.64 1.64 0 0 0-.439.595q-.18.39-.18 1.02v4.966H5.46V7.81zm15.693 15.64V.55H21.72V0H24v24h-2.28v-.55z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/PaisaFinanceApp" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M357.2 48h70.6L273.6 224.2 455 464H313L201.7 318.6 74.5 464H3.8l164.9-188.5L-5.2 48h145.6l100.5 132.9zm-24.8 373.8h39.1L119.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+      
+    
+    
+    
+      
+      
+    
+    <a href="https://mastodon.social/@PaisaFinanceApp" target="_blank" rel="noopener me" title="mastodon.social" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M433 179.1c0-97.2-63.7-125.7-63.7-125.7-62.5-28.7-228.6-28.4-290.5 0 0 0-63.7 28.5-63.7 125.7 0 115.7-6.6 259.4 105.6 289.1 40.5 10.7 75.3 13 103.3 11.4 50.8-2.8 79.3-18.1 79.3-18.1l-1.7-36.9s-36.3 11.4-77.1 10.1c-40.4-1.4-83-4.4-89.6-54-.6-4.6-.9-9.3-.9-13.9 85.6 20.9 158.7 9.1 178.7 6.7 56.1-6.7 105-41.3 111.2-72.9 9.8-49.8 9-121.5 9-121.5zm-75.1 125.2h-46.6V190.1c0-49.7-64-51.6-64 6.9v62.5H201V197c0-58.5-64-56.6-64-6.9v114.2H90.3c0-122.1-5.2-147.9 18.4-175 25.9-28.9 79.8-30.8 103.8 6.1l11.6 19.5 11.6-19.5c24.1-37.1 78.1-34.8 103.8-6.1 23.7 27.3 18.4 53 18.4 175"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/users/aerics84/packages/container/package/paisa" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M349.9 236.3h-66.1v-59.4h66.1zm0-204.3h-66.1v60.7h66.1zm78.2 144.8H362v59.4h66.1zm-156.3-72.1h-66.1v60.1h66.1zm78.1 0h-66.1v60.1h66.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1zm78.1 0h-66.1v59.4h66.1zm-78.1-72.1h-66.1v60.1h66.1z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+      <div class="md-consent" data-md-component="consent" id="__consent" hidden>
+        <div class="md-consent__overlay"></div>
+        <aside class="md-consent__inner">
+          <form class="md-consent__form md-grid md-typeset" name="consent">
+            
+
+
+
+<h4>Cookie consent</h4>
+<p>We use cookies to recognize your repeated visits and preferences, as well as to measure the effectiveness of our documentation and whether users find what they're searching for. With your consent, you're helping us to make our documentation better.</p>
+<input class="md-toggle" type="checkbox" id="__settings" >
+<div class="md-consent__settings">
+  <ul class="task-list">
+    
+    
+      
+        
+  
+  
+    
+    
+  
+  <li class="task-list-item">
+    <label class="task-list-control">
+      <input type="checkbox" name="analytics" checked>
+      <span class="task-list-indicator"></span>
+      Google Analytics
+    </label>
+  </li>
+
+      
+    
+    
+      
+        
+  
+  
+    
+    
+  
+  <li class="task-list-item">
+    <label class="task-list-control">
+      <input type="checkbox" name="github" checked>
+      <span class="task-list-indicator"></span>
+      GitHub
+    </label>
+  </li>
+
+      
+    
+    
+  </ul>
+</div>
+<div class="md-consent__controls">
+  
+    
+      <button class="md-button md-button--primary">Accept</button>
+    
+    
+    
+  
+    
+    
+      <button type="reset" class="md-button md-button--primary">Reject</button>
+    
+    
+  
+    
+    
+    
+      <label class="md-button" for="__settings">Manage settings</label>
+    
+  
+</div>
+          </form>
+        </aside>
+      </div>
+      <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout((function(){document.querySelector("[data-md-component=consent]").hidden=!1}),250);var form=document.forms.consent;for(var action of["submit","reset"])form.addEventListener(action,(function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map((function(e){return[e,!0]})))),location.hash="",location.reload()}))</script>
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.tabs.link", "content.code.copy", "content.code.annotate", "navigation.instant", "navigation.tabs", "navigation.expand", "navigation.indexes", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "announce.dismiss"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/extra.js"></script>
+      
+    
+  </body>
+</html>
