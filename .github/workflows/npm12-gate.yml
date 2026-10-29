@@ -50,7 +50,8 @@ jobs:
 
       # P-REG needs ledger, hledger and beancount in the versions the goldens
       # were generated with. Linux uses the repository's Nix dev shell; macOS
-      # uses Homebrew (ledger 3.4.1, hledger 1.52.4) plus beancount 2.3.6.
+      # uses Homebrew (ledger 3.4.1, hledger 1.52.4) plus beancount 3.2.3 and
+      # beanquery 0.2.0.
       # Windows runs with the regression test's documented tolerance for
       # missing ledger CLIs.
       - uses: nixbuild/nix-quick-install-action@v35
@@ -71,9 +72,10 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install ledger hledger
-          python -m pip install beancount==2.3.6
+          python -m pip install beancount==3.2.3 beanquery==0.2.0
           ledger --version
           hledger --version
+          bean-check --version
           bean-query --version
 
       - name: Install npm 12.2.1

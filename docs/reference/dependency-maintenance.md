@@ -13,7 +13,7 @@ This page defines Paisa's JavaScript maintenance contract so routine dependency 
 
 GitHub Actions, local development, and Nix-based workflows should converge on this baseline unless a workflow documents a deliberate exception.
 
-## Refresh Status (2026-10-28)
+## Refresh Status (updated 2026-10-29)
 
 - Phases 0–6 are complete; the audit gate and the freeze report are in place.
 - hledger is on 1.52.4 (Hackage source override; issue #2254 was fixed in 1.41).
@@ -81,7 +81,7 @@ gh run list --workflow npm12-gate.yml --limit 1
 
 Each matrix job installs npm 12.2.1 over the runner's bundled npm, runs `npm ci`, asserts that `package-lock.json` is unchanged, and then runs P-JS (`check`, `build`, imports, investment, monthly), P-PDF (`src/lib/pdf.test.ts`) and P-REG (`go build`, `TZ=UTC bun test tests/regression.test.ts`). A green run on all three platforms is the evidence required by step 4; the run URL is recorded here once it passes.
 
-The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6 at the time; the dev shell now provides beancount 3.2.3); macOS used the same versions from Homebrew and pip. Windows used the regression test's built-in tolerance for missing ledger CLIs.
+The gate passed on 2026-10-28 on `master` at `6caa0ab`: [run 40782020978](https://github.com/Aerics84/paisa/actions/runs/40782020978) reported `success` for `gate (ubuntu-latest)`, `gate (windows-latest)` and `gate (macos-latest)`. Each job printed `12.2.1` before and after `npm ci`, the lockfile stayed unchanged, P-PDF passed 2/2 and P-REG passed 6/6. Linux ran P-REG in the Nix dev shell (ledger 3.4.1, hledger 1.52.4, beancount 2.3.6 at the time; the dev shell now provides beancount 3.2.3); macOS used the same ledger/hledger versions from Homebrew and beancount 2.3.6 from pip at the time. Windows used the regression test's built-in tolerance for missing ledger CLIs.
 
 "Lockfile unchanged" proves only the lockfile state, **not** identical platform-specific install trees. Acceptance stays limited to "lockfile unchanged + tests green on all platforms".
 
@@ -211,6 +211,8 @@ Paisa now uses:
 Precision: v3's bare `units(position)` and `cost(position)` apply display rounding (`-99.7652` becomes `-100`, `-0.00042772` becomes `-0`). The nested forms return exact values. On `tests/fixture/inr-beancount/main.beancount` the units of all 25 postings match v2 exactly; `cost` is more precise than v2's rounded value. The fixture snapshot was regenerated with `time_zone: UTC` so the timestamps are platform-independent, and `tests/regression.test.ts` now writes snapshots with a trailing newline.
 
 Packaging: the Nix dev shell takes `python3Packages.beancount` and `python3Packages.beanquery` from nixpkgs 26.05; `ledger-parsers.yml` pins 3.2.3/0.2.0 through pipx. Alpine 3.24 still packages 2.3.6, so `Dockerfile.beancount` and `Dockerfile.all` install the pinned Python packages with a temporary build-dependency set. Homebrew and PyPI provide the same versions. beancount 2.3.6 no longer builds from PyPI on Python 3.13; 3.2.3 works on 3.13 and 3.14.
+
+`utils.SetNow` now parses the `--now` flag in UTC, so the fixture `now` field is identical on every host; previously the flag depended on the host time zone. Verified on 2026-10-29 by `Test` ([run 40845361622](https://github.com/Aerics84/paisa/actions/runs/40845361622)) and `Ledger Parsers` ([run 40845361519](https://github.com/Aerics84/paisa/actions/runs/40845361519)).
 
 ## Font Generator
 
