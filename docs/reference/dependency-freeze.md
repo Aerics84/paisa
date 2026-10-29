@@ -107,9 +107,8 @@ shell (`node -v`, `go version`, `mkdocs build`) and a served
 - **beancount 2.3.6:** v3 removes `bean-report` and moves `bean-query` to
   `beanquery`; a migration needs new query-based implementations. See
   [Dependency Maintenance](dependency-maintenance.md#parser-tooling).
-- **npm 12.2.1:** deferred to a default-branch follow-up because
-  `workflow_dispatch` must be registered there. See
-  [Dependency Maintenance](dependency-maintenance.md#npm-12-deferred).
+- **npm 12.2.1:** adopted on 2026-10-29 after the default-branch gate passed;
+  see [Dependency Maintenance](dependency-maintenance.md#npm-12).
 - **TypeScript 7.0.2:** intentionally ignored for major updates until the
   surrounding toolchain accepts it.
 - **73 indirect Go modules:** have newer releases; deferred until a concrete
