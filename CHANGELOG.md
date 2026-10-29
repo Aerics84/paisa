@@ -4,7 +4,7 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
-### Unreleased
+### 0.8.6 (2026-10-29)
 
 - Add the manual `npm 12 gate` workflow that verifies npm 12.2.1 on Linux,
   Windows and macOS before the package manager is switched. The first run
