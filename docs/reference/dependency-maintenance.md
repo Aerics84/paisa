@@ -196,19 +196,21 @@ If one of them becomes necessary again, reintroduce it with a documented reason.
 
 ## Parser Tooling
 
-### Beancount (deferred)
+### Beancount (migration prepared)
 
-The 2026-10-28 spike installed `beancount==3.2.3` (current PyPI release) in an isolated venv:
+The 2026-10-28 spike installed `beancount==3.2.3` (current PyPI release) in an isolated venv. A 2026-10-29 follow-up reproduced the behaviour in containers (beancount 2.3.6/Python 3.10 versus 3.2.3 + beanquery 0.2.0/Python 3.12):
 
-- `bean-check` works and reports the fixture cleanly.
-- `bean-query` is **no longer shipped** by beancount; it moved to the separate `beanquery` package (0.2.0).
-- `bean-report` was **removed** in beancount 3.
+- `bean-check` works in both; v3 keeps the `file:line: message` format that `Beancount.ValidateFile` parses.
+- `bean-query` moved to the separate `beanquery` package. This is not a rewrite: `beanquery` is the v2 `beancount/query` engine extracted into the official `beancount` organisation package (same authors, full query test suite, active development). The 0.x version reflects the new standalone package, not the maturity of BQL.
+- `bean-report` is gone by design. The Vnext design document says custom reports and `bean-web` should be removed because Fava subsumes the web UI and BQL filters can replace the custom reports; `beancount/reports` was deleted. The underlying APIs (`beancount.core.prices`, `beancount.core.realization.dump_balances`) remain.
+- Both paisa report calls have direct BQL equivalents:
+  - `pricesdb` → `SELECT date, currency, amount.number, amount.currency FROM prices`
+  - `bal` → `BALANCES`
+- Important precision detail: v3's bare `units(position)` and `cost(position)` apply display rounding (`-99.7652` becomes `-100`, `-0.00042772` becomes `-0`). The nested forms `units(position).number`, `units(position).currency`, `cost(position).number` and `cost(position).currency` return the exact values. On `tests/fixture/inr-beancount/main.beancount` the units of all 25 postings match v2 exactly with the nested form. The `sum(position)` delta from the first spike (`22000.0`/`-109.76562772` versus `22000`/`-110`) is this display rounding, not a data change, and paisa does not use that query.
+- The only data change is that v3's exact `cost(position)` is more precise than v2's rounded cost (`99` versus `99.7652 USD`, `0` versus `0.00042772 USD`); the `inr-beancount` goldens still need a domain review before switching.
+- Availability: PyPI, Homebrew and nixpkgs 26.05 ship 3.2.3 and beanquery 0.2.0. Alpine 3.24 only packages 2.3.6, so the beancount Docker variants need a Python + pip layer (verified on Alpine 3.24 with Python 3.14; build dependencies are required, runtime packages are about 5.5 MB). beancount 2.3.6 installs on Python 3.12 but fails on 3.13; 3.2.3 works on 3.13 and 3.14.
 
-Paisa depends on both removed entry points: `Beancount.Parse` calls `bean-query`, while `Beancount.ValidateFile` and `Beancount.Prices` call `bean-report` (`bal` and `pricesdb`). Even with `beanquery` installed, `bean-report` has no v3 replacement, so `pricesdb` and the balance text would need new query-based implementations.
-
-The parser output also changes. On `tests/fixture/inr-beancount/main.beancount`, `bean-query "SELECT account, sum(position) GROUP BY account"` returns `22000.0` / `-109.76562772 USD` under 2.3.6 but `22000` / `-110 USD` under 3.2.3 — a valuation/formatting difference that needs a domain review, not a mechanical port. `bean-report ... pricesdb` output is unavailable in v3, so the existing prices comparison cannot be reproduced.
-
-Decision: this branch stays on **beancount 2.3.6** (CI and both Docker variants). A follow-up spike must replace `bean-report` with bean-query queries, add `beanquery` to CI and the images, and review the valuation delta before switching.
+Decision: this branch stays on **beancount 2.3.6** until that migration is implemented. The migration is now a concrete, small change (two functions, packaging and fixture review), not a parser rewrite.
 
 ## Font Generator
 

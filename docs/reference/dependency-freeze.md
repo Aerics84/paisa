@@ -104,8 +104,9 @@ shell (`node -v`, `go version`, `mkdocs build`) and a served
 
 ## Deliberate Pins and Follow-ups
 
-- **beancount 2.3.6:** v3 removes `bean-report` and moves `bean-query` to
-  `beanquery`; a migration needs new query-based implementations. See
+- **beancount 2.3.6:** still pinned. The v3 migration is prepared:
+  `bean-report` is replaced by BQL (`BALANCES`, `SELECT ... FROM prices`) and
+  `bean-query` comes from the official `beanquery` package. See
   [Dependency Maintenance](dependency-maintenance.md#parser-tooling).
 - **npm 12.2.1:** adopted on 2026-10-29 after the default-branch gate passed;
   see [Dependency Maintenance](dependency-maintenance.md#npm-12).
