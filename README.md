@@ -92,7 +92,7 @@ mkdir ~/Documents/paisa && cd ~/Documents/paisa
 
 `paisa init --regional-profile germany-eu` creates an EUR starter journal and configuration. Use `--regional-profile india` for the upstream default.
 
-This fork does not publish prebuilt binaries yet; use the Docker images or build from source. The binaries from [upstream releases](https://github.com/ananthakumaran/paisa/releases) are upstream builds and do not contain the fork features described above.
+This fork publishes prebuilt binaries from **0.8.6** onwards on the [releases page](https://github.com/Aerics84/paisa/releases); older releases are built from source. The binaries from [upstream releases](https://github.com/ananthakumaran/paisa/releases) are upstream builds and do not contain the fork features described above.
 
 ## Documentation
 

@@ -19,6 +19,7 @@ document the upstream releases this fork builds on; the short-lived
   byte order and disabling the incompatible readline detection.
 - Refresh the 20 transitive Go modules in the compiled import graph; the
   remaining 53 tooling/optional-backend updates stay deferred.
+- Update sass and sass-embedded to 1.107.0.
 
 ### 0.8.5.3 (2026-10-28)
 
