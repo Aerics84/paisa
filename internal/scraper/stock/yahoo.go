@@ -256,13 +256,10 @@ func fetchTicker(ticker string, refresh bool) (*Response, error) {
 	}
 
 	url := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y&crumb=%s", ticker, url.QueryEscape(crumb))
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := newYahooRequest(url)
 	if err != nil {
 		return nil, err
 	}
-
-	agent.Do(func() { selectAgent() })
-	req.Header.Add("User-Agent", agent.name)
 
 	resp, err := yahooSessionState.client().Do(req)
 	if err != nil {
@@ -287,6 +284,22 @@ func fetchTicker(ticker string, refresh bool) (*Response, error) {
 	}
 
 	return &response, nil
+}
+
+// newYahooRequest builds a request with the browser user agent Yahoo expects.
+// The cookie and crumb handshake is rate limited just like the chart endpoint,
+// so the default Go user agent would be answered with HTTP 429 and every price
+// sync would silently keep the previously stored quotes.
+func newYahooRequest(rawURL string) (*http.Request, error) {
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	agent.Do(func() { selectAgent() })
+	req.Header.Add("User-Agent", agent.name)
+
+	return req, nil
 }
 
 type statusError struct {
@@ -348,14 +361,24 @@ func (s *yahooSession) getCrumb(refresh bool) (string, error) {
 
 	client := s.client()
 
-	cookieResp, err := client.Get(yahooCookieURL)
+	cookieReq, err := newYahooRequest(yahooCookieURL)
+	if err != nil {
+		return "", err
+	}
+
+	cookieResp, err := client.Do(cookieReq)
 	if err != nil {
 		return "", err
 	}
 	io.Copy(io.Discard, cookieResp.Body)
 	cookieResp.Body.Close()
 
-	crumbResp, err := client.Get(yahooCrumbURL)
+	crumbReq, err := newYahooRequest(yahooCrumbURL)
+	if err != nil {
+		return "", err
+	}
+
+	crumbResp, err := client.Do(crumbReq)
 	if err != nil {
 		return "", err
 	}

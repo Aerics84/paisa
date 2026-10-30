@@ -372,6 +372,42 @@ func TestGetTickerUsesCrumb(t *testing.T) {
 	assert.True(t, sawCrumb)
 }
 
+func TestGetCrumbSendsBrowserUserAgent(t *testing.T) {
+	loadYahooTestConfig(t)
+	previousClient := yahooHTTPClient
+	previousCookieURL, previousCrumbURL := yahooCookieURL, yahooCrumbURL
+	previousSession := yahooSessionState
+	yahooCookieURL, yahooCrumbURL = "https://example.test/cookie", "https://example.test/crumb"
+	yahooSessionState = newYahooSession()
+	t.Cleanup(func() {
+		yahooHTTPClient = previousClient
+		yahooCookieURL, yahooCrumbURL = previousCookieURL, previousCrumbURL
+		yahooSessionState = previousSession
+	})
+
+	userAgents := []string{}
+	yahooHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		userAgents = append(userAgents, req.Header.Get("User-Agent"))
+		switch req.URL.String() {
+		case yahooCookieURL:
+			return &http.Response{StatusCode: 200, Header: http.Header{"Set-Cookie": []string{"A=1; Path=/"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		case yahooCrumbURL:
+			return yahooJSONResponse("crumb123"), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	crumb, err := yahooSessionState.getCrumb(false)
+	require.NoError(t, err)
+	assert.Equal(t, "crumb123", crumb)
+	require.Len(t, userAgents, 2)
+	for _, userAgent := range userAgents {
+		assert.Contains(t, UserAgents, userAgent, "yahoo handshake must not use the default Go user agent")
+	}
+}
+
 func TestGetTickerRefreshesCrumbOnUnauthorized(t *testing.T) {
 	loadYahooTestConfig(t)
 	previousClient := yahooHTTPClient
