@@ -7,4 +7,11 @@ describe("preview flow lifecycle", () => {
     const source = readFileSync(join(__dirname, "+page.svelte"), "utf-8");
     expect(source).toMatch(/if\s*\(!activeMonthlyReview\)\s*\{[^}]*flowRenderer\.reset\(\)/s);
   });
+
+  test("renders the flow only after the canvas is mounted", () => {
+    const source = readFileSync(join(__dirname, "+page.svelte"), "utf-8");
+    expect(source).toContain("afterUpdate");
+    expect(source).toContain("pendingFlowReview");
+    expect(source).not.toContain("await tick();");
+  });
 });

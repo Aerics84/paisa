@@ -87,6 +87,22 @@ commodities:
 1. price provider name
 1. stock ticker code
 
+### Optional display name
+
+`display_name` is shown in the **Assets → Balance** tooltip. It does not
+change the commodity name used in the ledger or the price lookup, so you
+can keep identifiers such as ISINs in `name` and add a readable label:
+
+```yaml
+commodities:
+  - name: IE00BF0L3536
+    display_name: AIB Group
+    type: stock
+    price:
+      provider: com-yahoo
+      code: A5G.IR
+```
+
 Stock prices are fetched from yahoo finance website. The ticker code
 should match the code used in yahoo. If the fetched price currency is
 not the default currency, it will be converted to default currency

@@ -2,7 +2,7 @@
   import * as d3 from "d3";
   import dayjs from "dayjs";
   import _ from "lodash";
-  import { onMount, tick } from "svelte";
+  import { afterUpdate, onMount } from "svelte";
   import { categoryColor, categoryVisual } from "$lib/colors";
   import { renderFlow } from "$lib/cash_flow";
   import DashboardSectionHeader from "$lib/components/dashboard/DashboardSectionHeader.svelte";
@@ -77,7 +77,7 @@
   let monthlyReviewError = false;
   let monthlyReviewRequest = 0;
   let sankeyEmpty = true;
-  let sankeyRequest = 0;
+  let pendingFlowReview: MonthlyReviewResponse | null = null;
   let loadError = false;
 
   const flowRenderer = createFlowRenderController({
@@ -148,23 +148,24 @@
     }
   }
 
-  async function renderMonthlyFlow(review: MonthlyReviewResponse) {
-    const request = ++sankeyRequest;
+  function renderMonthlyFlow(review: MonthlyReviewResponse) {
     const signature = flowSignature(review);
     const state = flowState(review.flow_graph);
-    sankeyEmpty = state === "empty";
-
-    await tick();
-    if (request !== sankeyRequest) {
-      return;
-    }
-
     try {
       flowRenderer.update(review.flow_graph, signature, state);
     } catch (error) {
       console.error("Failed to render monthly flow", error);
     }
   }
+
+  afterUpdate(() => {
+    const review = pendingFlowReview;
+    if (!review) {
+      return;
+    }
+    pendingFlowReview = null;
+    renderMonthlyFlow(review);
+  });
 
   onMount(async () => {
     try {
@@ -294,6 +295,7 @@
   }
   $: activeMonthlyReview = isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null;
   $: if (!activeMonthlyReview) {
+    pendingFlowReview = null;
     flowRenderer.reset();
   }
   $: reviewTrend = trendSeries(activeMonthlyReview);
@@ -313,7 +315,8 @@
     activeMonthlyReview &&
     flowSignature(activeMonthlyReview) !== flowRenderer.renderedSignature()
   ) {
-    void renderMonthlyFlow(activeMonthlyReview);
+    sankeyEmpty = flowState(activeMonthlyReview.flow_graph) === "empty";
+    pendingFlowReview = activeMonthlyReview;
   }
 
   let surplusInsightItem: InsightItem;

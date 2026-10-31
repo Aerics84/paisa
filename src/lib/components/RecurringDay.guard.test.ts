@@ -14,13 +14,16 @@ describe("recurring calendar layout", () => {
     expect(page).toContain("@media (min-width: 768px)");
   });
 
-  test("keeps the desktop and mobile breakpoints aligned with Tailwind md", () => {
+  test("pins seven explicit columns instead of relying on Bulma grid utilities", () => {
     const page = readFileSync(
       join(__dirname, "..", "..", "routes", "(app)", "cash_flow", "recurring", "+page.svelte"),
       "utf-8"
     );
-    expect(page).toContain("md:grid-cols-7");
+    expect(page).toContain("recurring-weekdays-grid");
+    expect(page).toContain("grid-template-columns: repeat(7, minmax(0, 1fr))");
+    expect(page).toContain("display: grid");
     expect(page).toContain("min-width: 768px");
+    expect(page).not.toContain("grid-cols-7");
   });
 
   test("keeps the day header outside the scrolling schedule list", () => {

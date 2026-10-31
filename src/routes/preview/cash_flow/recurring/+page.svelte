@@ -58,15 +58,13 @@
     <div class="columns" class:is-hidden={isEmpty}>
       <div class="column is-12">
         <div
-          class="has-text-centered grid grid-cols-7 auto-cols-[1fr] auto-rows-[1fr] weekdays-grid uppercase mb-3 is-hidden-mobile"
+          class="has-text-centered recurring-weekdays-grid weekdays-grid uppercase mb-3 is-hidden-mobile"
         >
           {#each dayjs.weekdaysShort(true) as day}
             <div>{day}</div>
           {/each}
         </div>
-        <div
-          class="grid grid-cols-1 md:grid-cols-7 gap-2 auto-cols-[1fr] pb-1 recurring-calendar-grid"
-        >
+        <div class="pb-1 recurring-calendar-grid">
           {#each days as day (day)}
             <RecurringDay
               month={$month}
@@ -92,12 +90,22 @@
 </div>
 
 <style lang="scss">
+  .recurring-weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
   .recurring-calendar-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-auto-rows: auto;
+    gap: 0.5rem;
   }
 
   @media (min-width: 768px) {
     .recurring-calendar-grid {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       grid-auto-rows: minmax(0, 1fr);
       overflow: hidden;
       height: calc(100vh - 150px);

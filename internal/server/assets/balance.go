@@ -202,7 +202,11 @@ func commodityMetadata(ps []posting.Posting) (string, string, string) {
 	if configured.Name == "" {
 		return "", "", ""
 	}
-	return name, configured.Name, configured.Price.Code
+	label := configured.DisplayName
+	if label == "" {
+		label = configured.Name
+	}
+	return name, label, configured.Price.Code
 }
 
 func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string) AssetBreakdown {

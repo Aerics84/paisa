@@ -104,6 +104,7 @@ type Price struct {
 
 type Commodity struct {
 	Name                        string          `json:"name" yaml:"name"`
+	DisplayName                 string          `json:"display_name,omitempty" yaml:"display_name,omitempty"`
 	Type                        CommodityType   `json:"type" yaml:"type"`
 	Price                       Price           `json:"price" yaml:"price"`
 	Harvest                     int             `json:"harvest" yaml:"harvest"`

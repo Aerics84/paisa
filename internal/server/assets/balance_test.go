@@ -40,6 +40,12 @@ commodities:
     price:
       provider: com-yahoo
       code: OTHER
+  - name: DISPLAY
+    display_name: Display Name
+    type: stock
+    price:
+      provider: com-yahoo
+      code: DISP
 `), "")
 	require.NoError(t, err)
 
@@ -221,6 +227,27 @@ func TestComputeBreakdownsIncludesConfiguredCommodityMetadata(t *testing.T) {
 	require.Equal(t, "AIB Group", leaf.Commodity)
 	require.Equal(t, "AIB Group", leaf.CommodityName)
 	require.Equal(t, "AIBRF", leaf.CommodityCode)
+}
+
+func TestComputeBreakdownsUsesCommodityDisplayName(t *testing.T) {
+	db := openBalanceTestDB(t)
+	postings := []posting.Posting{
+		{
+			TransactionID: "buy",
+			Date:          balanceTestDate("2025-06-10"),
+			Account:       "Assets:Investments:DISPLAY",
+			Commodity:     "DISPLAY",
+			Quantity:      decimal.NewFromInt(10),
+			Amount:        decimal.NewFromInt(1000),
+		},
+	}
+
+	breakdowns := ComputeBreakdowns(db, postings, true)
+	leaf := breakdowns["Assets:Investments:DISPLAY"]
+
+	require.Equal(t, "DISPLAY", leaf.Commodity)
+	require.Equal(t, "Display Name", leaf.CommodityName)
+	require.Equal(t, "DISP", leaf.CommodityCode)
 }
 
 func TestComputeBreakdownsOmitsUnknownOrMixedCommodities(t *testing.T) {
