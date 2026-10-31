@@ -91,4 +91,20 @@ describe("preview flow render controller", () => {
     expect(controller.update(ready, "A", "ready")).toBe(true);
     expect(controller.renderedSignature()).toBe("A");
   });
+
+  test("can be reset when the canvas is recreated", () => {
+    let renders = 0;
+    const controller = createFlowRenderController({
+      render: () => {
+        renders++;
+      },
+      clear: () => undefined
+    });
+
+    expect(controller.update(ready, "A", "ready")).toBe(true);
+    expect(controller.update(ready, "A", "ready")).toBe(false);
+    controller.reset();
+    expect(controller.update(ready, "A", "ready")).toBe(true);
+    expect(renders).toBe(2);
+  });
 });

@@ -39,6 +39,7 @@ export function flowSignature(
 export interface FlowRenderController {
   update(graph: Graph, signature: string, state: FlowState): boolean;
   renderedSignature(): string;
+  reset(): void;
 }
 
 export function createFlowRenderController(handlers: {
@@ -60,6 +61,9 @@ export function createFlowRenderController(handlers: {
     },
     renderedSignature() {
       return last;
+    },
+    reset() {
+      last = "";
     }
   };
 }

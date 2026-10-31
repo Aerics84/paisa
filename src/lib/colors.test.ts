@@ -108,4 +108,56 @@ describe("expense category colors", () => {
     expect(resolveExpenseColor(hierarchical, "Expenses:Food")).toBe(hierarchical("Expenses:Food"));
     expect(resolveExpenseColor(flat, "Expenses:Food")).toBe(flat("Food"));
   });
+
+  test("unknown categories receive distinct colors", () => {
+    const names = [
+      "Mortgage",
+      "Phone",
+      "Pet",
+      "Childcare",
+      "Charity",
+      "Taxi",
+      "Category0",
+      "Category1",
+      "Category2",
+      "Category3",
+      "Category4",
+      "Category5",
+      "Category6",
+      "Category7",
+      "Category8",
+      "Category9",
+      "Category10",
+      "Category11",
+      "Category12",
+      "Category13",
+      "Category14",
+      "Category15",
+      "Category16",
+      "Category17",
+      "Category18",
+      "Category19",
+      "Category20",
+      "Category21",
+      "Category22",
+      "Category23",
+      "Category24",
+      "Category25"
+    ];
+    const z = expenseCategoryColorScheme(names);
+    const colors = names.map((name) => z(name));
+    expect(new Set(colors).size).toBe(names.length);
+    for (const color of colors) {
+      const lightness = chroma(color).get("hsl.l");
+      expect(lightness).toBeGreaterThanOrEqual(0.28);
+      expect(lightness).toBeLessThanOrEqual(0.78);
+    }
+  });
+
+  test("achromatic categories keep neutral children", () => {
+    const z = colorScale([posting("Expenses:Fees"), posting("Expenses:Fees:Bank")]);
+    const child = chroma(z("Expenses:Fees:Bank"));
+    expect(child.get("hsl.s")).toBeLessThan(0.05);
+    expect(z("Expenses:Fees:Bank")).not.toBe(z("Expenses:Fees"));
+  });
 });

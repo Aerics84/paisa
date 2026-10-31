@@ -196,21 +196,22 @@ export function expenseCategoryColor(category: string) {
   const key = category.toLowerCase().trim();
   const hash = stableHash(key);
   const known = EXPENSE_CATEGORY_SLOTS[key];
-  const slot = known === undefined ? hash % EXPENSE_CATEGORY_PALETTE.length : known;
-  const base = EXPENSE_CATEGORY_PALETTE[slot];
-  if (known !== undefined) return base;
+  if (known !== undefined) return EXPENSE_CATEGORY_PALETTE[known];
 
-  const variant = Math.floor(hash / EXPENSE_CATEGORY_PALETTE.length) % 4;
-  if (variant === 0) return base;
-  const hsl = chroma(base).hsl();
-  return chroma
-    .hsl((hsl[0] + variant * 9) % 360, hsl[1], clamp(hsl[2] + (variant - 2) * 0.06, 0.28, 0.74))
-    .hex();
+  const hue = hash % 360;
+  const saturation = 0.48 + ((hash >>> 9) % 30) / 100;
+  const lightness = 0.38 + ((hash >>> 17) % 23) / 100;
+  return chroma.hsl(hue, saturation, lightness).hex();
 }
 
 export function expenseChildColor(rootColor: string, scope: string) {
   const hash = stableHash(scope);
   const hsl = chroma(rootColor).hsl();
+  if (!Number.isFinite(hsl[0]) || hsl[1] <= 0.01) {
+    const delta = ((hash % 41) - 20) / 100;
+    const lightness = clamp(hsl[2] + (delta === 0 ? 0.06 : delta), 0.28, 0.74);
+    return chroma.hsl(0, 0, lightness).hex();
+  }
   return chroma
     .hsl(
       hsl[0],

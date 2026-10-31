@@ -293,6 +293,9 @@
     void loadMonthlyReview(monthKey);
   }
   $: activeMonthlyReview = isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null;
+  $: if (!activeMonthlyReview) {
+    flowRenderer.reset();
+  }
   $: reviewTrend = trendSeries(activeMonthlyReview);
   $: reviewSurplusState = surplusState(activeMonthlyReview);
   $: reviewPerformance = performanceRows(activeMonthlyReview);
