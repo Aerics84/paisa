@@ -3,7 +3,6 @@ package server
 import (
 	"path/filepath"
 	"sort"
-	"time"
 
 	"os"
 
@@ -80,7 +79,8 @@ func SaveSheetFile(db *gorm.DB, file SheetFile) gin.H {
 		return gin.H{"saved": false, "message": "Invalid file name"}
 	}
 
-	backupPath := filePath + ".backup." + time.Now().Format("2006-01-02-15-04-05.000")
+	now := utils.Now()
+	backupPath := filePath + ".backup." + now.Format("2006-01-02-15-04-05.000")
 
 	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
@@ -120,7 +120,7 @@ func SaveSheetFile(db *gorm.DB, file SheetFile) gin.H {
 		return gin.H{"saved": false, "message": "Failed to write file"}
 	}
 
-	pruneOldBackups(filePath, maxEditorBackups)
+	pruneOldBackups(filePath, now)
 
 	return gin.H{"saved": true, "file": readSheetFileWithVersions(dir, filePath)}
 }

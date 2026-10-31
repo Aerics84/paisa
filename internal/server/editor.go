@@ -3,6 +3,7 @@ package server
 import (
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"os"
@@ -56,22 +57,67 @@ func GetFile(file LedgerFile) gin.H {
 	return gin.H{"file": readLedgerFile(dir, filePath)}
 }
 
-const maxEditorBackups = 10
-
-// pruneOldBackups keeps the newest maxBackups backup files and removes the
-// older ones. Backup names embed a sortable timestamp.
-func pruneOldBackups(filePath string, maxBackups int) {
+// pruneOldBackups keeps every backup from the cutoff day, the newest backup
+// per calendar day for the previous seven days, and the newest backup per
+// seven-day bucket for the four weeks before that. Backup names embed a
+// sortable timestamp.
+func pruneOldBackups(filePath string, cutoff time.Time) {
 	backups := utils.Glob(filePath, ".backup.*")
-	if len(backups) <= maxBackups {
-		return
+	prefix := filepath.Base(filePath) + ".backup."
+	keep := map[string]bool{}
+	latestByDay := map[string]string{}
+	latestByBucket := map[int]string{}
+
+	for _, backup := range backups {
+		name := filepath.Base(backup)
+		if !strings.HasPrefix(name, prefix) {
+			keep[backup] = true
+			continue
+		}
+
+		suffix := strings.TrimPrefix(name, prefix)
+		parsed, err := time.ParseInLocation("2006-01-02-15-04-05.000", suffix, cutoff.Location())
+		if err != nil {
+			keep[backup] = true
+			continue
+		}
+
+		offset := int(calendarDay(cutoff).Sub(calendarDay(parsed)).Hours() / 24)
+		switch {
+		case offset <= 0:
+			keep[backup] = true
+		case offset <= 7:
+			day := parsed.Format("2006-01-02")
+			if current, ok := latestByDay[day]; !ok || backup > current {
+				latestByDay[day] = backup
+			}
+		case offset <= 35:
+			bucket := (offset - 8) / 7
+			if current, ok := latestByBucket[bucket]; !ok || backup > current {
+				latestByBucket[bucket] = backup
+			}
+		}
 	}
 
-	sort.Sort(sort.Reverse(sort.StringSlice(backups)))
-	for _, backup := range backups[maxBackups:] {
+	for _, backup := range latestByDay {
+		keep[backup] = true
+	}
+	for _, backup := range latestByBucket {
+		keep[backup] = true
+	}
+
+	for _, backup := range backups {
+		if keep[backup] {
+			continue
+		}
 		if err := os.Remove(backup); err != nil {
 			log.Warn(err)
 		}
 	}
+}
+
+func calendarDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 func DeleteBackups(file LedgerFile) gin.H {
@@ -110,7 +156,8 @@ func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
 		return gin.H{"errors": errors, "saved": false, "message": "Invalid file name"}
 	}
 
-	backupPath := filePath + ".backup." + time.Now().Format("2006-01-02-15-04-05.000")
+	now := utils.Now()
+	backupPath := filePath + ".backup." + now.Format("2006-01-02-15-04-05.000")
 
 	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
@@ -150,7 +197,7 @@ func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
 		return gin.H{"errors": errors, "saved": false, "message": "Failed to write file"}
 	}
 
-	pruneOldBackups(filePath, maxEditorBackups)
+	pruneOldBackups(filePath, now)
 
 	Sync(db, SyncRequest{Journal: true})
 
