@@ -12,6 +12,7 @@
   import {
     ajax,
     formatCurrency,
+    formatCurrencyWithSymbol,
     formatFloat,
     type Budget,
     type CashFlow,
@@ -181,14 +182,14 @@
                         narrow
                         title="Net worth"
                         color={COLORS.primary}
-                        value={formatCurrency(networth.balanceAmount)}
+                        value={formatCurrencyWithSymbol(networth.balanceAmount)}
                       />
 
                       <LevelItem
                         narrow
                         title="Net Investment"
                         color={COLORS.secondary}
-                        value={formatCurrency(networth.netInvestmentAmount)}
+                        value={formatCurrencyWithSymbol(networth.netInvestmentAmount)}
                       />
                     </nav>
                     <nav class="level grid-2">
@@ -196,7 +197,7 @@
                         narrow
                         title="Gain / Loss"
                         color={networth.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
-                        value={formatCurrency(networth.gainAmount)}
+                        value={formatCurrencyWithSymbol(networth.gainAmount)}
                       />
 
                       <LevelItem narrow title="XIRR" value={formatFloat(xirr)} />
