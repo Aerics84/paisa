@@ -4,6 +4,32 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.6.1 (2026-10-31)
+
+- Keep every backup from the current day; retain one backup per day for
+  the previous seven days and one per week for the previous four weeks
+  before deleting older backups.
+- Show the currency symbol for Net worth, Net Investment and Gain / Loss
+  on the classic dashboard.
+- Add “Net after tax (cash flow)” and “Net after saving (cash flow)”
+  rows to the cash-flow tooltip so a month’s surplus or deficit is
+  visible without adding bars.
+- Apply the same cash-flow tooltip to `cash_flow/monthly`.
+- Stop the recurring calendar from stretching one week to a thousand
+  pixels; long days now scroll inside their own cell.
+- Replace the expense category palette with clearly separated colors and
+  keep subcategories inside their parent’s color family.
+- Space and wrap the legends on `expense/monthly`.
+- Space and wrap the legends on `expense/yearly`.
+- Show the readable commodity name and symbol as an accessible tooltip
+  on Assets > Balance.
+- Fix the breadcrumb so it follows every navigation and add spacing
+  around its chevrons.
+- Show income tax payments (advance and back payments) under
+  `Expenses:Tax:IncomeTax` in the tax overview and CSV export.
+- Render the posted money flow on the preview dashboard in the running
+  month as well.
+
 ### 0.8.6 (2026-10-29)
 
 - Add the manual `npm 12 gate` workflow that verifies npm 12.2.1 on Linux,
