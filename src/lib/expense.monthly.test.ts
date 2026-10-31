@@ -99,6 +99,11 @@ describe("monthly expense timeline interactions", () => {
     const foodLegend = legends.find((legend) => String(legend.label).includes("Food"));
     expect(foodLegend).toBeDefined();
 
+    const barFills = Array.from(
+      document.querySelectorAll("#d3-monthly-expense-timeline g[fill]")
+    ).map((node) => node.getAttribute("fill"));
+    expect(barFills).toContain(foodLegend?.color);
+
     foodLegend?.onClick?.(foodLegend);
 
     expect(get(timelineGroup)).toBe("Food");

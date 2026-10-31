@@ -103,10 +103,10 @@ describe("expense drilldown helpers", () => {
     ]);
 
     expect(expenseColorKey(posting("Expenses:Food:Restaurants:Lunch", 12), "Expenses:Food")).toBe(
-      "Restaurants"
+      "Expenses:Food:Restaurants"
     );
     expect(
       expenseColorKey(posting("Expenses:Food:Restaurants", 12), "Expenses:Food:Restaurants")
-    ).toBe("Restaurants");
+    ).toBe("Expenses:Food:Restaurants");
   });
 });

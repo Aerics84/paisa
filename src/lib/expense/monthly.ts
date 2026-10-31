@@ -14,9 +14,10 @@ import {
   firstName,
   monthDays,
   rem,
+  lastName,
   type Legend
 } from "$lib/utils";
-import COLORS, { generateColorScheme, white } from "$lib/colors";
+import COLORS, { expenseCategoryColor, expenseChildColor, white } from "$lib/colors";
 import { get, type Readable, type Unsubscriber, type Writable } from "svelte/store";
 import { iconify } from "$lib/icon";
 import {
@@ -124,7 +125,7 @@ export function renderCalendar(
     .data((d) => pieData(expensesByDay[d.format("YYYY-MM-DD")], scope))
     .join("path")
     .attr("fill", function (d) {
-      return z(d.data.category);
+      return z(d.data.scope);
     })
     .attr("d", (arc) => {
       return d3.arc().innerRadius(13).outerRadius(17)(arc as any);
@@ -132,8 +133,18 @@ export function renderCalendar(
 }
 
 export function colorScale(postings: Posting[]) {
-  const groups = expenseColorKeys(postings);
-  return generateColorScheme(groups);
+  const scopes = expenseColorKeys(postings);
+  const range = scopes.map((scope) => {
+    const parts = scope.split(":");
+    const root = parts[1];
+    const rootColor = expenseCategoryColor(root);
+    return parts.length === 2 ? rootColor : expenseChildColor(rootColor, scope);
+  });
+  return d3.scaleOrdinal<string>().domain(scopes).range(range);
+}
+
+export function resolveExpenseColor(z: d3.ScaleOrdinal<string, string, never>, scope: string) {
+  return z.domain().includes(scope) ? z(scope) : z(lastName(scope));
 }
 
 export function renderMonthlyExpensesTimeline(
@@ -351,7 +362,7 @@ export function renderMonthlyExpensesTimeline(
       .join(
         (enter) =>
           enter.append("g").attr("fill", function (d) {
-            return z(d.key);
+            return z(`${ROOT_EXPENSE_SCOPE}:${d.key}`);
           }),
         (update) => {
           const target: any = t ? update.transition(t) : update;
@@ -435,7 +446,7 @@ export function renderMonthlyExpensesTimeline(
     (group) =>
       ({
         label: iconify(group, { group: "Expenses" }),
-        color: z(group),
+        color: z(`${ROOT_EXPENSE_SCOPE}:${group}`),
         shape: "square",
         onClick: () => {
           if (get(selectedGroupStore) === group) {
@@ -549,7 +560,7 @@ export function renderCurrentExpensesBreakdown(
           enter
             .append("rect")
             .attr("fill", function (d) {
-              return z(d.category);
+              return resolveExpenseColor(z, d.scope);
             })
             .attr("class", (d) => (options.onDrilldown && d.expandable ? "zoomable" : null))
             .attr("data-tippy-content", tooltipContent)
@@ -570,7 +581,7 @@ export function renderCurrentExpensesBreakdown(
         (update) =>
           update
             .attr("fill", function (d) {
-              return z(d.category);
+              return resolveExpenseColor(z, d.scope);
             })
             .attr("class", (d) => (options.onDrilldown && d.expandable ? "zoomable" : null))
             .attr("data-tippy-content", tooltipContent)
@@ -612,7 +623,7 @@ export function renderCurrentExpensesBreakdown(
             .style("font-size", "0.928rem")
             .style("font-weight", "bold")
             .style("fill", function (d) {
-              return chroma(z(d.category)).darken(0.8).hex();
+              return chroma(resolveExpenseColor(z, d.scope)).darken(0.8).hex();
             })
             .attr("class", "is-family-monospace")
             .text(rightLabel),

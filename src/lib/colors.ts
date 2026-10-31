@@ -141,6 +141,90 @@ export function categoryColorScale(categories: string[]) {
     .range(categories.map((category, index) => categoryColor(category, index)));
 }
 
+export const EXPENSE_CATEGORY_PALETTE = [
+  "#0067A5", // blue
+  "#F38400", // orange
+  "#00915e", // green
+  "#E68FAC", // pink
+  "#F3C300", // yellow
+  "#875692", // violet
+  "#17becf", // cyan
+  "#BE0032", // red
+  "#8DB600", // lime
+  "#604E97", // purple
+  "#009796", // teal
+  "#F6A600", // amber
+  "#3b4fa0", // indigo
+  "#B3446C", // rose
+  "#848482", // slate
+  "#882D17" // brown
+];
+
+const EXPENSE_CATEGORY_SLOTS: Record<string, number> = {
+  food: 0,
+  housing: 1,
+  transport: 2,
+  dining: 3,
+  utilities: 4,
+  shopping: 5,
+  health: 6,
+  entertainment: 7,
+  savings: 8,
+  other: 9,
+  insurance: 10,
+  travel: 11,
+  education: 12,
+  gifts: 13,
+  fees: 14,
+  subscriptions: 15
+};
+
+function stableHash(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index++) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+export function expenseCategoryColor(category: string) {
+  const key = category.toLowerCase().trim();
+  const hash = stableHash(key);
+  const known = EXPENSE_CATEGORY_SLOTS[key];
+  const slot = known === undefined ? hash % EXPENSE_CATEGORY_PALETTE.length : known;
+  const base = EXPENSE_CATEGORY_PALETTE[slot];
+  if (known !== undefined) return base;
+
+  const variant = Math.floor(hash / EXPENSE_CATEGORY_PALETTE.length) % 4;
+  if (variant === 0) return base;
+  const hsl = chroma(base).hsl();
+  return chroma
+    .hsl((hsl[0] + variant * 9) % 360, hsl[1], clamp(hsl[2] + (variant - 2) * 0.06, 0.28, 0.74))
+    .hex();
+}
+
+export function expenseChildColor(rootColor: string, scope: string) {
+  const hash = stableHash(scope);
+  const hsl = chroma(rootColor).hsl();
+  return chroma
+    .hsl(
+      hsl[0],
+      clamp(hsl[1] + (((hash >>> 8) % 21) - 10) / 100, 0.35, 0.9),
+      clamp(hsl[2] + ((hash % 41) - 20) / 100, 0.28, 0.74)
+    )
+    .hex();
+}
+
+export function expenseCategoryColorScheme(categories: string[]) {
+  const unique = _.uniq(categories);
+  return d3.scaleOrdinal<string>().domain(unique).range(unique.map(expenseCategoryColor));
+}
+
 export function generateColorScheme(domain: string[]) {
   let colors: string[];
   const n = domain.length;

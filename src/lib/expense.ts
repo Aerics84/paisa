@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import _ from "lodash";
-import { lastName, type Posting } from "./utils";
+import { type Posting } from "./utils";
 
 export const ROOT_EXPENSE_SCOPE = "Expenses";
 
@@ -60,8 +60,17 @@ export function expenseGroup(posting: Posting, scope: string = ROOT_EXPENSE_SCOP
   return parts[scopeDepth];
 }
 
+export function expenseColorScope(posting: Posting | string, scope: string = ROOT_EXPENSE_SCOPE) {
+  const parts = accountParts(posting);
+  const scopeDepth = scopeParts(scope).length;
+  if (!isInExpenseScope(parts.join(":"), scope) || parts.length <= scopeDepth) {
+    return scope;
+  }
+  return parts.slice(0, scopeDepth + 1).join(":");
+}
+
 export function expenseColorKey(posting: Posting, scope: string = ROOT_EXPENSE_SCOPE) {
-  return expenseGroup(posting, scope) || lastName(scope);
+  return expenseColorScope(posting, scope);
 }
 
 export function expenseTopLevelGroup(scope: string) {
@@ -71,7 +80,11 @@ export function expenseTopLevelGroup(scope: string) {
 
 export function expenseColorKeys(expenses: Posting[]) {
   return _.chain(expenses)
-    .flatMap((expense) => accountParts(expense).slice(1))
+    .flatMap((expense) => {
+      const parts = accountParts(expense);
+      if (parts[0] !== ROOT_EXPENSE_SCOPE) return [];
+      return _.range(1, parts.length).map((index) => parts.slice(0, index + 1).join(":"));
+    })
     .uniq()
     .sort()
     .value();
@@ -79,7 +92,7 @@ export function expenseColorKeys(expenses: Posting[]) {
 
 export function pieData(expenses: Posting[], scope: string = ROOT_EXPENSE_SCOPE) {
   return d3
-    .pie<{ category: string; total: number }>()
+    .pie<{ category: string; total: number; scope: string }>()
     .value((g) => g.total)
     .sort((a, b) => a.category.localeCompare(b.category))(
     _.values(byExpenseGroup(expenses, scope))
