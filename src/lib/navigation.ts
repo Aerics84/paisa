@@ -32,6 +32,14 @@ function matchesPath(path: string, base: string) {
   return path === base || path.startsWith(base + "/");
 }
 
+function decodePathSegment(segment: string) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 export function normalizeNavigationPath(pathname: string): string {
   if (!pathname) {
     return "/";
@@ -116,7 +124,7 @@ export function breadcrumbItems(resolution: BreadcrumbResolution): BreadcrumbIte
   if (normalizedPath !== combined) {
     const segment = normalizedPath.split("/").filter(Boolean).at(-1);
     if (segment) {
-      items.push({ label: decodeURIComponent(segment) });
+      items.push({ label: decodePathSegment(segment) });
     }
   }
 

@@ -630,6 +630,9 @@ export function renderCurrentExpensesBreakdown(
         (update) =>
           update
             .text(rightLabel)
+            .style("fill", function (d) {
+              return chroma(resolveExpenseColor(z, d.scope)).darken(0.8).hex();
+            })
             .transition(t)
             .attr("y", function (d) {
               return y(d.category) + y.bandwidth() / 2;

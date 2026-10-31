@@ -32,6 +32,13 @@ describe("cash flow net values", () => {
     });
   });
 
+  test("treats an investment withdrawal as incoming cash", () => {
+    expect(cashFlowNetValues(cashFlow({ investment: -400 }))).toEqual({
+      netAfterTax: 2500,
+      netAfterSaving: 2900
+    });
+  });
+
   test("returns zero for a balanced month", () => {
     expect(cashFlowNetValues(cashFlow({ income: 0, expenses: 0, tax: 0, investment: 0 }))).toEqual({
       netAfterTax: 0,

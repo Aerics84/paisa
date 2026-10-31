@@ -38,4 +38,16 @@ describe("recurring calendar layout", () => {
     );
     expect(preview).toContain("recurring-calendar-grid");
   });
+
+  test("keeps the desktop height inside the CSS breakpoint", () => {
+    const pages = [
+      join(__dirname, "..", "..", "routes", "(app)", "cash_flow", "recurring", "+page.svelte"),
+      join(__dirname, "..", "..", "routes", "preview", "cash_flow", "recurring", "+page.svelte")
+    ];
+    for (const page of pages) {
+      const source = readFileSync(page, "utf-8");
+      expect(source).not.toContain('isMobile() ? "" : "height: calc(100vh - 150px);"');
+      expect(source).toMatch(/@media \(min-width: 768px\)[\s\S]*height: calc\(100vh - 150px\)/);
+    }
+  });
 });

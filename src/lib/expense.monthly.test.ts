@@ -2,13 +2,18 @@ import "../happydom";
 
 import { beforeEach, describe, expect, test } from "bun:test";
 import * as d3 from "d3";
+import chroma from "chroma-js";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { get, writable } from "svelte/store";
 
 import { ROOT_EXPENSE_SCOPE } from "./expense";
-import { renderCurrentExpensesBreakdown, renderMonthlyExpensesTimeline } from "./expense/monthly";
+import {
+  colorScale,
+  renderCurrentExpensesBreakdown,
+  renderMonthlyExpensesTimeline
+} from "./expense/monthly";
 import type { Posting } from "./utils";
 
 dayjs.extend(isSameOrBefore);
@@ -187,5 +192,25 @@ describe("monthly expense breakdown drilldown", () => {
     bars[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     expect(drilldowns).toEqual([]);
+  });
+
+  test("updates label color when the same leaf category moves to another scope", () => {
+    const z = colorScale([
+      posting("2026-01-05", "Expenses:Food:Other", 10),
+      posting("2026-01-05", "Expenses:Transport:Other", 10)
+    ]);
+    const renderer = renderCurrentExpensesBreakdown(z);
+
+    renderer([posting("2026-01-05", "Expenses:Food:Other", 10)], "Expenses:Food");
+    renderer([posting("2026-01-05", "Expenses:Transport:Other", 10)], "Expenses:Transport");
+
+    const label = document.querySelector(
+      "#d3-current-month-breakdown text.is-family-monospace"
+    ) as SVGTextElement;
+
+    expect(label).toBeTruthy();
+    expect(chroma(label.style.fill).hex()).toBe(
+      chroma(z("Expenses:Transport:Other")).darken(0.8).hex()
+    );
   });
 });

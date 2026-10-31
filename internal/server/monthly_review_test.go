@@ -247,6 +247,25 @@ func TestGetMonthlyReviewReturnsFlowGraphFromActualPostings(t *testing.T) {
 	requireDecimalEqual(t, "200", leaf)
 }
 
+func TestGetMonthlyReviewCurrentMonthIncludesFlowGraph(t *testing.T) {
+	setMonthlyReviewNow(t, "2022-02-15")
+	db := openMonthlyReviewTestDB(t)
+
+	addMonthlyReviewSalary(t, db, "salary", "2022-02-01", "1000")
+	addMonthlyReviewExpense(t, db, "expense", "2022-02-06", "200")
+
+	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+
+	require.False(t, review.PeriodComplete, "the running month is calendar-incomplete")
+	income, ok := findGraphLinkValue(review.FlowGraph, "Income", "Assets:Checking:Bank")
+	require.True(t, ok)
+	requireDecimalEqual(t, "1000", income)
+
+	expense, ok := findGraphLinkValue(review.FlowGraph, "Assets:Checking:Bank", "Expenses")
+	require.True(t, ok)
+	requireDecimalEqual(t, "200", expense)
+}
+
 func TestGetMonthlyReviewDoesNotRankPositionsWithoutPriceCoverage(t *testing.T) {
 	setMonthlyReviewNow(t, "2022-03-15")
 	db := openMonthlyReviewTestDB(t)

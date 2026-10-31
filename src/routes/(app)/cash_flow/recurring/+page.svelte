@@ -7,7 +7,6 @@
   import {
     ajax,
     helpUrl,
-    isMobile,
     monthDays,
     type TransactionSchedule,
     type TransactionSequence
@@ -67,7 +66,6 @@
         </div>
         <div
           class="grid grid-cols-1 md:grid-cols-7 gap-2 auto-cols-[1fr] pb-1 recurring-calendar-grid"
-          style={isMobile() ? "" : "height: calc(100vh - 150px);"}
         >
           {#each days as day (day)}
             <RecurringDay
@@ -102,6 +100,7 @@
     .recurring-calendar-grid {
       grid-auto-rows: minmax(0, 1fr);
       overflow: hidden;
+      height: calc(100vh - 150px);
     }
   }
 </style>

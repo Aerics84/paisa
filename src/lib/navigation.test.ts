@@ -102,4 +102,9 @@ describe("breadcrumb resolution", () => {
       "Assets:Equity:AAPL"
     ]);
   });
+
+  test("does not throw on malformed dynamic path segments", () => {
+    const trail = resolveBreadcrumbTrail("/assets/gain/%", links);
+    expect(breadcrumbItems(trail).map((item) => item.label)).toEqual(["Assets", "Gain", "%"]);
+  });
 });
