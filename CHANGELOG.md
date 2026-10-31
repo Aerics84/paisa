@@ -23,6 +23,9 @@ document the upstream releases this fork builds on; the short-lived
 - Space and wrap the legends on `expense/yearly`.
 - Show the readable commodity name and symbol as an accessible tooltip
   on Assets > Balance.
+- Add an optional `display_name` for commodities so the Assets > Balance
+  tooltip can show a readable label alongside the ledger commodity and
+  symbol.
 - Fix the breadcrumb so it follows every navigation and add spacing
   around its chevrons.
 - Show income tax payments (advance and back payments) under

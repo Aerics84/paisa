@@ -10,8 +10,9 @@ describe("preview flow lifecycle", () => {
 
   test("renders the flow only after the canvas is mounted", () => {
     const source = readFileSync(join(__dirname, "+page.svelte"), "utf-8");
-    expect(source).toContain("afterUpdate");
-    expect(source).toContain("pendingFlowReview");
+    expect(source).toContain("use:flowCanvas={activeMonthlyReview}");
+    expect(source).toContain("requestAnimationFrame");
+    expect(source).not.toContain("afterUpdate");
     expect(source).not.toContain("await tick();");
   });
 });

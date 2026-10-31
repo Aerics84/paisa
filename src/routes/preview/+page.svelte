@@ -2,7 +2,7 @@
   import * as d3 from "d3";
   import dayjs from "dayjs";
   import _ from "lodash";
-  import { afterUpdate, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { categoryColor, categoryVisual } from "$lib/colors";
   import { renderFlow } from "$lib/cash_flow";
   import DashboardSectionHeader from "$lib/components/dashboard/DashboardSectionHeader.svelte";
@@ -77,7 +77,6 @@
   let monthlyReviewError = false;
   let monthlyReviewRequest = 0;
   let sankeyEmpty = true;
-  let pendingFlowReview: MonthlyReviewResponse | null = null;
   let loadError = false;
 
   const flowRenderer = createFlowRenderController({
@@ -158,14 +157,39 @@
     }
   }
 
-  afterUpdate(() => {
-    const review = pendingFlowReview;
-    if (!review) {
-      return;
-    }
-    pendingFlowReview = null;
-    renderMonthlyFlow(review);
-  });
+  function flowCanvas(_node: SVGElement, review: MonthlyReviewResponse | null) {
+    let current = review;
+    let frame = 0;
+
+    const draw = () => {
+      frame = 0;
+      if (!current) {
+        return;
+      }
+      renderMonthlyFlow(current);
+    };
+
+    const schedule = () => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+      frame = requestAnimationFrame(draw);
+    };
+
+    schedule();
+
+    return {
+      update(next: MonthlyReviewResponse | null) {
+        current = next;
+        schedule();
+      },
+      destroy() {
+        if (frame) {
+          cancelAnimationFrame(frame);
+        }
+      }
+    };
+  }
 
   onMount(async () => {
     try {
@@ -295,7 +319,6 @@
   }
   $: activeMonthlyReview = isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null;
   $: if (!activeMonthlyReview) {
-    pendingFlowReview = null;
     flowRenderer.reset();
   }
   $: reviewTrend = trendSeries(activeMonthlyReview);
@@ -311,12 +334,16 @@
   ).length;
   $: flowChartHeight = Math.max(440, Math.min(1100, flowTerminalCount * 30 + 120));
 
-  $: if (
-    activeMonthlyReview &&
-    flowSignature(activeMonthlyReview) !== flowRenderer.renderedSignature()
-  ) {
+  $: if (activeMonthlyReview) {
     sankeyEmpty = flowState(activeMonthlyReview.flow_graph) === "empty";
-    pendingFlowReview = activeMonthlyReview;
+  }
+
+  $: if (activeMonthlyReview && sankeyEmpty) {
+    flowRenderer.update(
+      activeMonthlyReview.flow_graph,
+      flowSignature(activeMonthlyReview),
+      "empty"
+    );
   }
 
   let surplusInsightItem: InsightItem;
@@ -844,7 +871,11 @@
                   </div>
                 {:else}
                   <div class="paisa-review__flow-canvas">
-                    <svg id="d3-expense-flow" height={flowChartHeight}></svg>
+                    <svg
+                      id="d3-expense-flow"
+                      height={flowChartHeight}
+                      use:flowCanvas={activeMonthlyReview}
+                    ></svg>
                   </div>
                 {/if}
               </div>
