@@ -13,10 +13,12 @@
     monthlyReviewEndpoint,
     performanceRows,
     positionLabel,
+    shouldApplyMonthlyReview,
     surplusState,
     trendSeries,
     type MonthlyReviewResponse
   } from "$lib/monthly_review";
+  import { createFlowRenderController, flowSignature, flowState } from "$lib/preview_flow";
   import {
     enrichTrantionSequence,
     nextUnpaidSchedule,
@@ -75,9 +77,18 @@
   let monthlyReviewError = false;
   let monthlyReviewRequest = 0;
   let sankeyEmpty = true;
-  let renderedSankeyMonth = "";
   let sankeyRequest = 0;
   let loadError = false;
+
+  const flowRenderer = createFlowRenderController({
+    render: (graph) => {
+      if (!document.getElementById("d3-expense-flow")) {
+        throw new Error("flow canvas missing");
+      }
+      renderFlow(graph, { withCurrency: true });
+    },
+    clear: () => d3.select("#d3-expense-flow").selectAll("*").remove()
+  });
   let checkingState: WidgetState = "insufficient-data";
   let networthTrendState: WidgetState = "insufficient-data";
   let reserveState: WidgetState = "insufficient-data";
@@ -101,7 +112,7 @@
 
     try {
       const response = (await ajax(monthlyReviewEndpoint(selectedMonth))) as MonthlyReviewResponse;
-      if (request !== monthlyReviewRequest || !isCurrentMonthlyReview(response, selectedMonth)) {
+      if (!shouldApplyMonthlyReview(response, selectedMonth, request, monthlyReviewRequest)) {
         return;
       }
       monthlyReview = response;
@@ -139,18 +150,19 @@
 
   async function renderMonthlyFlow(review: MonthlyReviewResponse) {
     const request = ++sankeyRequest;
-    const empty = !review.flow_graph?.nodes?.length || !review.flow_graph?.links?.length;
-    sankeyEmpty = empty;
-    renderedSankeyMonth = review.month;
+    const signature = flowSignature(review);
+    const state = flowState(review.flow_graph);
+    sankeyEmpty = state === "empty";
 
     await tick();
-    if (request !== sankeyRequest || empty) {
+    if (request !== sankeyRequest) {
       return;
     }
 
-    const element = document.getElementById("d3-expense-flow");
-    if (element) {
-      renderFlow(review.flow_graph, { withCurrency: true });
+    try {
+      flowRenderer.update(review.flow_graph, signature, state);
+    } catch (error) {
+      console.error("Failed to render monthly flow", error);
     }
   }
 
@@ -294,7 +306,10 @@
   ).length;
   $: flowChartHeight = Math.max(440, Math.min(1100, flowTerminalCount * 30 + 120));
 
-  $: if (activeMonthlyReview && activeMonthlyReview.month !== renderedSankeyMonth) {
+  $: if (
+    activeMonthlyReview &&
+    flowSignature(activeMonthlyReview) !== flowRenderer.renderedSignature()
+  ) {
     void renderMonthlyFlow(activeMonthlyReview);
   }
 

@@ -61,6 +61,15 @@ export function monthlyReviewEndpoint(selectedMonth: string): string {
   return `/api/dashboard/monthly?month=${encodeURIComponent(selectedMonth)}`;
 }
 
+export function shouldApplyMonthlyReview(
+  review: MonthlyReviewResponse | null,
+  selectedMonth: string,
+  request: number,
+  latestRequest: number
+): boolean {
+  return request === latestRequest && isCurrentMonthlyReview(review, selectedMonth);
+}
+
 export interface TrendPoint {
   month: string;
   value: number | null;

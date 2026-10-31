@@ -5,6 +5,7 @@ import {
   isCurrentMonthlyReview,
   monthlyReviewEndpoint,
   performanceRows,
+  shouldApplyMonthlyReview,
   surplusState,
   trendSeries,
   type MonthlyReviewResponse
@@ -154,5 +155,14 @@ describe("monthly review states", () => {
 
     expect(rows.best[0].dividend_income).toBe(20);
     expect(rows.asOf).toBe("2022-02-28T00:00:00Z");
+  });
+});
+
+describe("monthly review response application", () => {
+  test("accepts only the latest matching response", () => {
+    expect(shouldApplyMonthlyReview(monthlyReview(), "2022-02", 2, 2)).toBe(true);
+    expect(shouldApplyMonthlyReview(monthlyReview(), "2022-02", 1, 2)).toBe(false);
+    expect(shouldApplyMonthlyReview(monthlyReview(), "2022-03", 2, 2)).toBe(false);
+    expect(shouldApplyMonthlyReview(null, "2022-02", 2, 2)).toBe(false);
   });
 });
