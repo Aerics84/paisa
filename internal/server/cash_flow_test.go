@@ -45,3 +45,32 @@ func TestComputeCashFlowClassifiesPostings(t *testing.T) {
 	requireDecimalEqual(t, "30", jan.Checking)
 	requireDecimalEqual(t, "30", jan.Balance)
 }
+
+func TestComputeCashFlowKeepsTaxOutOfExpenses(t *testing.T) {
+	loadMonthlyReviewConfig(t)
+	utils.SetNow("2022-03-15")
+	t.Cleanup(func() { utils.SetNow(time.Now().Format("2006-01-02")) })
+	db := openMonthlyReviewTestDB(t)
+
+	date := monthlyReviewTestDate("2022-01-15")
+	rows := []posting.Posting{
+		{TransactionID: "salary", Date: date, Account: "Income:Salary:Acme", Commodity: "EUR", Amount: decimal.NewFromInt(-5000)},
+		{TransactionID: "salary", Date: date, Account: "Assets:Checking:Bank", Commodity: "EUR", Amount: decimal.NewFromInt(5000)},
+		{TransactionID: "food", Date: date, Account: "Expenses:Food:Groceries", Commodity: "EUR", Amount: decimal.NewFromInt(2000)},
+		{TransactionID: "food", Date: date, Account: "Assets:Checking:Bank", Commodity: "EUR", Amount: decimal.NewFromInt(-2000)},
+		{TransactionID: "tax", Date: date, Account: "Expenses:Tax:IncomeTax", Commodity: "EUR", Amount: decimal.NewFromInt(500)},
+		{TransactionID: "tax", Date: date, Account: "Assets:Checking:Bank", Commodity: "EUR", Amount: decimal.NewFromInt(-500)},
+		{TransactionID: "buy", Date: date, Account: "Assets:Broker", Commodity: "EUR", Amount: decimal.NewFromInt(1000)},
+		{TransactionID: "buy", Date: date, Account: "Assets:Checking:Bank", Commodity: "EUR", Amount: decimal.NewFromInt(-1000)},
+	}
+	require.NoError(t, db.Create(&rows).Error)
+
+	flows := computeCashFlow(db, query.Init(db), decimal.Zero)
+	require.NotEmpty(t, flows)
+
+	jan := flows[0]
+	requireDecimalEqual(t, "5000", jan.Income)
+	requireDecimalEqual(t, "2000", jan.Expenses) // tax must not be included here
+	requireDecimalEqual(t, "500", jan.Tax)
+	requireDecimalEqual(t, "1000", jan.Investment)
+}

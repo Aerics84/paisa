@@ -24,6 +24,19 @@ import COLORS, { generateColorScheme } from "./colors";
 import textures from "textures";
 import chroma from "chroma-js";
 
+export function cashFlowNetValues(cashFlow: CashFlow) {
+  const netAfterTax = cashFlow.income - cashFlow.expenses - cashFlow.tax;
+  return {
+    netAfterTax,
+    netAfterSaving: netAfterTax - cashFlow.investment
+  };
+}
+
+function netValueClass(value: number) {
+  const tone = value > 0 ? "has-text-success" : value < 0 ? "has-text-danger" : "has-text-grey";
+  return `has-text-weight-bold has-text-right ${tone}`;
+}
+
 export function renderMonthlyFlow(
   id: string,
   options = {
@@ -230,6 +243,7 @@ export function renderMonthlyFlow(
       .join("rect")
       .attr("fill", "transparent")
       .attr("data-tippy-content", (c: CashFlow) => {
+        const { netAfterTax, netAfterSaving } = cashFlowNetValues(c);
         return tooltip(
           [
             ["Income", [formatCurrency(c.income), "has-text-weight-bold has-text-right"]],
@@ -238,7 +252,18 @@ export function renderMonthlyFlow(
             ["Tax", [formatCurrency(c.tax), "has-text-weight-bold has-text-right"]],
             ["Investment", [formatCurrency(c.investment), "has-text-weight-bold has-text-right"]],
             ["Checking", [formatCurrency(c.checking), "has-text-weight-bold has-text-right"]],
-            ["Checking Balance", [formatCurrency(c.balance), "has-text-weight-bold has-text-right"]]
+            [
+              "Checking Balance",
+              [formatCurrency(c.balance), "has-text-weight-bold has-text-right"]
+            ],
+            [
+              "Net after tax (cash flow)",
+              [formatCurrency(netAfterTax), netValueClass(netAfterTax)]
+            ],
+            [
+              "Net after saving (cash flow)",
+              [formatCurrency(netAfterSaving), netValueClass(netAfterSaving)]
+            ]
           ],
           { header: c.date.format("MMM YYYY") }
         );
