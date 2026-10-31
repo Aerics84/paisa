@@ -162,6 +162,10 @@
               "description": "Name of the commodity",
               "type": "string"
             },
+            "display_name": {
+              "description": "Optional human-readable label for tooltips. The commodity name remains the ledger identifier.",
+              "type": "string"
+            },
             "price": {
               "properties": {
                 "code": {
