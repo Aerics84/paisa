@@ -350,3 +350,41 @@ func TestBuildTaxOverviewTaggedTransactionWithoutExpenseIsDiagnosed(t *testing.T
 	assert.Contains(t, diagnosticSummaries(overview), "nicht genau einen Aufwandsposten")
 	assert.Equal(t, 1, len(overview.Diagnostics))
 }
+
+func TestBuildTaxOverviewIncludesIncomeTaxPayments(t *testing.T) {
+	postings := []posting.Posting{
+		taxOverviewPosting("p1", "2025-06-10", "Expenses:Tax:IncomeTax", "110", "", ""),
+		taxOverviewPosting("p1", "2025-06-10", "Assets:Checking:ING", "-110", "", ""),
+		taxOverviewPosting("p2", "2025-09-10", "Expenses:Tax:IncomeTax:Advance", "50", "health", "TaxRelevant"),
+		taxOverviewPosting("p3", "2025-12-01", "Expenses:Tax:IncomeTax", "-30", "", ""),
+	}
+
+	overview := BuildTaxOverview(postings, "2025", nil)
+
+	require.Equal(t, 3, overview.IncomeTaxPayments.PostingCount)
+	require.Len(t, overview.IncomeTaxPayments.Postings, 3)
+	require.True(t, overview.IncomeTaxPayments.Total.Equal(decimal.RequireFromString("130")))
+	require.True(t, overview.Summary.IncomeTaxPaid.Equal(decimal.RequireFromString("130")))
+	require.Equal(t, 3, overview.Summary.IncomeTaxPostingCount)
+	require.True(t, overview.Summary.ExpenseCandidates.IsZero())
+	require.Equal(t, 0, overview.Summary.MatchedExpensePostings)
+	require.Equal(t, 0, overview.Coverage.UnmatchedPostingCount)
+	require.Empty(t, overview.Diagnostics)
+}
+
+func TestBuildTaxOverviewDoesNotTreatNearbyTaxAccountsAsIncomeTaxPayments(t *testing.T) {
+	postings := []posting.Posting{
+		taxOverviewPosting("x1", "2025-05-01", "Expenses:Tax:IncomeTaxOther", "10", "", ""),
+		taxOverviewPosting("x2", "2025-05-02", "Expenses:Tax:Income", "20", "", ""),
+		taxOverviewPosting("x3", "2025-05-03", "Expenses:Tax:Preparation", "30", "", ""),
+	}
+
+	overview := BuildTaxOverview(postings, "2025", taxRules("Expenses:Tax:Preparation", "tax_advice"))
+
+	require.Empty(t, overview.IncomeTaxPayments.Postings)
+	require.True(t, overview.IncomeTaxPayments.Total.IsZero())
+	require.Equal(t, 0, overview.IncomeTaxPayments.PostingCount)
+	require.Equal(t, 2, overview.Coverage.UnmatchedPostingCount)
+	c := findCategory(t, overview, "work_expenses", "tax_advice")
+	require.True(t, c.Total.Equal(decimal.RequireFromString("30")))
+}

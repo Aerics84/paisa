@@ -149,3 +149,22 @@ func TestTaxOverviewRouteRejectsInvalidYear(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestGetTaxOverviewIncludesIncomeTaxPayments(t *testing.T) {
+	utils.SetNow("2026-10-27")
+	t.Cleanup(func() { utils.SetNow(time.Now().Format("2006-01-02")) })
+	loadTaxOverviewConfig(t)
+	db := openTaxOverviewTestDB(t)
+
+	require.NoError(t, db.Create(&posting.Posting{
+		TransactionID: "tax-payment",
+		Date:          time.Date(2025, 6, 10, 0, 0, 0, 0, time.UTC),
+		Payee:         "FINANZAMT NIDDA",
+		Account:       "Expenses:Tax:IncomeTax",
+		Amount:        decimal.RequireFromString("110"),
+	}).Error)
+
+	overview, err := GetTaxOverview(db, "2025")
+	require.NoError(t, err)
+	require.True(t, overview.IncomeTaxPayments.Total.Equal(decimal.RequireFromString("110")))
+}

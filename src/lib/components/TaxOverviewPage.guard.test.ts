@@ -17,6 +17,17 @@ describe("TaxOverviewPage year changes", () => {
     const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
     expect(source).toContain("data.sections.map((s) => [s.key, false])");
   });
+
+  test("renders the neutral income tax payment block", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
+    expect(source).toContain("Einkommensteuerzahlungen");
+    expect(source).toContain("TaxOverviewIncomeTaxPayments");
+  });
+
+  test("handles an empty income tax payment year", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewIncomeTaxPayments.svelte"), "utf-8");
+    expect(source).toContain("Keine Einkommensteuerzahlungen für dieses Jahr.");
+  });
 });
 
 describe("TaxOverviewSection rendering", () => {

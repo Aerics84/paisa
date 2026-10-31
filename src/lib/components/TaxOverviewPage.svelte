@@ -4,6 +4,7 @@
   import type { TaxOverview, TaxOverviewCoverage } from "$lib/utils";
   import { downloadTaxOverview } from "$lib/tax_overview_export";
   import TaxOverviewSection from "./TaxOverviewSection.svelte";
+  import TaxOverviewIncomeTaxPayments from "./TaxOverviewIncomeTaxPayments.svelte";
   import TaxOverviewCapitalIncome from "./TaxOverviewCapitalIncome.svelte";
 
   let overview: TaxOverview | null = null;
@@ -127,6 +128,14 @@
         </div>
         <div class="column is-2">
           <div class="box py-3">
+            <p class="is-size-7 has-text-grey">Einkommensteuerzahlungen</p>
+            <p class="is-size-5 has-text-weight-semibold">
+              {formatCurrency(overview.income_tax_payments.total)}
+            </p>
+          </div>
+        </div>
+        <div class="column is-2">
+          <div class="box py-3">
             <p class="is-size-7 has-text-grey">Hinweise</p>
             <p class="is-size-5 has-text-weight-semibold">{overview.summary.diagnostic_count}</p>
           </div>
@@ -140,6 +149,8 @@
           onToggle={() => toggleSection(section.key)}
         />
       {/each}
+
+      <TaxOverviewIncomeTaxPayments payments={overview.income_tax_payments} />
 
       <div class="box mb-3">
         <button

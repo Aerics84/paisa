@@ -35,6 +35,20 @@ export function taxOverviewCSVRows(overview: TaxOverview): Array<Record<string, 
       }
     }
   }
+  for (const posting of overview.income_tax_payments.postings) {
+    rows.push({
+      section: "income_tax_payments",
+      category: "income_tax",
+      date: dayjs(posting.date).format("YYYY-MM-DD"),
+      payee: posting.payee,
+      account: posting.account,
+      amount: posting.amount,
+      source: "ledger",
+      note: posting.note ?? "",
+      file: posting.file_name,
+      line: posting.transaction_begin_line
+    });
+  }
   const capital = overview.capital_income;
   const capitalRows: Array<[string, number]> = [
     ["realized_gains", capital.realized_gains],

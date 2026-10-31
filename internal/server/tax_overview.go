@@ -17,13 +17,14 @@ import (
 )
 
 type TaxOverview struct {
-	Years         []string                 `json:"years"`
-	SelectedYear  string                   `json:"selected_year"`
-	Summary       TaxOverviewSummary       `json:"summary"`
-	Sections      []TaxOverviewSection     `json:"sections"`
-	Coverage      TaxOverviewCoverage      `json:"coverage"`
-	CapitalIncome TaxOverviewCapitalIncome `json:"capital_income"`
-	Diagnostics   []TaxOverviewDiagnostic  `json:"diagnostics"`
+	Years             []string                     `json:"years"`
+	SelectedYear      string                       `json:"selected_year"`
+	Summary           TaxOverviewSummary           `json:"summary"`
+	Sections          []TaxOverviewSection         `json:"sections"`
+	Coverage          TaxOverviewCoverage          `json:"coverage"`
+	CapitalIncome     TaxOverviewCapitalIncome     `json:"capital_income"`
+	IncomeTaxPayments TaxOverviewIncomeTaxPayments `json:"income_tax_payments"`
+	Diagnostics       []TaxOverviewDiagnostic      `json:"diagnostics"`
 }
 
 type TaxOverviewSummary struct {
@@ -31,6 +32,8 @@ type TaxOverviewSummary struct {
 	MatchedExpensePostings  int             `json:"matched_expense_posting_count"`
 	CapitalIncomeBooked     decimal.Decimal `json:"capital_income_booked"`
 	CapitalIncomeCalculated decimal.Decimal `json:"capital_income_calculated"`
+	IncomeTaxPaid           decimal.Decimal `json:"income_tax_paid"`
+	IncomeTaxPostingCount   int             `json:"income_tax_posting_count"`
 	DiagnosticCount         int             `json:"diagnostic_count"`
 }
 
@@ -61,6 +64,23 @@ type TaxOverviewPosting struct {
 	TransactionBeginLine uint64          `json:"transaction_begin_line"`
 	Source               string          `json:"source"`
 	Category             string          `json:"category"`
+}
+
+type TaxOverviewIncomeTaxPayment struct {
+	TransactionID        string          `json:"transaction_id"`
+	Date                 time.Time       `json:"date"`
+	Payee                string          `json:"payee"`
+	Account              string          `json:"account"`
+	Amount               decimal.Decimal `json:"amount"`
+	Note                 string          `json:"note"`
+	FileName             string          `json:"file_name"`
+	TransactionBeginLine uint64          `json:"transaction_begin_line"`
+}
+
+type TaxOverviewIncomeTaxPayments struct {
+	Total        decimal.Decimal               `json:"total"`
+	PostingCount int                           `json:"posting_count"`
+	Postings     []TaxOverviewIncomeTaxPayment `json:"postings"`
 }
 
 type TaxOverviewCoverage struct {
@@ -223,6 +243,9 @@ func BuildTaxOverview(postings []posting.Posting, year string, rules []config.Ta
 		Diagnostics:   []TaxOverviewDiagnostic{},
 		Summary:       TaxOverviewSummary{},
 		CapitalIncome: TaxOverviewCapitalIncome{Accounts: []TaxOverviewCapitalIncomeAccount{}},
+		IncomeTaxPayments: TaxOverviewIncomeTaxPayments{
+			Postings: []TaxOverviewIncomeTaxPayment{},
+		},
 	}
 
 	sectionIndex := map[string]int{}
@@ -277,6 +300,23 @@ func BuildTaxOverview(postings []posting.Posting, year string, rules []config.Ta
 	unresolvedByAccount := map[string]int{}
 
 	for _, p := range selected {
+		if utils.IsSameOrParent(p.Account, "Expenses:Tax:IncomeTax") {
+			overview.IncomeTaxPayments.Postings = append(overview.IncomeTaxPayments.Postings, TaxOverviewIncomeTaxPayment{
+				TransactionID:        p.TransactionID,
+				Date:                 p.Date,
+				Payee:                p.Payee,
+				Account:              p.Account,
+				Amount:               p.Amount,
+				Note:                 p.Note,
+				FileName:             p.FileName,
+				TransactionBeginLine: p.TransactionBeginLine,
+			})
+			overview.IncomeTaxPayments.Total = overview.IncomeTaxPayments.Total.Add(p.Amount)
+			overview.IncomeTaxPayments.PostingCount++
+			overview.Summary.IncomeTaxPaid = overview.IncomeTaxPayments.Total
+			overview.Summary.IncomeTaxPostingCount = overview.IncomeTaxPayments.PostingCount
+			continue
+		}
 		if p.TaxCategoryLegacy != "" {
 			legacy = append(legacy, p)
 		}
@@ -473,6 +513,9 @@ func GetTaxOverview(db *gorm.DB, requestedYear string) (TaxOverview, error) {
 			Coverage:      TaxOverviewCoverage{Accounts: []TaxOverviewCoverageAccount{}},
 			Diagnostics:   []TaxOverviewDiagnostic{},
 			CapitalIncome: TaxOverviewCapitalIncome{Accounts: []TaxOverviewCapitalIncomeAccount{}},
+			IncomeTaxPayments: TaxOverviewIncomeTaxPayments{
+				Postings: []TaxOverviewIncomeTaxPayment{},
+			},
 		}, nil
 	}
 

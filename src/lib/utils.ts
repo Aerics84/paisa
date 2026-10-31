@@ -438,7 +438,26 @@ export interface TaxOverviewSummary {
   matched_expense_posting_count: number;
   capital_income_booked: number;
   capital_income_calculated: number;
+  income_tax_paid: number;
+  income_tax_posting_count: number;
   diagnostic_count: number;
+}
+
+export interface TaxOverviewIncomeTaxPayment {
+  transaction_id: string;
+  date: dayjs.Dayjs;
+  payee: string;
+  account: string;
+  amount: number;
+  note: string;
+  file_name: string;
+  transaction_begin_line: number;
+}
+
+export interface TaxOverviewIncomeTaxPayments {
+  total: number;
+  posting_count: number;
+  postings: TaxOverviewIncomeTaxPayment[];
 }
 
 export interface TaxOverviewCoverageAccount {
@@ -480,6 +499,7 @@ export interface TaxOverview {
   sections: TaxOverviewSection[];
   coverage: TaxOverviewCoverage;
   capital_income: TaxOverviewCapitalIncome;
+  income_tax_payments: TaxOverviewIncomeTaxPayments;
   diagnostics: TaxOverviewDiagnostic[];
 }
 

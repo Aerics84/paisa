@@ -15,6 +15,8 @@ const overview: TaxOverview = {
     matched_expense_posting_count: 1,
     capital_income_booked: 118.06,
     capital_income_calculated: 0,
+    income_tax_paid: 130,
+    income_tax_posting_count: 3,
     diagnostic_count: 1
   },
   sections: [
@@ -56,6 +58,42 @@ const overview: TaxOverview = {
     taxes_booked: 0,
     sales: 0,
     accounts: []
+  },
+  income_tax_payments: {
+    total: 130,
+    posting_count: 3,
+    postings: [
+      {
+        transaction_id: "p1",
+        date: dayjs("2025-06-10"),
+        payee: "FINANZAMT NIDDA",
+        account: "Expenses:Tax:IncomeTax",
+        amount: 110,
+        note: "",
+        file_name: "main.ledger",
+        transaction_begin_line: 10
+      },
+      {
+        transaction_id: "p2",
+        date: dayjs("2025-09-10"),
+        payee: "FINANZAMT NIDDA",
+        account: "Expenses:Tax:IncomeTax:Advance",
+        amount: 50,
+        note: "",
+        file_name: "main.ledger",
+        transaction_begin_line: 20
+      },
+      {
+        transaction_id: "p3",
+        date: dayjs("2025-12-01"),
+        payee: "FINANZAMT NIDDA",
+        account: "Expenses:Tax:IncomeTax",
+        amount: -30,
+        note: "Erstattung",
+        file_name: "main.ledger",
+        transaction_begin_line: 30
+      }
+    ]
   },
   diagnostics: []
 };
@@ -123,5 +161,21 @@ describe("tax overview CSV", () => {
       ]
     });
     expect(csv).toContain("'=SUM(1,2)");
+  });
+
+  test("exports every income tax payment with its refund and no duplicate section", () => {
+    const rows = taxOverviewCSVRows(overview);
+    const payments = rows.filter((row) => row.section === "income_tax_payments");
+
+    expect(payments).toHaveLength(3);
+    expect(payments.map((row) => Number(row.amount))).toEqual([110, 50, -30]);
+    expect(payments[0].date).toBe("2025-06-10");
+    expect(payments[0].payee).toBe("FINANZAMT NIDDA");
+    expect(payments[2].note).toBe("Erstattung");
+    expect(
+      rows.filter(
+        (row) => row.section !== "income_tax_payments" && row.account === "Expenses:Tax:IncomeTax"
+      )
+    ).toHaveLength(0);
   });
 });
