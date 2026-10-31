@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/model/commodity"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
@@ -27,6 +28,9 @@ type AssetBreakdown struct {
 	XIRR             decimal.Decimal `json:"xirr"`
 	GainAmount       decimal.Decimal `json:"gainAmount"`
 	AbsoluteReturn   decimal.Decimal `json:"absoluteReturn"`
+	Commodity        string          `json:"commodity,omitempty"`
+	CommodityName    string          `json:"commodity_name,omitempty"`
+	CommodityCode    string          `json:"commodity_code,omitempty"`
 }
 
 // CheckingBalancePoint is the recorded end-of-month balance of one checking
@@ -180,6 +184,27 @@ func ComputeBreakdowns(db *gorm.DB, postings []posting.Posting, rollup bool) map
 	return result
 }
 
+func commodityMetadata(ps []posting.Posting) (string, string, string) {
+	names := map[string]bool{}
+	for _, p := range ps {
+		if !utils.IsCurrency(p.Commodity) {
+			names[p.Commodity] = true
+		}
+	}
+	if len(names) != 1 {
+		return "", "", ""
+	}
+	var name string
+	for candidate := range names {
+		name = candidate
+	}
+	configured := commodity.FindByName(name)
+	if configured.Name == "" {
+		return "", "", ""
+	}
+	return name, configured.Name, configured.Price.Code
+}
+
 func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string) AssetBreakdown {
 	investmentAmount := lo.Reduce(ps, func(acc decimal.Decimal, p posting.Posting, _ int) decimal.Decimal {
 		if utils.IsCheckingAccount(p.Account) || p.Amount.LessThan(decimal.Zero) || service.IsInterest(db, p) || service.IsStockSplit(db, p) || service.IsCapitalGains(p) {
@@ -216,6 +241,10 @@ func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string
 	if !investmentAmount.IsZero() {
 		absoluteReturn = marketAmount.Sub(netInvestment).Div(investmentAmount)
 	}
+	commodityName, commodityLabel, commodityCode := "", "", ""
+	if leaf {
+		commodityName, commodityLabel, commodityCode = commodityMetadata(ps)
+	}
 	return AssetBreakdown{
 		InvestmentAmount: investmentAmount,
 		WithdrawalAmount: withdrawalAmount,
@@ -225,5 +254,8 @@ func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string
 		BalanceUnits:     balanceUnits,
 		GainAmount:       gainAmount,
 		AbsoluteReturn:   absoluteReturn,
+		Commodity:        commodityName,
+		CommodityName:    commodityLabel,
+		CommodityCode:    commodityCode,
 	}
 }

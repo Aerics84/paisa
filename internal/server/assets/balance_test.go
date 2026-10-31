@@ -29,6 +29,17 @@ journal_path: main.ledger
 db_path: paisa.db
 default_currency: EUR
 time_zone: UTC
+commodities:
+  - name: AIB Group
+    type: stock
+    price:
+      provider: com-yahoo
+      code: AIBRF
+  - name: OTHER
+    type: stock
+    price:
+      provider: com-yahoo
+      code: OTHER
 `), "")
 	require.NoError(t, err)
 
@@ -189,4 +200,45 @@ func TestAvailableMonthRangeIsZeroWithoutPostings(t *testing.T) {
 	monthRange := GetAvailableMonthRange(db)
 	require.True(t, monthRange.From.IsZero())
 	require.True(t, monthRange.To.IsZero())
+}
+
+func TestComputeBreakdownsIncludesConfiguredCommodityMetadata(t *testing.T) {
+	db := openBalanceTestDB(t)
+	postings := []posting.Posting{
+		{
+			TransactionID: "buy",
+			Date:          balanceTestDate("2025-06-10"),
+			Account:       "Assets:Investments:IE00BF0L3536",
+			Commodity:     "AIB Group",
+			Quantity:      decimal.NewFromInt(10),
+			Amount:        decimal.NewFromInt(1000),
+		},
+	}
+
+	breakdowns := ComputeBreakdowns(db, postings, true)
+	leaf := breakdowns["Assets:Investments:IE00BF0L3536"]
+
+	require.Equal(t, "AIB Group", leaf.Commodity)
+	require.Equal(t, "AIB Group", leaf.CommodityName)
+	require.Equal(t, "AIBRF", leaf.CommodityCode)
+}
+
+func TestComputeBreakdownsOmitsUnknownOrMixedCommodities(t *testing.T) {
+	db := openBalanceTestDB(t)
+	unknown := posting.Posting{
+		TransactionID: "buy-unknown", Date: balanceTestDate("2025-06-10"),
+		Account: "Assets:Investments:UNKNOWN", Commodity: "UNKNOWN",
+		Quantity: decimal.NewFromInt(1), Amount: decimal.NewFromInt(10),
+	}
+	mixedA := posting.Posting{
+		TransactionID: "buy-a", Date: balanceTestDate("2025-06-10"),
+		Account: "Assets:Investments:MIXED", Commodity: "AIB Group",
+		Quantity: decimal.NewFromInt(1), Amount: decimal.NewFromInt(10),
+	}
+	mixedB := mixedA
+	mixedB.Commodity = "OTHER"
+
+	breakdowns := ComputeBreakdowns(db, []posting.Posting{unknown, mixedA, mixedB}, true)
+	require.Empty(t, breakdowns["Assets:Investments:UNKNOWN"].Commodity)
+	require.Empty(t, breakdowns["Assets:Investments:MIXED"].Commodity)
 }

@@ -206,6 +206,9 @@ export interface AssetBreakdown {
   xirr: number;
   gainAmount: number;
   absoluteReturn: number;
+  commodity?: string;
+  commodity_name?: string;
+  commodity_code?: string;
 }
 
 export interface LiabilityBreakdown {
