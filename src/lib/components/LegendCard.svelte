@@ -41,11 +41,11 @@
   }
 </script>
 
-<div class="flex justify-start gap-0 {clazz}">
+<div class="flex flex-wrap justify-start gap-x-4 gap-y-2 min-w-0 {clazz}">
   {#each legends as legend}
     {#if legend.onClick}
       <button
-        class="legend-box legend-box-button flex flex-col p-1.5 gap-2 cursor-pointer"
+        class="legend-box legend-box-button flex flex-col p-1.5 gap-2 cursor-pointer shrink-0"
         on:click={(_e) => onClick(legend)}
         class:selected={selectedLegend == legend}
         type="button"
@@ -69,12 +69,17 @@
             style="border-top: 3px solid {legend.color}; height: 0.1rem; width: 2rem;"
           ></div>
         {/if}
-        <div class="legend-label whitespace-pre is-size-6-5 has-text-grey custom-icon">
+        <div
+          class="legend-label whitespace-pre-wrap break-words is-size-6-5 has-text-grey custom-icon"
+        >
           {legend.label}
         </div>
       </button>
     {:else}
-      <div class="flex flex-col p-1.5 gap-2 legend-box" class:selected={selectedLegend == legend}>
+      <div
+        class="flex flex-col p-1.5 gap-2 legend-box shrink-0"
+        class:selected={selectedLegend == legend}
+      >
         {#if legend.texture}
           <svg
             use:texture={{ texture: legend.texture }}
@@ -94,7 +99,9 @@
             style="border-top: 3px solid {legend.color}; height: 0.1rem; width: 2rem;"
           ></div>
         {/if}
-        <div class="legend-label whitespace-pre is-size-6-5 has-text-grey custom-icon">
+        <div
+          class="legend-label whitespace-pre-wrap break-words is-size-6-5 has-text-grey custom-icon"
+        >
           {legend.label}
         </div>
       </div>
