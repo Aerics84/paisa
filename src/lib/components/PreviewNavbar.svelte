@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { afterNavigate } from "$app/navigation";
   import Actions from "$lib/components/Actions.svelte";
   import { month, year, dateMax, dateMin, dateRangeOption } from "../../store";
   import {
@@ -28,6 +29,11 @@
   import MonthPicker from "./MonthPicker.svelte";
   import Logo from "./Logo.svelte";
   import InputRange from "./InputRange.svelte";
+  import {
+    normalizeNavigationPath,
+    resolveBreadcrumbTrail,
+    type NavigationLink
+  } from "$lib/navigation";
 
   const prefix = "/preview";
   const readonly = USER_CONFIG.readonly;
@@ -56,21 +62,7 @@
     { icon: "fa-circle-check", color: "var(--app-text-subtle)", label: "Upcoming" }
   ];
 
-  interface Link {
-    label: string;
-    href: string;
-    sidebarHref?: string;
-    icon?: string;
-    help?: string;
-    dateRangeSelector?: boolean;
-    monthPicker?: boolean;
-    financialYearPicker?: boolean;
-    maxDepthSelector?: boolean;
-    recurringIcons?: boolean;
-    children?: Link[];
-    disablePreload?: boolean;
-    sidebarHidden?: boolean;
-  }
+  type Link = NavigationLink;
 
   const links: Link[] = [
     { label: "Overview", href: "/", icon: "fa-house", sidebarHref: "/" },
@@ -253,50 +245,19 @@
   let selectedLink: Link = null;
   let selectedSubLink: Link = null;
   let selectedSubSubLink: Link = null;
+  let normalizedPath = "";
 
-  $: pathname = page.url.pathname?.replace(/(.+)\/$/, "") || prefix;
-  $: normalizedPath =
-    pathname === prefix
-      ? "/"
-      : pathname.startsWith(prefix)
-        ? pathname.slice(prefix.length) || "/"
-        : pathname;
+  let currentPath = normalizeNavigationPath(page.url.pathname || "");
+  afterNavigate((navigation) => {
+    currentPath = normalizeNavigationPath(navigation.to?.url.pathname || currentPath);
+  });
+
+  $: trail = resolveBreadcrumbTrail(currentPath, links, prefix);
+  $: normalizedPath = trail.normalizedPath;
+  $: selectedLink = trail.selectedLink;
+  $: selectedSubLink = trail.selectedSubLink;
+  $: selectedSubSubLink = trail.selectedSubSubLink;
   $: isOverview = normalizedPath === "/";
-
-  $: if (normalizedPath) {
-    selectedSubLink = null;
-    selectedSubSubLink = null;
-    selectedLink = _.find(
-      links,
-      (l) => normalizedPath == l.href || normalizedPath == l.sidebarHref
-    );
-
-    if (!selectedLink) {
-      selectedLink = _.find(
-        links,
-        (l) => !_.isEmpty(l.children) && normalizedPath.startsWith(l.href)
-      );
-
-      if (selectedLink) {
-        selectedSubLink = _.find(
-          selectedLink.children,
-          (l) => normalizedPath == selectedLink.href + l.href
-        );
-
-        if (!selectedSubLink) {
-          selectedSubLink = _.find(selectedLink.children, (l) =>
-            normalizedPath.startsWith(selectedLink.href + l.href)
-          );
-
-          if (!_.isEmpty(selectedSubLink?.children)) {
-            selectedSubSubLink = _.find(selectedSubLink.children, (l) =>
-              normalizedPath.startsWith(selectedLink.href + selectedSubLink.href + l.href)
-            );
-          }
-        }
-      }
-    }
-  }
 
   $: contextTitle =
     selectedSubSubLink?.label || selectedSubLink?.label || selectedLink?.label || "Overview";

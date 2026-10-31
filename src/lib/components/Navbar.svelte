@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { afterNavigate } from "$app/navigation";
   import Actions from "$lib/components/Actions.svelte";
   import { month, year, dateMax, dateMin, dateRangeOption } from "../../store";
   import {
@@ -28,6 +29,12 @@
   import MonthPicker from "./MonthPicker.svelte";
   import Logo from "./Logo.svelte";
   import InputRange from "./InputRange.svelte";
+  import {
+    breadcrumbItems,
+    normalizeNavigationPath,
+    resolveBreadcrumbTrail,
+    type NavigationLink
+  } from "$lib/navigation";
 
   export let isBurger: boolean = null;
 
@@ -46,20 +53,7 @@
     { icon: "fa-circle-check", color: "grey", label: "Upcoming" }
   ];
 
-  interface Link {
-    label: string;
-    href: string;
-    tag?: string;
-    help?: string;
-    hide?: boolean;
-    dateRangeSelector?: boolean;
-    monthPicker?: boolean;
-    financialYearPicker?: boolean;
-    maxDepthSelector?: boolean;
-    recurringIcons?: boolean;
-    children?: Link[];
-    disablePreload?: boolean;
-  }
+  type Link = NavigationLink;
 
   const links: Link[] = [
     { label: "Dashboard", href: "/", hide: true },
@@ -187,38 +181,20 @@
   let selectedLink: Link = null;
   let selectedSubLink: Link = null;
   let selectedSubSubLink: Link = null;
+  let normalizedPath = "";
   let openMobileDropdown: string = null;
 
-  $: normalizedPath = page.url.pathname?.replace(/(.+)\/$/, "");
+  let currentPath = normalizeNavigationPath(page.url.pathname || "");
+  afterNavigate((navigation) => {
+    currentPath = normalizeNavigationPath(navigation.to?.url.pathname || currentPath);
+  });
 
-  $: if (normalizedPath) {
-    selectedSubLink = null;
-    selectedSubSubLink = null;
-    selectedLink = _.find(links, (l) => normalizedPath == l.href);
-    if (!selectedLink) {
-      selectedLink = _.find(
-        links,
-        (l) => !_.isEmpty(l.children) && normalizedPath.startsWith(l.href)
-      );
-
-      selectedSubLink = _.find(
-        selectedLink.children,
-        (l) => normalizedPath == selectedLink.href + l.href
-      );
-
-      if (!selectedSubLink) {
-        selectedSubLink = _.find(selectedLink.children, (l) =>
-          normalizedPath.startsWith(selectedLink.href + l.href)
-        );
-
-        if (selectedSubLink && !_.isEmpty(selectedSubLink.children)) {
-          selectedSubSubLink = _.find(selectedSubLink.children, (l) =>
-            normalizedPath.startsWith(selectedLink.href + selectedSubLink.href + l.href)
-          );
-        }
-      }
-    }
-  }
+  $: trail = resolveBreadcrumbTrail(currentPath, links);
+  $: normalizedPath = trail.normalizedPath;
+  $: selectedLink = trail.selectedLink;
+  $: selectedSubLink = trail.selectedSubLink;
+  $: selectedSubSubLink = trail.selectedSubSubLink;
+  $: breadcrumb = breadcrumbItems(trail);
 </script>
 
 <nav class="navbar px-2 is-transparent" aria-label="main navigation">
@@ -356,47 +332,21 @@
 </nav>
 
 <div class="mt-3 px-3 is-flex is-justify-content-space-between">
-  {#if selectedLink}
+  {#if breadcrumb.length > 0}
     <nav
       style="margin-left: 0.73rem;"
       class="breadcrumb has-chevron-separator mb-0 is-small"
       aria-label="breadcrumbs"
     >
       <ul>
-        <li>
-          <span class="is-inactive">{selectedLink.label}</span>
-
-          {#if selectedLink.tag}
-            <span style="font-size: 0.6rem" class="tag is-rounded is-warning"
-              >{selectedLink.tag}</span
-            >
-          {/if}
-        </li>
-        {#if selectedSubLink}
+        {#each breadcrumb as item}
           <li>
-            <span class="is-inactive">{selectedSubLink.label}</span>
-
-            {#if selectedSubLink.tag}
-              <span style="font-size: 0.6rem" class="tag is-rounded is-warning mr-2"
-                >{selectedSubLink.tag}</span
-              >
+            <span class="is-inactive">{item.label}</span>
+            {#if item.tag}
+              <span style="font-size: 0.6rem" class="tag is-rounded is-warning">{item.tag}</span>
             {/if}
           </li>
-        {/if}
-
-        {#if selectedSubLink}
-          {#if selectedSubSubLink}
-            <li>
-              <span class="is-inactive">{selectedSubSubLink.label}</span>
-            </li>
-          {:else if selectedLink.href + selectedSubLink.href != normalizedPath}
-            <li>
-              <span class="is-inactive"
-                >{decodeURIComponent(_.last(normalizedPath.split("/")))}</span
-              >
-            </li>
-          {/if}
-        {/if}
+        {/each}
       </ul>
     </nav>
   {/if}
