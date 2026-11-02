@@ -1612,3 +1612,40 @@ div.is-hoverable:hover {
     border-top: 1px solid var(--app-border);
   }
 }
+
+// Mobile readability and touch targets
+@include mobile {
+  .is-size-7 {
+    font-size: 0.85rem !important;
+  }
+
+  .is-size-6-5 {
+    font-size: 0.9rem !important;
+  }
+
+  .axis text {
+    font-size: 0.8rem;
+  }
+
+  .button,
+  .button.is-small,
+  .input,
+  .select select {
+    min-height: 44px;
+  }
+
+  .du-tabs .du-tab,
+  .du-tabs-sm .du-tab {
+    min-height: 38px;
+    height: auto;
+  }
+
+  .svelte-select {
+    --height: 44px;
+  }
+
+  .navbar-burger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
