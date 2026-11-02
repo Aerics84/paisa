@@ -11,6 +11,7 @@
     type IngestionResult,
     type StagedTransaction
   } from "$lib/utils";
+  import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
 
   let accountsList: string[] = $state([]);
   let defaultCurrency: string = $state(globalThis.USER_CONFIG?.default_currency || "");
@@ -112,7 +113,7 @@
     await runIngest();
   }
 
-  async function runIngest() {
+  async function runIngest(mode: "replace" | "merge" = "replace") {
     if (!rawFileContent.trim()) {
       toast.toast({ message: "No statement content to analyze", type: "is-warning" });
       return;
@@ -138,13 +139,19 @@
         return;
       }
 
-      stagedTransactions = (response.transactions || []).map((tx) => ({
+      const incoming = (response.transactions || []).map((tx) => ({
         ...tx,
         selected_account: tx.selected_account || ""
       }));
-      // Only include rows that the backend already classified. Suggested rows
-      // stay unchecked until the user accepts them.
-      includedStaged = stagedTransactions.map((tx) => !tx.is_duplicate && !!tx.selected_account);
+
+      if (mode === "merge" && stagedTransactions.length > 0) {
+        const merged = mergeIngestedTransactions(stagedTransactions, includedStaged, incoming);
+        stagedTransactions = merged.transactions;
+        includedStaged = merged.included;
+      } else {
+        stagedTransactions = incoming;
+        includedStaged = defaultIncludedTransactions(incoming);
+      }
 
       toast.toast({
         message: `Parsed ${response.total_parsed} transactions (${response.auto_categorized} rule-matched, ${response.possible_duplicates} duplicates flagged)`,
@@ -268,7 +275,7 @@
         });
 
         stagedTransactions = stagedTransactions.filter((_, idx) => !includedStaged[idx]);
-        includedStaged = stagedTransactions.map(() => true);
+        includedStaged = defaultIncludedTransactions(stagedTransactions);
       } else if (res.success) {
         toast.toast({
           message: res.message || "Import request was accepted",
@@ -300,7 +307,7 @@
   onruleschanged={() => {
     initialRuleForStudio = null;
     if (stagedTransactions.length > 0) {
-      runIngest();
+      runIngest("merge");
     }
   }}
 />
@@ -378,7 +385,7 @@
           class="button is-small ml-auto"
           class:is-loading={ingestLoading}
           disabled={ingestLoading || !rawFileContent.trim()}
-          onclick={runIngest}
+          onclick={() => runIngest()}
         >
           Re-analyze
         </button>
