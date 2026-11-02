@@ -298,6 +298,55 @@ func TestKotakValueDateFallback(t *testing.T) {
 	assert.True(t, result.Transactions[0].IsDebit)
 }
 
+// The ICICI bank statement fixture mirrors the normalized CSV produced from
+// the bank's .xls export (DD/MM/YYYY dates and separate debit/credit columns).
+// It is rendered against internal/model/template/templates/ICICI Bank
+// Statement.handlebars by the TypeScript fixture harness; this test pins the Go
+// side of the pipeline so the parser keeps recovering dates, amounts, thousands
+// separators and the debit/credit direction.
+func TestIngestICICIBankStatement(t *testing.T) {
+	db := openTestDB(t)
+
+	content, err := os.ReadFile("../../fixture/import/ICICI Bank Statement/monthly.csv")
+	require.NoError(t, err)
+
+	result, err := Ingest(db, IngestionRequest{
+		Format:  FormatCSV,
+		Content: string(content),
+	})
+	require.NoError(t, err)
+	require.Equal(t, 5, result.TotalParsed)
+
+	tx0 := result.Transactions[0]
+	assert.Equal(t, "2026-10-01", tx0.Date)
+	assert.Equal(t, "UPI/DR/415923876543/SWIGGY/YESB/swiggy@ybl", tx0.Payee)
+	assert.Equal(t, 450.0, tx0.Amount)
+	assert.True(t, tx0.IsDebit, "empty credit column must keep the row a debit")
+	assert.Equal(t, "INR", tx0.Currency)
+
+	tx1 := result.Transactions[1]
+	assert.Equal(t, "2026-10-03", tx1.Date)
+	assert.Equal(t, "NEFT/ICIC0000123/ACME PAYROLL/SALARY OCT 2026", tx1.Payee)
+	assert.Equal(t, 85000.0, tx1.Amount)
+	assert.False(t, tx1.IsDebit, "empty debit column must mark the row as credit")
+	assert.Equal(t, "INR", tx1.Currency)
+
+	tx2 := result.Transactions[2]
+	assert.Equal(t, "2026-10-07", tx2.Date)
+	assert.Equal(t, 1500.0, tx2.Amount)
+	assert.False(t, tx2.IsDebit)
+
+	tx3 := result.Transactions[3]
+	assert.Equal(t, "2026-10-12", tx3.Date)
+	assert.Equal(t, 2499.0, tx3.Amount)
+	assert.True(t, tx3.IsDebit)
+
+	tx4 := result.Transactions[4]
+	assert.Equal(t, "2026-10-15", tx4.Date)
+	assert.Equal(t, 1234.56, tx4.Amount)
+	assert.True(t, tx4.IsDebit)
+}
+
 func TestLoadPostingsForIngestionDateWindow(t *testing.T) {
 	db := openTestDB(t)
 

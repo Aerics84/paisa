@@ -33,6 +33,17 @@ func BuiltinPresets() []ImportPreset {
 			Delimiter:       ",",
 			PresetType:      Builtin,
 		},
+		{
+			ID:   buildID("ICICI Bank Statement CSV", Builtin),
+			Name: "ICICI Bank Statement CSV",
+			ColumnMappings: map[string]string{
+				"date": "A", "description": "B", "debit": "C", "credit": "D", "balance": "E",
+			},
+			DateFormat:      "DD/MM/YYYY",
+			DefaultAccounts: map[string]string{"asset": "Assets:Checking:ICICI"},
+			Delimiter:       ",",
+			PresetType:      Builtin,
+		},
 	}
 }
 

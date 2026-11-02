@@ -7,6 +7,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBuiltinPresetsContainsICICIBankStatement(t *testing.T) {
+	var icici *ImportPreset
+	for i, preset := range BuiltinPresets() {
+		if preset.Name == "ICICI Bank Statement CSV" {
+			icici = &BuiltinPresets()[i]
+			break
+		}
+	}
+	require.NotNil(t, icici)
+
+	assert.Equal(t, "builtin:ICICI Bank Statement CSV", icici.ID)
+	assert.Equal(t, map[string]string{
+		"date":        "A",
+		"description": "B",
+		"debit":       "C",
+		"credit":      "D",
+		"balance":     "E",
+	}, icici.ColumnMappings)
+	assert.Equal(t, "DD/MM/YYYY", icici.DateFormat)
+	assert.Equal(t, map[string]string{"asset": "Assets:Checking:ICICI"}, icici.DefaultAccounts)
+	assert.Equal(t, ",", icici.Delimiter)
+	assert.Equal(t, Builtin, icici.PresetType)
+}
+
 func TestBuiltinPresetsContainsKotakStatement(t *testing.T) {
 	var kotak *ImportPreset
 	for i, preset := range BuiltinPresets() {
