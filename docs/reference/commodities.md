@@ -221,6 +221,34 @@ All metal providers in Paisa are expected to persist normalized unit
 prices as `currency per gram`. Downstream valuation uses the stored unit
 price directly and computes market value as `quantity * unitPrice`.
 
+## AllRatesToday Exchange Rates
+
+To automatically track the exchange rate of a foreign currency, link
+the currency commodity with its ISO code. The daily European Central
+Bank reference rate is fetched from
+[AllRatesToday](https://allratestoday.com) (no api key needed) and
+converted to your [default_currency](./config.md). History goes back
+to 1999 where the ECB publishes the currency.
+
+```yaml
+commodities:
+  - name: USD # (1)!
+    type: unknown # (2)!
+    price:
+        provider: com-allratestoday # (3)!
+        code: USD # (4)!
+```
+
+1. commodity name
+1. type
+1. price provider name
+1. currency code
+
+The following currencies are supported: AUD, BRL, CAD, CHF, CNY, CZK,
+DKK, EUR, GBP, HKD, HUF, IDR, ILS, INR, ISK, JPY, KRW, MXN, MYR, NOK,
+NZD, PHP, PLN, RON, SEK, SGD, THB, TRY, USD and ZAR. Both the currency
+and your default currency need to be in this list.
+
 ## RealEstate
 
 Some commodities like real estate are bought once and the price
