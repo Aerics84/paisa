@@ -187,6 +187,11 @@ func CurrencyRates(db *gorm.DB, commodity string) []price.Price {
 			continue
 		}
 		for _, p := range utils.BTreeToSlice[price.Price](pt) {
+			// A zero quote carries no exchange rate. Treating it as valid
+			// would silently turn balances and XIRR into zero.
+			if p.Value.IsZero() {
+				continue
+			}
 			pmap[p.Date.String()] = p
 		}
 	}

@@ -59,7 +59,7 @@ func TestXIRRConvertedUsesDateRates(t *testing.T) {
 			Account:       "Assets:Broker",
 			Commodity:     "EUR",
 			Quantity:      decimal.NewFromInt(10),
-			Amount:        decimal.NewFromInt(-1000),
+			Amount:        decimal.NewFromInt(1000),
 			MarketAmount:  decimal.NewFromInt(1500),
 		},
 	}
@@ -84,12 +84,36 @@ func TestXIRRConvertedUsesDateRates(t *testing.T) {
 			Account:       "Assets:Broker",
 			Commodity:     "EUR",
 			Quantity:      decimal.NewFromInt(10),
-			Amount:        decimal.NewFromInt(-500),
+			Amount:        decimal.NewFromInt(500),
 			MarketAmount:  decimal.NewFromInt(375),
 		},
 	})
 
+	require.False(t, expected.IsZero(), "expected XIRR must be non-zero")
 	require.True(t, converted.Equal(expected), "expected %s, got %s", expected, converted)
+
+	// Control: using today's rate for the purchase too must produce a
+	// different (but still non-zero) XIRR. A conversion that is ignored would
+	// coincide with this control instead of the date-exact result.
+	control := XIRRConverted(db, ps, func(time.Time) decimal.Decimal {
+		return decimal.NewFromInt(4)
+	})
+	controlExpected := XIRR(db, []posting.Posting{
+		{
+			TransactionID: "buy",
+			Date:          purchaseDate,
+			Payee:         "Buy",
+			Account:       "Assets:Broker",
+			Commodity:     "EUR",
+			Quantity:      decimal.NewFromInt(10),
+			Amount:        decimal.NewFromInt(250),
+			MarketAmount:  decimal.NewFromInt(375),
+		},
+	})
+
+	require.False(t, controlExpected.IsZero(), "control XIRR must be non-zero")
+	require.True(t, control.Equal(controlExpected), "expected %s, got %s", controlExpected, control)
+	require.False(t, converted.Equal(control), "date-exact and today-rate conversions must differ")
 }
 
 func TestXIRRConvertedSkipsMissingRate(t *testing.T) {
@@ -105,7 +129,7 @@ func TestXIRRConvertedSkipsMissingRate(t *testing.T) {
 			Account:       "Assets:Broker",
 			Commodity:     "EUR",
 			Quantity:      decimal.NewFromInt(10),
-			Amount:        decimal.NewFromInt(-1000),
+			Amount:        decimal.NewFromInt(1000),
 			MarketAmount:  decimal.NewFromInt(1200),
 		},
 		{
@@ -115,7 +139,7 @@ func TestXIRRConvertedSkipsMissingRate(t *testing.T) {
 			Account:       "Assets:Broker",
 			Commodity:     "EUR",
 			Quantity:      decimal.NewFromInt(1),
-			Amount:        decimal.NewFromInt(-100),
+			Amount:        decimal.NewFromInt(100),
 		},
 	}
 
@@ -131,9 +155,24 @@ func TestXIRRConvertedSkipsMissingRate(t *testing.T) {
 
 	converted := XIRRConverted(db, ps, rate)
 
-	// A missing rate contributes a zero cashflow and must not panic.
-	expected := XIRRConverted(db, ps[:1], rate)
+	// A missing rate contributes a zero cashflow and must not panic. The
+	// remaining posting is converted at its own date's rate, so the result
+	// matches an explicitly converted posting.
+	expected := XIRR(db, []posting.Posting{
+		{
+			TransactionID: "buy",
+			Date:          firstDate,
+			Payee:         "Buy",
+			Account:       "Assets:Broker",
+			Commodity:     "EUR",
+			Quantity:      decimal.NewFromInt(10),
+			Amount:        decimal.NewFromInt(500),
+			MarketAmount:  decimal.NewFromInt(600),
+		},
+	})
+	require.False(t, expected.IsZero(), "expected XIRR must be non-zero")
 	require.True(t, converted.Equal(expected), "expected %s, got %s", expected, converted)
+	require.False(t, converted.IsZero(), "converted XIRR must be non-zero")
 }
 
 func TestXIRRConvertedReturnsZeroWithoutTodayRate(t *testing.T) {
@@ -148,7 +187,7 @@ func TestXIRRConvertedReturnsZeroWithoutTodayRate(t *testing.T) {
 			Account:       "Assets:Broker",
 			Commodity:     "EUR",
 			Quantity:      decimal.NewFromInt(10),
-			Amount:        decimal.NewFromInt(-1000),
+			Amount:        decimal.NewFromInt(1000),
 			MarketAmount:  decimal.NewFromInt(1200),
 		},
 	}

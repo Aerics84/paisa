@@ -117,3 +117,45 @@ func TestConvertedTimelineUsesEarliestRateBeforeFirstQuote(t *testing.T) {
 	require.True(t, converted[2].BalanceAmount.Equal(decimal.NewFromInt(60)), "got %s", converted[2].BalanceAmount)
 	require.True(t, converted[2].InvestmentAmount.Equal(decimal.NewFromInt(70)), "got %s", converted[2].InvestmentAmount)
 }
+
+func TestConvertedTimelineIgnoresZeroValuedLatestRate(t *testing.T) {
+	db := openNetworthCurrencyTestDB(t)
+
+	first := currencyTestDate(1)
+	second := currencyTestDate(2)
+	require.NoError(t, db.Create(&[]price.Price{
+		{Date: first, CommodityType: config.Unknown, CommodityID: "USD", CommodityName: "USD", Value: decimal.NewFromInt(2)},
+		{Date: second, CommodityType: config.Unknown, CommodityID: "USD", CommodityName: "USD", Value: decimal.Zero},
+	}).Error)
+
+	timeline := []Networth{
+		{Date: first, InvestmentAmount: decimal.NewFromInt(100), BalanceAmount: decimal.NewFromInt(100)},
+		{Date: second, InvestmentAmount: decimal.NewFromInt(200), BalanceAmount: decimal.NewFromInt(220)},
+	}
+
+	converted := computeConvertedNetworthTimeline(db, "USD", timeline)
+	require.Len(t, converted, 2, "a zero-valued latest quote must fall back to the previous valid rate")
+	require.True(t, converted[1].Date.Equal(second))
+	require.True(t, converted[1].InvestmentAmount.Equal(decimal.NewFromInt(100)), "got %s", converted[1].InvestmentAmount)
+	require.True(t, converted[1].BalanceAmount.Equal(decimal.NewFromInt(110)), "got %s", converted[1].BalanceAmount)
+	require.True(t, converted[1].GainAmount.Equal(decimal.NewFromInt(10)), "got %s", converted[1].GainAmount)
+}
+
+func TestConvertedTimelineEmptyWithOnlyZeroValuedRates(t *testing.T) {
+	db := openNetworthCurrencyTestDB(t)
+
+	require.NoError(t, db.Create(&price.Price{
+		Date:          currencyTestDate(1),
+		CommodityType: config.Unknown,
+		CommodityID:   "USD",
+		CommodityName: "USD",
+		Value:         decimal.Zero,
+	}).Error)
+
+	timeline := []Networth{
+		{Date: currencyTestDate(1), InvestmentAmount: decimal.NewFromInt(100), BalanceAmount: decimal.NewFromInt(100)},
+	}
+
+	require.Nil(t, currencyRateFn(db, "USD"), "zero-valued quotes must be treated as missing")
+	require.Empty(t, computeConvertedNetworthTimeline(db, "USD", timeline))
+}
