@@ -1,15 +1,13 @@
 <script lang="ts">
   import Modal from "$lib/components/Modal.svelte";
   import { ajax, type AllocationTarget } from "$lib/utils";
+  import {
+    allocationTargetsToEntries,
+    validateAllocationTargetEntries,
+    type AllocationTargetEntry
+  } from "$lib/allocation_targets";
   import * as toast from "bulma-toast";
   import _ from "lodash";
-
-  interface TargetEntry {
-    name: string;
-    target: number;
-    drift: number;
-    accounts: string[];
-  }
 
   let {
     active = $bindable(false),
@@ -23,7 +21,7 @@
     onSave?: () => void;
   } = $props();
 
-  let localTargets = $state<TargetEntry[]>([]);
+  let localTargets = $state<AllocationTargetEntry[]>([]);
   let saving = $state(false);
   let activeAccountPickerIndex = $state<number | null>(null);
   let accountSearch = $state("");
@@ -31,12 +29,7 @@
   $effect(() => {
     if (active) {
       if (targets && targets.length > 0) {
-        localTargets = targets.map((t) => ({
-          name: t.name || "",
-          target: Number(t.target) || 0,
-          drift: t.drift != null && Number(t.drift) > 0 ? Number(t.drift) : 5,
-          accounts: [...(t.accounts || [])]
-        }));
+        localTargets = allocationTargetsToEntries(targets);
       } else {
         localTargets = [
           { name: "Equity", target: 60, drift: 5, accounts: ["Assets:Equity:*"] },
@@ -93,25 +86,10 @@
   }
 
   async function handleSave() {
-    for (const t of localTargets) {
-      if (!t.name.trim()) {
-        toast.toast({ message: "All asset class names must be filled.", type: "is-warning" });
-        return;
-      }
-      if (t.target < 0 || t.target > 100) {
-        toast.toast({
-          message: `Target percentage for ${t.name} must be between 0 and 100.`,
-          type: "is-warning"
-        });
-        return;
-      }
-      if (t.accounts.length === 0) {
-        toast.toast({
-          message: `Please assign at least one account to "${t.name}".`,
-          type: "is-warning"
-        });
-        return;
-      }
+    const validationError = validateAllocationTargetEntries(localTargets);
+    if (validationError) {
+      toast.toast({ message: validationError, type: "is-warning" });
+      return;
     }
 
     saving = true;

@@ -1,9 +1,15 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/cache"
@@ -235,4 +241,99 @@ func TestComputeRebalancePlanFullRebalance(t *testing.T) {
 		}
 	}
 	assert.True(t, bought.Equal(sold), "buys and sells must net to zero, bought: %s, sold: %s", bought, sold)
+}
+
+func TestComputeRebalancePlanCashInjectionZeroCash(t *testing.T) {
+	targets := []AllocationTarget{
+		{
+			Name:         "Equity",
+			Target:       decimal.NewFromInt(60),
+			Current:      decimal.NewFromInt(70),
+			MarketAmount: decimal.NewFromInt(7000),
+		},
+		{
+			Name:         "Debt",
+			Target:       decimal.NewFromInt(40),
+			Current:      decimal.NewFromInt(30),
+			MarketAmount: decimal.NewFromInt(3000),
+		},
+	}
+
+	plan := ComputeRebalancePlan(targets, decimal.Zero, "cash_injection")
+
+	assert.Equal(t, "cash_injection", plan.Mode)
+	require.Len(t, plan.Items, 2)
+	for _, item := range plan.Items {
+		assert.Equal(t, "HOLD", item.Action, "zero cash injection must not buy or sell")
+		assert.True(t, item.Amount.Equal(decimal.Zero))
+	}
+}
+
+func TestComputeRebalancePlanFullRebalanceNonHundredTargets(t *testing.T) {
+	targets := []AllocationTarget{
+		{
+			Name:         "Equity",
+			Target:       decimal.NewFromInt(60),
+			Current:      decimal.NewFromInt(70),
+			MarketAmount: decimal.NewFromInt(7000),
+		},
+		{
+			Name:         "Debt",
+			Target:       decimal.NewFromInt(30),
+			Current:      decimal.NewFromInt(20),
+			MarketAmount: decimal.NewFromInt(2000),
+		},
+	}
+
+	plan := ComputeRebalancePlan(targets, decimal.Zero, "full_rebalance")
+
+	assert.Equal(t, "SELL", plan.Items[0].Action)
+	assert.True(t, plan.Items[0].Amount.Equal(decimal.NewFromInt(1000)))
+	assert.Equal(t, "BUY", plan.Items[1].Action)
+	assert.True(t, plan.Items[1].Amount.Equal(decimal.NewFromInt(1000)))
+
+	bought := decimal.Zero
+	sold := decimal.Zero
+	for _, item := range plan.Items {
+		switch item.Action {
+		case "BUY":
+			bought = bought.Add(item.Amount)
+		case "SELL":
+			sold = sold.Add(item.Amount)
+		}
+	}
+	assert.True(t, bought.Equal(sold), "buys and sells must net to zero, bought: %s, sold: %s", bought, sold)
+}
+
+func TestValidateAllocationTargetsRequiresHundredPercent(t *testing.T) {
+	valid := []config.AllocationTarget{
+		{Name: "Equity", Target: 60, Drift: 5, Accounts: []string{"Assets:Equity:*"}},
+		{Name: "Debt", Target: 40, Drift: 5, Accounts: []string{"Assets:Debt:*"}},
+	}
+	require.NoError(t, validateAllocationTargets(valid))
+
+	invalid := []config.AllocationTarget{
+		{Name: "Equity", Target: 60, Drift: 5, Accounts: []string{"Assets:Equity:*"}},
+		{Name: "Debt", Target: 30, Drift: 5, Accounts: []string{"Assets:Debt:*"}},
+	}
+	require.Error(t, validateAllocationTargets(invalid))
+}
+
+func TestRebalanceHandlerRejectsUnknownMode(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	db := openFuturePostingsTestDB(t)
+
+	router := gin.New()
+	router.POST("/api/allocation/rebalance", RebalanceHandler(db))
+
+	payload, err := json.Marshal(RebalanceRequest{Cash: decimal.NewFromInt(1000), Mode: "sideways"})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/api/allocation/rebalance", bytes.NewReader(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

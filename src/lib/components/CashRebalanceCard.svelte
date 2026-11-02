@@ -20,9 +20,11 @@
   let plan = $state<RebalancePlan | null>(null);
   let loading = $state(false);
 
+  // React to the plan passed by the page, including after targets are saved.
   $effect(() => {
-    if (initialPlan && !plan) {
+    if (initialPlan) {
       plan = initialPlan;
+      mode = initialPlan.mode;
     }
   });
 
@@ -165,7 +167,8 @@
             <tr class="hover:bg-base-200/40 transition-colors">
               <td class="font-semibold">{item.name}</td>
               <td class="text-right font-mono">{formatPercentage(Number(item.target) / 100, 1)}</td>
-              <td class="text-right font-mono">{formatPercentage(Number(item.current) / 100, 1)}</td>
+              <td class="text-right font-mono">{formatPercentage(Number(item.current) / 100, 1)}</td
+              >
               <td class="text-right font-mono">{formatCurrency(Number(item.market_amount))}</td>
               <td class="text-center">
                 {#if item.action === "BUY"}

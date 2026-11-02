@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -218,6 +219,13 @@ func computeAggregate(db *gorm.DB, postings []posting.Posting, date time.Time) m
 	return result
 }
 
+func allocationTargetPercent(target decimal.Decimal, totalTarget decimal.Decimal) decimal.Decimal {
+	if totalTarget.IsZero() {
+		return decimal.Zero
+	}
+	return target.Div(totalTarget).Mul(decimal.NewFromInt(100))
+}
+
 func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode string) RebalancePlan {
 	if mode == "" {
 		if cash.GreaterThan(decimal.Zero) {
@@ -228,8 +236,10 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 	}
 
 	totalBefore := decimal.Zero
+	totalTarget := decimal.Zero
 	for _, t := range targets {
 		totalBefore = totalBefore.Add(t.MarketAmount)
+		totalTarget = totalTarget.Add(t.Target)
 	}
 
 	if cash.LessThan(decimal.Zero) {
@@ -261,9 +271,10 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 		}
 	}
 
-	if mode == "full_rebalance" || cash.IsZero() {
+	if mode == "full_rebalance" {
 		for _, t := range targets {
-			idealTargetAmount := totalAfter.Mul(t.Target).Div(decimal.NewFromInt(100)).Round(2)
+			targetPercent := allocationTargetPercent(t.Target, totalTarget)
+			idealTargetAmount := totalAfter.Mul(targetPercent).Div(decimal.NewFromInt(100)).Round(2)
 			delta := idealTargetAmount.Sub(t.MarketAmount)
 			action := "HOLD"
 			amount := decimal.Zero
@@ -284,7 +295,7 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 				TargetAmount: idealTargetAmount,
 				Action:       action,
 				Amount:       amount,
-				NewPercent:   t.Target,
+				NewPercent:   targetPercent.Round(2),
 			})
 		}
 	} else {
@@ -295,17 +306,15 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 		}
 		deficits := make([]bucketDeficit, len(targets))
 		totalDeficit := decimal.Zero
-		totalTarget := decimal.Zero
 
 		for i, t := range targets {
-			ideal := totalAfter.Mul(t.Target).Div(decimal.NewFromInt(100)).Round(2)
+			ideal := totalAfter.Mul(allocationTargetPercent(t.Target, totalTarget)).Div(decimal.NewFromInt(100)).Round(2)
 			def := ideal.Sub(t.MarketAmount)
 			if def.LessThan(decimal.Zero) {
 				def = decimal.Zero
 			}
 			deficits[i] = bucketDeficit{index: i, deficit: def, target: t.Target}
 			totalDeficit = totalDeficit.Add(def)
-			totalTarget = totalTarget.Add(t.Target)
 		}
 
 		allocations := make([]decimal.Decimal, len(targets))
@@ -349,7 +358,7 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 			if totalAfter.GreaterThan(decimal.Zero) {
 				newPercent = newAmount.Div(totalAfter).Mul(decimal.NewFromInt(100)).Round(2)
 			}
-			targetAmount := totalAfter.Mul(t.Target).Div(decimal.NewFromInt(100)).Round(2)
+			targetAmount := totalAfter.Mul(allocationTargetPercent(t.Target, totalTarget)).Div(decimal.NewFromInt(100)).Round(2)
 
 			items = append(items, RebalanceItem{
 				Name:         t.Name,
@@ -381,6 +390,13 @@ func RebalanceHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		switch req.Mode {
+		case "", "cash_injection", "full_rebalance":
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "mode must be cash_injection or full_rebalance"})
+			return
+		}
+
 		postings := query.Init(db).UntilToday().Like("Assets:%").All()
 		now := utils.EndOfToday()
 		postings = lo.Map(postings, func(p posting.Posting, _ int) posting.Posting {
@@ -391,6 +407,35 @@ func RebalanceHandler(db *gorm.DB) gin.HandlerFunc {
 		plan := ComputeRebalancePlan(targets, req.Cash, req.Mode)
 		c.JSON(http.StatusOK, plan)
 	}
+}
+
+func validateAllocationTargets(targets []config.AllocationTarget) error {
+	if len(targets) == 0 {
+		return nil
+	}
+
+	total := decimal.Zero
+	for _, t := range targets {
+		if strings.TrimSpace(t.Name) == "" {
+			return fmt.Errorf("target name cannot be empty")
+		}
+		if t.Target < 0 || t.Target > 100 {
+			return fmt.Errorf("target percentage must be between 0 and 100")
+		}
+		if t.Drift < 0 || t.Drift > 100 {
+			return fmt.Errorf("drift tolerance must be between 0 and 100")
+		}
+		if len(t.Accounts) == 0 {
+			return fmt.Errorf("target %q must have at least one account", t.Name)
+		}
+		total = total.Add(decimal.NewFromFloat(t.Target))
+	}
+
+	if !total.Round(2).Equal(decimal.NewFromInt(100)) {
+		return fmt.Errorf("target percentages must sum to 100, got %s", total)
+	}
+
+	return nil
 }
 
 func SaveAllocationTargetsHandler() gin.HandlerFunc {
@@ -406,19 +451,9 @@ func SaveAllocationTargetsHandler() gin.HandlerFunc {
 			return
 		}
 
-		for _, t := range targets {
-			if strings.TrimSpace(t.Name) == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "target name cannot be empty"})
-				return
-			}
-			if t.Target < 0 || t.Target > 100 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "target percentage must be between 0 and 100"})
-				return
-			}
-			if t.Drift < 0 || t.Drift > 100 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "drift tolerance must be between 0 and 100"})
-				return
-			}
+		if err := validateAllocationTargets(targets); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 
 		cfg := config.GetConfig()
