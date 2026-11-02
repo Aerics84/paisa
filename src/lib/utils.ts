@@ -686,6 +686,76 @@ export interface ImportTemplate {
   [key: string]: unknown;
 }
 
+/** Mirrors internal/importer.IngestionFormat. */
+export type IngestionFormat = "csv" | "ofx" | "qfx" | "excel" | "pdf" | "cas";
+
+/** Mirrors internal/importer.StagedTransaction. */
+export interface StagedTransaction {
+  index: number;
+  date: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  currency?: string;
+  is_debit: boolean;
+  selected_account: string;
+  suggested_account?: string;
+  confidence?: string;
+  matched_rule_name?: string;
+  matched_rule_id?: number;
+  tags?: string[];
+  flag_for_review?: boolean;
+  is_duplicate?: boolean;
+  duplicate_score?: number;
+  duplicate_match_id?: number;
+  duplicate_reason?: string;
+}
+
+/** Mirrors internal/importer.IngestionResult. */
+export interface IngestionResult {
+  total_parsed: number;
+  auto_categorized: number;
+  possible_duplicates: number;
+  transactions: StagedTransaction[];
+}
+
+/** Mirrors internal/model/import_rule.Rule. */
+export interface ImportRule {
+  id?: number;
+  name: string;
+  priority: number;
+  enabled: boolean;
+  payee_pattern?: string;
+  payee_match_type?: "contains" | "exact" | "regex";
+  memo_pattern?: string;
+  memo_match_type?: "contains" | "exact" | "regex";
+  tx_type?: "any" | "debit" | "credit";
+  min_amount?: number;
+  max_amount?: number;
+  target_account: string;
+  tags?: string[];
+  flag_for_review?: boolean;
+}
+
+/** Mirrors internal/model/import_rule.RuleMatchResult. */
+export interface RuleMatchResult {
+  matched: boolean;
+  rule_id?: number;
+  rule_name?: string;
+  target_account?: string;
+  tags?: string[];
+  flag_for_review: boolean;
+}
+
+/** Mirrors internal/server.CommitImportRequest. */
+export interface CommitImportRequest {
+  base_account: string;
+  commodity: string;
+  group_by_date: boolean;
+  raw_content: string;
+  transactions: StagedTransaction[];
+}
+
 export interface Log {
   time: dayjs.Dayjs;
   level: string;
