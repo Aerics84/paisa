@@ -36,6 +36,7 @@ const (
 	NPS        CommodityType = "nps"
 	Stock      CommodityType = "stock"
 	Metal      CommodityType = "metal"
+	Currency   CommodityType = "currency"
 	Unknown    CommodityType = "unknown"
 )
 

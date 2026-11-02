@@ -20,6 +20,15 @@ import (
 // endpoint. Overridden in tests.
 var BaseURL = "https://allratestoday.com/api/compat/frankfurter"
 
+// httpClient is overridden in tests.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
+// maxResponseBytes bounds how much of a response body is accepted.
+const maxResponseBytes = 1 << 20
+
+// maxErrorBodyBytes bounds the snippet included in error messages.
+const maxErrorBodyBytes = 512
+
 // The endpoint caps a range at 366 days, so history is fetched one
 // year at a time, walking backwards until a year has no rates.
 const chunkDays = 365
@@ -143,23 +152,27 @@ func fetchRange(from, to, commodityName string, start, end time.Time) ([]*price.
 	}
 	req.Header.Set("User-Agent", "paisa")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
 
 	// 404 means no published rates in the range.
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(respBytes))
+		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, strings.TrimSpace(string(snippet)))
+	}
+
+	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(respBytes) > maxResponseBytes {
+		return nil, fmt.Errorf("response body exceeds %d bytes", maxResponseBytes)
 	}
 
 	var response rangeResponse
@@ -182,7 +195,7 @@ func fetchRange(from, to, commodityName string, start, end time.Time) ([]*price.
 
 		prices = append(prices, &price.Price{
 			Date:          dateTime,
-			CommodityType: config.Unknown,
+			CommodityType: config.Currency,
 			CommodityID:   from,
 			CommodityName: commodityName,
 			Value:         value,

@@ -278,7 +278,7 @@ allocation_targets:
 # OPTIONAL, DEFAULT: []
 commodities:
   - name: NASDAQ
-    # Required, ENUM: mutualfund, stock, nps, unknown
+    # Required, ENUM: mutualfund, stock, nps, metal, currency, unknown
     type: mutualfund
     price:
       # Required, ENUM: in-mfapi, com-yahoo, com-purifiedbytes-nps, co-alphavantage, com-allratestoday

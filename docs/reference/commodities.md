@@ -233,7 +233,7 @@ to 1999 where the ECB publishes the currency.
 ```yaml
 commodities:
   - name: USD # (1)!
-    type: unknown # (2)!
+    type: currency # (2)!
     price:
         provider: com-allratestoday # (3)!
         code: USD # (4)!
@@ -247,7 +247,8 @@ commodities:
 The following currencies are supported: AUD, BRL, CAD, CHF, CNY, CZK,
 DKK, EUR, GBP, HKD, HUF, IDR, ILS, INR, ISK, JPY, KRW, MXN, MYR, NOK,
 NZD, PHP, PLN, RON, SEK, SGD, THB, TRY, USD and ZAR. Both the currency
-and your default currency need to be in this list.
+and your default currency need to be in this list. The commodity type
+must be `currency`.
 
 ## RealEstate
 

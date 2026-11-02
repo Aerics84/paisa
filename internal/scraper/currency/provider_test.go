@@ -1,6 +1,7 @@
 package currency
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,6 +63,7 @@ func TestGetHistoryWalksBackUntilEmpty(t *testing.T) {
 	for _, p := range prices {
 		assert.Equal(t, "USD", p.CommodityID)
 		assert.Equal(t, "USD", p.CommodityName)
+		assert.Equal(t, config.Currency, p.CommodityType)
 	}
 }
 
@@ -109,6 +112,40 @@ func TestGetHistoryRejectsInvalidResponse(t *testing.T) {
 
 	withServer(t, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"rates":`)
+	})
+
+	_, err := GetHistory("USD", "INR", "USD", until)
+	require.Error(t, err)
+}
+
+func TestGetHistoryRejectsOversizedResponse(t *testing.T) {
+	until := time.Date(2026, 10, 31, 0, 0, 0, 0, time.UTC)
+
+	withServer(t, func(w http.ResponseWriter, r *http.Request) {
+		// A syntactically valid body that is larger than the accepted
+		// response size.
+		fmt.Fprint(w, `{"padding":"`)
+		fmt.Fprint(w, string(bytes.Repeat([]byte("a"), 1<<20)))
+		fmt.Fprint(w, `","rates":{"2026-10-30":{"INR":94.955245}}}`)
+	})
+
+	_, err := GetHistory("USD", "INR", "USD", until)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds")
+}
+
+func TestGetHistoryTimesOut(t *testing.T) {
+	until := time.Date(2026, 10, 31, 0, 0, 0, 0, time.UTC)
+
+	withServer(t, func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(250 * time.Millisecond)
+		fmt.Fprint(w, `{"rates":{"2026-10-30":{"INR":94.955245}}}`)
+	})
+
+	previousClient := httpClient
+	httpClient = &http.Client{Timeout: 20 * time.Millisecond}
+	t.Cleanup(func() {
+		httpClient = previousClient
 	})
 
 	_, err := GetHistory("USD", "INR", "USD", until)

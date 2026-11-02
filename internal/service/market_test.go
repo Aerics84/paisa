@@ -175,3 +175,31 @@ func TestPriceCacheConcurrentClearAndRead(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestCurrencyQuotesRemainInMainPriceCache(t *testing.T) {
+	loadMarketTestConfig(t)
+	ClearPriceCache()
+	t.Cleanup(ClearPriceCache)
+
+	db, err := gorm.Open(sqlite.Open("file:market-currency?mode=memory&cache=shared"), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.AutoMigrate(&price.Price{}, &posting.Posting{}))
+
+	date := time.Date(2026, 10, 30, 0, 0, 0, 0, config.TimeZone())
+	require.NoError(t, db.Create(&price.Price{
+		Date:          date,
+		CommodityType: config.Currency,
+		CommodityID:   "USD",
+		CommodityName: "USD",
+		Value:         decimal.NewFromInt(80),
+	}).Error)
+
+	quote, found := FindUnitPrice(db, "USD", date)
+	require.True(t, found, "fetched currency quotes must stay in the main price cache")
+	assert.Equal(t, config.Currency, quote.CommodityType)
+	assert.True(t, quote.Value.Equal(decimal.NewFromInt(80)))
+
+	rates := CurrencyRates(db, "USD")
+	require.Len(t, rates, 1)
+	assert.True(t, rates[0].Value.Equal(decimal.NewFromInt(80)))
+}
