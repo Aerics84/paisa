@@ -6,6 +6,7 @@
   export let data: any[];
   export let columns: ColumnDefinition[];
   export let tree = false;
+  export let layout: "fitDataTable" | "fitColumns" = "fitDataTable";
 
   let tableComponent: HTMLElement;
   let tabulator: Tabulator;
@@ -39,9 +40,9 @@
         // fitDataTable measures the rendered cells. The virtual renderers only
         // mount the visible rows, so long account names further down the table
         // are never measured and the header columns stay too narrow.
-        renderVertical: "basic",
-        renderHorizontal: "basic",
-        layout: "fitDataTable"
+        renderVertical: layout === "fitDataTable" ? "basic" : "virtual",
+        renderHorizontal: layout === "fitDataTable" ? "basic" : "virtual",
+        layout
       });
     }
   }
@@ -52,12 +53,3 @@
 </script>
 
 <div class="overflow-x-auto box py-0" style="max-width: 100%;" bind:this={tableComponent}></div>
-
-<style lang="scss">
-  /* Do not stretch the table box beyond the last column; otherwise the row
-     background continues past the final header cell. */
-  :global(.tabulator) {
-    width: fit-content !important;
-    max-width: 100%;
-  }
-</style>
