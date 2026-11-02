@@ -1060,6 +1060,32 @@
         "additionalProperties": false
       }
     },
+    "networth_currencies": {
+      "type": "array",
+      "description": "Additional currencies in which the networth and gain pages show amounts, timelines and XIRR. The rate is taken from the price of the commodity (in the default currency).",
+      "default": [],
+      "itemsUniqueProperties": ["name"],
+      "items": {
+        "type": "object",
+        "ui:header": "name",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Currency name shown in the UI. Example: USD"
+          },
+          "commodity": {
+            "type": "string",
+            "description": "Commodity whose price is the exchange rate. Example: $"
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Symbol shown before amounts. Defaults to the commodity"
+          }
+        },
+        "required": ["name", "commodity"],
+        "additionalProperties": false
+      }
+    },
     "commodities": {
       "type": "array",
       "default": [

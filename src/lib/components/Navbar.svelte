@@ -24,6 +24,7 @@
   } from "$lib/utils";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
+  import CurrencySelect from "./CurrencySelect.svelte";
   import DateRange from "./DateRange.svelte";
   import ThemeSwitcher from "./ThemeSwitcher.svelte";
   import MonthPicker from "./MonthPicker.svelte";
@@ -92,9 +93,14 @@
       href: "/assets",
       children: [
         { label: "Balance", href: "/balance" },
-        { label: "Networth", href: "/networth", dateRangeSelector: true },
+        {
+          label: "Networth",
+          href: "/networth",
+          dateRangeSelector: true,
+          currencySelector: true
+        },
         { label: "Investment", href: "/investment" },
-        { label: "Gain", href: "/gain" },
+        { label: "Gain", href: "/gain", currencySelector: true },
         { label: "Allocation", href: "/allocation", help: "allocation-targets" },
         { label: "Analysis", href: "/analysis", tag: "alpha", help: "analysis" }
       ]
@@ -390,6 +396,10 @@
           </div>
         </div>
       </div>
+    {/if}
+
+    {#if selectedSubLink?.currencySelector || selectedLink?.currencySelector}
+      <CurrencySelect />
     {/if}
 
     {#if selectedSubLink?.dateRangeSelector || selectedLink?.dateRangeSelector}

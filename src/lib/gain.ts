@@ -8,6 +8,7 @@ import COLORS from "./colors";
 import {
   formatCurrency,
   formatCurrencyCrude,
+  formatCurrencyCrudeWithLocale,
   formatFloat,
   now,
   rem,
@@ -313,7 +314,19 @@ export function renderOverview(gains: Gain[]) {
     .attr("width", width);
 }
 
-export function renderAccountOverview(points: Networth[], postings: Posting[], id: string) {
+export function renderAccountOverview(
+  points: Networth[],
+  postings: Posting[],
+  id: string,
+  options: { currencySymbol?: string } = {}
+) {
+  // The user's locale (e.g. lakh / crore grouping) applies to the default
+  // currency only.
+  const symbol = options.currencySymbol || "";
+  const locale = symbol ? "en-US" : null;
+  const fmt = (v: number) => symbol + formatCurrency(v, null, locale);
+  const fmtCrude = (v: number) => symbol + formatCurrencyCrudeWithLocale(v, locale);
+
   const start = _.min(_.map(points, (p) => p.date)),
     end = now();
 
@@ -357,11 +370,11 @@ export function renderAccountOverview(points: Networth[], postings: Posting[], i
   g.append("g")
     .attr("class", "axis y")
     .attr("transform", `translate(${width},0)`)
-    .call(d3.axisRight(y).ticks(5).tickPadding(5).tickFormat(formatCurrencyCrude));
+    .call(d3.axisRight(y).ticks(5).tickPadding(5).tickFormat(fmtCrude));
 
   g.append("g")
     .attr("class", "axis y")
-    .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(formatCurrencyCrude));
+    .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(fmtCrude));
 
   const postingsG = g.append("g").attr("class", "postings");
 
@@ -373,7 +386,7 @@ export function renderAccountOverview(points: Networth[], postings: Posting[], i
       return tooltip(
         [
           ["Date", p.date.format("DD MMM YYYY")],
-          ["Amount", [formatCurrency(p.amount), "has-text-weight-bold has-text-right"]]
+          ["Amount", [fmt(p.amount), "has-text-weight-bold has-text-right"]]
         ],
         { header: p.payee }
       );
@@ -506,12 +519,12 @@ export function renderAccountOverview(points: Networth[], postings: Posting[], i
         placement: pointType == "balance" ? "top" : "bottom",
         content: tooltip([
           ["Date", d.date.format("DD MMM YYYY")],
-          ["Balance", [formatCurrency(d.balanceAmount), "has-text-weight-bold has-text-right"]],
+          ["Balance", [fmt(d.balanceAmount), "has-text-weight-bold has-text-right"]],
           [
             "Net Investment",
-            [formatCurrency(d.netInvestmentAmount), "has-text-weight-bold has-text-right"]
+            [fmt(d.netInvestmentAmount), "has-text-weight-bold has-text-right"]
           ],
-          ["Gain / Loss", [formatCurrency(d.gainAmount), "has-text-weight-bold has-text-right"]]
+          ["Gain / Loss", [fmt(d.gainAmount), "has-text-weight-bold has-text-right"]]
         ])
       });
       t.show();

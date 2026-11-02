@@ -14,6 +14,10 @@
   export let posting: Posting;
   export let color: string;
   export let icon: boolean = false;
+  export let currencySymbol: string = "";
+
+  const fmt = (value: number) =>
+    currencySymbol ? currencySymbol + formatCurrency(value, 2, "en-US") : formatCurrency(value);
 </script>
 
 <div class="box p-2 my-2 has-background-white" style="border-left: 2px solid {color}">
@@ -46,7 +50,7 @@
       >
         {formatFloat(posting.quantity, 4)} @ {formatFloat(posting.amount / posting.quantity, 3)}
       </div>
-      <div class="has-text-weight-bold is-size-6">{formatCurrency(posting.amount)}</div>
+      <div class="has-text-weight-bold is-size-6">{fmt(posting.amount)}</div>
     </div>
   </div>
 </div>

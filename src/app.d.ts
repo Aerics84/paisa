@@ -48,6 +48,11 @@ interface UserConfig {
   amount_alignment_column: number;
   week_starting_day: number;
   goals: Record<string, Array<GoalSummary>>;
+  networth_currencies?: {
+    name: string;
+    symbol?: string;
+    commodity: string;
+  }[];
   accounts: {
     name: string;
     icon: string;

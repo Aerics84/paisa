@@ -169,11 +169,28 @@ export interface Gain {
   postings: Posting[];
 }
 
+export interface CurrencyNetworth {
+  name: string;
+  symbol: string;
+  commodity: string;
+  networthTimeline: Networth[];
+}
+
+export interface CurrencyAccountGain {
+  name: string;
+  symbol: string;
+  commodity: string;
+  networthTimeline: Networth[];
+  xirr: number;
+  postings: Posting[];
+}
+
 export interface AccountGain {
   account: string;
   networthTimeline: Networth[];
   xirr: number;
   postings: Posting[];
+  currencies: CurrencyAccountGain[];
 }
 
 export interface InterestOverview {
@@ -877,6 +894,7 @@ export function ajax(
 ): Promise<{ balancedPostings: BalancedPosting[] }>;
 export function ajax(route: "/api/networth"): Promise<{
   networthTimeline: Networth[];
+  currencyNetworths: CurrencyNetworth[];
   xirr: number;
 }>;
 export function ajax(route: "/api/gain"): Promise<{
@@ -1234,7 +1252,7 @@ function unicodeMinus(value: string) {
   return value.replace(/^-/, "\u2212");
 }
 
-export function formatCurrency(value: number, precision: number = null) {
+export function formatCurrency(value: number, precision: number = null, locale: string = null) {
   const config = getUserConfig();
   value = normalize(value);
 
@@ -1243,7 +1261,7 @@ export function formatCurrency(value: number, precision: number = null) {
   }
 
   return unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(locale ?? config.locale, {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -1254,7 +1272,15 @@ export function formatCurrencyCrude(value: number) {
   return formatCurrencyCrudeWithPrecision(value, -1);
 }
 
-export function formatCurrencyCrudeWithPrecision(value: number, precision: number) {
+export function formatCurrencyCrudeWithLocale(value: number, locale: string = null) {
+  return formatCurrencyCrudeWithPrecision(value, -1, locale);
+}
+
+export function formatCurrencyCrudeWithPrecision(
+  value: number,
+  precision: number,
+  locale: string = null
+) {
   const config = getUserConfig();
   value = normalize(value);
 
@@ -1269,7 +1295,7 @@ export function formatCurrencyCrudeWithPrecision(value: number, precision: numbe
     options.minimumFractionDigits = precision;
   }
 
-  return unicodeMinus(value.toLocaleString(config.locale, options));
+  return unicodeMinus(value.toLocaleString(locale ?? config.locale, options));
 }
 
 export function formatCurrencyWithSymbol(value: number, precision: number = null) {

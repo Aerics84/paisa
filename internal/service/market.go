@@ -50,22 +50,35 @@ func loadPriceCache(db *gorm.DB) *priceCache {
 		log.Fatal(result.Error)
 	}
 
-	for commodityName, postings := range lo.GroupBy(postings, func(p posting.Posting) string { return p.Commodity }) {
-		if !utils.IsCurrency(postings[0].Commodity) {
-			result := db.Where("commodity_type = ? and commodity_name = ?", config.Unknown, commodityName).Find(&prices)
-			if result.Error != nil {
-				log.Fatal(result.Error)
-			}
+	commodities := make(map[string]struct{})
+	for _, p := range postings {
+		if !utils.IsCurrency(p.Commodity) {
+			commodities[p.Commodity] = struct{}{}
+		}
+	}
 
-			postingPricesTree := btree.New(2)
-			for _, price := range prices {
-				postingPricesTree.ReplaceOrInsert(price)
-			}
-			cache.postingPricesTree[commodityName] = postingPricesTree
+	// Exchange rates are needed for the configured networth currencies even
+	// when no posting uses the commodity.
+	for _, nc := range config.GetConfig().NetworthCurrencies {
+		if nc.Commodity != "" && !utils.IsCurrency(nc.Commodity) {
+			commodities[nc.Commodity] = struct{}{}
+		}
+	}
 
-			if cache.pricesTree[commodityName] == nil {
-				cache.pricesTree[commodityName] = postingPricesTree
-			}
+	for commodityName := range commodities {
+		result := db.Where("commodity_type = ? and commodity_name = ?", config.Unknown, commodityName).Find(&prices)
+		if result.Error != nil {
+			log.Fatal(result.Error)
+		}
+
+		postingPricesTree := btree.New(2)
+		for _, price := range prices {
+			postingPricesTree.ReplaceOrInsert(price)
+		}
+		cache.postingPricesTree[commodityName] = postingPricesTree
+
+		if cache.pricesTree[commodityName] == nil {
+			cache.pricesTree[commodityName] = postingPricesTree
 		}
 	}
 
@@ -161,6 +174,26 @@ func GetAllPrices(db *gorm.DB, commodity string) []price.Price {
 	}
 
 	return prices
+}
+
+// CurrencyRates returns the prices of the commodity (in the default currency)
+// sorted by date ascending. It is empty when no price is available.
+func CurrencyRates(db *gorm.DB, commodity string) []price.Price {
+	cache := ensurePriceCache(db)
+
+	pmap := make(map[string]price.Price)
+	for _, pt := range []*btree.BTree{cache.postingPricesTree[commodity], cache.pricesTree[commodity]} {
+		if pt == nil {
+			continue
+		}
+		for _, p := range utils.BTreeToSlice[price.Price](pt) {
+			pmap[p.Date.String()] = p
+		}
+	}
+
+	rates := lo.Values(pmap)
+	sort.Slice(rates, func(i, j int) bool { return rates[i].Date.Before(rates[j].Date) })
+	return rates
 }
 
 func GetMarketPrice(db *gorm.DB, p posting.Posting, date time.Time) decimal.Decimal {
