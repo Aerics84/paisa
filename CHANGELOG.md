@@ -54,6 +54,13 @@ fixes found during release testing.
   line breaks.
 - Record the fork adoption decisions and the intentionally deferred
   changes in `docs/development/fork-adoption-decisions.md`.
+- Support import column references beyond `Z` (`AA`, `AB`, …) for wide
+  CSV and Excel files.
+- Reject editor file names whose extension differs from the journal
+  extension.
+- Validate nested journal files against their own directory so relative
+  includes resolve correctly, and return validation errors instead of
+  terminating the server.
 
 ### 0.8.6.1 (2026-10-31)
 
