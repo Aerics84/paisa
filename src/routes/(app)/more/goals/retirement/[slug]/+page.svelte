@@ -162,7 +162,7 @@
         title="Current Savings"
         value={formatCurrency(savingsTotal)}
         color={COLORS.gainText}
-        subtitle="{formatFloat(savingsX, 0)}x times Yearly Expenses"
+        subtitle={`${formatFloat(savingsX, 0)}× Yearly Expenses`}
       />
       <LevelItem
         title="Yearly Expenses"
@@ -174,7 +174,7 @@
         title="Target Savings"
         value={formatCurrency(targetSavings)}
         color={COLORS.primary}
-        subtitle={`${formatFloat(targetX, 0)}x times Yearly Expenses${
+        subtitle={`${formatFloat(targetX, 0)}× Yearly Expenses${
           predictedTargetDate
             ? `<br/>Projected <b>${predictedTargetDate}</b>`
             : savingsTotal >= targetSavings

@@ -34,8 +34,10 @@
           : accountName,
       width: mobile ? 140 : undefined,
       minWidth: mobile ? 140 : undefined,
-      maxWidth: mobile ? 155 : undefined,
-      frozen: true
+      maxWidth: mobile ? 155 : undefined
+      // Do not freeze this column: Tabulator renders frozen columns in a
+      // separate table, which drifts out of sync with the header when the
+      // table is horizontally scrollable.
     };
   }
 
