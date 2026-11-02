@@ -4,6 +4,7 @@
   import _ from "lodash";
   import Spinner from "$lib/components/Spinner.svelte";
   import PreviewNavbar from "$lib/components/PreviewNavbar.svelte";
+  import GlobalConfirmDialog from "$lib/components/GlobalConfirmDialog.svelte";
   import { willClearTippy, willRefresh } from "../../store";
 
   function clearTippy() {
@@ -86,3 +87,5 @@
     </div>
   </div>
 {/key}
+
+<GlobalConfirmDialog />

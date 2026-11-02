@@ -34,20 +34,45 @@ type CapitalGain struct {
 }
 
 func GetCapitalGains(db *gorm.DB) gin.H {
-	if !config.SupportsIndiaTaxFeatures() {
-		return gin.H{"capital_gains": map[string]CapitalGain{}}
+	capitalGains := map[string]CapitalGain{}
+	if config.SupportsIndiaTaxFeatures() {
+		commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
+			return (c.Type == config.MutualFund || c.Type == config.Stock) &&
+				(c.TaxCategory == config.Debt || c.TaxCategory == config.Equity || c.TaxCategory == config.Equity65 || c.TaxCategory == config.Equity35 || c.TaxCategory == config.UnlistedEquity)
+		})
+		postings := query.Init(db).Like("Assets:%").Commodities(commodities).All()
+		byAccount := lo.GroupBy(postings, func(p posting.Posting) string { return p.Account })
+		capitalGains = lo.MapValues(byAccount, func(postings []posting.Posting, account string) CapitalGain {
+			return computeCapitalGains(db, account, c.FindByName(postings[0].Commodity), postings)
+		})
 	}
 
-	commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
-		return (c.Type == config.MutualFund || c.Type == config.Stock) &&
-			(c.TaxCategory == config.Debt || c.TaxCategory == config.Equity || c.TaxCategory == config.Equity65 || c.TaxCategory == config.Equity35 || c.TaxCategory == config.UnlistedEquity)
-	})
-	postings := query.Init(db).Like("Assets:%").Commodities(commodities).All()
-	byAccount := lo.GroupBy(postings, func(p posting.Posting) string { return p.Account })
-	capitalGains := lo.MapValues(byAccount, func(postings []posting.Posting, account string) CapitalGain {
-		return computeCapitalGains(db, account, c.FindByName(postings[0].Commodity), postings)
-	})
-	return gin.H{"capital_gains": capitalGains}
+	return gin.H{"capital_gains": capitalGains, "totals": ComputeCapitalGainTotals(capitalGains)}
+}
+
+// ComputeCapitalGainTotals nets capital gains across accounts per financial
+// year. Taxable gains and slab income stay signed so losses remain visible,
+// while the actual tax liabilities floor at zero.
+func ComputeCapitalGainTotals(gains map[string]CapitalGain) map[string]FYCapitalGain {
+	totals := make(map[string]FYCapitalGain)
+	for _, gain := range gains {
+		for fy, fyGain := range gain.FY {
+			total := totals[fy]
+			total.Units = total.Units.Add(fyGain.Units)
+			total.PurchasePrice = total.PurchasePrice.Add(fyGain.PurchasePrice)
+			total.SellPrice = total.SellPrice.Add(fyGain.SellPrice)
+			total.Tax = taxation.Add(total.Tax, fyGain.Tax)
+			totals[fy] = total
+		}
+	}
+
+	for fy, total := range totals {
+		total.Tax.ShortTerm = decimal.Max(total.Tax.ShortTerm, decimal.Zero)
+		total.Tax.LongTerm = decimal.Max(total.Tax.LongTerm, decimal.Zero)
+		totals[fy] = total
+	}
+
+	return totals
 }
 
 func computeCapitalGains(db *gorm.DB, account string, commodity config.Commodity, postings []posting.Posting) CapitalGain {

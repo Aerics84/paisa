@@ -145,6 +145,13 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, Sync(db, syncRequest))
 	})
 
+	router.POST("/api/import/statement", HandleParseStatement(db))
+	router.POST("/api/import/commit", HandleCommitImport(db))
+	router.GET("/api/import/reconciliation", HandleGetReconciliation())
+	router.GET("/api/rules", HandleGetRules(db))
+	router.POST("/api/rules", HandleSaveRule(db))
+	router.DELETE("/api/rules/:id", HandleDeleteRule(db))
+
 	router.GET("/api/dashboard", func(c *gin.Context) {
 		c.JSON(200, GetDashboard(db))
 	})
@@ -206,6 +213,8 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	router.GET("/api/allocation", func(c *gin.Context) {
 		c.JSON(200, GetAllocation(db))
 	})
+	router.POST("/api/allocation/rebalance", RebalanceHandler(db))
+	router.POST("/api/allocation/targets", SaveAllocationTargetsHandler())
 	router.GET("/api/portfolio_allocation", func(c *gin.Context) {
 		c.JSON(200, GetPortfolioAllocation(db))
 	})
@@ -296,6 +305,8 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	router.GET("/api/logs", func(c *gin.Context) {
 		c.JSON(200, GetLogs())
 	})
+
+	router.GET("/api/backup/export", HandleExportBackup)
 
 	router.GET("/api/editor/files", func(c *gin.Context) {
 		c.JSON(200, GetFiles(db))

@@ -17,6 +17,220 @@ interface ParsedCSVResult {
 
 type CSVRow = Record<string, string>;
 
+export interface StatementTransaction {
+  date: string;
+  description: string;
+  amount: number;
+  account: string;
+  expenseAccount?: string;
+  raw?: Record<string, any>;
+}
+
+export interface DuplicateMatchOptions {
+  dateWindowHours?: number;
+  requirePayee?: boolean;
+}
+
+function normalizePayee(value: string): string {
+  return _.toString(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+export function isDuplicateStatementTransaction(
+  left: Partial<StatementTransaction>,
+  right: Partial<StatementTransaction>,
+  options: DuplicateMatchOptions = {}
+): boolean {
+  const dateWindowHours = options.dateWindowHours ?? 0;
+  const requirePayee = options.requirePayee ?? true;
+
+  const sameAccount = _.toString(left.account || "") === _.toString(right.account || "");
+  const sameAmount = Math.abs((left.amount ?? 0) - (right.amount ?? 0)) < 0.01;
+  if (!sameAccount || !sameAmount) {
+    return false;
+  }
+
+  const leftPayee = normalizePayee(_.toString(left.description || ""));
+  const rightPayee = normalizePayee(_.toString(right.description || ""));
+  const payeeMatch = leftPayee !== "" && leftPayee === rightPayee;
+
+  if (requirePayee && !payeeMatch) {
+    return false;
+  }
+
+  const leftDate = left.date ? new Date(left.date) : null;
+  const rightDate = right.date ? new Date(right.date) : null;
+  if (
+    !leftDate ||
+    !rightDate ||
+    Number.isNaN(leftDate.getTime()) ||
+    Number.isNaN(rightDate.getTime())
+  ) {
+    return false;
+  }
+
+  const diffHours = Math.abs(leftDate.getTime() - rightDate.getTime()) / (1000 * 60 * 60);
+  return diffHours <= dateWindowHours;
+}
+
+export function deduplicateStatementTransactions(
+  transactions: Array<Partial<StatementTransaction>>,
+  options: DuplicateMatchOptions = {}
+): StatementTransaction[] {
+  const deduped: StatementTransaction[] = [];
+
+  for (const tx of transactions) {
+    const candidate = {
+      date: _.toString(tx.date || ""),
+      description: _.toString(tx.description || ""),
+      amount: Number.isFinite(tx.amount) ? Number(tx.amount) : 0,
+      account: _.toString(tx.account || ""),
+      expenseAccount: tx.expenseAccount || "Expenses:Unknown"
+    } as StatementTransaction;
+
+    const existing = deduped.find((entry) =>
+      isDuplicateStatementTransaction(entry, candidate, options)
+    );
+
+    if (existing) {
+      existing.amount += candidate.amount;
+      if (!existing.expenseAccount || existing.expenseAccount === "Expenses:Unknown") {
+        existing.expenseAccount = candidate.expenseAccount;
+      }
+      continue;
+    }
+
+    deduped.push(candidate);
+  }
+
+  return deduped;
+}
+
+export function consolidateStatementTransactions(
+  transactions: Array<Partial<StatementTransaction>>,
+  options: { defaultAccount?: string; expensePrefix?: string; dateWindowHours?: number } = {}
+): string {
+  if (_.isEmpty(transactions)) {
+    return "";
+  }
+
+  const defaultAccount = options.defaultAccount || "Assets:Unknown";
+  const expensePrefix = options.expensePrefix || "Expenses";
+  const dateWindowHours = options.dateWindowHours ?? 0;
+
+  const prepared = transactions.map((tx) => ({
+    date: _.toString(tx.date || "") || "1970-01-01",
+    description: _.toString(tx.description || "Unknown merchant"),
+    amount: Number.isFinite(tx.amount) ? Number(tx.amount) : 0,
+    account: _.toString(tx.account || defaultAccount),
+    expenseAccount:
+      tx.expenseAccount ||
+      guessExpenseAccount(_.toString(tx.description || "Unknown merchant"), expensePrefix)
+  })) as StatementTransaction[];
+
+  const deduped = deduplicateStatementTransactions(prepared, {
+    dateWindowHours,
+    requirePayee: true
+  });
+  const groups = new Map<
+    string,
+    { month: string; expenseAccount: string; amount: number; account: string }
+  >();
+
+  for (const tx of deduped) {
+    const amount = Math.abs(tx.amount);
+    const date = tx.date.includes("-") ? tx.date.slice(0, 7) : "1970-01";
+    const key = `${date}|${tx.expenseAccount || "Expenses:Unknown"}|${tx.account || defaultAccount}`;
+
+    const current = groups.get(key) || {
+      month: date,
+      expenseAccount: tx.expenseAccount || `${expensePrefix}:Unknown`,
+      amount: 0,
+      account: tx.account || defaultAccount
+    };
+
+    current.amount += amount;
+    groups.set(key, current);
+  }
+
+  const lines: string[] = [];
+  for (const group of Array.from(groups.values()).sort((a, b) => a.month.localeCompare(b.month))) {
+    const monthDate = `${group.month}-01`;
+    const total = Number(group.amount.toFixed(2));
+    lines.push(`${monthDate} * "${group.expenseAccount}"`);
+    lines.push(`  ${group.expenseAccount} ${total.toFixed(2)} INR`);
+    lines.push(`  ${group.account || defaultAccount} -${total.toFixed(2)} INR`);
+  }
+
+  return lines.join("\n");
+}
+
+const EXPENSE_KEYWORDS: Array<[string, RegExp[]]> = [
+  [
+    "Expenses:Groceries",
+    [
+      /\b(?:grocery|groceries|grocer|mart|supermarket|bigbasket|milk|vegetables?|fruits?|dairy|reliance fresh|dmart|fresh|foodmart)\b/i
+    ]
+  ],
+  [
+    "Expenses:Dining",
+    [/\b(?:restaurant|cafe|coffee|zomato|swiggy|pizza|burger|bistro|food court|canteen|dining)\b/i]
+  ],
+  [
+    "Expenses:Transportation",
+    [
+      /\b(?:uber|ola|metro|fuel|petrol|diesel|rail|bus|cab|taxi|parking|toll|auto|transport|indian oil|bharat petrol)\b/i
+    ]
+  ],
+  [
+    "Expenses:Shopping",
+    [/\b(?:amazon|flipkart|myntra|shop|shopping|marketplace|retail|ebay|store|paytm|online purchase)\b/i]
+  ],
+  [
+    "Expenses:Utilities",
+    [
+      /\b(?:electricity|water|gas|wifi|internet|mobile|phone|recharge|broadband|utility|bill|bse|bescom|airtel|jio|vodafone)\b/i
+    ]
+  ],
+  [
+    "Expenses:Health",
+    [/\b(?:doctor|hospital|pharmacy|clinic|apollo|health|medical|medplus|wellness|optical)\b/i]
+  ],
+  [
+    "Expenses:Travel",
+    [/\b(?:flight|hotel|booking|airline|railway|irctc|airbnb|holiday|trip|travel)\b/i]
+  ],
+  [
+    "Expenses:Entertainment",
+    [/\b(?:netflix|spotify|movie|cinema|games|entertainment|youtube|streaming)\b/i]
+  ],
+  ["Expenses:Education", [/\b(?:school|college|course|tuition|exam|books|udemy|education|academy)\b/i]],
+  ["Expenses:Investment", [/\b(?:sip|mutual fund|nps|brokerage|stock|investment|trading|etf)\b/i]],
+  ["Expenses:Insurance", [/\b(?:insurance|premium|policy|lic|cover|renewal)\b/i]]
+];
+
+export function guessExpenseAccount(
+  description: string,
+  prefix: string = "Expenses",
+  rules: Array<[string, RegExp[]]> = EXPENSE_KEYWORDS
+): string {
+  const text = _.toString(description || "").trim();
+  if (!text) {
+    return `${prefix}:Unknown`;
+  }
+
+  const normalized = text.toLowerCase();
+  for (const [bucket, patterns] of rules) {
+    if (patterns.some((pattern) => pattern.test(normalized))) {
+      return `${prefix}:${bucket.replace(/^Expenses:/, "")}`;
+    }
+  }
+
+  return `${prefix}:Unknown`;
+}
+
 export function parse(file: File): Promise<Result> {
   let extension = file.name.split(".").pop();
   extension = extension?.toLowerCase();

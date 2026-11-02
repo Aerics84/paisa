@@ -1034,10 +1034,17 @@
             "type": "string"
           },
           "target": {
-            "type": "integer",
+            "type": "number",
             "description": "Target percentage",
-            "minimum": 1,
+            "minimum": 0,
             "maximum": 100
+          },
+          "drift": {
+            "type": "number",
+            "description": "Allowed drift tolerance percentage",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 5
           },
           "accounts": {
             "type": "array",
@@ -1050,6 +1057,32 @@
           }
         },
         "required": ["name", "target", "accounts"],
+        "additionalProperties": false
+      }
+    },
+    "networth_currencies": {
+      "type": "array",
+      "description": "Additional currencies in which the networth and gain pages show amounts, timelines and XIRR. The rate is taken from the price of the commodity (in the default currency).",
+      "default": [],
+      "itemsUniqueProperties": ["name"],
+      "items": {
+        "type": "object",
+        "ui:header": "name",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Currency name shown in the UI. Example: USD"
+          },
+          "commodity": {
+            "type": "string",
+            "description": "Commodity whose price is the exchange rate. Example: $"
+          },
+          "symbol": {
+            "type": "string",
+            "description": "Symbol shown before amounts. Defaults to the commodity"
+          }
+        },
+        "required": ["name", "commodity"],
         "additionalProperties": false
       }
     },
@@ -1077,7 +1110,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["mutualfund", "stock", "nps", "metal", "unknown"]
+            "enum": ["mutualfund", "stock", "nps", "metal", "currency", "unknown"]
           },
           "price": {
             "type": "object",
@@ -1091,7 +1124,8 @@
                   "com-purifiedbytes-nps",
                   "com-purifiedbytes-metal",
                   "com-yahoo-eu-metal",
-                  "co-alphavantage"
+                  "co-alphavantage",
+                  "com-allratestoday"
                 ]
               },
               "code": {

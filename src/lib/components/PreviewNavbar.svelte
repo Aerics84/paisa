@@ -34,11 +34,23 @@
     resolveBreadcrumbTrail,
     type NavigationLink
   } from "$lib/navigation";
+  import { resolveFinancialYear } from "$lib/financial_year";
 
   const prefix = "/preview";
   const readonly = USER_CONFIG.readonly;
   let sidebarIdentity = "";
   let sidebarInitials = "";
+
+  $: years = forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear);
+
+  // The shared year starts empty and the range changes once a page has
+  // loaded its data, so keep the selection within it (latest by default).
+  $: {
+    const next = resolveFinancialYear($year, years);
+    if (next !== $year) {
+      year.set(next);
+    }
+  }
 
   onMount(() => {
     if (get(year) == "") {
@@ -186,6 +198,7 @@
         { label: "Sheets", href: "/sheets", help: "sheets", disablePreload: true },
         { label: "Goals", href: "/goals", help: "goals" },
         { label: "Doctor", href: "/doctor" },
+        { label: "Backup", href: "/backup" },
         { label: "Logs", href: "/logs" }
       ]
     }
@@ -428,8 +441,8 @@
         {#if selectedSubSubLink?.financialYearPicker || selectedSubLink?.financialYearPicker || selectedLink?.financialYearPicker}
           <div class="select is-small">
             <select bind:value={$year}>
-              {#each forEachFinancialYear($dateMin, $dateMax).reverse() as fy}
-                <option>{financialYear(fy)}</option>
+              {#each years as fy}
+                <option>{fy}</option>
               {/each}
             </select>
           </div>

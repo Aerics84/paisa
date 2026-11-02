@@ -1,11 +1,10 @@
 package accounting
 
 import (
+	"path"
 	"sort"
 	"strings"
 	"time"
-
-	"path/filepath"
 
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/transaction"
@@ -40,7 +39,7 @@ func Register(postings []posting.Posting) []Balance {
 
 func matchAccountGlob(pattern string, account string) (bool, error) {
 	if strings.Contains(pattern, "*") {
-		return filepath.Match(pattern, account)
+		return path.Match(pattern, account)
 	}
 	return utils.IsSameOrParent(account, pattern), nil
 }

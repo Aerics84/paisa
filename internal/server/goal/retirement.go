@@ -44,7 +44,7 @@ func calculateAverageExpense(db *gorm.DB, conf config.RetirementGoal) decimal.De
 	now := utils.Now()
 	end := utils.BeginningOfMonth(now)
 	start := end.AddDate(-2, 0, 0)
-	expenses := accounting.FilterByGlob(query.Init(db).Like("Expenses:%").Where("date between ? AND ?", start, end).All(), conf.Expenses)
+	expenses := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Expenses:%").Where("date between ? AND ?", start, end).All(), conf.Expenses)
 	return utils.SumBy(expenses, func(p posting.Posting) decimal.Decimal { return p.Amount }).Div(decimal.NewFromInt(2))
 }
 
@@ -66,9 +66,9 @@ func calculateMonthlyContribution(postings []posting.Posting, current time.Time)
 }
 
 func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
-	savings := accounting.FilterByGlob(query.Init(db).Like("Assets:%").All(), conf.Savings)
+	savings := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%").All(), conf.Savings)
 	savings = service.PopulateMarketPrice(db, savings)
-	savingsWithCapitalGains := accounting.FilterByGlob(query.Init(db).Like("Assets:%", "Income:CapitalGains:%").All(), conf.Savings)
+	savingsWithCapitalGains := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").All(), conf.Savings)
 	savingsWithCapitalGains = service.PopulateMarketPrice(db, savingsWithCapitalGains)
 	savingsTotal := accounting.CurrentBalance(savings)
 	investmentPostings := make([]posting.Posting, 0, len(savings))
@@ -106,5 +106,6 @@ func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
 		"xirr":                service.XIRR(db, savingsWithCapitalGains),
 		"postings":            savingsWithCapitalGains,
 		"balances":            balances,
+		"intelligence":        analyze("retirement", savingsTotal, targetSavings, "", 0, 0, nil),
 	}
 }

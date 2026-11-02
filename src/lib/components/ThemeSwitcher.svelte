@@ -14,8 +14,8 @@
     store.theme.set(value);
   }
 
-  const toggle = () => {
-    if (refresh()) {
+  const toggle = async () => {
+    if (await refresh()) {
       setTheme(theme === "light" ? "dark" : "light");
     }
   };

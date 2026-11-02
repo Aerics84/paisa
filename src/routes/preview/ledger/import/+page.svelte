@@ -14,9 +14,14 @@
   import { onMount } from "svelte";
   import { ajax, type ImportTemplate } from "$lib/utils";
   import { accountTfIdf } from "../../../../store";
+  import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
   import FileModal from "$lib/components/FileModal.svelte";
   import Modal from "$lib/components/Modal.svelte";
+  import StatementImport from "$lib/components/StatementImport.svelte";
+
+  // The template/preset flow is the default; statement staging is additive.
+  let importMode: "template" | "staging" = "template";
 
   let templates: ImportTemplate[] = [];
   let selectedTemplate: ImportTemplate;
@@ -87,7 +92,13 @@
 
   async function remove() {
     const oldName = selectedTemplate.name;
-    const confirmed = confirm(`Are you sure you want to delete ${oldName} template?`);
+    const confirmed = await askConfirm({
+      title: "Delete template?",
+      description: `Are you sure you want to delete ${oldName} template?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "danger"
+    });
     if (!confirmed) {
       return;
     }
@@ -254,7 +265,27 @@
 
 <section class="section tab-import" style="padding-bottom: 0 !important">
   <div class="container is-fluid">
-    <div class="columns mb-0">
+    <div class="tabs is-toggle is-toggle-rounded is-small mb-4">
+      <ul>
+        <li class:is-active={importMode === "template"}>
+          <a href="#template-import" on:click|preventDefault={() => (importMode = "template")}>
+            <span class="icon is-small"><i class="fas fa-code"></i></span>
+            <span>Template / Preset Import</span>
+          </a>
+        </li>
+        <li class:is-active={importMode === "staging"}>
+          <a href="#statement-staging" on:click|preventDefault={() => (importMode = "staging")}>
+            <span class="icon is-small"><i class="fas fa-wand-magic-sparkles"></i></span>
+            <span>Statement Staging</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class:is-hidden={importMode !== "staging"}>
+      <StatementImport />
+    </div>
+    <div class="columns mb-0" class:is-hidden={importMode !== "template"}>
       <div class="column is-5 py-0">
         <div class="box p-3 mb-3 overflow-x-auto">
           <div class="field is-grouped mb-0">

@@ -22,6 +22,7 @@
   import { iconify } from "$lib/icon";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { selectedCurrency } from "../../../../../persisted_store";
 
   let commodities: string[] = [];
   let selectedCommodities: string[] = [];
@@ -50,6 +51,39 @@
     industryR: any,
     ratingR: any = null;
 
+  const timelineId = "d3-account-timeline-breakdown";
+
+  $: current = gain ? _.find(gain.currencies, (c) => c.name === $selectedCurrency) : null;
+  $: symbol = current ? current.symbol : "";
+  $: timeline = current ? current.networthTimeline : gain?.networthTimeline;
+  $: xirr = current ? current.xirr : gain?.xirr;
+  $: overview = _.last(timeline);
+  $: absoluteReturn = current
+    ? overview && overview.investmentAmount !== 0
+      ? overview.gainAmount / overview.investmentAmount
+      : 0
+    : assetBreakdown?.absoluteReturn;
+  $: fmt = (v: number) => symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
+  $: postings = _.chain(current ? current.postings : gain?.postings || [])
+    .sortBy((p) => p.date)
+    .reverse()
+    .take(100)
+    .value();
+
+  // re-render the timeline when the data or the selected currency changes
+  $: if (gain) {
+    destroyCallback();
+    const element = document.getElementById(timelineId);
+    if (element) {
+      element.innerHTML = "";
+    }
+    destroyCallback = overview
+      ? renderAccountOverview(timeline, current ? current.postings : gain.postings, timelineId, {
+          currencySymbol: symbol
+        })
+      : () => {};
+  }
+
   onDestroy(async () => {
     destroyCallback();
   });
@@ -60,18 +94,6 @@
       asset_breakdown: assetBreakdown,
       portfolio_allocation: { name_and_security_type, security_type, rating, industry, commodities }
     } = await ajax("/api/gain/:name", null, data));
-
-    overview = _.last(gain.networthTimeline);
-    postings = _.chain(gain.postings)
-      .sortBy((p) => p.date)
-      .reverse()
-      .take(100)
-      .value();
-    destroyCallback = renderAccountOverview(
-      gain.networthTimeline,
-      gain.postings,
-      "d3-account-timeline-breakdown"
-    );
 
     selectedCommodities = [...commodities];
     ({ renderer: securityTypeR } = renderPortfolioBreakdown(
@@ -127,13 +149,13 @@
                     narrow
                     title="Balance"
                     color={COLORS.primary}
-                    value={formatCurrency(overview.balanceAmount)}
+                    value={fmt(overview.balanceAmount)}
                   />
                   <LevelItem
                     narrow
                     title="Net Investment"
                     color={COLORS.secondary}
-                    value={formatCurrency(overview.netInvestmentAmount)}
+                    value={fmt(overview.netInvestmentAmount)}
                   />
                 </nav>
               </div>
@@ -145,14 +167,14 @@
                     narrow
                     title="Gain / Loss"
                     color={overview.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
-                    value={formatCurrency(overview.gainAmount)}
+                    value={fmt(overview.gainAmount)}
                   />
 
                   <LevelItem
                     narrow
                     title="XIRR"
-                    value={formatFloat(gain.xirr)}
-                    subtitle="{formatPercentage(assetBreakdown.absoluteReturn, 2)} absolute return"
+                    value={formatFloat(xirr)}
+                    subtitle="{formatPercentage(absoluteReturn, 2)} absolute return"
                   />
                 </nav>
               </div>
@@ -164,6 +186,7 @@
             {#each postings as posting}
               <PostingCard
                 {posting}
+                currencySymbol={symbol}
                 color={posting.amount >= 0
                   ? posting.account.startsWith("Income:CapitalGains")
                     ? COLORS.loss
@@ -185,13 +208,11 @@
               </div>
               <div class="ml-3">
                 <span class="mr-1 is-size-7 has-text-grey">Investment</span>
-                <span class="has-text-weight-bold">{formatCurrency(overview.investmentAmount)}</span
-                >
+                <span class="has-text-weight-bold">{fmt(overview.investmentAmount)}</span>
               </div>
               <div class="ml-3">
                 <span class="mr-1 is-size-7 has-text-grey">Withdrawal</span>
-                <span class="has-text-weight-bold">{formatCurrency(overview.withdrawalAmount)}</span
-                >
+                <span class="has-text-weight-bold">{fmt(overview.withdrawalAmount)}</span>
               </div>
               {#if overview.balanceUnits > 0}
                 <div class="ml-3">
@@ -206,6 +227,9 @@
         {/if}
         <LegendCard {legends} clazz="mb-2" />
         <div class="box">
+          {#if current && !overview}
+            <p>No prices found for commodity {current.commodity}.</p>
+          {/if}
           <svg id="d3-account-timeline-breakdown" width="100%" height="450" />
         </div>
         <BoxLabel text="Timeline" />

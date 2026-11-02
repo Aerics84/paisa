@@ -8,6 +8,9 @@ export const cashflowExpenseDepth = persisted("cashflowExpenseDepth", 0);
 export const cashflowIncomeDepthAllowed = writable({ min: 1, max: 1 });
 export const cashflowIncomeDepth = persisted("cashflowIncomeDepth", 0);
 
+// name of the selected networth currency, empty for the default currency
+export const selectedCurrency = persisted("selectedCurrency", "");
+
 export function setCashflowDepthAllowed(expense: number, income: number) {
   cashflowExpenseDepthAllowed.set({ min: 1, max: expense });
   if (get(cashflowExpenseDepth) == 0 || get(cashflowExpenseDepth) > expense) {

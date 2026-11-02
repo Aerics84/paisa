@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -9,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/constraints"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -255,9 +255,9 @@ func SumBy[C any](collection []C, iteratee func(item C) decimal.Decimal) decimal
 	}, decimal.Zero)
 }
 
-func SortedKeys[K constraints.Ordered, V any](m map[K]V) []K {
+func SortedKeys[K cmp.Ordered, V any](m map[K]V) []K {
 	keys := lo.Keys(m)
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	slices.Sort(keys)
 	return keys
 }
 

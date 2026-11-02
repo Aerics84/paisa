@@ -46,3 +46,4 @@ brand/*.png
 /.superpowers/
 *.db-shm
 *.db-wal
+.pi

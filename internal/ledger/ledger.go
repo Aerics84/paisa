@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -49,6 +50,7 @@ type Ledger interface {
 	ValidateFile(journalPath string) ([]LedgerFileError, string, error)
 	Parse(journalPath string, prices []price.Price) ([]*posting.Posting, error)
 	Prices(jornalPath string) ([]price.Price, error)
+	Files(journalPath string) ([]string, error)
 }
 
 type LedgerCLI struct{}
@@ -153,6 +155,10 @@ func (LedgerCLI) Prices(journalPath string) ([]price.Price, error) {
 	return parseLedgerPrices(utils.Dos2Unix(output.String()), config.DefaultCurrency())
 }
 
+func (LedgerCLI) Files(journalPath string) ([]string, error) {
+	return journalFiles(journalPath), nil
+}
+
 func (HLedgerCLI) ValidateFile(journalPath string) ([]LedgerFileError, string, error) {
 	errors := []LedgerFileError{}
 	path, err := binary.LookPath("hledger")
@@ -246,6 +252,10 @@ func (HLedgerCLI) Prices(journalPath string) ([]price.Price, error) {
 	return parseHLedgerPrices(utils.Dos2Unix(output.String()), config.DefaultCurrency())
 }
 
+func (HLedgerCLI) Files(journalPath string) ([]string, error) {
+	return journalFiles(journalPath), nil
+}
+
 func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, error) {
 	errors := []LedgerFileError{}
 
@@ -273,8 +283,8 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 
 	re := regexp.MustCompile(`(?:.*):([0-9]+):\s+(.+)`)
 
-	lines := strings.Split(utils.Dos2Unix(error.String()), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(utils.Dos2Unix(error.String()), "\n")
+	for line := range lines {
 		match := re.FindStringSubmatch(line)
 		if len(match) == 0 {
 			lastError := errors[len(errors)-1]
@@ -471,9 +481,9 @@ func parseHLedgerCommodities(journalPath string) ([]string, error) {
 		return commodities, err
 	}
 
-	lines := strings.Split(utils.Dos2Unix(output.String()), "\n")
+	lines := strings.SplitSeq(utils.Dos2Unix(output.String()), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		commodities = append(commodities, utils.UnQuote(strings.TrimSpace(line)))
 	}
 
@@ -581,6 +591,181 @@ func parseBeancountPrices(output string, defaultCurrency string) ([]price.Price,
 		prices = append(prices, price.Price{Date: date, CommodityName: commodity, CommodityID: commodity, CommodityType: config.Unknown, Value: value})
 	}
 	return prices, nil
+}
+
+func (Beancount) Files(journalPath string) ([]string, error) {
+	visited := make(map[string]bool)
+	files := parseBeancountIncludes(journalPath, visited)
+
+	path, err := binary.LookPath("bean-query")
+	if err == nil {
+		var output, error bytes.Buffer
+		err = utils.Exec(path, &output, &error, "-f", "csv", journalPath, "select distinct filename")
+		if err == nil {
+			reader := csv.NewReader(bytes.NewBuffer(output.Bytes()))
+			records, err := reader.ReadAll()
+			if err == nil && len(records) > 1 {
+				for _, record := range records[1:] {
+					if len(record) == 0 {
+						continue
+					}
+					fileName := strings.TrimSpace(record[0])
+					if fileName == "" {
+						continue
+					}
+					abs, err := filepath.Abs(fileName)
+					if err != nil {
+						abs = fileName
+					}
+					abs = filepath.Clean(abs)
+					if !visited[abs] {
+						visited[abs] = true
+						files = append(files, abs)
+					}
+				}
+			}
+		}
+	}
+
+	if len(files) == 0 {
+		return []string{journalPath}, nil
+	}
+
+	return files, nil
+}
+
+func parseBeancountIncludes(journalPath string, visited map[string]bool) []string {
+	absPath, err := filepath.Abs(journalPath)
+	if err != nil {
+		absPath = journalPath
+	}
+	absPath = filepath.Clean(absPath)
+	if visited[absPath] {
+		return nil
+	}
+	visited[absPath] = true
+
+	var files []string
+	content, err := os.ReadFile(absPath)
+	if err != nil {
+		return files
+	}
+	files = append(files, absPath)
+
+	dir := filepath.Dir(absPath)
+	re := regexp.MustCompile(`(?m)^\s*include\s+["']([^"']+)["']`)
+	matches := re.FindAllStringSubmatch(string(content), -1)
+
+	for _, match := range matches {
+		incPath := match[1]
+		fullIncPath := filepath.Join(dir, incPath)
+
+		if strings.ContainsAny(incPath, "*?[") {
+			globMatches, err := filepath.Glob(fullIncPath)
+			if err == nil {
+				for _, g := range globMatches {
+					files = append(files, parseBeancountIncludes(g, visited)...)
+				}
+			}
+		} else {
+			files = append(files, parseBeancountIncludes(fullIncPath, visited)...)
+		}
+	}
+
+	return files
+}
+
+var journalIncludePattern = regexp.MustCompile(`(?m)^\s*include\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s*$`)
+
+// journalFiles walks the journal's include directives. Ledger and hledger
+// both resolve includes relative to the including file and support globs, so
+// parsing the directives directly works for both dialects without requiring
+// the ledger binary to expose a `files` command.
+func journalFiles(journalPath string) []string {
+	files := parseJournalIncludes(journalPath, make(map[string]bool))
+	if len(files) == 0 {
+		return []string{journalPath}
+	}
+	return files
+}
+
+func parseJournalIncludes(journalPath string, visited map[string]bool) []string {
+	absPath, err := filepath.Abs(journalPath)
+	if err != nil {
+		absPath = journalPath
+	}
+	absPath = filepath.Clean(absPath)
+	if visited[absPath] {
+		return nil
+	}
+	visited[absPath] = true
+
+	var files []string
+	content, err := os.ReadFile(absPath)
+	if err != nil {
+		return files
+	}
+	files = append(files, absPath)
+
+	dir := filepath.Dir(absPath)
+	for _, match := range journalIncludePattern.FindAllStringSubmatch(string(content), -1) {
+		include := match[1]
+		if include == "" {
+			include = match[2]
+		}
+		if include == "" {
+			include = match[3]
+		}
+		include = expandIncludePath(include)
+		if include == "" {
+			continue
+		}
+
+		fullPath := include
+		if !filepath.IsAbs(fullPath) {
+			fullPath = filepath.Join(dir, include)
+		}
+
+		if strings.ContainsAny(include, "*?[") {
+			globbed, err := filepath.Glob(fullPath)
+			if err != nil {
+				continue
+			}
+			for _, path := range globbed {
+				files = append(files, parseJournalIncludes(path, visited)...)
+			}
+			continue
+		}
+
+		files = append(files, parseJournalIncludes(fullPath, visited)...)
+	}
+	return files
+}
+
+func expandIncludePath(path string) string {
+	if path == "~" {
+		if home, err := os.UserHomeDir(); err == nil {
+			return home
+		}
+		return path
+	}
+	if strings.HasPrefix(path, "~/") || strings.HasPrefix(path, `~\`) {
+		if home, err := os.UserHomeDir(); err == nil {
+			return filepath.Join(home, path[2:])
+		}
+	}
+	return path
+}
+
+func splitLedgerFiles(output string) []string {
+	var files []string
+	for line := range strings.SplitSeq(utils.Dos2Unix(output), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			files = append(files, line)
+		}
+	}
+	return files
 }
 
 func parseAmount(amount string) (string, decimal.Decimal, error) {

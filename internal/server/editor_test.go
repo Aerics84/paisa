@@ -28,7 +28,7 @@ var fileAPIs = []fileAPI{
 
 func configureEditor(t *testing.T, root string, readonly bool) {
 	t.Helper()
-	content, err := json.Marshal(map[string]interface{}{
+	content, err := json.Marshal(map[string]any{
 		"journal_path":     filepath.Join(root, "main.ledger"),
 		"sheets_directory": root,
 		"db_path":          filepath.Join(root, "paisa.db"),

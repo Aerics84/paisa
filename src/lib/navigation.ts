@@ -5,6 +5,7 @@ export interface NavigationLink {
   help?: string;
   hide?: boolean;
   dateRangeSelector?: boolean;
+  currencySelector?: boolean;
   monthPicker?: boolean;
   financialYearPicker?: boolean;
   maxDepthSelector?: boolean;

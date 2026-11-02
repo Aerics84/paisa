@@ -23,7 +23,8 @@
     type Legend,
     now,
     type GoalSummary,
-    type AssetBreakdown
+    type AssetBreakdown,
+    type ExpensePace
   } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
@@ -51,10 +52,13 @@
   let transactions: Transaction[] = [];
   let budgetsByMonth: Record<string, Budget> = {};
   let currentBudget: Budget;
+  let expensePace: ExpensePace | null = null;
+  let currentExpensePace: ExpensePace | null = null;
   let selectedExpenses: Posting[] = [];
   let isEmpty = false;
   let checkingBalances: Record<string, AssetBreakdown> = {};
 
+  $: currentExpensePace = expensePace && expensePace.period === month ? expensePace : null;
   $: if (renderer) {
     selectedExpenses = expenses[month] || [];
     renderer(selectedExpenses);
@@ -68,7 +72,7 @@
         regional_profile: USER_CONFIG?.regional_profile || "india"
       })
     });
-    refresh();
+    await refresh();
   }
 
   onMount(async () => {
@@ -80,7 +84,8 @@
       budget: { budgetsByMonth },
       networth: { networth, xirr },
       checkingBalances: { asset_breakdowns: checkingBalances },
-      transactions
+      transactions,
+      expense_pace: expensePace
     } = dashboard);
 
     goalSummaries = _.sortBy(goalSummaries, (g) => -g.priority);
@@ -265,6 +270,29 @@
                       <BudgetCard compact {accountBudget} />
                     {/each}
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {/if}
+        {#if currentExpensePace}
+          <div class="tile is-parent">
+            <div class="tile is-child">
+              <div class="content">
+                <p class="subtitle">
+                  <a class="secondary-link has-text-grey" href="/expense/budget"
+                    >Prognose Monatsende</a
+                  >
+                </p>
+                <div class="content box px-3 py-2">
+                  <span class="has-text-weight-bold"
+                    >{formatCurrencyWithSymbol(currentExpensePace.projectedExpenses)}</span
+                  >
+                  {#if currentExpensePace.overBudget != null}
+                    <span class="tag is-danger is-light ml-2"
+                      >über Budget {formatCurrencyWithSymbol(currentExpensePace.overBudget)}</span
+                    >
+                  {/if}
                 </div>
               </div>
             </div>

@@ -169,11 +169,36 @@ export interface Gain {
   postings: Posting[];
 }
 
+export interface CurrencyNetworth {
+  name: string;
+  symbol: string;
+  commodity: string;
+  networthTimeline: Networth[];
+}
+
+export interface CurrencyAccountGain {
+  name: string;
+  symbol: string;
+  commodity: string;
+  networthTimeline: Networth[];
+  xirr: number;
+  postings: Posting[];
+}
+
+export interface PostingReturn {
+  posting_id: number;
+  unrealized_gain: number;
+  holding_days: number;
+  annualized_return: number | null;
+}
+
 export interface AccountGain {
   account: string;
   networthTimeline: Networth[];
   xirr: number;
   postings: Posting[];
+  posting_returns: PostingReturn[];
+  currencies: CurrencyAccountGain[];
 }
 
 export interface InterestOverview {
@@ -260,6 +285,31 @@ export interface AllocationTarget {
   target: number;
   current: number;
   aggregates: { [key: string]: Aggregate };
+  market_amount: number;
+  drift: number;
+  drift_tolerance: number;
+  status: "in_band" | "overweight" | "underweight";
+  accounts: string[];
+  commodities: string[];
+}
+
+export interface RebalanceItem {
+  name: string;
+  target: number;
+  current: number;
+  market_amount: number;
+  target_amount: number;
+  action: "BUY" | "SELL" | "HOLD";
+  amount: number;
+  new_percent: number;
+}
+
+export interface RebalancePlan {
+  mode: "cash_injection" | "full_rebalance";
+  cash_amount: number;
+  total_before: number;
+  total_after: number;
+  items: RebalanceItem[];
 }
 
 export interface Income {
@@ -537,6 +587,12 @@ export interface Forecast {
   error: number;
 }
 
+export interface ExpensePace {
+  period: string;
+  projectedExpenses: number;
+  overBudget?: number | null;
+}
+
 export interface Budget {
   date: dayjs.Dayjs;
   accounts: AccountBudget[];
@@ -572,6 +628,7 @@ export interface RetirementGoalProgress {
   icon: string;
   postings: Posting[];
   balances: Record<string, AssetBreakdown>;
+  intelligence?: GoalIntelligenceData;
 }
 
 export interface SavingsGoalProgress {
@@ -589,6 +646,8 @@ export interface SavingsGoalProgress {
   icon: string;
   paymentPerPeriod: number;
   balances: Record<string, AssetBreakdown>;
+  contributionHistory?: GoalContributionMonth[];
+  intelligence?: GoalIntelligenceData;
 }
 
 export interface Legend {
@@ -686,6 +745,129 @@ export interface ImportTemplate {
   [key: string]: unknown;
 }
 
+/** Mirrors internal/importer.IngestionFormat. */
+export type IngestionFormat = "csv" | "ofx" | "qfx" | "excel" | "pdf" | "cas";
+
+/** Mirrors internal/importer.StagedTransaction. */
+export interface StagedTransaction {
+  index: number;
+  date: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  currency?: string;
+  is_debit: boolean;
+  selected_account: string;
+  suggested_account?: string;
+  confidence?: string;
+  matched_rule_name?: string;
+  matched_rule_id?: number;
+  tags?: string[];
+  flag_for_review?: boolean;
+  balance?: number;
+  is_duplicate?: boolean;
+  duplicate_score?: number;
+  duplicate_match_id?: number;
+  duplicate_reason?: string;
+}
+
+/** Mirrors internal/importer.IngestionResult. */
+export interface IngestionResult {
+  total_parsed: number;
+  auto_categorized: number;
+  possible_duplicates: number;
+  already_imported: boolean;
+  import_id?: string;
+  transactions: StagedTransaction[];
+}
+
+/** Mirrors internal/model/import_rule.Rule. */
+export interface ImportRule {
+  id?: number;
+  name: string;
+  priority: number;
+  enabled: boolean;
+  payee_pattern?: string;
+  payee_match_type?: "contains" | "exact" | "regex";
+  memo_pattern?: string;
+  memo_match_type?: "contains" | "exact" | "regex";
+  tx_type?: "any" | "debit" | "credit";
+  min_amount?: number;
+  max_amount?: number;
+  target_account: string;
+  tags?: string[];
+  flag_for_review?: boolean;
+}
+
+/** Mirrors internal/model/import_rule.RuleMatchResult. */
+export interface RuleMatchResult {
+  matched: boolean;
+  rule_id?: number;
+  rule_name?: string;
+  target_account?: string;
+  tags?: string[];
+  flag_for_review: boolean;
+}
+
+/** Mirrors internal/server.CommitImportRequest. */
+export interface CommitImportRequest {
+  base_account: string;
+  commodity: string;
+  group_by_date: boolean;
+  raw_content: string;
+  import_id?: string;
+  source_type?: string;
+  transactions: StagedTransaction[];
+}
+
+/** Mirrors internal/importer/reconciliation.BankBalanceCheck. */
+export interface BankBalanceCheck {
+  source: string;
+  currency: string;
+  transaction_count: number;
+  direction: "ascending" | "descending" | "unknown" | "unavailable";
+  opening_balance: string | null;
+  closing_balance: string | null;
+  mismatch_count: number;
+  status: "ok" | "warning" | "error" | "skipped";
+}
+
+/** Mirrors internal/importer/reconciliation.DuplicateHolding. */
+export interface DuplicateHolding {
+  key: string;
+  occurrences: number;
+  sources: string[];
+}
+
+/** Mirrors internal/importer/reconciliation.CurrencyTotal. */
+export interface CurrencyTotal {
+  currency: string;
+  holdings: string;
+  assets: string;
+  liabilities: string;
+  net: string;
+  invalid_records: number;
+}
+
+/** Mirrors internal/importer/reconciliation.TaxYearCheck. */
+export interface TaxYearCheck {
+  financial_year: string;
+  sources_present: string[];
+  missing_required: string[];
+  status: "complete" | "incomplete";
+}
+
+/** Mirrors internal/importer/reconciliation.ReconciliationReport. */
+export interface ReconciliationReport {
+  generated_at: string;
+  status: "ok" | "warning" | "error" | "incomplete";
+  bank_balances: BankBalanceCheck[];
+  duplicate_holdings: DuplicateHolding[];
+  portfolio_totals: CurrencyTotal[];
+  tax_year_completeness: TaxYearCheck[];
+  issues: string[];
+}
+
 export interface Log {
   time: dayjs.Dayjs;
   level: string;
@@ -725,6 +907,36 @@ export interface GoalSummary {
   target: number;
   targetDate: string;
   priority: number;
+  intelligence?: GoalIntelligenceData;
+}
+
+export interface GoalContributionMonth {
+  month: string;
+  amount: number;
+}
+
+// Analysis of a goal computed by the backend. Dates are YYYY-MM-DD strings.
+export interface GoalIntelligenceData {
+  progressRatio: number;
+  remainingAmount: number;
+  validTarget: boolean;
+  requiredMonthlyContribution?: number;
+  actualMonthlyContribution?: number;
+  contributionMonthsObserved: number;
+  activeContributionMonths: number;
+  paceCoverage?: number;
+  paceGap?: number;
+  projectedCompletionDate?: string;
+  configuredCompletionDate?: string;
+  projectionSource?: "recent-pace" | "configured-payment" | "assumed-growth";
+  delayMonths?: number;
+  state: "active" | "completed" | "overdue";
+  scheduleStatus: "on-track" | "behind" | "at-risk" | "insufficient-data" | "no-deadline";
+  attention: "none" | "warning" | "critical";
+  deadlineSource: "configured" | "derived-from-payment" | "none";
+  targetDate?: string;
+  annualReturn?: number;
+  reasons: string[];
 }
 
 export interface SheetLineResult {
@@ -750,9 +962,10 @@ export function ajax(
   route: "/api/config"
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
 export function ajax(route: "/api/harvest"): Promise<{ harvestables: Record<string, Harvestable> }>;
-export function ajax(
-  route: "/api/capital_gains"
-): Promise<{ capital_gains: Record<string, CapitalGain> }>;
+export function ajax(route: "/api/capital_gains"): Promise<{
+  capital_gains: Record<string, CapitalGain>;
+  totals: Record<string, FYCapitalGain>;
+}>;
 export function ajax(
   route: "/api/capital_income_tax"
 ): Promise<{ tax_years: Record<string, GermanyTaxYear> }>;
@@ -781,6 +994,7 @@ export function ajax(
 ): Promise<{ balancedPostings: BalancedPosting[] }>;
 export function ajax(route: "/api/networth"): Promise<{
   networthTimeline: Networth[];
+  currencyNetworths: CurrencyNetworth[];
   xirr: number;
 }>;
 export function ajax(route: "/api/gain"): Promise<{
@@ -791,6 +1005,7 @@ export function ajax(route: "/api/dashboard"): Promise<{
   checkingBalanceTimeline: { month: string; account: string; balance: number }[];
   availableMonthRange: { from: string; to: string };
   expenses: { [key: string]: Posting[] };
+  expense_pace?: ExpensePace | null;
   cashFlows: CashFlow[];
   transactionSequences: TransactionSequence[];
   networth: { networth: Networth; xirr: number };
@@ -815,7 +1030,16 @@ export function ajax(route: "/api/allocation"): Promise<{
   aggregates: { [key: string]: Aggregate };
   aggregates_timeline: { [key: string]: Aggregate }[];
   allocation_targets: AllocationTarget[];
+  rebalance?: RebalancePlan;
 }>;
+export function ajax(
+  route: "/api/allocation/rebalance",
+  options?: RequestOptions
+): Promise<RebalancePlan>;
+export function ajax(
+  route: "/api/allocation/targets",
+  options?: RequestOptions
+): Promise<{ success: boolean; error?: string }>;
 export function ajax(route: "/api/portfolio_allocation"): Promise<PortfolioAllocation>;
 export function ajax(route: "/api/income"): Promise<{
   income_timeline: Income[];
@@ -979,6 +1203,8 @@ export function ajax(
 
 export function ajax(route: "/api/version"): Promise<{ version: string }>;
 
+export function ajax(route: "/api/import/reconciliation"): Promise<ReconciliationReport>;
+
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 
 export function ajax<T = any>(
@@ -1129,7 +1355,7 @@ function unicodeMinus(value: string) {
   return value.replace(/^-/, "\u2212");
 }
 
-export function formatCurrency(value: number, precision: number = null) {
+export function formatCurrency(value: number, precision: number = null, locale: string = null) {
   const config = getUserConfig();
   value = normalize(value);
 
@@ -1138,7 +1364,7 @@ export function formatCurrency(value: number, precision: number = null) {
   }
 
   return unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(locale ?? config.locale, {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -1149,7 +1375,15 @@ export function formatCurrencyCrude(value: number) {
   return formatCurrencyCrudeWithPrecision(value, -1);
 }
 
-export function formatCurrencyCrudeWithPrecision(value: number, precision: number) {
+export function formatCurrencyCrudeWithLocale(value: number, locale: string = null) {
+  return formatCurrencyCrudeWithPrecision(value, -1, locale);
+}
+
+export function formatCurrencyCrudeWithPrecision(
+  value: number,
+  precision: number,
+  locale: string = null
+) {
   const config = getUserConfig();
   value = normalize(value);
 
@@ -1164,7 +1398,7 @@ export function formatCurrencyCrudeWithPrecision(value: number, precision: numbe
     options.minimumFractionDigits = precision;
   }
 
-  return unicodeMinus(value.toLocaleString(config.locale, options));
+  return unicodeMinus(value.toLocaleString(locale ?? config.locale, options));
 }
 
 export function formatCurrencyWithSymbol(value: number, precision: number = null) {

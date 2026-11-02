@@ -6,17 +6,28 @@
 
   export let financialYear: string;
   export let capitalGains: CapitalGain[];
+  export let totals: Record<string, FYCapitalGain> | undefined = undefined;
 
   const fyGains: FYCapitalGain[] = _.compact(capitalGains.map((cg) => cg.fy[financialYear]));
+  const fyTotal = totals?.[financialYear];
 
-  const total = {
-    withdrawn: _.sumBy(fyGains, (fy) => fy.sell_price),
-    gain: _.sumBy(fyGains, (fy) => fy.tax.gain),
-    taxableGain: _.sumBy(fyGains, (fy) => fy.tax.taxable),
-    shortTermTax: _.sumBy(fyGains, (fy) => fy.tax.short_term),
-    longTermTax: _.sumBy(fyGains, (fy) => fy.tax.long_term),
-    slab: _.sumBy(fyGains, (fy) => fy.tax.slab)
-  };
+  const total = fyTotal
+    ? {
+        withdrawn: fyTotal.sell_price,
+        gain: fyTotal.tax.gain,
+        taxableGain: fyTotal.tax.taxable,
+        shortTermTax: fyTotal.tax.short_term,
+        longTermTax: fyTotal.tax.long_term,
+        slab: fyTotal.tax.slab
+      }
+    : {
+        withdrawn: _.sumBy(fyGains, (fy) => fy.sell_price),
+        gain: _.sumBy(fyGains, (fy) => fy.tax.gain),
+        taxableGain: _.sumBy(fyGains, (fy) => fy.tax.taxable),
+        shortTermTax: _.sumBy(fyGains, (fy) => fy.tax.short_term),
+        longTermTax: _.sumBy(fyGains, (fy) => fy.tax.long_term),
+        slab: _.sumBy(fyGains, (fy) => fy.tax.slab)
+      };
 </script>
 
 <div class="column is-12">

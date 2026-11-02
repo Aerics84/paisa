@@ -6,6 +6,7 @@
   import _ from "lodash";
   import * as toast from "bulma-toast";
   import { refresh } from "../../../../store";
+  import { askConfirm } from "$lib/confirm";
   import { sync } from "$lib/sync";
 
   let lastConfig: UserConfig;
@@ -45,11 +46,15 @@
   });
 
   async function resetToDefault() {
-    if (
-      confirm(
-        "Are you sure you want to reset the config to defaults? This action is not reversible."
-      )
-    ) {
+    const confirmed = await askConfirm({
+      title: "Reset configuration?",
+      description:
+        "Are you sure you want to reset the config to defaults? This action is not reversible.",
+      confirmLabel: "Reset",
+      cancelLabel: "Cancel",
+      variant: "danger"
+    });
+    if (confirmed) {
       save({
         journal_path: lastConfig.journal_path,
         db_path: lastConfig.db_path,
@@ -73,7 +78,7 @@
         config = _.cloneDeep(newConfig);
         globalThis.USER_CONFIG = _.cloneDeep(newConfig);
         configUpdated();
-        refresh();
+        await refresh();
         toast.toast({
           message: `Saved config`,
           type: "is-success"

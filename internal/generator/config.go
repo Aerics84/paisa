@@ -53,7 +53,7 @@ regional_profile: %s
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
 	profile = config.NormalizeRegionalProfile(profile)
-	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile)), 0644)
+	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -194,7 +194,7 @@ credit_cards:
 	log.Info("Generating config file: ", configFilePath)
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
-	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(config, filepath.Base(journalFilePath), filepath.Base(dbFilePath))), 0644)
+	err := os.WriteFile(configFilePath, fmt.Appendf(nil, config, filepath.Base(journalFilePath), filepath.Base(dbFilePath)), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -266,13 +266,13 @@ credit_cards:
 	log.Info("Generating config file: ", configFilePath)
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
-	err := os.WriteFile(configFilePath, []byte(fmt.Sprintf(configContent, filepath.Base(journalFilePath), filepath.Base(dbFilePath))), 0644)
+	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configContent, filepath.Base(journalFilePath), filepath.Base(dbFilePath)), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func emitTransaction(file *os.File, date time.Time, payee string, from string, to string, amount interface{}) {
+func emitTransaction(file *os.File, date time.Time, payee string, from string, to string, amount any) {
 	amountString := ""
 	switch amount.(type) {
 	case string:
@@ -656,7 +656,7 @@ func generateGermanyEUJournalFile(cwd string) {
 	}
 	journal.WriteString("\n")
 
-	for offset := 0; offset < 3; offset++ {
+	for offset := range 3 {
 		month := startMonth.AddDate(0, offset, 0)
 
 		salary := 4800.0

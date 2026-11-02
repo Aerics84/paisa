@@ -1,6 +1,8 @@
 <script lang="ts">
   import { createEditor, sheetEditorState } from "$lib/sheet";
   import { focus, moveToLine, updateContent } from "$lib/editor";
+  import { askConfirm } from "$lib/confirm";
+  import { shouldDeferNavigation } from "$lib/navigation_guard";
   import {
     ajax,
     buildDirectoryTree,
@@ -15,7 +17,7 @@
   import type { EditorView } from "codemirror";
   import _ from "lodash";
   import { onMount } from "svelte";
-  import { beforeNavigate, goto } from "$app/navigation";
+  import { beforeNavigate, goto, afterNavigate } from "$app/navigation";
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
   import FileModal from "$lib/components/FileModal.svelte";
@@ -50,19 +52,54 @@
   ];
 
   let cancelled = false;
-  beforeNavigate(async ({ cancel }) => {
-    if ($sheetEditorState.hasUnsavedChanges) {
-      const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (!confirmed) {
-        cancel();
-        cancelled = true;
-      } else {
-        $sheetEditorState = _.assign({}, $sheetEditorState, { hasUnsavedChanges: false });
+
+  function askLeaveUnsavedChanges(): Promise<boolean> {
+    return askConfirm({
+      title: "Unsaved changes",
+      description: "You have unsaved changes. Are you sure you want to leave?",
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "danger"
+    });
+  }
+
+  beforeNavigate(({ cancel, to, willUnload }) => {
+    if (!shouldDeferNavigation({ dirty: $sheetEditorState.hasUnsavedChanges })) return;
+
+    // Navigations initiated by the editor itself ask before calling goto().
+    // Everything else (links, back/forward) is cancelled here and repeated
+    // once the user chooses to leave.
+    cancel();
+    cancelled = true;
+    if (willUnload || !to) return;
+
+    const target = to.url;
+    void askLeaveUnsavedChanges().then((confirmed) => {
+      if (shouldDeferNavigation({ dirty: true, confirmed })) {
+        cancelled = false;
+        return;
       }
-    }
+      cancelled = false;
+      $sheetEditorState = _.assign({}, $sheetEditorState, { hasUnsavedChanges: false });
+      void goto(target, { reset: false });
+    });
   });
 
   async function navigate(url: string) {
+    const dirty = $sheetEditorState.hasUnsavedChanges;
+    cancelled = false;
+
+    // Ask before goto() so a confirmed navigation can update selectedFile.
+    const confirmed = dirty ? await askLeaveUnsavedChanges() : false;
+    if (shouldDeferNavigation({ dirty, confirmed, cancelled })) {
+      cancelled = false;
+      return false;
+    }
+
+    if (dirty) {
+      $sheetEditorState = _.assign({}, $sheetEditorState, { hasUnsavedChanges: false });
+    }
+
     await goto(url, { reset: false });
     if (cancelled) {
       cancelled = false;
@@ -70,6 +107,16 @@
     }
     return true;
   }
+
+  // A navigation not started by navigate() (for example an external link) is
+  // cancelled in beforeNavigate and repeated after confirmation. Pick the new
+  // file from the route once that deferred navigation lands.
+  afterNavigate(() => {
+    const file = filesMap[page.params.slug];
+    if (file && selectedFile?.name !== file.name) {
+      selectedFile = file;
+    }
+  });
 
   onMount(async () => {
     loadFiles(data.name);

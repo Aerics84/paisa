@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 
@@ -273,7 +273,7 @@ func ruleAllocationTargetMissingAssetAccounts(db *gorm.DB) []error {
 		found := false
 		for _, target := range config.GetConfig().AllocationTargets {
 			for _, targetAccount := range target.Accounts {
-				match, _ := filepath.Match(targetAccount, account)
+				match, _ := path.Match(targetAccount, account)
 				if match {
 					found = true
 					break

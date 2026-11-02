@@ -1025,7 +1025,7 @@ span.progress-percent.less-than-10 {
   .budget-amount {
     width: 80px;
     text-align: right;
-    text-weight: bold;
+    font-weight: bold;
 
     &.info {
       font-weight: bold;
@@ -1610,5 +1610,87 @@ div.is-hoverable:hover {
   .paisa-surface-split > * + * {
     border-left: none;
     border-top: 1px solid var(--app-border);
+  }
+}
+
+// Mobile readability and touch targets
+@include mobile {
+  .is-size-7 {
+    font-size: 0.85rem !important;
+  }
+
+  .is-size-6-5 {
+    font-size: 0.9rem !important;
+  }
+
+  .axis text {
+    font-size: 0.8rem;
+  }
+
+  .button,
+  .button.is-small,
+  .input,
+  .select select {
+    min-height: 44px;
+  }
+
+  .du-tabs .du-tab,
+  .du-tabs-sm .du-tab {
+    min-height: 38px;
+    height: auto;
+  }
+
+  .svelte-select {
+    --height: 44px;
+  }
+
+  .navbar-burger {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  // The compact topbar sizing has a higher specificity than the global
+  // `.button`/`.select select` rule above, so re-assert the touch target.
+  .paisa-topbar__controls .button,
+  .paisa-topbar__controls .select select,
+  .paisa-topbar__filters .button,
+  .paisa-topbar__filters .select select,
+  .paisa-topbar__controls > .dropdown .dropdown-trigger .button,
+  .paisa-topbar__controls > .dropdown-trigger .button,
+  .paisa-topbar__filters > .dropdown .dropdown-trigger .button,
+  .paisa-topbar__filters > .dropdown-trigger .button {
+    min-height: 44px;
+    height: auto;
+  }
+
+  // The theme switcher is a plain button, so the `.button` rules above do
+  // not reach it.
+  .paisa-topbar__controls .theme-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  // Let long navigation labels and breadcrumb trails wrap instead of
+  // overflowing. These live here (after Bulma) rather than in
+  // responsive.scss, which is emitted before app.scss.
+  .navbar-dropdown {
+    max-width: 100%;
+
+    .navbar-item,
+    .navbar-link {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .breadcrumb {
+    white-space: normal;
+
+    ul,
+    ol {
+      flex-wrap: wrap;
+    }
   }
 }

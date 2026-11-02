@@ -101,7 +101,8 @@ display_precision: 0
 # OPTIONAL, DEFAULT: 52
 amount_alignment_column: 52
 
-# The locale used to format numbers. The list of locales supported
+# The locale used to format numbers and parse amounts in import templates.
+# The list of locales supported
 # depends on your browser. It's known to work well with en-US and en-IN.
 #
 # OPTIONAL, DEFAULT: en-IN
@@ -277,10 +278,10 @@ allocation_targets:
 # OPTIONAL, DEFAULT: []
 commodities:
   - name: NASDAQ
-    # Required, ENUM: mutualfund, stock, nps, unknown
+    # Required, ENUM: mutualfund, stock, nps, metal, currency, unknown
     type: mutualfund
     price:
-      # Required, ENUM: in-mfapi, com-yahoo, com-purifiedbytes-nps, co-alphavantage
+      # Required, ENUM: in-mfapi, com-yahoo, com-purifiedbytes-nps, co-alphavantage, com-allratestoday
       provider: in-mfapi
       # differs based on provider
       code: 145552

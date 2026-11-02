@@ -9,7 +9,7 @@
     try {
       await sync(request);
     } finally {
-      refresh();
+      await refresh();
     }
   }
 
@@ -18,7 +18,7 @@
   obscure.subscribe(() => {
     if ($obscure === last) return;
 
-    refresh();
+    void refresh();
   });
 
   function doLogout() {

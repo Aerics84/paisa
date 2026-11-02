@@ -13,6 +13,7 @@
     formatCurrency,
     formatFloat,
     firstName,
+    isMobile,
     type LedgerFile,
     type Transaction,
     asTransaction
@@ -112,14 +113,14 @@
               scrollDirection="vertical"
               height={window.innerHeight - 245}
               itemCount={filteredPostings.length}
-              itemSize={27}
+              itemSize={isMobile() ? 32 : 27}
             >
               {#snippet item({ index, style })}
                 {@const p = filteredPostings[index]}
                 {@const c = change(p)}
                 <div
                   class="px-3 pt-1 grid grid-cols-7x gap-1 posting-row items-baseline is-hoverable"
-                  {style}
+                  style="{style} overflow: hidden;"
                 >
                   <div>{p.date.format("DD MMM YYYY")}</div>
                   <div class="is-size-7 truncate" title={p.payee}>

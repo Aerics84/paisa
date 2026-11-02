@@ -37,12 +37,12 @@ func setMonthlyReviewNow(t *testing.T, date string) {
 func loadMonthlyReviewConfigWithTimeZone(t *testing.T, zone string) {
 	t.Helper()
 
-	err := config.LoadConfig([]byte(fmt.Sprintf(`
+	err := config.LoadConfig(fmt.Appendf(nil, `
 journal_path: main.ledger
 db_path: paisa.db
 default_currency: EUR
 time_zone: %s
-`, zone)), "")
+`, zone), "")
 	require.NoError(t, err)
 }
 

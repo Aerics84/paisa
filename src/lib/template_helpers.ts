@@ -1,9 +1,10 @@
 import dayjs from "dayjs";
-import { BigNumber } from "bignumber.js";
 import _ from "lodash";
 import { get } from "svelte/store";
 import { accountTfIdf } from "../store";
 import similarity from "compute-cosine-similarity";
+import { BigNumber } from "bignumber.js";
+import { Amount, parseAmount as parseLocalizedAmount } from "./amount";
 
 const STOP_WORDS = ["", "fof", "growth", "direct", "plan", "the"];
 
@@ -75,102 +76,35 @@ function findMatch(query: string) {
     .value();
 }
 
-function scrubAmount(str: string) {
-  const amount = _.trim(str)
-    .replace(/\((.+)\)/, "-$1")
-    .replace(/[^0-9,.-]/g, "");
-
-  const normalized = normalizeNumericToken(amount);
-
-  if (!isNaN(normalized as any) && !isNaN(parseFloat(normalized))) {
-    return normalized;
-  }
+function parseAmount(value: unknown) {
+  return parseLocalizedAmount(value, globalThis.USER_CONFIG?.locale || "en-IN");
 }
 
-function negateAmount(value: string | number) {
-  const amount = _.isNumber(value) ? value.toString() : scrubAmount(value);
-  if (amount) {
-    return new BigNumber(amount).negated().toFixed();
-  }
-}
-
-function normalizeNumericToken(token: string) {
-  if (!token) {
-    return token;
-  }
-
-  if (token.includes(",") && token.includes(".")) {
-    return token.lastIndexOf(",") > token.lastIndexOf(".")
-      ? normalizeWithDecimalSeparator(token, ",")
-      : normalizeWithDecimalSeparator(token, ".");
-  }
-
-  if (token.includes(",")) {
-    if (hasThousandsGrouping(token.split(","))) {
-      return token.replaceAll(",", "");
-    }
-    return normalizeWithDecimalSeparator(token, ",");
-  }
-
-  if ((token.match(/\./g) || []).length > 1) {
-    if (hasThousandsGrouping(token.split("."))) {
-      return token.replaceAll(".", "");
-    }
-    return normalizeWithDecimalSeparator(token, ".");
-  }
-
-  return token;
-}
-
-function normalizeWithDecimalSeparator(token: string, separator: "," | ".") {
-  const index = token.lastIndexOf(separator);
-  const integerPart = token.slice(0, index).replaceAll(",", "").replaceAll(".", "");
-  const fractionPart = token
-    .slice(index + 1)
-    .replaceAll(",", "")
-    .replaceAll(".", "");
-  return `${integerPart}.${fractionPart}`;
-}
-
-function hasThousandsGrouping(groups: string[]) {
-  if (groups.length <= 1) {
-    return false;
-  }
-
-  const western = groups.slice(1).every((group) => group.length === 3);
-  if (western) {
-    return true;
-  }
-
-  if (groups[groups.length - 1].length !== 3) {
-    return false;
-  }
-
-  return groups.slice(1, -1).every((group) => group.length === 2);
-}
-
-function parseAmount(str: string | number) {
-  if (_.isNumber(str)) {
-    return str;
-  }
-
-  const amount = scrubAmount(str);
-  if (amount) {
-    return parseFloat(amount);
-  }
+function compareAmounts(a: unknown, b: unknown, test: (comparison: number) => boolean) {
+  const left = parseAmount(a);
+  const right = parseAmount(b);
+  return !!left && !!right && test(left.value.comparedTo(right.value));
 }
 
 export default {
   eq: (a: any, b: any) => a === b,
   ne: (a: any, b: any) => a !== b,
   not: (value: any) => !value,
-  gte: (a: string | number, b: string | number) => parseAmount(a) >= parseAmount(b),
-  gt: (a: string | number, b: string | number) => parseAmount(a) > parseAmount(b),
-  lte: (a: string | number, b: string | number) => parseAmount(a) <= parseAmount(b),
-  lt: (a: string | number, b: string | number) => parseAmount(a) < parseAmount(b),
-  negate: negateAmount,
-  round(str: string, options: any) {
-    return _.round(parseAmount(str), options.hash.precision || 0);
+  gte: (a: unknown, b: unknown) => compareAmounts(a, b, (comparison) => comparison >= 0),
+  gt: (a: unknown, b: unknown) => compareAmounts(a, b, (comparison) => comparison > 0),
+  lte: (a: unknown, b: unknown) => compareAmounts(a, b, (comparison) => comparison <= 0),
+  lt: (a: unknown, b: unknown) => compareAmounts(a, b, (comparison) => comparison < 0),
+  negate(value: unknown) {
+    const amount = parseAmount(value);
+    return amount ? new Amount(amount.value.negated()) : "";
+  },
+  round(value: unknown, options: any) {
+    const amount = parseAmount(value);
+    if (!amount) {
+      return "";
+    }
+    const precision = _.clamp(_.toInteger(options.hash.precision), 0, 292);
+    return new Amount(amount.value.decimalPlaces(precision, BigNumber.ROUND_HALF_CEIL));
   },
   and(...args: any[]) {
     return Array.prototype.every.call(Array.prototype.slice.call(args, 0, -1), Boolean);
@@ -222,7 +156,7 @@ export default {
       return prefix + ":Unknown";
     }
   },
-  isBlank(str: string) {
+  isBlank(str: any) {
     if (_.isNumber(str) || _.isDate(str)) {
       return false;
     }
@@ -231,9 +165,8 @@ export default {
     }
     return _.isEmpty(str) || _.trim(str) === "";
   },
-  amount(str: any, options: any) {
-    const amount = _.isNumber(str) ? String(str) : scrubAmount(str);
-    return amount || options.hash.default || "";
+  amount(value: unknown, options: any) {
+    return parseAmount(value) ?? options.hash.default ?? "";
   },
   date(value: any, format: string) {
     if (_.isDate(value)) {

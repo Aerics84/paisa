@@ -24,14 +24,16 @@ export function renderAllocationTarget(
   color: d3.ScaleOrdinal<string, string>
 ) {
   const id = "#d3-allocation-target";
+  const svg = d3.select(id);
+  svg.selectAll("*").remove();
+  d3.select("#d3-allocation-target-treemap").selectAll("*").remove();
 
   if (_.isEmpty(allocationTargets)) {
     return;
   }
   allocationTargets = _.sortBy(allocationTargets, (t) => t.name);
   const BAR_HEIGHT = rem(25);
-  const svg = d3.select(id),
-    margin = { top: rem(20), right: rem(20), bottom: rem(10), left: rem(150) },
+  const margin = { top: rem(20), right: rem(20), bottom: rem(10), left: rem(150) },
     fullWidth = Math.max(document.getElementById(id.substring(1)).parentElement.clientWidth, 1000),
     width = fullWidth - margin.left - margin.right,
     height = allocationTargets.length * BAR_HEIGHT * 2,
@@ -243,6 +245,8 @@ function renderPartition(
   color: d3.ScaleOrdinal<string, string>,
   options = { margin: { top: 0, right: 20, bottom: 0, left: 0 } }
 ) {
+  d3.select(element).selectAll("*").remove();
+
   if (_.isEmpty(aggregates)) {
     return;
   }
@@ -306,6 +310,8 @@ function renderPartition(
 export function renderAllocationTimeline(
   aggregatesTimeline: { [key: string]: Aggregate }[]
 ): Legend[] {
+  d3.select("#d3-allocation-timeline").selectAll("*").remove();
+
   const timeline = _.map(aggregatesTimeline, (aggregates) => {
     return _.chain(aggregates)
       .values()

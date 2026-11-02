@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"testing"
 	"time"
@@ -22,17 +23,15 @@ func configureInvestmentTest(t *testing.T) {
 	configureInvestmentTestWith(t, nil)
 }
 
-func configureInvestmentTestWith(t *testing.T, extra map[string]interface{}) {
+func configureInvestmentTestWith(t *testing.T, extra map[string]any) {
 	t.Helper()
 	root := t.TempDir()
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"journal_path":                  filepath.Join(root, "main.ledger"),
 		"db_path":                       filepath.Join(root, "paisa.db"),
 		"financial_year_starting_month": 4,
 	}
-	for key, value := range extra {
-		payload[key] = value
-	}
+	maps.Copy(payload, extra)
 	content, err := json.Marshal(payload)
 	require.NoError(t, err)
 	require.NoError(t, config.LoadConfig(content, ""))
@@ -261,7 +260,7 @@ func TestIsSalaryIncomeMatchesWholeSegments(t *testing.T) {
 
 func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
 	utils.SetNow("2026-06-15")
-	configureInvestmentTestWith(t, map[string]interface{}{
+	configureInvestmentTestWith(t, map[string]any{
 		"salary_income_accounts": []string{"Income:Employment:Wages"},
 	})
 	date := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -277,7 +276,7 @@ func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
 }
 
 func TestGetInvestmentExcludesInternalTransfers(t *testing.T) {
-	configureInvestmentTestWith(t, map[string]interface{}{
+	configureInvestmentTestWith(t, map[string]any{
 		"transfer_accounts": []string{"Assets:Cash"},
 	})
 	db := openInvestmentTestDB(t)

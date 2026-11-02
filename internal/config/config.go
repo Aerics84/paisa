@@ -36,6 +36,7 @@ const (
 	NPS        CommodityType = "nps"
 	Stock      CommodityType = "stock"
 	Metal      CommodityType = "metal"
+	Currency   CommodityType = "currency"
 	Unknown    CommodityType = "unknown"
 )
 
@@ -160,7 +161,14 @@ type Budget struct {
 type AllocationTarget struct {
 	Name     string   `json:"name" yaml:"name"`
 	Target   float64  `json:"target" yaml:"target"`
+	Drift    float64  `json:"drift,omitempty" yaml:"drift,omitempty"`
 	Accounts []string `json:"accounts" yaml:"accounts"`
+}
+
+type NetworthCurrency struct {
+	Name      string `json:"name" yaml:"name"`
+	Symbol    string `json:"symbol" yaml:"symbol"`
+	Commodity string `json:"commodity" yaml:"commodity"`
 }
 
 type CreditCard struct {
@@ -199,6 +207,8 @@ type Config struct {
 	ScheduleALs []ScheduleAL `json:"schedule_al" yaml:"schedule_al"`
 
 	AllocationTargets []AllocationTarget `json:"allocation_targets" yaml:"allocation_targets"`
+
+	NetworthCurrencies []NetworthCurrency `json:"networth_currencies" yaml:"networth_currencies"`
 
 	Commodities []Commodity `json:"commodities" yaml:"commodities"`
 
@@ -243,6 +253,7 @@ var defaultConfig = Config{
 	WeekStartingDay:            0,
 	ScheduleALs:                []ScheduleAL{},
 	AllocationTargets:          []AllocationTarget{},
+	NetworthCurrencies:         []NetworthCurrency{},
 	Commodities:                []Commodity{},
 	ImportTemplates:            []ImportTemplate{},
 	SalaryIncomeAccounts:       nil,
@@ -293,7 +304,7 @@ func regionalProfileDefaults(profile RegionalProfileType) Config {
 	}
 }
 
-func applyRegionalProfileDefaults(raw map[string]interface{}, cfg *Config) {
+func applyRegionalProfileDefaults(raw map[string]any, cfg *Config) {
 	profileDefaults := regionalProfileDefaults(cfg.RegionalProfile)
 
 	if _, ok := raw["tax_regime"]; !ok {
@@ -334,10 +345,10 @@ var itemsUniquePropertiesMeta = jsonschema.MustCompileString("itemsUniquePropert
 type itemsUniquePropertiesSchema []string
 type itemsUniquePropertiessCompiler struct{}
 
-func (itemsUniquePropertiessCompiler) Compile(ctx jsonschema.CompilerContext, m map[string]interface{}) (jsonschema.ExtSchema, error) {
+func (itemsUniquePropertiessCompiler) Compile(ctx jsonschema.CompilerContext, m map[string]any) (jsonschema.ExtSchema, error) {
 
 	if items, ok := m["itemsUniqueProperties"]; ok {
-		itemsInterface := items.([]interface{})
+		itemsInterface := items.([]any)
 		itemsString := make([]string, len(itemsInterface))
 		for i, v := range itemsInterface {
 			itemsString[i] = v.(string)
@@ -348,12 +359,12 @@ func (itemsUniquePropertiessCompiler) Compile(ctx jsonschema.CompilerContext, m 
 	return nil, nil
 }
 
-func (s itemsUniquePropertiesSchema) Validate(ctx jsonschema.ValidationContext, v interface{}) error {
+func (s itemsUniquePropertiesSchema) Validate(ctx jsonschema.ValidationContext, v any) error {
 	for _, uniqueProperty := range s {
-		items := v.([]interface{})
+		items := v.([]any)
 		seen := make(map[string]bool)
 		for _, item := range items {
-			itemMap := item.(map[string]interface{})
+			itemMap := item.(map[string]any)
 			if _, ok := itemMap[uniqueProperty]; ok {
 				value := itemMap[uniqueProperty].(string)
 				if seen[value] {
@@ -431,13 +442,13 @@ func LoadConfigFile(path string) {
 }
 
 func LoadConfig(content []byte, cp string) error {
-	var configJson interface{}
+	var configJson any
 	err := yaml.Unmarshal(content, &configJson)
 	if err != nil {
 		return err
 	}
 
-	rawConfig := map[string]interface{}{}
+	rawConfig := map[string]any{}
 	err = yaml.Unmarshal(content, &rawConfig)
 	if err != nil {
 		return err

@@ -1,8 +1,9 @@
 import { writable, derived, get } from "svelte/store";
-import * as d3 from "d3";
 
 import dayjs from "dayjs";
+import { dateBounds } from "$lib/date_range";
 import type { AccountTfIdf, LedgerFileError, SheetFileError, SheetLineResult } from "$lib/utils";
+import { askConfirm } from "$lib/confirm";
 import _ from "lodash";
 
 export function now() {
@@ -125,17 +126,23 @@ export const willClearTippy = writable(0);
 export const accountTfIdf = writable<AccountTfIdf>(null);
 
 export function setAllowedDateRange(dates: dayjs.Dayjs[]) {
-  const [start, end] = d3.extent(dates);
-  if (start) {
-    dateMin.set(start);
-    dateMax.set(end);
+  const bounds = dateBounds(dates);
+  if (bounds) {
+    dateMin.set(bounds.dateMin);
+    dateMax.set(bounds.dateMax);
   }
 }
 
 export const willRefresh = writable(0);
-export function refresh() {
+export async function refresh(): Promise<boolean> {
   if (get(editorState).hasUnsavedChanges) {
-    const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
+    const confirmed = await askConfirm({
+      title: "Unsaved changes",
+      description: "You have unsaved changes. Are you sure you want to leave?",
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "danger"
+    });
     if (!confirmed) {
       return false;
     } else {

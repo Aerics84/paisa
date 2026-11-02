@@ -9,6 +9,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/cache"
 	"github.com/ananthakumaran/paisa/internal/model/cii"
 	"github.com/ananthakumaran/paisa/internal/model/commodity"
+	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	mutualfundModel "github.com/ananthakumaran/paisa/internal/model/mutualfund/scheme"
 	npsModel "github.com/ananthakumaran/paisa/internal/model/nps/scheme"
 	"github.com/ananthakumaran/paisa/internal/model/portfolio"
@@ -30,6 +31,7 @@ func AutoMigrate(db *gorm.DB) {
 	db.AutoMigrate(&portfolio.Portfolio{})
 	db.AutoMigrate(&price.Price{})
 	db.AutoMigrate(&cii.CII{})
+	db.AutoMigrate(&import_rule.Rule{})
 	db.AutoMigrate(&cache.Cache{})
 }
 
@@ -44,11 +46,11 @@ func SyncJournal(db *gorm.DB) (string, error) {
 			return err.Error(), err
 		}
 
-		var message string
+		var message strings.Builder
 		for _, error := range errors {
-			message += error.String() + "\n\n"
+			message.WriteString(error.String() + "\n\n")
 		}
-		return strings.TrimRight(message, "\n"), err
+		return strings.TrimRight(message.String(), "\n"), err
 	}
 
 	prices, err := ledger.Cli().Prices(config.GetJournalPath())
@@ -93,11 +95,11 @@ func SyncCommodities(db *gorm.DB) error {
 	}
 
 	if len(errors) > 0 {
-		var message string
+		var message strings.Builder
 		for _, error := range errors {
-			message += error.Error() + "\n"
+			message.WriteString(error.Error() + "\n")
 		}
-		return fmt.Errorf("%s", strings.Trim(message, "\n"))
+		return fmt.Errorf("%s", strings.Trim(message.String(), "\n"))
 	}
 	return nil
 }

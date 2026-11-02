@@ -7,7 +7,8 @@
     isMobile,
     type AssetBreakdown,
     type Point,
-    type Posting
+    type Posting,
+    type GoalIntelligenceData
   } from "$lib/utils";
   import { onMount, tick, onDestroy } from "svelte";
   import ARIMAPromise from "arima/async";
@@ -16,7 +17,11 @@
     renderProgress,
     findBreakPoints,
     renderInvestmentTimeline,
-    type ForecastMode
+    analyzeGoal,
+    goalDelayLabel,
+    goalStatusLabel,
+    type ForecastMode,
+    type GoalIntelligence
   } from "$lib/goals";
   import LevelItem from "$lib/components/LevelItem.svelte";
   import type { PageData } from "./$types";
@@ -54,6 +59,11 @@
     postings: Posting[] = [],
     latestPostings: Posting[] = [],
     balances: Record<string, AssetBreakdown> = {},
+    intelligence: GoalIntelligence | undefined,
+    intelligenceData: GoalIntelligenceData | undefined,
+    statusLabel = "",
+    projectionDate = "",
+    delayLabel = "",
     destroyCallback = () => {};
 
   onDestroy(async () => {
@@ -75,7 +85,8 @@
       icon,
       name,
       postings,
-      balances
+      balances,
+      intelligence: intelligenceData
     } = await ajax("/api/goals/retirement/:name", null, data));
 
     latestPostings = _.chain(postings)
@@ -84,8 +95,25 @@
       .take(100)
       .value();
 
+    const goal = {
+      type: "retirement",
+      name,
+      id: `retirement-${name}`,
+      icon,
+      current: savingsTotal,
+      target: targetSavings,
+      targetDate: "",
+      priority: 0,
+      intelligence: intelligenceData
+    };
+    intelligence = analyzeGoal(goal);
+    statusLabel = goalStatusLabel(goal, intelligence);
+    projectionDate = intelligence.projectedCompletionDate?.format("DD MMM YYYY") ?? "";
+    delayLabel = goalDelayLabel(intelligence);
+    predictedTargetDate = projectionDate;
+
     if (yearlyExpense > 0) {
-      progressPercent = (savingsTotal / targetSavings) * 100;
+      progressPercent = Math.max(0, Math.min(100, (intelligenceData?.progressRatio ?? 0) * 100));
       savingsX = savingsTotal / yearlyExpense;
       targetX = targetSavings / yearlyExpense;
     }
@@ -105,7 +133,8 @@
     );
     forecastMode = mode;
     forecastUnavailable = forecastMode === "none" && savingsTotal < targetSavings;
-    predictedTargetDate = _.last(predictionsTimeline)?.date.format("DD MMM YYYY") || "";
+    predictedTargetDate =
+      projectionDate || _.last(predictionsTimeline)?.date.format("DD MMM YYYY") || "";
     await tick();
     breakPoints = findBreakPoints(savingsTimeline.concat(predictionsTimeline), targetSavings);
     destroyCallback = renderProgress(savingsTimeline, predictionsTimeline, breakPoints, svg, {
@@ -133,7 +162,7 @@
         title="Current Savings"
         value={formatCurrency(savingsTotal)}
         color={COLORS.gainText}
-        subtitle="{formatFloat(savingsX, 0)}x times Yearly Expenses"
+        subtitle={`${formatFloat(savingsX, 0)}× Yearly Expenses`}
       />
       <LevelItem
         title="Yearly Expenses"
@@ -145,15 +174,23 @@
         title="Target Savings"
         value={formatCurrency(targetSavings)}
         color={COLORS.primary}
-        subtitle={`${formatFloat(targetX, 0)}x times Yearly Expenses${
+        subtitle={`${formatFloat(targetX, 0)}× Yearly Expenses${
           predictedTargetDate
-            ? `<br/>${
-                forecastMode === "fallback" ? "Estimated" : "Expected"
-              } <b>${predictedTargetDate}</b>`
+            ? `<br/>Projected <b>${predictedTargetDate}</b>`
             : savingsTotal >= targetSavings
               ? "<br/>Target achieved"
               : ""
         }`}
+      />
+      <LevelItem
+        title="Goal Status"
+        value={statusLabel}
+        color={intelligence?.attention === "critical"
+          ? COLORS.lossText
+          : intelligence?.attention === "warning"
+            ? COLORS.tertiary
+            : COLORS.gainText}
+        subtitle={delayLabel || null}
       />
       <LevelItem title="SWR" value={formatFloat(swr)} />
     </nav>

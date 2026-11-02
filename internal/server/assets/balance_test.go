@@ -128,7 +128,7 @@ func TestCheckingBalanceTimelineKeepsInternalTransfersNeutral(t *testing.T) {
 func TestCheckingBalanceTimelineLimitsToLatestTwelveRecordedMonths(t *testing.T) {
 	db := openBalanceTestDB(t)
 
-	for index := 0; index < 14; index++ {
+	for index := range 14 {
 		month := time.Date(2021, time.January, 10, 0, 0, 0, 0, time.UTC).AddDate(0, index, 0)
 		date := month.Format("2006-01-02")
 		addCheckingPosting(t, db, "salary-month-"+month.Format("2006-01"), date, "Assets:Checking:Bank", "100")
@@ -186,7 +186,7 @@ func TestAvailableMonthRangeUsesRecordedPostingBounds(t *testing.T) {
 	monthRange := GetAvailableMonthRange(db)
 
 	require.True(t, monthRange.From.Equal(utils.BeginningOfMonth(balanceTestDate("2020-02-10"))))
-	require.True(t, monthRange.To.Equal(utils.BeginningOfMonth(balanceTestDate("2022-04-20"))))
+	require.True(t, monthRange.To.Equal(utils.BeginningOfMonth(balanceTestDate("2022-03-15"))), "future postings must not extend the picker range")
 }
 
 func TestAvailableMonthRangeIncludesCurrentMonthWithoutPostings(t *testing.T) {
@@ -206,6 +206,22 @@ func TestAvailableMonthRangeIsZeroWithoutPostings(t *testing.T) {
 	monthRange := GetAvailableMonthRange(db)
 	require.True(t, monthRange.From.IsZero())
 	require.True(t, monthRange.To.IsZero())
+}
+
+func TestBalanceExcludesFuturePostings(t *testing.T) {
+	db := openBalanceTestDB(t)
+
+	today := utils.BeginningOfDay(utils.Now())
+	addCheckingPosting(t, db, "today", today.Format("2006-01-02"), "Assets:Checking:Bank", "1000")
+	addCheckingPosting(t, db, "future", today.AddDate(0, 1, 0).Format("2006-01-02"), "Assets:Checking:Bank", "500")
+
+	result := GetBalance(db)
+	breakdowns, ok := result["asset_breakdowns"].(map[string]AssetBreakdown)
+	require.True(t, ok)
+
+	leaf, found := breakdowns["Assets:Checking:Bank"]
+	require.True(t, found)
+	require.True(t, leaf.MarketAmount.Equal(decimal.NewFromInt(1000)), "future postings must not inflate the balance, got %s", leaf.MarketAmount)
 }
 
 func TestComputeBreakdownsIncludesConfiguredCommodityMetadata(t *testing.T) {
