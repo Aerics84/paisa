@@ -35,11 +35,14 @@ func getSavingsDetail(db *gorm.DB, conf config.SavingsGoal) gin.H {
 	savingsTotal := accounting.CurrentBalance(savings)
 	investmentTotal := accounting.CostBalance(savings)
 
-	savingsWithCapitalGains := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").All(), conf.Accounts)
+	// Keep the unfiltered postings for contribution accounting: the capital-gain
+	// counterparts must be selected together with their source asset account.
+	contributionPostings := query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").All()
+	savingsWithCapitalGains := accounting.FilterByGlob(contributionPostings, conf.Accounts)
 	savingsWithCapitalGains = service.PopulateMarketPrice(db, savingsWithCapitalGains)
 
 	balances := assets.ComputeBreakdowns(db, savingsWithCapitalGains, false)
-	history := contributionHistory(savingsWithCapitalGains, conf.Accounts, utils.Now())
+	history := contributionHistory(db, contributionPostings, conf.Accounts, utils.Now())
 
 	return gin.H{
 		"type":                "savings",

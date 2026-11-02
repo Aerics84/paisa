@@ -2,6 +2,7 @@ package goal
 
 import (
 	"github.com/ananthakumaran/paisa/internal/config"
+	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
@@ -25,19 +26,31 @@ type GoalSummary struct {
 
 func GetGoalSummaries(db *gorm.DB) []GoalSummary {
 	summaries := []GoalSummary{}
+	goals := config.GetConfig().Goals
 	assetPostings := query.Init(db).UntilToday().Like("Assets:%").All()
 	assetPostings = service.PopulateMarketPrice(db, assetPostings)
 
-	for _, goal := range config.GetConfig().Goals.Retirement {
+	// Keep older asset activity so observed zero months are retained. Only the
+	// capital-gain counterparts need a bounded query; they make an internal sale
+	// cancel its cost and realized gain exactly.
+	contributionPostings := append([]posting.Posting{}, assetPostings...)
+	if len(goals.Savings) > 0 {
+		end := utils.BeginningOfMonth(utils.Now())
+		start := end.AddDate(0, -6, 0)
+		gains := query.Init(db).Like("Income:CapitalGains:%").Where("date between ? AND ?", start, end).All()
+		contributionPostings = append(contributionPostings, gains...)
+	}
+
+	for _, goal := range goals.Retirement {
 		summary := getRetirementSummary(db, assetPostings, goal)
 		intelligence := analyze(summary.Type, summary.Current, summary.Target, "", 0, 0, nil)
 		summary.Intelligence = &intelligence
 		summaries = append(summaries, summary)
 	}
 
-	for _, goal := range config.GetConfig().Goals.Savings {
+	for _, goal := range goals.Savings {
 		summary := getSavingsSummary(db, assetPostings, goal)
-		history := contributionHistory(assetPostings, goal.Accounts, utils.Now())
+		history := contributionHistory(db, contributionPostings, goal.Accounts, utils.Now())
 		intelligence := analyze(summary.Type, summary.Current, summary.Target, goal.TargetDate, goal.Rate, goal.PaymentPerPeriod, history)
 		summary.Intelligence = &intelligence
 		summaries = append(summaries, summary)
