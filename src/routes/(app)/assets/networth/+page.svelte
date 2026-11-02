@@ -30,8 +30,7 @@
   $: selected = _.find(currencyNetworths, (c) => c.name === $selectedCurrency);
   $: symbol = selected?.symbol || "";
   $: points = selected ? selected.networthTimeline : defaultPoints;
-  $: fmt = (v: number) =>
-    symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
+  $: fmt = (v: number) => (symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v));
   $: stats = computePeriodStats(points, $dateRange.from, $dateRange.to);
   $: showKpis = hasNetworthKpiData(selected, points);
 

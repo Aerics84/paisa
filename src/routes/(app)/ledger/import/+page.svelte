@@ -534,7 +534,7 @@
           <span>Reconciliation</span>
         </span>
         <span class="icon">
-          <i class="fas fa-chevron-{reconciliationOpen ? "up" : "down"}"></i>
+          <i class="fas fa-chevron-{reconciliationOpen ? 'up' : 'down'}"></i>
         </span>
       </button>
 

@@ -166,9 +166,7 @@ export function renderNetworth(
       .call(d3.axisRight(y).tickPadding(5).tickFormat(fmtCrude));
   }
 
-  g.append("g")
-    .attr("class", "axis y")
-    .call(d3.axisLeft(y).tickSize(-width).tickFormat(fmtCrude));
+  g.append("g").attr("class", "axis y").call(d3.axisLeft(y).tickSize(-width).tickFormat(fmtCrude));
 
   const layer = g.selectAll(".layer").data([points]).enter().append("g").attr("class", "layer");
 
