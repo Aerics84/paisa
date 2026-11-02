@@ -30,6 +30,7 @@
     "asset_breakdowns": {}
   },
   "expenses": {},
+  "expense_pace": null,
   "goalSummaries": [],
   "networth": {
     "networth": {

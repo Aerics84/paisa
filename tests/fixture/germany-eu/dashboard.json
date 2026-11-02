@@ -194,6 +194,10 @@
       }
     ]
   },
+  "expense_pace": {
+    "period": "2022-02",
+    "projectedExpenses": 6640
+  },
   "goalSummaries": [
     {
       "type": "retirement",
@@ -203,7 +207,19 @@
       "current": 2293.5,
       "target": 26937.5,
       "targetDate": "",
-      "priority": 0
+      "priority": 0,
+      "intelligence": {
+        "progressRatio": 0.0851415313225058,
+        "remainingAmount": 24644,
+        "validTarget": true,
+        "contributionMonthsObserved": 0,
+        "activeContributionMonths": 0,
+        "state": "active",
+        "scheduleStatus": "no-deadline",
+        "attention": "none",
+        "deadlineSource": "none",
+        "reasons": []
+      }
     },
     {
       "type": "savings",
@@ -213,7 +229,21 @@
       "current": 4705.5,
       "target": 18000,
       "targetDate": "",
-      "priority": 0
+      "priority": 0,
+      "intelligence": {
+        "progressRatio": 0.2614166666666667,
+        "remainingAmount": 13294.5,
+        "validTarget": true,
+        "actualMonthlyContribution": 2173,
+        "contributionMonthsObserved": 1,
+        "activeContributionMonths": 1,
+        "state": "active",
+        "scheduleStatus": "no-deadline",
+        "attention": "none",
+        "deadlineSource": "none",
+        "annualReturn": 0,
+        "reasons": []
+      }
     }
   ],
   "networth": {
