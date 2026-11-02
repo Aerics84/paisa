@@ -587,6 +587,12 @@ export interface Forecast {
   error: number;
 }
 
+export interface ExpensePace {
+  period: string;
+  projectedExpenses: number;
+  overBudget?: number | null;
+}
+
 export interface Budget {
   date: dayjs.Dayjs;
   accounts: AccountBudget[];
@@ -946,6 +952,7 @@ export function ajax(route: "/api/dashboard"): Promise<{
   checkingBalanceTimeline: { month: string; account: string; balance: number }[];
   availableMonthRange: { from: string; to: string };
   expenses: { [key: string]: Posting[] };
+  expense_pace?: ExpensePace | null;
   cashFlows: CashFlow[];
   transactionSequences: TransactionSequence[];
   networth: { networth: Networth; xirr: number };
