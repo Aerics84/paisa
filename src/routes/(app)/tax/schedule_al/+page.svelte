@@ -4,9 +4,11 @@
   import { ajax, type ScheduleAL } from "$lib/utils";
   import { onMount } from "svelte";
   import { setAllowedDateRange, year } from "../../../../store";
+  import ZeroState from "$lib/components/ZeroState.svelte";
 
   let scheduleAls: Record<string, ScheduleAL>;
   let selectedScheduleAl: ScheduleAL;
+  let loaded = false;
 
   $: if (scheduleAls) {
     selectedScheduleAl = scheduleAls[$year];
@@ -18,6 +20,7 @@
 
   onMount(async () => {
     ({ schedule_als: scheduleAls } = await ajax("/api/schedule_al"));
+    loaded = true;
 
     setAllowedDateRange(_.map(Object.values(scheduleAls), (e) => e.date));
   });
@@ -37,7 +40,20 @@
       </div>
     {/if}
 
-    <div class="columns">
+    {#if loaded && !selectedScheduleAl}
+      <div class="columns">
+        <div class="column is-12">
+          <div class="box" style="max-width: 1024px;">
+            <ZeroState item={false}>
+              <strong>No Schedule AL data for this year.</strong>
+              There are no Schedule AL entries for the selected financial year.
+            </ZeroState>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <div class="columns" style:display={selectedScheduleAl ? null : "none"}>
       <div class="column is-12">
         <div class="box px-3" style="max-width: 1024px;">
           <table class="table is-narrow is-fullwidth is-hoverable">

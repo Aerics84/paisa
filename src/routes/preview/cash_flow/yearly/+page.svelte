@@ -72,7 +72,8 @@
       <div class="column is-12">
         <div class="box overflow-x-auto">
           <ZeroState item={!isEmpty}
-            ><strong>Oops!</strong> You have not made any transactions for the selected year.</ZeroState
+            ><strong>No cash flow data for this year.</strong> You have not made any transactions for
+            the selected year.</ZeroState
           >
 
           <LegendCard {legends} clazz="ml-5 mb-2" />

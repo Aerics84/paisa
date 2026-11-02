@@ -214,6 +214,11 @@
   $: selectedSubLink = trail.selectedSubLink;
   $: selectedSubSubLink = trail.selectedSubSubLink;
   $: breadcrumb = breadcrumbItems(trail);
+
+  // On mobile, expand the section that contains the current route so a
+  // reload or deep link shows the active navigation immediately.
+  $: openMobileDropdown =
+    typeof window !== "undefined" && isMobile() ? (selectedLink?.href ?? null) : null;
 </script>
 
 <nav class="navbar px-2 is-transparent" aria-label="main navigation">
@@ -244,6 +249,18 @@
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
     </button>
+
+    <div class="navbar-item navbar-actions-row mobile-top-actions">
+      {#if readonly}
+        <span
+          class="tag is-rounded is-danger is-light invertable"
+          data-tippy-content="<p>Paisa is in readonly mode</p>">readonly</span
+        >
+      {/if}
+      <a href="/preview" class="button is-small is-light">Preview</a>
+      <ThemeSwitcher />
+      <Actions />
+    </div>
   </div>
 
   <div class="navbar-menu" class:is-active={isBurger === true}>
@@ -325,7 +342,7 @@
     </div>
     <div class="navbar-end" style="margin-right: 0.3em">
       <div class="navbar-item">
-        <div class="field is-grouped">
+        <div class="field is-grouped navbar-actions-row menu-actions-row">
           {#if readonly}
             <p class="control">
               <span
@@ -350,11 +367,11 @@
   </div>
 </nav>
 
-<div class="mt-3 px-3 is-flex is-justify-content-space-between">
+<div class="mt-3 px-3 is-flex is-justify-content-space-between subnav-bar">
   {#if breadcrumb.length > 0}
     <nav
       style="margin-left: 0.73rem;"
-      class="breadcrumb has-chevron-separator mb-0 is-small"
+      class="breadcrumb has-chevron-separator mb-0 is-small app-breadcrumb"
       aria-label="breadcrumbs"
     >
       <ul>
@@ -370,7 +387,7 @@
     </nav>
   {/if}
 
-  <div class="mr-3 is-flex" style="gap: 12px">
+  <div class="mr-3 is-flex subnav-controls" style="gap: 12px">
     {#if selectedSubLink?.recurringIcons}
       <div class="flex gap-5 items-center has-text-grey">
         {#each RecurringIcons as icon}
@@ -437,3 +454,72 @@
     {/if}
   </div>
 </div>
+
+<style lang="scss">
+  .navbar-actions-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .mobile-top-actions {
+    display: none !important;
+  }
+
+  @media screen and (max-width: 768px) {
+    .navbar-brand {
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
+    }
+
+    .mobile-top-actions {
+      display: flex !important;
+      flex: 1 1 100%;
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+      padding: 0.15rem 0 0.1rem 0.15rem;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .mobile-top-actions :global(.theme-toggle) {
+      --size: 2.5rem;
+      min-width: 40px;
+      min-height: 40px;
+      border-radius: 0.5rem;
+    }
+
+    .menu-actions-row {
+      display: none !important;
+    }
+
+    .subnav-bar {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+
+    .subnav-bar :global(nav.app-breadcrumb) {
+      margin-left: 0 !important;
+      font-size: 0.95rem !important;
+    }
+
+    .subnav-bar :global(nav.app-breadcrumb ul) {
+      flex-wrap: wrap;
+      row-gap: 0.25rem;
+    }
+
+    .subnav-controls {
+      flex-wrap: wrap;
+      margin-right: 0 !important;
+      width: 100%;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 0.5rem !important;
+    }
+  }
+</style>
