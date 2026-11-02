@@ -36,6 +36,11 @@
           "<span class='has-text-link icon is-small mr-3'><i class='fas fa-angle-down'></i></span>",
         data: data,
         columns: columns,
+        // fitDataTable measures the rendered cells. The virtual renderers only
+        // mount the visible rows, so long account names further down the table
+        // are never measured and the header columns stay too narrow.
+        renderVertical: "basic",
+        renderHorizontal: "basic",
         layout: "fitDataTable"
       });
     }
