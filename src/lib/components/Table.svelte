@@ -51,7 +51,11 @@
   });
 </script>
 
-<div class="overflow-x-auto box py-0" style="max-width: 100%;" bind:this={tableComponent}></div>
+<div
+  class="overflow-x-auto box px-0 py-0"
+  style="max-width: 100%;"
+  bind:this={tableComponent}
+></div>
 
 <style lang="scss">
   /* End the table box at the last real column instead of extending it with
