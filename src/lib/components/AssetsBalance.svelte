@@ -32,12 +32,12 @@
         : indent
           ? indendedAssetAccountName
           : accountName,
-      width: mobile ? 140 : undefined,
-      minWidth: mobile ? 140 : undefined,
-      maxWidth: mobile ? 155 : undefined
-      // Do not freeze this column: Tabulator renders frozen columns in a
-      // separate table, which drifts out of sync with the header when the
-      // table is horizontally scrollable.
+      // A fixed width keeps the header and body columns aligned even when
+      // fitDataTable only measures a subset of rows. Long names are truncated
+      // with the full account in the title tooltip.
+      width: mobile ? 140 : 300,
+      minWidth: mobile ? 140 : 240,
+      maxWidth: mobile ? 155 : 360
     };
   }
 
