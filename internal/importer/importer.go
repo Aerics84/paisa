@@ -64,6 +64,9 @@ type StagedTransaction struct {
 	Tags             []string `json:"tags,omitempty"`
 	FlagForReview    bool     `json:"flag_for_review"`
 
+	// Balance is the running statement balance for rows that carry one.
+	Balance *float64 `json:"balance,omitempty"`
+
 	// Duplicate Detection
 	IsDuplicate      bool   `json:"is_duplicate"`
 	DuplicateScore   int    `json:"duplicate_score"` // 0-100
@@ -85,6 +88,7 @@ type IngestionRequest struct {
 	SourceType    string `json:"source_type,omitempty"`
 	OriginalPath  string `json:"original_path,omitempty"`
 	ContentSHA256 string `json:"content_sha256,omitempty"`
+	Locale        string `json:"locale,omitempty"`
 }
 
 // IngestionResult returns the staged candidate list.
@@ -93,6 +97,7 @@ type IngestionResult struct {
 	AutoCategorized    int                 `json:"auto_categorized"`
 	PossibleDuplicates int                 `json:"possible_duplicates"`
 	AlreadyImported    bool                `json:"already_imported"`
+	ImportID           string              `json:"import_id,omitempty"`
 	Transactions       []StagedTransaction `json:"transactions"`
 }
 
@@ -130,6 +135,11 @@ func resolveIngestionProvenance(req IngestionRequest) (ingestionProvenance, erro
 		originalPath: originalPath,
 		contentHash:  contentHash,
 	}, nil
+}
+
+func manifestIsCommitted(m manifest.Manifest) bool {
+	status := strings.ToLower(strings.TrimSpace(m.Status))
+	return status == "committed" || status == ""
 }
 
 // readByID loads a manifest directly from its deterministic import directory.
@@ -171,17 +181,20 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		return nil, err
 	}
 
+	importID := ""
 	if provenance.present {
-		importID := manifest.ImportID(provenance.sourceType, provenance.originalPath, provenance.contentHash)
+		importID = manifest.ImportID(provenance.sourceType, provenance.originalPath, provenance.contentHash)
 		existing, found, err := readByID(ingestConfigDir(), provenance.sourceType, importID)
 		if err != nil {
 			return nil, fmt.Errorf("read import manifest: %w", err)
 		}
 		if found &&
 			strings.EqualFold(existing.ContentSHA256, provenance.contentHash) &&
-			existing.Parser.Version == IngestionParserVersion {
+			existing.Parser.Version == IngestionParserVersion &&
+			manifestIsCommitted(existing) {
 			return &IngestionResult{
 				AlreadyImported: true,
+				ImportID:        importID,
 				Transactions:    []StagedTransaction{},
 			}, nil
 		}
@@ -207,7 +220,7 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		}
 
 	case string(FormatCSV), string(FormatExcel), string(FormatPDF), "":
-		parsed, err := parseCSVRows(req.Content, req.Delimiter, req.PresetName, db)
+		parsed, err := parseCSVRows(req.Content, req.Delimiter, req.PresetName, db, req.Locale)
 		if err != nil {
 			return nil, err
 		}
@@ -239,6 +252,7 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 	staged := make([]StagedTransaction, 0, len(candidates))
 	autoCatCount := 0
 	duplicateCount := 0
+	seenRows := make(map[string]struct{}, len(candidates))
 
 	for i, c := range candidates {
 		curr := strings.TrimSpace(c.Currency)
@@ -255,6 +269,7 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 			Currency: curr,
 			IsDebit:  c.IsDebit,
 			Tags:     []string{},
+			Balance:  c.Balance,
 		}
 
 		// 1. Evaluate Rule Match
@@ -277,8 +292,9 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 			}
 		}
 
-		// 2. Duplicate Detection Scoring
+		// 2. Duplicate Detection Scoring against the ledger.
 		dupMatch, score, reason := findBestDuplicateMatch(c, existingPostings)
+		dbDuplicate := false
 		if score >= 70 {
 			item.IsDuplicate = true
 			item.DuplicateScore = score
@@ -286,7 +302,27 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 			if dupMatch != nil {
 				item.DuplicateMatchID = dupMatch.ID
 			}
+			dbDuplicate = true
 			duplicateCount++
+		}
+
+		// 3. Duplicate Detection within the uploaded statement itself.
+		rowKey := statementRowKey(c, item.SelectedAccount)
+		if _, seen := seenRows[rowKey]; seen {
+			item.IsDuplicate = true
+			if item.DuplicateScore < 100 {
+				item.DuplicateScore = 100
+			}
+			if item.DuplicateReason == "" {
+				item.DuplicateReason = "duplicate row within the same statement"
+			} else {
+				item.DuplicateReason += ", duplicate row within the same statement"
+			}
+			if !dbDuplicate {
+				duplicateCount++
+			}
+		} else {
+			seenRows[rowKey] = struct{}{}
 		}
 
 		staged = append(staged, item)
@@ -296,13 +332,14 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		TotalParsed:        len(staged),
 		AutoCategorized:    autoCatCount,
 		PossibleDuplicates: duplicateCount,
+		ImportID:           importID,
 		Transactions:       staged,
 	}
 
-	if provenance.present {
+	if provenance.present && !config.GetConfig().Readonly {
 		importManifest := manifest.Manifest{
 			RecordType:    manifest.RecordTypeImportManifest,
-			ImportID:      manifest.ImportID(provenance.sourceType, provenance.originalPath, provenance.contentHash),
+			ImportID:      importID,
 			SourceType:    provenance.sourceType,
 			OriginalPath:  provenance.originalPath,
 			ContentSHA256: provenance.contentHash,
@@ -321,6 +358,24 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 	}
 
 	return result, nil
+}
+
+func statementRowKey(c import_rule.CandidateTransaction, account string) string {
+	payee := normalizeDuplicatePayee(c.Payee)
+	if payee == "" {
+		payee = normalizeDuplicatePayee(c.Memo)
+	}
+	direction := "credit"
+	if c.IsDebit {
+		direction = "debit"
+	}
+	return strings.Join([]string{
+		c.Date,
+		payee,
+		fmt.Sprintf("%.2f", c.Amount),
+		direction,
+		strings.ToLower(strings.TrimSpace(account)),
+	}, "|")
 }
 
 const ingestionDateWindowDays = 7
@@ -371,7 +426,7 @@ func candidateDateRange(candidates []import_rule.CandidateTransaction) (time.Tim
 	return minDate, maxDate, found
 }
 
-func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_rule.CandidateTransaction, error) {
+func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale string) ([]import_rule.CandidateTransaction, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	reader.FieldsPerRecord = -1
 	if delimiter != "" {
@@ -393,6 +448,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 	if headerIdx < 0 || dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
 		return nil, fmt.Errorf("could not detect valid transaction table header in statement")
 	}
+	balanceIdx := findColumnIndex(records[headerIdx], []string{"balance", "closing balance", "running balance", "saldo"})
 
 	var candidates []import_rule.CandidateTransaction
 
@@ -431,7 +487,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 		}
 
 		if debitIdx >= 0 && debitIdx < len(row) && strings.TrimSpace(row[debitIdx]) != "" {
-			val, _, isCr, parsedCurr := parseAmountFloat(row[debitIdx])
+			val, _, isCr, parsedCurr := parseAmountFloat(row[debitIdx], locale)
 			if val > 0 {
 				amt = val
 				isDebit = !isCr // Default true for debit column unless explicitly marked Cr
@@ -442,7 +498,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 		}
 
 		if amt == 0 && creditIdx >= 0 && creditIdx < len(row) && strings.TrimSpace(row[creditIdx]) != "" {
-			val, isDr, _, parsedCurr := parseAmountFloat(row[creditIdx])
+			val, isDr, _, parsedCurr := parseAmountFloat(row[creditIdx], locale)
 			if val > 0 {
 				amt = val
 				isDebit = isDr // Default false for credit column unless explicitly marked Dr
@@ -453,7 +509,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 		}
 
 		if amt == 0 && amountIdx >= 0 && amountIdx < len(row) && strings.TrimSpace(row[amountIdx]) != "" {
-			val, d, isCr, parsedCurr := parseAmountFloat(row[amountIdx])
+			val, d, isCr, parsedCurr := parseAmountFloat(row[amountIdx], locale)
 			if val > 0 {
 				amt = val
 				if rowCurr == "" && parsedCurr != "" {
@@ -489,6 +545,13 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 			rowCurr = stmtCurrency
 		}
 
+		var balance *float64
+		if balanceIdx >= 0 && balanceIdx < len(row) && strings.TrimSpace(row[balanceIdx]) != "" {
+			if parsed, ok := parseLocaleAmount(row[balanceIdx], locale); ok {
+				balance = &parsed
+			}
+		}
+
 		if amt > 0 {
 			candidates = append(candidates, import_rule.CandidateTransaction{
 				Date:     dateStr,
@@ -497,6 +560,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 				Amount:   amt,
 				Currency: rowCurr,
 				IsDebit:  isDebit,
+				Balance:  balance,
 			})
 		}
 	}
@@ -520,12 +584,12 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 			continue
 		}
 
-		dIdx := findColumnIndex(row, []string{"transaction date", "txn date", "value date", "trans date", "date"})
-		deIdx := findColumnIndex(row, []string{"narration", "description", "particulars", "memo", "payee", "details", "name"})
-		drIdx := findColumnIndex(row, []string{"debit amount", "withdrawal", "debit", "dr"})
-		crIdx := findColumnIndex(row, []string{"credit amount", "deposit", "credit", "cr"})
-		aIdx := findColumnIndex(row, []string{"amount (inr)", "net amount", "trans amount", "amount"})
-		cIdx := findColumnIndex(row, []string{"currency", "curr", "ccy", "iso currency"})
+		dIdx := findColumnIndex(row, []string{"transaction date", "txn date", "value date", "trans date", "date", "datum", "buchungstag"})
+		deIdx := findColumnIndex(row, []string{"narration", "description", "particulars", "memo", "payee", "details", "name", "beschreibung", "buchungstext", "verwendungszweck"})
+		drIdx := findColumnIndex(row, []string{"debit amount", "withdrawal", "debit", "dr", "soll"})
+		crIdx := findColumnIndex(row, []string{"credit amount", "deposit", "credit", "cr", "haben"})
+		aIdx := findColumnIndex(row, []string{"amount (inr)", "net amount", "trans amount", "amount", "betrag"})
+		cIdx := findColumnIndex(row, []string{"currency", "curr", "ccy", "iso currency", "währung", "waehrung"})
 		drCr := findDrCrIndicatorIndex(row, aIdx)
 
 		var fbDate int = -1
@@ -535,7 +599,7 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 					continue
 				}
 				clean := strings.ToLower(strings.TrimSpace(cell))
-				if strings.Contains(clean, "date") {
+				if strings.Contains(clean, "date") || strings.Contains(clean, "wertstellung") {
 					fbDate = idx
 					break
 				}
@@ -689,7 +753,9 @@ func normalizeCurrencyToken(raw string) string {
 	}
 }
 
-func parseAmountFloat(val string) (amount float64, isDebit bool, isCredit bool, currency string) {
+var nonNumericAmountRe = regexp.MustCompile(`[^0-9.,'+-]`)
+
+func parseAmountFloat(val string, locale string) (amount float64, isDebit bool, isCredit bool, currency string) {
 	cleaned := strings.TrimSpace(val)
 	upper := strings.ToUpper(cleaned)
 
@@ -721,18 +787,16 @@ func parseAmountFloat(val string) (amount float64, isDebit bool, isCredit bool, 
 		currency = "GBP"
 	}
 
-	cleaned = strings.ReplaceAll(cleaned, ",", "")
-	cleaned = strings.ReplaceAll(cleaned, "$", "")
+	for _, code := range []string{"INR", "USD", "EUR", "GBP", "CAD", "AUD", "SGD", "JPY", "CHF", "Rs.", "RS.", "rs.", "Rs", "RS", "rs"} {
+		cleaned = strings.ReplaceAll(cleaned, code, "")
+	}
 	cleaned = strings.ReplaceAll(cleaned, "₹", "")
 	cleaned = strings.ReplaceAll(cleaned, "€", "")
 	cleaned = strings.ReplaceAll(cleaned, "£", "")
-	for _, code := range []string{"INR", "USD", "EUR", "GBP", "CAD", "AUD", "SGD", "Rs.", "RS.", "rs."} {
-		cleaned = strings.ReplaceAll(cleaned, code, "")
-	}
-	cleaned = strings.TrimSpace(cleaned)
+	cleaned = strings.ReplaceAll(cleaned, "$", "")
 
-	parsed, err := strconv.ParseFloat(cleaned, 64)
-	if err != nil {
+	parsed, ok := parseLocaleAmount(cleaned, locale)
+	if !ok {
 		return 0, false, false, ""
 	}
 
@@ -748,6 +812,136 @@ func parseAmountFloat(val string) (amount float64, isDebit bool, isCredit bool, 
 	return parsed, false, false, currency
 }
 
+// parseLocaleAmount parses a signed amount using the decimal separator implied
+// by locale. When both separators are present the right-most one wins, which
+// handles en-IN grouping (1,23,456.78) and German grouping (1.234,56).
+func parseLocaleAmount(raw string, locale string) (float64, bool) {
+	text := strings.TrimSpace(raw)
+	if text == "" {
+		return 0, false
+	}
+
+	negative := false
+	if strings.HasPrefix(text, "(") && strings.HasSuffix(text, ")") {
+		negative = true
+		text = strings.TrimSpace(text[1 : len(text)-1])
+	}
+
+	text = nonNumericAmountRe.ReplaceAllString(text, "")
+	text = strings.ReplaceAll(text, "'", "")
+	if text == "" {
+		return 0, false
+	}
+
+	if strings.HasPrefix(text, "-") {
+		negative = !negative
+		text = text[1:]
+	} else if strings.HasPrefix(text, "+") {
+		text = text[1:]
+	}
+	if text == "" {
+		return 0, false
+	}
+
+	dotCount := strings.Count(text, ".")
+	commaCount := strings.Count(text, ",")
+	commaDecimal := localeUsesCommaDecimal(locale)
+
+	switch {
+	case dotCount > 0 && commaCount > 0:
+		if strings.LastIndex(text, ".") > strings.LastIndex(text, ",") {
+			text = strings.ReplaceAll(text, ",", "")
+		} else {
+			text = strings.ReplaceAll(text, ".", "")
+			text = strings.ReplaceAll(text, ",", ".")
+		}
+	case commaCount > 0:
+		if commaDecimal {
+			if commaCount > 1 {
+				return 0, false
+			}
+			text = strings.ReplaceAll(text, ",", ".")
+		} else {
+			text = strings.ReplaceAll(text, ",", "")
+		}
+	case dotCount > 0:
+		if commaDecimal {
+			if dotCount > 1 {
+				parts := strings.Split(text, ".")
+				if !allThreeDigitGroups(parts[1:]) {
+					return 0, false
+				}
+				text = strings.Join(parts, "")
+			} else if dotLooksLikeGrouping(text) {
+				text = strings.ReplaceAll(text, ".", "")
+			}
+		} else if dotCount > 1 {
+			return 0, false
+		}
+	}
+
+	parsed, err := strconv.ParseFloat(text, 64)
+	if err != nil || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		return 0, false
+	}
+	if negative {
+		parsed = -parsed
+	}
+	return parsed, true
+}
+
+func localeUsesCommaDecimal(locale string) bool {
+	normalized := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(locale), "_", "-"))
+	parts := strings.SplitN(normalized, "-", 2)
+	language := parts[0]
+	region := ""
+	if len(parts) > 1 {
+		region = parts[1]
+	}
+
+	// Swiss German and Swiss Italian use a dot decimal separator.
+	if (language == "de" || language == "it") && (region == "ch" || region == "li") {
+		return false
+	}
+
+	switch language {
+	case "de", "fr", "es", "it", "nl", "pt", "da", "nb", "nn", "sv", "fi", "pl", "ru", "tr", "cs", "sk", "hu", "id", "vi", "ro", "hr", "sl", "bg", "el":
+		return true
+	}
+	return false
+}
+
+func dotLooksLikeGrouping(text string) bool {
+	index := strings.Index(text, ".")
+	if index < 0 {
+		return false
+	}
+	left := text[:index]
+	right := text[index+1:]
+	return len(left) >= 1 && len(left) <= 3 && len(right) == 3 && isDigits(left) && isDigits(right)
+}
+
+func allThreeDigitGroups(groups []string) bool {
+	for _, group := range groups {
+		if len(group) != 3 || !isDigits(group) {
+			return false
+		}
+	}
+	return true
+}
+
+func isDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func normalizeDateString(raw string) (string, bool) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -758,8 +952,10 @@ func normalizeDateString(raw string) (string, bool) {
 	formats := []string{
 		"2006-01-02", "02/01/2006", "01/02/2006", "02-01-2006", "01-02-2006",
 		"02-Jan-2006", "02 Jan 2006", "2006/01/02", "2/1/2006", "02/01/06", "02-01-06",
+		"02.01.2006", "2.1.2006", "02.01.06", "2.1.06",
 		"02-Jan-06", "02 Jan 06", "2/1/06", "2-1-06", "2-1-2006",
 		"2006-01-02 15:04:05", "02/01/2006 15:04:05", "02-01-2006 15:04:05",
+		"02.01.2006 15:04:05", "02.01.2006 15:04",
 		"2006-01-02 15:04", "02/01/2006 15:04", "02-01-2006 15:04",
 		"02-01-06 15:04", "02-01-06 15:04:05", "02/01/06 15:04", "02/01/06 15:04:05",
 		"2/1/2006 15:04", "2/1/2006 15:04:05", "2/1/06 15:04",

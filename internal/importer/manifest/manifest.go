@@ -117,6 +117,89 @@ func Write(root string, m Manifest, records any) (string, error) {
 	return manifestPath, nil
 }
 
+// UpdateStatus atomically rewrites the status field of an existing manifest.
+// Records are left untouched so a committed import keeps its staged rows.
+func UpdateStatus(root, sourceType, importID, status string) (Manifest, error) {
+	if strings.TrimSpace(root) == "" {
+		return Manifest{}, fmt.Errorf("import root is required")
+	}
+	if err := validateSegment("source_type", sourceType); err != nil {
+		return Manifest{}, err
+	}
+	if !importIDPattern.MatchString(importID) {
+		return Manifest{}, fmt.Errorf("import_id must be a 64 character SHA-256 hex string")
+	}
+	if strings.TrimSpace(status) == "" {
+		return Manifest{}, fmt.Errorf("status is required")
+	}
+
+	manifestPath := filepath.Join(root, "imports", sourceType, importID, "manifest.json")
+	data, err := os.ReadFile(manifestPath)
+	if os.IsNotExist(err) {
+		return Manifest{}, fmt.Errorf("import manifest %s not found", importID)
+	}
+	if err != nil {
+		return Manifest{}, fmt.Errorf("read import manifest: %w", err)
+	}
+
+	var m Manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		return Manifest{}, fmt.Errorf("parse import manifest: %w", err)
+	}
+	if m.ImportID != "" && !strings.EqualFold(m.ImportID, importID) {
+		return Manifest{}, fmt.Errorf("import manifest %s has a mismatched id", importID)
+	}
+	m.Status = status
+
+	manifestData, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return Manifest{}, fmt.Errorf("marshal import manifest: %w", err)
+	}
+	manifestData = append(manifestData, '\n')
+
+	if err := writeFileAtomically(manifestPath, manifestData); err != nil {
+		return Manifest{}, fmt.Errorf("write import manifest: %w", err)
+	}
+
+	return m, nil
+}
+
+// MarkCommitted marks a staged manifest as committed after its rows were
+// written to the ledger.
+func MarkCommitted(root, sourceType, importID string) (Manifest, error) {
+	return UpdateStatus(root, sourceType, importID, "committed")
+}
+
+// FindSourceType locates the source type directory that holds an import id.
+func FindSourceType(root, importID string) (string, error) {
+	if strings.TrimSpace(root) == "" {
+		return "", fmt.Errorf("import root is required")
+	}
+	if !importIDPattern.MatchString(importID) {
+		return "", fmt.Errorf("import_id must be a 64 character SHA-256 hex string")
+	}
+
+	base := filepath.Join(root, "imports")
+	entries, err := os.ReadDir(base)
+	if os.IsNotExist(err) {
+		return "", fmt.Errorf("import manifest %s not found", importID)
+	}
+	if err != nil {
+		return "", fmt.Errorf("read import directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(base, entry.Name(), importID, "manifest.json")); err == nil {
+			return entry.Name(), nil
+		}
+	}
+
+	return "", fmt.Errorf("import manifest %s not found", importID)
+}
+
 // ReadLatest returns the newest manifest for each original path within a
 // source type. A missing source type yields an empty history.
 func ReadLatest(root, sourceType string) ([]Manifest, error) {

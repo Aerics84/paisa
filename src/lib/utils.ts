@@ -764,6 +764,7 @@ export interface StagedTransaction {
   matched_rule_id?: number;
   tags?: string[];
   flag_for_review?: boolean;
+  balance?: number;
   is_duplicate?: boolean;
   duplicate_score?: number;
   duplicate_match_id?: number;
@@ -776,6 +777,7 @@ export interface IngestionResult {
   auto_categorized: number;
   possible_duplicates: number;
   already_imported: boolean;
+  import_id?: string;
   transactions: StagedTransaction[];
 }
 
@@ -813,6 +815,8 @@ export interface CommitImportRequest {
   commodity: string;
   group_by_date: boolean;
   raw_content: string;
+  import_id?: string;
+  source_type?: string;
   transactions: StagedTransaction[];
 }
 

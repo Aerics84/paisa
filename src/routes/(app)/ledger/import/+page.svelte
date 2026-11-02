@@ -556,6 +556,12 @@
               </span>
             </div>
 
+            <p class="is-size-7 has-text-grey mb-4">
+              Holdings, portfolio totals and tax-year completeness require data that the current
+              statement import flow does not produce. Those sections stay empty until holdings or
+              tax records are imported through a dedicated data source.
+            </p>
+
             <h4 class="title is-6 mb-2">Bank Balance Checks</h4>
             {#if reconciliation.bank_balances.length === 0}
               <p class="is-size-7 has-text-grey mb-4">No imported bank statements.</p>

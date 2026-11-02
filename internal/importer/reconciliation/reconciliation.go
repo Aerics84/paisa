@@ -531,7 +531,7 @@ type manifestRecord struct {
 	IsDebit  bool     `json:"is_debit"`
 	Debit    string   `json:"debit"`
 	Credit   string   `json:"credit"`
-	Balance  string   `json:"balance"`
+	Balance  *float64 `json:"balance"`
 }
 
 func loadManifestInput(root string) (ReconciliationInput, []string) {
@@ -585,8 +585,10 @@ func loadManifestInput(root string) (ReconciliationInput, []string) {
 					Date:     record.Date,
 					Debit:    record.Debit,
 					Credit:   record.Credit,
-					Balance:  record.Balance,
 					Currency: record.Currency,
+				}
+				if record.Balance != nil {
+					transaction.Balance = strconv.FormatFloat(*record.Balance, 'f', 2, 64)
 				}
 				if transaction.Debit == "" && transaction.Credit == "" && record.Amount != nil {
 					amount := strconv.FormatFloat(math.Abs(*record.Amount), 'f', 2, 64)

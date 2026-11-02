@@ -240,3 +240,56 @@ func TestManifestJSONRoundTrip(t *testing.T) {
 	assert.Contains(t, string(data), `"record_type":"import_manifest"`)
 	assert.Contains(t, string(data), `"record_locator":"row:7"`)
 }
+
+func TestUpdateStatusAtomicallyPreservesRecords(t *testing.T) {
+	root := t.TempDir()
+	id := ImportID("bank", "statements/checking.csv", sha256Hex("statement"))
+	records := []map[string]any{
+		{"payee": "Coffee Shop", "amount": 4.5, "balance": 120.5},
+	}
+
+	_, err := Write(root, sampleManifest(id, "statements/checking.csv", sha256Hex("statement"), "2026-01-02T10:00:00Z"), records)
+	require.NoError(t, err)
+
+	updated, err := MarkCommitted(root, "bank", id)
+	require.NoError(t, err)
+	assert.Equal(t, "committed", updated.Status)
+
+	data, err := os.ReadFile(filepath.Join(root, "imports", "bank", id, "manifest.json"))
+	require.NoError(t, err)
+	var written Manifest
+	require.NoError(t, json.Unmarshal(data, &written))
+	assert.Equal(t, "committed", written.Status)
+
+	recordsData, err := os.ReadFile(filepath.Join(root, "imports", "bank", id, "records.json"))
+	require.NoError(t, err)
+	var writtenRecords []map[string]any
+	require.NoError(t, json.Unmarshal(recordsData, &writtenRecords))
+	assert.Equal(t, records, writtenRecords)
+	assertNoTempFiles(t, root)
+
+	latest, err := ReadLatest(root, "bank")
+	require.NoError(t, err)
+	require.Len(t, latest, 1)
+	assert.Equal(t, "committed", latest[0].Status)
+}
+
+func TestUpdateStatusRejectsMissingManifest(t *testing.T) {
+	root := t.TempDir()
+	_, err := MarkCommitted(root, "bank", ImportID("bank", "missing.csv", sha256Hex("missing")))
+	require.Error(t, err)
+}
+
+func TestFindSourceType(t *testing.T) {
+	root := t.TempDir()
+	id := ImportID("csv", "statements/checking.csv", sha256Hex("statement"))
+	_, err := Write(root, sampleManifest(id, "statements/checking.csv", sha256Hex("statement"), "2026-01-02T10:00:00Z"), []string{})
+	require.NoError(t, err)
+
+	sourceType, err := FindSourceType(root, id)
+	require.NoError(t, err)
+	assert.Equal(t, "bank", sourceType)
+
+	_, err = FindSourceType(root, ImportID("csv", "other.csv", sha256Hex("other")))
+	require.Error(t, err)
+}

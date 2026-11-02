@@ -12,6 +12,7 @@
     type StagedTransaction
   } from "$lib/utils";
   import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
+  import { buildStatementRequest } from "$lib/import_provenance";
 
   let accountsList: string[] = $state([]);
   let defaultCurrency: string = $state(globalThis.USER_CONFIG?.default_currency || "");
@@ -24,6 +25,11 @@
   let rawFileContent: string = $state("");
   let pasteContent: string = $state("");
   let parseErrorMessage: string | null = $state(null);
+  let alreadyImportedMessage: string | null = $state(null);
+  let uploadedFileName: string | null = $state(null);
+  let pastedStatement: boolean = $state(false);
+  let currentImportID: string | null = $state(null);
+  let currentSourceType: string = $state("");
   let ingestLoading: boolean = $state(false);
   let importSaving: boolean = $state(false);
   let groupByDate: boolean = $state(false);
@@ -81,6 +87,9 @@
     const file = files[0];
     const ext = (file.name.split(".").pop() || "").toLowerCase();
     parseErrorMessage = null;
+    alreadyImportedMessage = null;
+    uploadedFileName = file.name;
+    pastedStatement = false;
 
     try {
       if (ext === "xls" || ext === "xlsx" || ext === "pdf") {
@@ -108,8 +117,11 @@
       return;
     }
     parseErrorMessage = null;
+    alreadyImportedMessage = null;
     rawFileContent = pasteContent;
     detectedFormat = detectIngestionFormat("txt", pasteContent);
+    uploadedFileName = null;
+    pastedStatement = true;
     await runIngest();
   }
 
@@ -121,14 +133,19 @@
 
     ingestLoading = true;
     try {
+      const request = buildStatementRequest({
+        format: detectedFormat,
+        content: rawFileContent,
+        delimiter,
+        baseAccount: selectedAccount,
+        fileName: uploadedFileName || undefined,
+        pasted: pastedStatement,
+        locale: globalThis.USER_CONFIG?.locale || "en-IN"
+      });
+
       const response = await ajax<IngestionResult & { error?: string }>("/api/import/statement", {
         method: "POST",
-        body: JSON.stringify({
-          format: detectedFormat,
-          content: rawFileContent,
-          delimiter,
-          base_account: selectedAccount
-        }),
+        body: JSON.stringify(request),
         background: true
       });
 
@@ -136,8 +153,27 @@
         parseErrorMessage = response.error;
         stagedTransactions = [];
         includedStaged = [];
+        currentImportID = null;
+        currentSourceType = "";
         return;
       }
+
+      currentImportID = response.import_id || null;
+      currentSourceType = request.source_type;
+
+      if (response.already_imported) {
+        stagedTransactions = [];
+        includedStaged = [];
+        alreadyImportedMessage =
+          "This statement was already imported and committed to the ledger. No rows were staged again.";
+        toast.toast({
+          message: "Statement already imported — nothing to stage.",
+          type: "is-info",
+          duration: 5000
+        });
+        return;
+      }
+      alreadyImportedMessage = null;
 
       const incoming = (response.transactions || []).map((tx) => ({
         ...tx,
@@ -162,6 +198,8 @@
       parseErrorMessage = errorMessage(e);
       stagedTransactions = [];
       includedStaged = [];
+      currentImportID = null;
+      currentSourceType = "";
     } finally {
       ingestLoading = false;
     }
@@ -262,6 +300,8 @@
           commodity: defaultCurrency,
           group_by_date: groupByDate,
           raw_content: "",
+          import_id: currentImportID || undefined,
+          source_type: currentSourceType || undefined,
           transactions: selected
         }),
         background: true
@@ -276,6 +316,8 @@
 
         stagedTransactions = stagedTransactions.filter((_, idx) => !includedStaged[idx]);
         includedStaged = defaultIncludedTransactions(stagedTransactions);
+        currentImportID = null;
+        currentSourceType = "";
       } else if (res.success) {
         toast.toast({
           message: res.message || "Import request was accepted",
@@ -435,6 +477,13 @@
       <div class="message invertable is-danger mb-3">
         <div class="message-header">Ingestion Warning</div>
         <div class="message-body">{parseErrorMessage}</div>
+      </div>
+    {/if}
+
+    {#if alreadyImportedMessage}
+      <div class="notification is-info is-light mb-3">
+        <p class="has-text-weight-semibold mb-1">Already imported</p>
+        <p class="is-size-7">{alreadyImportedMessage}</p>
       </div>
     {/if}
 

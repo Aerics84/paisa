@@ -14,6 +14,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/importer"
+	"github.com/ananthakumaran/paisa/internal/importer/manifest"
 	"github.com/ananthakumaran/paisa/internal/importer/reconciliation"
 	"github.com/ananthakumaran/paisa/internal/ledger"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
@@ -31,6 +32,9 @@ const (
 var importSync = func(db *gorm.DB) gin.H {
 	return Sync(db, SyncRequest{Journal: true})
 }
+
+// importManifestRoot is a seam so tests can keep manifests inside a temp directory.
+var importManifestRoot = config.GetConfigDir
 
 // validateImportContent validates proposed journal content with the same
 // temp-file approach used by the editor. It is a seam because release builds
@@ -192,6 +196,8 @@ type CommitImportRequest struct {
 	Commodity    string                       `json:"commodity"`
 	GroupByDate  bool                         `json:"group_by_date"`
 	RawContent   string                       `json:"raw_content"`
+	ImportID     string                       `json:"import_id,omitempty"`
+	SourceType   string                       `json:"source_type,omitempty"`
 	Transactions []CommitCandidateTransaction `json:"transactions"`
 }
 
@@ -340,13 +346,44 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			committedCount = 1
 		}
 
+		manifestCommitted := markImportManifestCommitted(req)
+
 		c.JSON(http.StatusOK, gin.H{
-			"success":         true,
-			"committed_count": committedCount,
-			"target_file":     targetFile,
-			"errors":          validationErrors,
+			"success":            true,
+			"committed_count":    committedCount,
+			"target_file":        targetFile,
+			"manifest_committed": manifestCommitted,
+			"errors":             validationErrors,
 		})
 	}
+}
+
+// markImportManifestCommitted promotes the staged manifest belonging to a
+// successful commit to status "committed". A missing or unreadable manifest is
+// reported to the caller as a boolean instead of failing an already-applied
+// journal append.
+func markImportManifestCommitted(req CommitImportRequest) bool {
+	importID := strings.TrimSpace(req.ImportID)
+	if importID == "" {
+		return false
+	}
+
+	root := importManifestRoot()
+	sourceType := strings.TrimSpace(req.SourceType)
+	if sourceType == "" {
+		found, err := manifest.FindSourceType(root, importID)
+		if err != nil {
+			log.Warn("Failed to locate import manifest: ", err)
+			return false
+		}
+		sourceType = found
+	}
+
+	if _, err := manifest.MarkCommitted(root, sourceType, importID); err != nil {
+		log.Warn("Failed to mark import manifest as committed: ", err)
+		return false
+	}
+	return true
 }
 
 func validateCommitRequest(req CommitImportRequest) error {

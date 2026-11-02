@@ -3,13 +3,17 @@ package importer
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/config"
 	importmanifest "github.com/ananthakumaran/paisa/internal/importer/manifest"
+	"github.com/ananthakumaran/paisa/internal/importer/reconciliation"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/shopspring/decimal"
@@ -92,7 +96,7 @@ func TestParseCSVDebitCreditColumns(t *testing.T) {
 2026-09-16,Salary Deposit,,3500.00
 `
 
-	candidates, err := parseCSVRows(content, "", "", db)
+	candidates, err := parseCSVRows(content, "", "", db, "en-IN")
 	require.NoError(t, err)
 	require.Len(t, candidates, 2)
 
@@ -531,7 +535,7 @@ func useTempIngestConfigDir(t *testing.T) string {
 
 func TestIngestAlreadyImported(t *testing.T) {
 	db := openTestDB(t)
-	useTempIngestConfigDir(t)
+	root := useTempIngestConfigDir(t)
 
 	content := `Date,Description,Debit,Credit
 2026-09-15,Coffee Shop,150.00,
@@ -549,10 +553,22 @@ func TestIngestAlreadyImported(t *testing.T) {
 	assert.False(t, first.AlreadyImported)
 	assert.Equal(t, 1, first.TotalParsed)
 	require.Len(t, first.Transactions, 1)
+	require.NotEmpty(t, first.ImportID)
+
+	// Parsing alone only stages the import. Until the manifest is marked
+	// committed the same file must stay re-parseable so the UI can retry.
+	stagedAgain, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.False(t, stagedAgain.AlreadyImported)
+	require.Len(t, stagedAgain.Transactions, 1)
+
+	_, err = importmanifest.MarkCommitted(root, req.SourceType, first.ImportID)
+	require.NoError(t, err)
 
 	second, err := Ingest(db, req)
 	require.NoError(t, err)
 	assert.True(t, second.AlreadyImported)
+	assert.Equal(t, first.ImportID, second.ImportID)
 	assert.Equal(t, 0, second.TotalParsed)
 	assert.Empty(t, second.Transactions)
 
@@ -570,7 +586,7 @@ func TestIngestAlreadyImported(t *testing.T) {
 
 func TestIngestAlreadyImportedForOlderContent(t *testing.T) {
 	db := openTestDB(t)
-	useTempIngestConfigDir(t)
+	root := useTempIngestConfigDir(t)
 
 	contentA := `Date,Description,Debit,Credit
 2026-09-15,Coffee Shop,150.00,
@@ -591,11 +607,13 @@ func TestIngestAlreadyImportedForOlderContent(t *testing.T) {
 
 	_, err := Ingest(db, reqA)
 	require.NoError(t, err)
+	_, err = importmanifest.MarkCommitted(root, reqA.SourceType, importmanifest.ImportID(reqA.SourceType, reqA.OriginalPath, reqA.ContentSHA256))
+	require.NoError(t, err)
 	_, err = Ingest(db, reqB)
 	require.NoError(t, err)
 
-	// A is no longer the latest manifest for the path, but its manifest still
-	// exists under its deterministic import id.
+	// A is no longer the latest manifest for the path, but its committed
+	// manifest still exists under its deterministic import id.
 	again, err := Ingest(db, reqA)
 	require.NoError(t, err)
 	assert.True(t, again.AlreadyImported)
@@ -637,7 +655,10 @@ func TestIngestReparsesWhenParserVersionChanges(t *testing.T) {
 	assert.False(t, result.AlreadyImported)
 	require.Len(t, result.Transactions, 1)
 
-	// Re-ingestion is now idempotent under the current parser version.
+	// Re-ingestion is now idempotent under the current parser version once the
+	// staged manifest has been committed.
+	_, err = importmanifest.MarkCommitted(root, req.SourceType, result.ImportID)
+	require.NoError(t, err)
 	again, err := Ingest(db, req)
 	require.NoError(t, err)
 	assert.True(t, again.AlreadyImported)
@@ -647,4 +668,181 @@ func TestIngestReparsesWhenParserVersionChanges(t *testing.T) {
 func sha256HexString(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])
+}
+
+func TestParseLocaleAmount(t *testing.T) {
+	cases := []struct {
+		raw      string
+		locale   string
+		expected float64
+	}{
+		{"1.234,56", "de-DE", 1234.56},
+		{"(1.234,56)", "de-DE", -1234.56},
+		{"1.234,56 €", "de-DE", 1234.56},
+		{"1 234,56", "fr-FR", 1234.56},
+		{"1,23,456.78", "en-IN", 123456.78},
+		{"(1,23,456.78)", "en-IN", -123456.78},
+		{"₹ 12,34,567.89", "en-IN", 1234567.89},
+		{"1.234", "de-DE", 1234},
+		{"1234.56", "de-DE", 1234.56},
+		{"1,234.56", "en-US", 1234.56},
+	}
+
+	for _, tc := range cases {
+		actual, ok := parseLocaleAmount(tc.raw, tc.locale)
+		require.True(t, ok, "expected %q to parse under %s", tc.raw, tc.locale)
+		assert.InDelta(t, tc.expected, actual, 0.001, "unexpected amount for %q under %s", tc.raw, tc.locale)
+	}
+
+	_, ok := parseLocaleAmount("not-a-number", "de-DE")
+	assert.False(t, ok)
+}
+
+func TestParseCSVGermanHeadersAndAmounts(t *testing.T) {
+	db := openTestDB(t)
+
+	content := `Datum;Beschreibung;Soll;Haben;Saldo
+01.10.2026;Miete;1.234,56;;1.234,56
+02.10.2026;Gehalt;;2.500,00;3.734,56
+`
+	req := IngestionRequest{
+		Format:    FormatCSV,
+		Content:   content,
+		Delimiter: ";",
+		Locale:    "de-DE",
+	}
+
+	result, err := Ingest(db, req)
+	require.NoError(t, err)
+	require.Equal(t, 2, result.TotalParsed)
+
+	first := result.Transactions[0]
+	assert.Equal(t, "2026-10-01", first.Date)
+	assert.Equal(t, "Miete", first.Payee)
+	assert.Equal(t, 1234.56, first.Amount)
+	assert.True(t, first.IsDebit)
+	require.NotNil(t, first.Balance)
+	assert.Equal(t, 1234.56, *first.Balance)
+
+	second := result.Transactions[1]
+	assert.Equal(t, "2026-10-02", second.Date)
+	assert.Equal(t, "Gehalt", second.Payee)
+	assert.Equal(t, 2500.0, second.Amount)
+	assert.False(t, second.IsDebit)
+	require.NotNil(t, second.Balance)
+	assert.Equal(t, 3734.56, *second.Balance)
+}
+
+func TestIngestDuplicateRowsWithinStatement(t *testing.T) {
+	db := openTestDB(t)
+
+	content := `Date,Description,Debit,Credit
+2026-09-15,Coffee Shop,150.00,
+2026-09-15,Coffee Shop,150.00,
+`
+	result, err := Ingest(db, IngestionRequest{Format: FormatCSV, Content: content})
+	require.NoError(t, err)
+	require.Equal(t, 2, result.TotalParsed)
+	assert.Equal(t, 1, result.PossibleDuplicates)
+
+	assert.False(t, result.Transactions[0].IsDuplicate)
+	assert.True(t, result.Transactions[1].IsDuplicate)
+	assert.GreaterOrEqual(t, result.Transactions[1].DuplicateScore, 70)
+	assert.Contains(t, result.Transactions[1].DuplicateReason, "same statement")
+}
+
+func TestIngestReadonlyDoesNotWriteManifest(t *testing.T) {
+	db := openTestDB(t)
+	root := useTempIngestConfigDir(t)
+
+	require.NoError(t, config.LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: INR
+readonly: true
+`), ""))
+	t.Cleanup(func() {
+		_ = config.LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: INR
+`), "")
+	})
+
+	content := `Date,Description,Debit,Credit
+2026-09-15,Coffee Shop,150.00,
+`
+	result, err := Ingest(db, IngestionRequest{
+		Format:       FormatCSV,
+		Content:      content,
+		SourceType:   "csv",
+		OriginalPath: "checking.csv",
+		Locale:       "en-IN",
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.ImportID)
+	assert.NoDirExists(t, filepath.Join(root, "imports"))
+}
+
+func TestIngestPersistsBalanceForReconciliation(t *testing.T) {
+	db := openTestDB(t)
+	root := useTempIngestConfigDir(t)
+
+	content := `Date,Description,Debit,Credit,Balance
+2026-09-15,Opening,,1000.00,1000.00
+2026-09-16,Coffee Shop,150.00,,850.00
+2026-09-17,Salary,,500.00,1350.00
+`
+	result, err := Ingest(db, IngestionRequest{
+		Format:       FormatCSV,
+		Content:      content,
+		SourceType:   "csv",
+		OriginalPath: "checking.csv",
+		Locale:       "en-IN",
+	})
+	require.NoError(t, err)
+	require.Len(t, result.Transactions, 3)
+	for _, transaction := range result.Transactions {
+		require.NotNil(t, transaction.Balance, "balance must be parsed from the CSV column")
+	}
+
+	recordsPath := filepath.Join(root, "imports", "csv", result.ImportID, "records.json")
+	data, err := os.ReadFile(recordsPath)
+	require.NoError(t, err)
+	var records []StagedTransaction
+	require.NoError(t, json.Unmarshal(data, &records))
+	require.Len(t, records, 3)
+	require.NotNil(t, records[0].Balance)
+	assert.Equal(t, 1000.0, *records[0].Balance)
+
+	report := reconciliation.BuildReconciliationFromManifests(root)
+	require.Len(t, report.BankBalances, 1)
+	check := report.BankBalances[0]
+	assert.Equal(t, "ok", check.Status)
+	assert.Equal(t, "ascending", check.Direction)
+	require.NotNil(t, check.OpeningBalance)
+	require.NotNil(t, check.ClosingBalance)
+	assert.Equal(t, "0.00", *check.OpeningBalance)
+	assert.Equal(t, "1350.00", *check.ClosingBalance)
+}
+
+func TestIngestComputesContentHashFromProvenance(t *testing.T) {
+	db := openTestDB(t)
+	useTempIngestConfigDir(t)
+
+	content := `Date,Description,Debit,Credit
+2026-09-15,Coffee Shop,150.00,
+`
+	result, err := Ingest(db, IngestionRequest{
+		Format:       FormatCSV,
+		Content:      content,
+		SourceType:   "csv",
+		OriginalPath: "checking.csv",
+		Locale:       "en-IN",
+	})
+	require.NoError(t, err)
+	assert.Equal(t,
+		importmanifest.ImportID("csv", "checking.csv", sha256HexString(content)),
+		result.ImportID,
+	)
 }

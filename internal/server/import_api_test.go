@@ -13,6 +13,7 @@ import (
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
+	importmanifest "github.com/ananthakumaran/paisa/internal/importer/manifest"
 	"github.com/ananthakumaran/paisa/internal/ledger"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -310,6 +311,62 @@ func TestHandleCommitImportReadonly(t *testing.T) {
 
 	_, statErr := os.Stat(journalPath)
 	assert.True(t, os.IsNotExist(statErr), "readonly commit must not create the journal file")
+}
+
+func TestHandleCommitImportMarksManifestCommitted(t *testing.T) {
+	db := openImportTestDB(t)
+
+	journalPath := filepath.Join(t.TempDir(), "main.ledger")
+	loadImportTestConfig(t, fmt.Sprintf(
+		"journal_path: '%s'\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n",
+		filepath.ToSlash(journalPath),
+	))
+	router := buildImportTestRouter(db)
+	stubImportValidation(t, nil)
+	stubImportSyncSuccess(t)
+
+	root := t.TempDir()
+	originalRoot := importManifestRoot
+	importManifestRoot = func() string { return root }
+	t.Cleanup(func() { importManifestRoot = originalRoot })
+
+	importID := strings.Repeat("a", 64)
+	_, err := importmanifest.Write(root, importmanifest.Manifest{
+		ImportID:      importID,
+		SourceType:    "csv",
+		OriginalPath:  "checking.csv",
+		ContentSHA256: strings.Repeat("b", 64),
+		ImportedAt:    "2026-10-01T10:00:00Z",
+		Status:        "staged",
+		Parser:        importmanifest.ParserInfo{Name: "paisa-import", Version: "1"},
+	}, []any{})
+	require.NoError(t, err)
+
+	payload := fmt.Sprintf(`{
+		"base_account": "Assets:Checking",
+		"import_id": %q,
+		"source_type": "csv",
+		"transactions": [
+			{
+				"date": "2026-10-11",
+				"payee": "Coffee Shop",
+				"amount": 45.20,
+				"currency": "INR",
+				"is_debit": true,
+				"selected_account": "Expenses:Food:Dining"
+			}
+		]
+	}`, importID)
+	req := httptest.NewRequest(http.MethodPost, "/api/import/commit", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	manifests, err := importmanifest.ReadLatest(root, "csv")
+	require.NoError(t, err)
+	require.Len(t, manifests, 1)
+	assert.Equal(t, "committed", manifests[0].Status)
 }
 
 func stubImportValidation(t *testing.T, validationErr error) {
