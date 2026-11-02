@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -35,29 +36,44 @@ func TestDetectHeaderRow(t *testing.T) {
 		{"11-10-2026", "UPI-Smart Ba", "366.55 Dr.", "14336279452"},
 	}
 
-	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, currIdx, currency := detectHeaderRow(records)
+	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, currIdx, fallbackDateIdx, currency := detectHeaderRow(records)
 	assert.Equal(t, 1, headerIdx)
 	assert.Equal(t, 0, dateIdx)
 	assert.Equal(t, 1, descIdx)
 	assert.Equal(t, -1, debitIdx)
 	assert.Equal(t, -1, creditIdx)
 	assert.Equal(t, 2, amountIdx)
+	assert.Equal(t, -1, drCrIdx)
 	assert.Equal(t, -1, currIdx)
+	assert.Equal(t, -1, fallbackDateIdx)
 	assert.Equal(t, "INR", currency)
 
 	debitCreditRecords := [][]string{
 		{"Date", "Description", "Debit", "Credit"},
 		{"2026-09-15", "Netflix Subscription", "19.99", ""},
 	}
-	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, _, _ = detectHeaderRow(debitCreditRecords)
+	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, _, fallbackDateIdx, _ = detectHeaderRow(debitCreditRecords)
 	assert.Equal(t, 0, headerIdx)
 	assert.Equal(t, 0, dateIdx)
 	assert.Equal(t, 1, descIdx)
 	assert.Equal(t, 2, debitIdx)
 	assert.Equal(t, 3, creditIdx)
 	assert.Equal(t, -1, amountIdx)
+	assert.Equal(t, -1, drCrIdx)
+	assert.Equal(t, -1, fallbackDateIdx)
 
-	headerIdx, dateIdx, _, _, _, _, _, _ = detectHeaderRow([][]string{
+	kotakRecords := [][]string{
+		{"Sl. No,", "Transaction Date", "Value Date", "Description", "Chq /Ref No.", "Amount", "Dr / Cr", "Balance", "Dr / Cr"},
+		{"1", "25-10-26 23:46", "25-10-26", "MEESHO TECHNOLOGIES", "6.29823E+11", "172", "DR", "808.4", "CR"},
+	}
+	headerIdx, dateIdx, _, _, _, amountIdx, drCrIdx, _, fallbackDateIdx, _ = detectHeaderRow(kotakRecords)
+	assert.Equal(t, 0, headerIdx)
+	assert.Equal(t, 1, dateIdx)
+	assert.Equal(t, 5, amountIdx)
+	assert.Equal(t, 6, drCrIdx)
+	assert.Equal(t, 2, fallbackDateIdx)
+
+	headerIdx, dateIdx, _, _, _, _, _, _, _, _ = detectHeaderRow([][]string{
 		{"Some", "Random", "Text"},
 		{"without", "a", "table"},
 	})
@@ -227,6 +243,56 @@ func TestIngestOFX(t *testing.T) {
 	assert.Equal(t, 3500.00, result.Transactions[1].Amount)
 	assert.False(t, result.Transactions[1].IsDebit)
 	assert.Equal(t, "USD", result.Transactions[1].Currency)
+}
+
+// The Kotak fixture is rendered against
+// internal/model/template/templates/Kotak Account Statement.handlebars by the
+// TypeScript fixture harness in src/lib/import.test.ts. This test pins the Go
+// side of that pipeline: the CSV parser must recover the dates, amounts and
+// Dr/Cr direction that the template turns into monthly.ledger.
+func TestIngestKotakStatement(t *testing.T) {
+	db := openTestDB(t)
+
+	content, err := os.ReadFile("../../fixture/import/Kotak Account Statement/monthly.csv")
+	require.NoError(t, err)
+
+	result, err := Ingest(db, IngestionRequest{
+		Format:  FormatCSV,
+		Content: string(content),
+	})
+	require.NoError(t, err)
+	require.Equal(t, 2, result.TotalParsed)
+
+	tx0 := result.Transactions[0]
+	assert.Equal(t, "2026-10-25", tx0.Date)
+	assert.Equal(t, "MEESHO TECHNOLOGIES", tx0.Payee)
+	assert.Equal(t, 172.0, tx0.Amount)
+	assert.True(t, tx0.IsDebit, "DR indicator must mark the amount as debit")
+	assert.Equal(t, "INR", tx0.Currency)
+
+	tx1 := result.Transactions[1]
+	assert.Equal(t, "2026-10-25", tx1.Date)
+	assert.Equal(t, "CASHBACK EARNED", tx1.Payee)
+	assert.Equal(t, 1.5, tx1.Amount)
+	assert.False(t, tx1.IsDebit, "CR indicator must mark the amount as credit")
+	assert.Equal(t, "INR", tx1.Currency)
+}
+
+func TestKotakValueDateFallback(t *testing.T) {
+	db := openTestDB(t)
+
+	content := `Transaction Date,Value Date,Description,Amount,Dr / Cr
+25-10-26T23:46,25-10-26,MEESHO TECHNOLOGIES,172,DR
+`
+
+	result, err := Ingest(db, IngestionRequest{
+		Format:  FormatCSV,
+		Content: content,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, result.TotalParsed)
+	assert.Equal(t, "2026-10-25", result.Transactions[0].Date)
+	assert.True(t, result.Transactions[0].IsDebit)
 }
 
 func TestLoadPostingsForIngestionDateWindow(t *testing.T) {

@@ -1,0 +1,14 @@
+{{#if (or (isDate ROW.C "DD-MM-YY") (isDate (regexpMatch ROW.B "^(\\d{2}-\\d{2}-\\d{2})" group=1) "DD-MM-YY"))}}
+  {{#if (isDate ROW.C "DD-MM-YY")}}
+  {{date ROW.C "DD-MM-YY"}} {{ROW.D}}
+  {{else}}
+  {{date (regexpMatch ROW.B "^(\\d{2}-\\d{2}-\\d{2})" group=1) "DD-MM-YY"}} {{ROW.D}}
+  {{/if}}
+  {{#if (regexpTest ROW.G "CR")}}
+    Assets:Checking:Kotak                         {{amount ROW.F}} INR
+    {{predictAccount prefix="Income"}}
+  {{else}}
+    {{predictAccount prefix="Expenses"}}          {{amount ROW.F}} INR
+    Assets:Checking:Kotak
+  {{/if}}
+{{/if}}

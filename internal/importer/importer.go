@@ -252,7 +252,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 		return nil, fmt.Errorf("statement must have at least a header and one data row")
 	}
 
-	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, currIdx, stmtCurrency := detectHeaderRow(records)
+	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, currIdx, fallbackDateIdx, stmtCurrency := detectHeaderRow(records)
 	if headerIdx < 0 || dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
 		return nil, fmt.Errorf("could not detect valid transaction table header in statement")
 	}
@@ -268,12 +268,14 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 		if dateIdx >= 0 && dateIdx < len(row) {
 			dateRaw = strings.TrimSpace(row[dateIdx])
 		}
-		if dateRaw == "" {
-			continue
-		}
-
 		dateStr, ok := normalizeDateString(dateRaw)
-		if !ok {
+		if !ok && fallbackDateIdx >= 0 && fallbackDateIdx < len(row) {
+			// Some statements annotate the transaction date with a timestamp while
+			// keeping the plain value date in a separate column.
+			dateRaw = strings.TrimSpace(row[fallbackDateIdx])
+			dateStr, ok = normalizeDateString(dateRaw)
+		}
+		if !ok || dateStr == "" {
 			// Skip rows that don't have a valid date in date column (e.g., summary rows, disclaimers)
 			continue
 		}
@@ -320,13 +322,28 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 				if rowCurr == "" && parsedCurr != "" {
 					rowCurr = parsedCurr
 				}
-				if isCr {
-					isDebit = false
-				} else if d {
-					isDebit = true
+				if drCrIdx >= 0 && drCrIdx < len(row) {
+					indicator := strings.ToUpper(strings.TrimSpace(row[drCrIdx]))
+					if strings.HasPrefix(indicator, "DR") || indicator == "D" || indicator == "DEBIT" {
+						isDebit = true
+					} else if strings.HasPrefix(indicator, "CR") || indicator == "C" || indicator == "CREDIT" {
+						isDebit = false
+					} else if isCr {
+						isDebit = false
+					} else if d {
+						isDebit = true
+					} else {
+						isDebit = true
+					}
 				} else {
-					// Fallback: positive amount in single amount column usually treated as debit unless sign indicates otherwise
-					isDebit = true
+					if isCr {
+						isDebit = false
+					} else if d {
+						isDebit = true
+					} else {
+						// Fallback: positive amount in single amount column usually treated as debit unless sign indicates otherwise
+						isDebit = true
+					}
 				}
 			}
 		}
@@ -353,7 +370,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_
 var headerCurrencyRe = regexp.MustCompile(`(?i)\(([A-Z]{3})\)|\b(INR|USD|EUR|GBP|CAD|AUD|SGD|JPY|CHF|AED)\b`)
 
 // detectHeaderRow scans the top rows of a statement (up to 50 rows) to find where the actual transaction table begins.
-func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, currIdx int, stmtCurrency string) {
+func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, currIdx, fallbackDateIdx int, stmtCurrency string) {
 	maxScan := len(records)
 	if maxScan > 50 {
 		maxScan = 50
@@ -361,7 +378,7 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 
 	bestHeaderIdx := -1
 	bestScore := -1
-	bDate, bDesc, bDebit, bCredit, bAmount, bCurr := -1, -1, -1, -1, -1, -1
+	bDate, bDesc, bDebit, bCredit, bAmount, bDrCr, bCurr, bFallbackDate := -1, -1, -1, -1, -1, -1, -1, -1
 
 	for i := 0; i < maxScan; i++ {
 		row := records[i]
@@ -375,6 +392,21 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 		crIdx := findColumnIndex(row, []string{"credit amount", "deposit", "credit", "cr"})
 		aIdx := findColumnIndex(row, []string{"amount (inr)", "net amount", "trans amount", "amount"})
 		cIdx := findColumnIndex(row, []string{"currency", "curr", "ccy", "iso currency"})
+		drCr := findDrCrIndicatorIndex(row, aIdx)
+
+		var fbDate int = -1
+		if dIdx >= 0 {
+			for idx, cell := range row {
+				if idx == dIdx {
+					continue
+				}
+				clean := strings.ToLower(strings.TrimSpace(cell))
+				if strings.Contains(clean, "date") {
+					fbDate = idx
+					break
+				}
+			}
+		}
 
 		score := 0
 		if dIdx >= 0 {
@@ -392,6 +424,9 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 		if aIdx >= 0 {
 			score += 3
 		}
+		if drCr >= 0 {
+			score += 2
+		}
 
 		// Must have date and at least one amount column
 		if dIdx >= 0 && (drIdx >= 0 || crIdx >= 0 || aIdx >= 0) && score > bestScore {
@@ -402,7 +437,9 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 			bDebit = drIdx
 			bCredit = crIdx
 			bAmount = aIdx
+			bDrCr = drCr
 			bCurr = cIdx
+			bFallbackDate = fbDate
 		}
 	}
 
@@ -439,7 +476,35 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 		}
 	}
 
-	return bestHeaderIdx, bDate, bDesc, bDebit, bCredit, bAmount, bCurr, stmtCurrency
+	return bestHeaderIdx, bDate, bDesc, bDebit, bCredit, bAmount, bDrCr, bCurr, bFallbackDate, stmtCurrency
+}
+
+func isDrCrIndicatorHeader(h string) bool {
+	clean := strings.ToLower(strings.TrimSpace(h))
+	switch clean {
+	case "dr / cr", "dr/cr", "cr / dr", "cr/dr", "dr cr", "cr dr", "dr", "cr", "d/c", "type", "txn type", "transaction type", "dr/cr indicator", "cr/dr indicator":
+		return true
+	}
+	return false
+}
+
+func findDrCrIndicatorIndex(header []string, amountIdx int) int {
+	// If amount column is detected, prefer adjacent column (e.g. column right after Amount)
+	if amountIdx >= 0 {
+		if amountIdx+1 < len(header) && isDrCrIndicatorHeader(header[amountIdx+1]) {
+			return amountIdx + 1
+		}
+		if amountIdx-1 >= 0 && isDrCrIndicatorHeader(header[amountIdx-1]) {
+			return amountIdx - 1
+		}
+	}
+	// Otherwise look for any matching column
+	for i, h := range header {
+		if isDrCrIndicatorHeader(h) {
+			return i
+		}
+	}
+	return -1
 }
 
 func findColumnIndex(header []string, targets []string) int {
@@ -553,17 +618,48 @@ func parseAmountFloat(val string) (amount float64, isDebit bool, isCredit bool, 
 
 func normalizeDateString(raw string) (string, bool) {
 	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", false
+	}
+
 	// Try parsing standard date formats
 	formats := []string{
 		"2006-01-02", "02/01/2006", "01/02/2006", "02-01-2006", "01-02-2006",
 		"02-Jan-2006", "02 Jan 2006", "2006/01/02", "2/1/2006", "02/01/06", "02-01-06",
-		"2006-01-02 15:04:05", "02/01/2006 15:04:05", "2/1/2006 15:04",
+		"02-Jan-06", "02 Jan 06", "2/1/06", "2-1-06", "2-1-2006",
+		"2006-01-02 15:04:05", "02/01/2006 15:04:05", "02-01-2006 15:04:05",
+		"2006-01-02 15:04", "02/01/2006 15:04", "02-01-2006 15:04",
+		"02-01-06 15:04", "02-01-06 15:04:05", "02/01/06 15:04", "02/01/06 15:04:05",
+		"2/1/2006 15:04", "2/1/2006 15:04:05", "2/1/06 15:04",
+		"2006-01-02T15:04:05", "2006-01-02T15:04:05Z",
 	}
 	for _, f := range formats {
 		if t, err := time.Parse(f, raw); err == nil {
 			return t.Format("2006-01-02"), true
 		}
 	}
+
+	// If there's a space-separated time component, strip it and try date part
+	fields := strings.Fields(raw)
+	if len(fields) >= 2 {
+		if strings.Contains(fields[1], ":") {
+			for _, f := range formats {
+				if t, err := time.Parse(f, fields[0]); err == nil {
+					return t.Format("2006-01-02"), true
+				}
+			}
+		}
+		lastIdx := len(fields) - 1
+		if strings.Contains(fields[lastIdx], ":") {
+			datePart := strings.Join(fields[:lastIdx], " ")
+			for _, f := range formats {
+				if t, err := time.Parse(f, datePart); err == nil {
+					return t.Format("2006-01-02"), true
+				}
+			}
+		}
+	}
+
 	return "", false
 }
 
