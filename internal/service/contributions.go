@@ -1,7 +1,7 @@
 package service
 
 import (
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
@@ -119,7 +119,7 @@ func filterContributions(ps []posting.Posting, accounts []string) []posting.Post
 // its subaccounts.
 func matchContributionGlob(pattern string, account string) (bool, error) {
 	if strings.Contains(pattern, "*") {
-		return filepath.Match(pattern, account)
+		return path.Match(pattern, account)
 	}
 	return utils.IsSameOrParent(account, pattern), nil
 }
