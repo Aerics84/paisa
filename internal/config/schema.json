@@ -1034,10 +1034,17 @@
             "type": "string"
           },
           "target": {
-            "type": "integer",
+            "type": "number",
             "description": "Target percentage",
-            "minimum": 1,
+            "minimum": 0,
             "maximum": 100
+          },
+          "drift": {
+            "type": "number",
+            "description": "Allowed drift tolerance percentage",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 5
           },
           "accounts": {
             "type": "array",

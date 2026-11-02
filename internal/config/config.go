@@ -160,6 +160,7 @@ type Budget struct {
 type AllocationTarget struct {
 	Name     string   `json:"name" yaml:"name"`
 	Target   float64  `json:"target" yaml:"target"`
+	Drift    float64  `json:"drift,omitempty" yaml:"drift,omitempty"`
 	Accounts []string `json:"accounts" yaml:"accounts"`
 }
 
