@@ -14,6 +14,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/importer"
+	"github.com/ananthakumaran/paisa/internal/importer/reconciliation"
 	"github.com/ananthakumaran/paisa/internal/ledger"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	"github.com/gin-gonic/gin"
@@ -114,6 +115,15 @@ func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, result)
+	}
+}
+
+// HandleGetReconciliation returns a read-only reconciliation report built from
+// the latest import manifests. It never writes to the import store.
+func HandleGetReconciliation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		report := reconciliation.BuildReconciliationFromManifests(config.GetConfigDir())
+		c.JSON(http.StatusOK, report)
 	}
 }
 

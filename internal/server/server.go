@@ -147,6 +147,7 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 
 	router.POST("/api/import/statement", HandleParseStatement(db))
 	router.POST("/api/import/commit", HandleCommitImport(db))
+	router.GET("/api/import/reconciliation", HandleGetReconciliation())
 	router.GET("/api/rules", HandleGetRules(db))
 	router.POST("/api/rules", HandleSaveRule(db))
 	router.DELETE("/api/rules/:id", HandleDeleteRule(db))

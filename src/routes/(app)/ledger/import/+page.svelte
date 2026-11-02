@@ -12,7 +12,7 @@
   import _ from "lodash";
   import type { EditorView } from "codemirror";
   import { onMount } from "svelte";
-  import { ajax, type ImportTemplate } from "$lib/utils";
+  import { ajax, type ImportTemplate, type ReconciliationReport } from "$lib/utils";
   import { accountTfIdf } from "../../../../store";
   import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
@@ -245,6 +245,40 @@
   let templateCreateModalOpen = false;
   function openTemplateCreateModal() {
     templateCreateModalOpen = true;
+  }
+
+  let reconciliationOpen = false;
+  let reconciliationLoading = false;
+  let reconciliation: ReconciliationReport = null;
+  let reconciliationError: string = null;
+
+  async function toggleReconciliation() {
+    reconciliationOpen = !reconciliationOpen;
+    if (reconciliationOpen && !reconciliation && !reconciliationLoading) {
+      await loadReconciliation();
+    }
+  }
+
+  async function loadReconciliation() {
+    reconciliationLoading = true;
+    reconciliationError = null;
+    try {
+      reconciliation = await ajax("/api/import/reconciliation");
+    } catch (e) {
+      reconciliationError = e instanceof Error ? e.message : String(e);
+    } finally {
+      reconciliationLoading = false;
+    }
+  }
+
+  function statusTagClass(status: string) {
+    if (status === "ok" || status === "complete") {
+      return "is-success";
+    }
+    if (status === "warning") {
+      return "is-warning";
+    }
+    return "is-danger";
   }
 </script>
 
@@ -487,6 +521,178 @@
           </div>
         {/if}
       </div>
+    </div>
+    <div class="box mt-4">
+      <button
+        type="button"
+        class="button is-fullwidth is-flex is-justify-content-space-between"
+        aria-expanded={reconciliationOpen}
+        on:click={toggleReconciliation}
+      >
+        <span class="is-flex is-align-items-center">
+          <span class="icon mr-2"><i class="fas fa-scale-balanced"></i></span>
+          <span>Reconciliation</span>
+        </span>
+        <span class="icon">
+          <i class="fas fa-chevron-{reconciliationOpen ? "up" : "down"}"></i>
+        </span>
+      </button>
+
+      {#if reconciliationOpen}
+        <div class="mt-4">
+          {#if reconciliationLoading}
+            <p class="has-text-grey">Loading reconciliation report…</p>
+          {:else if reconciliationError}
+            <div class="notification is-danger is-light">
+              Failed to load reconciliation report: {reconciliationError}
+            </div>
+          {:else if reconciliation}
+            <div class="is-flex is-align-items-center is-flex-wrap-wrap mb-4 gap-4">
+              <span class="tag {statusTagClass(reconciliation.status)}">
+                {reconciliation.status}
+              </span>
+              <span class="is-size-7 has-text-grey">
+                Generated {new Date(reconciliation.generated_at).toLocaleString()}
+              </span>
+            </div>
+
+            <h4 class="title is-6 mb-2">Bank Balance Checks</h4>
+            {#if reconciliation.bank_balances.length === 0}
+              <p class="is-size-7 has-text-grey mb-4">No imported bank statements.</p>
+            {:else}
+              <div class="table-container mb-4">
+                <table class="table is-fullwidth is-narrow is-size-7">
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>Currency</th>
+                      <th>Direction</th>
+                      <th class="has-text-right">Opening</th>
+                      <th class="has-text-right">Closing</th>
+                      <th class="has-text-right">Mismatches</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each reconciliation.bank_balances as check}
+                      <tr>
+                        <td>{check.source}</td>
+                        <td>{check.currency}</td>
+                        <td>{check.direction}</td>
+                        <td class="has-text-right">{check.opening_balance ?? "—"}</td>
+                        <td class="has-text-right">{check.closing_balance ?? "—"}</td>
+                        <td class="has-text-right">{check.mismatch_count}</td>
+                        <td>
+                          <span class="tag {statusTagClass(check.status)}">{check.status}</span>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+
+            <h4 class="title is-6 mb-2">Duplicate Holdings</h4>
+            {#if reconciliation.duplicate_holdings.length === 0}
+              <p class="is-size-7 has-text-grey mb-4">No duplicate holdings detected.</p>
+            {:else}
+              <div class="table-container mb-4">
+                <table class="table is-fullwidth is-narrow is-size-7">
+                  <thead>
+                    <tr>
+                      <th>Identifier</th>
+                      <th class="has-text-right">Occurrences</th>
+                      <th>Sources</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each reconciliation.duplicate_holdings as duplicate}
+                      <tr>
+                        <td>{duplicate.key}</td>
+                        <td class="has-text-right">{duplicate.occurrences}</td>
+                        <td>{duplicate.sources.join(", ")}</td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+
+            <h4 class="title is-6 mb-2">Portfolio Totals</h4>
+            {#if reconciliation.portfolio_totals.length === 0}
+              <p class="is-size-7 has-text-grey mb-4">No portfolio records.</p>
+            {:else}
+              <div class="table-container mb-4">
+                <table class="table is-fullwidth is-narrow is-size-7">
+                  <thead>
+                    <tr>
+                      <th>Currency</th>
+                      <th class="has-text-right">Holdings</th>
+                      <th class="has-text-right">Assets</th>
+                      <th class="has-text-right">Liabilities</th>
+                      <th class="has-text-right">Net</th>
+                      <th class="has-text-right">Invalid</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each reconciliation.portfolio_totals as total}
+                      <tr>
+                        <td>{total.currency}</td>
+                        <td class="has-text-right">{total.holdings}</td>
+                        <td class="has-text-right">{total.assets}</td>
+                        <td class="has-text-right">{total.liabilities}</td>
+                        <td class="has-text-right">{total.net}</td>
+                        <td class="has-text-right">{total.invalid_records}</td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+
+            <h4 class="title is-6 mb-2">Tax Year Completeness</h4>
+            {#if reconciliation.tax_year_completeness.length === 0}
+              <p class="is-size-7 has-text-grey mb-4">No tax records.</p>
+            {:else}
+              <div class="table-container mb-4">
+                <table class="table is-fullwidth is-narrow is-size-7">
+                  <thead>
+                    <tr>
+                      <th>Financial Year</th>
+                      <th>Sources Present</th>
+                      <th>Missing Required</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each reconciliation.tax_year_completeness as year}
+                      <tr>
+                        <td>{year.financial_year}</td>
+                        <td>{year.sources_present.join(", ") || "—"}</td>
+                        <td>{year.missing_required.join(", ") || "—"}</td>
+                        <td>
+                          <span class="tag {statusTagClass(year.status)}">{year.status}</span>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
+
+            <h4 class="title is-6 mb-2">Issues</h4>
+            {#if reconciliation.issues.length === 0}
+              <p class="is-size-7 has-text-grey">No issues found.</p>
+            {:else}
+              <ul class="is-size-7">
+                {#each reconciliation.issues as issue}
+                  <li>{issue}</li>
+                {/each}
+              </ul>
+            {/if}
+          {/if}
+        </div>
+      {/if}
     </div>
     <div></div>
   </div>

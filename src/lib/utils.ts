@@ -816,6 +816,54 @@ export interface CommitImportRequest {
   transactions: StagedTransaction[];
 }
 
+/** Mirrors internal/importer/reconciliation.BankBalanceCheck. */
+export interface BankBalanceCheck {
+  source: string;
+  currency: string;
+  transaction_count: number;
+  direction: "ascending" | "descending" | "unknown";
+  opening_balance: string | null;
+  closing_balance: string | null;
+  mismatch_count: number;
+  status: "ok" | "warning" | "error";
+}
+
+/** Mirrors internal/importer/reconciliation.DuplicateHolding. */
+export interface DuplicateHolding {
+  key: string;
+  occurrences: number;
+  sources: string[];
+}
+
+/** Mirrors internal/importer/reconciliation.CurrencyTotal. */
+export interface CurrencyTotal {
+  currency: string;
+  holdings: string;
+  assets: string;
+  liabilities: string;
+  net: string;
+  invalid_records: number;
+}
+
+/** Mirrors internal/importer/reconciliation.TaxYearCheck. */
+export interface TaxYearCheck {
+  financial_year: string;
+  sources_present: string[];
+  missing_required: string[];
+  status: "complete" | "incomplete";
+}
+
+/** Mirrors internal/importer/reconciliation.ReconciliationReport. */
+export interface ReconciliationReport {
+  generated_at: string;
+  status: "ok" | "warning" | "error";
+  bank_balances: BankBalanceCheck[];
+  duplicate_holdings: DuplicateHolding[];
+  portfolio_totals: CurrencyTotal[];
+  tax_year_completeness: TaxYearCheck[];
+  issues: string[];
+}
+
 export interface Log {
   time: dayjs.Dayjs;
   level: string;
@@ -1150,6 +1198,8 @@ export function ajax(
 ): Promise<{ success: boolean; error?: string }>;
 
 export function ajax(route: "/api/version"): Promise<{ version: string }>;
+
+export function ajax(route: "/api/import/reconciliation"): Promise<ReconciliationReport>;
 
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 
