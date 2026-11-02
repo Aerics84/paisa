@@ -21,6 +21,10 @@
 
     if (tabulator) {
       tabulator.replaceData(data);
+      // fitDataTable sizes columns from the data. replaceData() does not
+      // recalculate those widths, so the header would keep the old widths
+      // while body cells grow with longer content.
+      tabulator.redraw(true);
     } else {
       tabulator = new Tabulator(tableComponent, {
         dataTree: tree,
@@ -35,11 +39,25 @@
         columns: columns,
         layout: "fitDataTable"
       });
+      requestAnimationFrame(() => tabulator?.redraw(true));
     }
   }
 
-  onMount(async () => {
+  onMount(() => {
     build();
+
+    // Recalculate column widths when the surrounding layout changes, otherwise
+    // a late container resize leaves the header and body columns out of sync.
+    let lastWidth = tableComponent.clientWidth;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width ?? 0;
+      if (width !== lastWidth) {
+        lastWidth = width;
+        tabulator?.redraw(true);
+      }
+    });
+    observer.observe(tableComponent);
+    return () => observer.disconnect();
   });
 </script>
 
