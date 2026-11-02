@@ -4,6 +4,57 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.6.2 (2026-11-02)
+
+Fork adoptions from upstream and the active Paisa forks, plus follow-up
+fixes found during release testing.
+
+- Parse import-template amounts with the configured locale, including
+  de-DE, en-IN, fr-FR and de-CH grouping, parenthesized negatives,
+  exponent notation and decimal precision; render them without
+  scientific notation.
+- Correct Indian capital-gains rules: tax long-term equity sales from
+  1 April 2018, apply the 23 July 2024 rate change, cap grandfathering
+  at the sale price, use calendar-year holding periods, and keep debt
+  indexation behind the 1 April 2023 cutoff.
+- Net capital-gain totals across accounts and floor the short/long-term
+  tax liabilities without dropping a signed taxable amount.
+- Exclude future-dated postings from balance, allocation, gain,
+  net-worth, portfolio and goal reports.
+- Add an OFX/QFX statement parser, persistent import rules, statement
+  ingestion and staging APIs, a staging table with a rule studio, and
+  duplicate matching within and across statements.
+- Add Kotak and ICICI bank-statement presets, including `Dr / Cr`
+  detection, day-first dates and thousands separators.
+- Add statement provenance manifests with SHA-256 IDs,
+  `already_imported` detection, commit tracking and persisted row
+  balances.
+- Add a reconciliation report and panel with bank-balance checks and
+  clear handling for statements without a balance column.
+- Include every file referenced by journal `include` directives in the
+  backup ZIP; keep excluding the database and redact password hashes
+  unless explicitly requested.
+- Add allocation drift/tolerance status and cash-injection or
+  full-rebalance plans.
+- Add multi-currency net-worth, gain and XIRR conversion with date-exact
+  FX rates and visible empty states when rates are missing.
+- Add the AllRatesToday ECB currency price provider with bounded HTTP
+  requests and a dedicated `currency` commodity type.
+- Replace browser `confirm()` with an accessible queued dialog and guard
+  unsaved editor/sheet changes.
+- Default the financial-year picker to the latest year with data and
+  derive the date range from the loaded report.
+- Improve mobile navigation, postings, balance tables, cash-flow cards
+  and touch targets.
+- Add compound annualized lot returns to the gain API.
+- Move goal intelligence and expense-pace projection into the backend.
+- Add `go fix` modernize targets and guard boolean binary AST parsing.
+- Fix account glob matching on Windows, table column alignment in the
+  current-balance and retirement views, and the retirement projection
+  line breaks.
+- Record the fork adoption decisions and the intentionally deferred
+  changes in `docs/development/fork-adoption-decisions.md`.
+
 ### 0.8.6.1 (2026-10-31)
 
 - Keep every backup from the current day; retain one backup per day for
