@@ -3,6 +3,7 @@ import * as d3 from "d3";
 
 import dayjs from "dayjs";
 import type { AccountTfIdf, LedgerFileError, SheetFileError, SheetLineResult } from "$lib/utils";
+import { askConfirm } from "$lib/confirm";
 import _ from "lodash";
 
 export function now() {
@@ -133,9 +134,15 @@ export function setAllowedDateRange(dates: dayjs.Dayjs[]) {
 }
 
 export const willRefresh = writable(0);
-export function refresh() {
+export async function refresh(): Promise<boolean> {
   if (get(editorState).hasUnsavedChanges) {
-    const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
+    const confirmed = await askConfirm({
+      title: "Unsaved changes",
+      description: "You have unsaved changes. Are you sure you want to leave?",
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "danger"
+    });
     if (!confirmed) {
       return false;
     } else {

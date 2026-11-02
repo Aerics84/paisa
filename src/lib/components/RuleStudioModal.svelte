@@ -2,6 +2,7 @@
   import { untrack } from "svelte";
   import Modal from "./Modal.svelte";
   import { ajax, type ImportRule } from "$lib/utils";
+  import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
   import _ from "lodash";
 
@@ -163,7 +164,14 @@
 
   async function deleteRule(id?: number) {
     if (id == null) return;
-    if (!confirm("Are you sure you want to delete this rule?")) return;
+    const confirmed = await askConfirm({
+      title: "Delete rule?",
+      description: "Are you sure you want to delete this rule?",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "danger"
+    });
+    if (!confirmed) return;
 
     try {
       await ajax("/api/rules/" + id, { method: "DELETE", background: true });

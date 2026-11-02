@@ -7,6 +7,7 @@
     moveToLine,
     updateContent
   } from "$lib/editor";
+  import { askConfirm } from "$lib/confirm";
   import { insertTab } from "@codemirror/commands";
   import { ajax, buildDirectoryTree, type LedgerFile } from "$lib/utils";
   import { redo, undo } from "@codemirror/commands";
@@ -55,16 +56,28 @@
   ];
 
   let cancelled = false;
-  beforeNavigate(async ({ cancel }) => {
-    if ($editorState.hasUnsavedChanges) {
-      const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (!confirmed) {
-        cancel();
-        cancelled = true;
-      } else {
-        $editorState = _.assign({}, $editorState, { hasUnsavedChanges: false });
-      }
-    }
+  beforeNavigate(({ cancel, to, willUnload }) => {
+    if (!$editorState.hasUnsavedChanges) return;
+
+    // The dialog is asynchronous, so stop the navigation before asking.
+    // If the user chooses to leave we repeat the navigation afterwards.
+    cancel();
+    cancelled = true;
+    if (willUnload || !to) return;
+
+    const target = to.url;
+    void askConfirm({
+      title: "Unsaved changes",
+      description: "You have unsaved changes. Are you sure you want to leave?",
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "danger"
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      cancelled = false;
+      $editorState = _.assign({}, $editorState, { hasUnsavedChanges: false });
+      void goto(target, { reset: false });
+    });
   });
 
   async function navigate(url: string) {

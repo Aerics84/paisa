@@ -68,7 +68,7 @@
         regional_profile: USER_CONFIG?.regional_profile || "india"
       })
     });
-    refresh();
+    await refresh();
   }
 
   onMount(async () => {

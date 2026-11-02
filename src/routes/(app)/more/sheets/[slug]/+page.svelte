@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEditor, sheetEditorState } from "$lib/sheet";
   import { focus, moveToLine, updateContent } from "$lib/editor";
+  import { askConfirm } from "$lib/confirm";
   import {
     ajax,
     buildDirectoryTree,
@@ -50,16 +51,28 @@
   ];
 
   let cancelled = false;
-  beforeNavigate(async ({ cancel }) => {
-    if ($sheetEditorState.hasUnsavedChanges) {
-      const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (!confirmed) {
-        cancel();
-        cancelled = true;
-      } else {
-        $sheetEditorState = _.assign({}, $sheetEditorState, { hasUnsavedChanges: false });
-      }
-    }
+  beforeNavigate(({ cancel, to, willUnload }) => {
+    if (!$sheetEditorState.hasUnsavedChanges) return;
+
+    // The dialog is asynchronous, so stop the navigation before asking.
+    // If the user chooses to leave we repeat the navigation afterwards.
+    cancel();
+    cancelled = true;
+    if (willUnload || !to) return;
+
+    const target = to.url;
+    void askConfirm({
+      title: "Unsaved changes",
+      description: "You have unsaved changes. Are you sure you want to leave?",
+      confirmLabel: "Leave",
+      cancelLabel: "Stay",
+      variant: "danger"
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      cancelled = false;
+      $sheetEditorState = _.assign({}, $sheetEditorState, { hasUnsavedChanges: false });
+      void goto(target, { reset: false });
+    });
   });
 
   async function navigate(url: string) {

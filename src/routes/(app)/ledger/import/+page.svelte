@@ -14,6 +14,7 @@
   import { onMount } from "svelte";
   import { ajax, type ImportTemplate } from "$lib/utils";
   import { accountTfIdf } from "../../../../store";
+  import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
   import FileModal from "$lib/components/FileModal.svelte";
   import Modal from "$lib/components/Modal.svelte";
@@ -101,7 +102,13 @@
 
   async function remove() {
     const oldName = selectedTemplate.name;
-    const confirmed = confirm(`Are you sure you want to delete ${oldName} template?`);
+    const confirmed = await askConfirm({
+      title: "Delete template?",
+      description: `Are you sure you want to delete ${oldName} template?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      variant: "danger"
+    });
     if (!confirmed) {
       return;
     }
