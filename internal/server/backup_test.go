@@ -53,6 +53,12 @@ func writeBackupTestConfig(t *testing.T, journalPath string, dbPath string, ledg
 		extra,
 	)
 
+	writeBackupTestConfigRaw(t, content)
+}
+
+func writeBackupTestConfigRaw(t *testing.T, content string) {
+	t.Helper()
+
 	configPath := backupTestConfigPath()
 	require.NoError(t, os.WriteFile(configPath, []byte(content), 0644))
 	require.NoError(t, config.LoadConfig([]byte(content), configPath))
@@ -178,4 +184,70 @@ func TestGenerateBackupZipSkipsUnsafePaths(t *testing.T) {
 		assert.NotContains(t, name, "secret", "file outside the allowed roots must not be included")
 		assert.NotContains(t, content, "OUTSIDE_SECRET_MARKER", "content outside the allowed roots must not be included")
 	}
+}
+
+func TestGenerateBackupZipRedactsAliasedSecrets(t *testing.T) {
+	journalDir := t.TempDir()
+	journalPath := filepath.Join(journalDir, "main.ledger")
+	require.NoError(t, os.WriteFile(journalPath, []byte("2026-05-01 * Sample\n  Assets:Cash  100\n  Income:Salary\n"), 0644))
+
+	passwordHash := "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+	content := fmt.Sprintf(
+		"journal_path: %s\ndb_path: &aliased_hash %s\ndefault_currency: EUR\ntime_zone: UTC\nledger_cli: ledger\nuser_accounts:\n  - username: admin\n    password: *aliased_hash\n",
+		yamlPath(journalPath),
+		strconv.Quote(passwordHash),
+	)
+	writeBackupTestConfigRaw(t, content)
+
+	zipData, _, err := GenerateBackupZip(false)
+	require.NoError(t, err)
+
+	entries := readBackupEntries(t, zipData)
+	configContent, ok := entries["config/paisa.yaml"]
+	require.True(t, ok, "config/paisa.yaml must be part of the backup")
+
+	assert.Contains(t, configContent, "[REDACTED]")
+	assert.NotContains(t, configContent, "aliased_hash")
+	for name, entryContent := range entries {
+		assert.NotContains(t, entryContent, passwordHash, "entry %q must not leak the aliased password hash", name)
+	}
+}
+
+func TestGenerateBackupZipExcludesNonSheetFiles(t *testing.T) {
+	journalDir := t.TempDir()
+	journalPath := filepath.Join(journalDir, "main.ledger")
+	require.NoError(t, os.WriteFile(journalPath, []byte("2026-05-01 * Sample\n  Assets:Cash  100\n  Income:Salary\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(journalDir, "budget.paisa"), []byte("Sheet Data"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(journalDir, "credentials.json"), []byte(`{"token":"secret"}`), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(journalDir, "statement.csv"), []byte("date,amount\n"), 0644))
+
+	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", "")
+
+	zipData, _, err := GenerateBackupZip(false)
+	require.NoError(t, err)
+
+	entries := readBackupEntries(t, zipData)
+	assert.Contains(t, entries, "sheets/budget.paisa")
+	assert.NotContains(t, entries, "sheets/credentials.json")
+	assert.NotContains(t, entries, "sheets/statement.csv")
+	for name := range entries {
+		if strings.HasPrefix(name, "sheets/") {
+			assert.Equal(t, ".paisa", strings.ToLower(filepath.Ext(name)), "unexpected sheet entry %q", name)
+		}
+	}
+}
+
+func TestGenerateBackupZipFailsOnMissingJournalFile(t *testing.T) {
+	journalDir := t.TempDir()
+	journalPath := filepath.Join(journalDir, "main.ledger")
+	require.NoError(t, os.WriteFile(journalPath, []byte("2026-05-01 * Sample\n  Assets:Cash  100\n  Income:Salary\n"), 0644))
+	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", "")
+
+	missingJournal := filepath.Join(journalDir, "missing.ledger")
+	_, _, err := generateBackupZip(false, func(string) ([]string, error) {
+		return []string{journalPath, missingJournal}, nil
+	})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing.ledger")
 }

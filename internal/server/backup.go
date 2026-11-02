@@ -25,8 +25,14 @@ var passwordLinePattern = regexp.MustCompile(`(?im)^(\s*(?:-\s*)?password\s*:\s*
 //
 // The database cache file is never included. Password values in the
 // configuration are redacted unless includeSecrets is true. Files that resolve
-// outside the configuration or journal directory are skipped.
+// outside the configuration or journal directory are skipped. A journal file
+// that cannot be read makes the export fail instead of producing an incomplete
+// backup.
 func GenerateBackupZip(includeSecrets bool) ([]byte, string, error) {
+	return generateBackupZip(includeSecrets, ledger.Cli().Files)
+}
+
+func generateBackupZip(includeSecrets bool, listJournalFiles func(string) ([]string, error)) ([]byte, string, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 
@@ -83,7 +89,7 @@ func GenerateBackupZip(includeSecrets bool) ([]byte, string, error) {
 	}
 
 	// 1. Add journal files.
-	journalFiles, err := ledger.Cli().Files(journalPath)
+	journalFiles, err := listJournalFiles(journalPath)
 	if err != nil || len(journalFiles) == 0 {
 		journalFiles = []string{journalPath}
 	}
@@ -119,13 +125,16 @@ func GenerateBackupZip(includeSecrets bool) ([]byte, string, error) {
 		}
 
 		info, err := os.Stat(file)
-		if err != nil || info.IsDir() {
-			continue
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to stat journal file %s: %w", file, err)
+		}
+		if info.IsDir() {
+			return nil, "", fmt.Errorf("journal path is a directory: %s", file)
 		}
 
 		content, err := os.ReadFile(file)
 		if err != nil {
-			continue
+			return nil, "", fmt.Errorf("failed to read journal file %s: %w", file, err)
 		}
 
 		relPath, err := filepath.Rel(journalDir, file)
@@ -175,9 +184,7 @@ func GenerateBackupZip(includeSecrets bool) ([]byte, string, error) {
 				return nil
 			}
 
-			switch strings.ToLower(filepath.Ext(entry.Name())) {
-			case ".paisa", ".sheet", ".json", ".csv":
-			default:
+			if !strings.EqualFold(filepath.Ext(entry.Name()), EXTENSION) {
 				return nil
 			}
 
@@ -282,6 +289,7 @@ func redactConfigSecrets(content []byte) []byte {
 	}
 
 	redactYAMLNode(&root)
+	stripYAMLAnchorsAndAliases(&root)
 
 	var buf bytes.Buffer
 	encoder := yaml.NewEncoder(&buf)
@@ -311,17 +319,105 @@ func redactYAMLNode(node *yaml.Node) {
 		for i := 0; i+1 < len(node.Content); i += 2 {
 			key := node.Content[i]
 			if strings.EqualFold(key.Value, "password") {
-				node.Content[i+1] = &yaml.Node{
-					Kind:  yaml.ScalarNode,
-					Tag:   "!!str",
-					Value: "[REDACTED]",
-					Style: yaml.DoubleQuotedStyle,
-				}
+				redactYAMLValue(node.Content[i+1])
+				node.Content[i+1] = redactedYAMLValue()
 				continue
 			}
 			redactYAMLNode(node.Content[i+1])
 		}
 	}
+}
+
+// redactYAMLValue replaces the given value with a redacted scalar. When the
+// value is an alias, the anchored node it points to is redacted as well so the
+// secret does not leak through the anchor declaration.
+func redactYAMLValue(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	if node.Kind == yaml.AliasNode && node.Alias != nil {
+		redactYAMLValue(node.Alias)
+		return
+	}
+
+	node.Kind = yaml.ScalarNode
+	node.Tag = "!!str"
+	node.Value = "[REDACTED]"
+	node.Style = yaml.DoubleQuotedStyle
+	node.Content = nil
+	node.Alias = nil
+	node.Anchor = ""
+}
+
+func redactedYAMLValue() *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: "[REDACTED]",
+		Style: yaml.DoubleQuotedStyle,
+	}
+}
+
+// stripYAMLAnchorsAndAliases removes anchors and resolves aliases by cloning
+// their targets. This guarantees that no value hidden behind an anchor can
+// survive redaction in the emitted YAML.
+func stripYAMLAnchorsAndAliases(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	node.Anchor = ""
+
+	switch node.Kind {
+	case yaml.DocumentNode, yaml.SequenceNode:
+		for i, child := range node.Content {
+			if child != nil && child.Kind == yaml.AliasNode && child.Alias != nil {
+				node.Content[i] = cloneYAMLNode(child.Alias, make(map[*yaml.Node]bool))
+				continue
+			}
+			stripYAMLAnchorsAndAliases(child)
+		}
+	case yaml.MappingNode:
+		for i := 0; i+1 < len(node.Content); i += 2 {
+			key := node.Content[i]
+			if key != nil && key.Kind == yaml.AliasNode && key.Alias != nil {
+				node.Content[i] = cloneYAMLNode(key.Alias, make(map[*yaml.Node]bool))
+			} else {
+				stripYAMLAnchorsAndAliases(key)
+			}
+
+			value := node.Content[i+1]
+			if value != nil && value.Kind == yaml.AliasNode && value.Alias != nil {
+				node.Content[i+1] = cloneYAMLNode(value.Alias, make(map[*yaml.Node]bool))
+				continue
+			}
+			stripYAMLAnchorsAndAliases(value)
+		}
+	}
+}
+
+func cloneYAMLNode(node *yaml.Node, stack map[*yaml.Node]bool) *yaml.Node {
+	if node == nil {
+		return nil
+	}
+	if stack[node] {
+		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!null", Value: "null"}
+	}
+	stack[node] = true
+	defer delete(stack, node)
+
+	clone := *node
+	clone.Anchor = ""
+	clone.Alias = nil
+	clone.Content = nil
+	for _, child := range node.Content {
+		if child != nil && child.Kind == yaml.AliasNode && child.Alias != nil {
+			clone.Content = append(clone.Content, cloneYAMLNode(child.Alias, stack))
+			continue
+		}
+		clone.Content = append(clone.Content, cloneYAMLNode(child, stack))
+	}
+
+	return &clone
 }
 
 func redactConfigSecretsByLine(content []byte) []byte {
