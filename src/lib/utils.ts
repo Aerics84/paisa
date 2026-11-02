@@ -750,9 +750,10 @@ export function ajax(
   route: "/api/config"
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
 export function ajax(route: "/api/harvest"): Promise<{ harvestables: Record<string, Harvestable> }>;
-export function ajax(
-  route: "/api/capital_gains"
-): Promise<{ capital_gains: Record<string, CapitalGain> }>;
+export function ajax(route: "/api/capital_gains"): Promise<{
+  capital_gains: Record<string, CapitalGain>;
+  totals: Record<string, FYCapitalGain>;
+}>;
 export function ajax(
   route: "/api/capital_income_tax"
 ): Promise<{ tax_years: Record<string, GermanyTaxYear> }>;
