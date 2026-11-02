@@ -185,11 +185,18 @@ export interface CurrencyAccountGain {
   postings: Posting[];
 }
 
+export interface PostingReturn {
+  unrealized_gain: number;
+  holding_days: number;
+  annualized_return: number | null;
+}
+
 export interface AccountGain {
   account: string;
   networthTimeline: Networth[];
   xirr: number;
   postings: Posting[];
+  posting_returns: PostingReturn[];
   currencies: CurrencyAccountGain[];
 }
 
