@@ -9,7 +9,7 @@
     type Networth
   } from "$lib/utils";
   import COLORS from "$lib/colors";
-  import { computePeriodStats, renderNetworth } from "$lib/networth";
+  import { computePeriodStats, hasNetworthKpiData, renderNetworth } from "$lib/networth";
   import _ from "lodash";
   import { onDestroy, onMount } from "svelte";
   import { dateRange, setAllowedDateRange } from "../../../../store";
@@ -33,6 +33,7 @@
   $: fmt = (v: number) =>
     symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
   $: stats = computePeriodStats(points, $dateRange.from, $dateRange.to);
+  $: showKpis = hasNetworthKpiData(selected, points);
 
   $: if (svg) {
     if (destroy) {
@@ -70,14 +71,21 @@
 <section class="section tab-networth">
   <div class="container is-fluid">
     <nav class="level {isMobile() && 'grid-2'}">
-      <LevelItem title="Net worth" color={COLORS.primary} value={fmt(stats.networth)} />
-      <LevelItem title="Net Investment" color={COLORS.secondary} value={fmt(stats.investment)} />
-      <LevelItem
-        title="Gain / Loss"
-        color={stats.gain >= 0 ? COLORS.gainText : COLORS.lossText}
-        value={fmt(stats.gain)}
-      />
-      <LevelItem title="XIRR" value={formatFloat(stats.xirr)} />
+      {#if showKpis}
+        <LevelItem title="Net worth" color={COLORS.primary} value={fmt(stats.networth)} />
+        <LevelItem title="Net Investment" color={COLORS.secondary} value={fmt(stats.investment)} />
+        <LevelItem
+          title="Gain / Loss"
+          color={stats.gain >= 0 ? COLORS.gainText : COLORS.lossText}
+          value={fmt(stats.gain)}
+        />
+        <LevelItem title="XIRR" value={formatFloat(stats.xirr)} />
+      {:else}
+        <p class="is-size-6 has-text-grey">
+          No FX rates are available for {selected?.name || "the selected currency"}. Net worth KPIs
+          are hidden until rates exist.
+        </p>
+      {/if}
     </nav>
   </div>
 </section>

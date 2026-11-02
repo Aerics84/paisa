@@ -11,6 +11,7 @@ import {
   now,
   svgUrl,
   tooltip,
+  type CurrencyNetworth,
   type Legend,
   type Networth
 } from "./utils";
@@ -28,6 +29,18 @@ export interface PeriodStats {
   investment: number;
   gain: number;
   xirr: number;
+}
+
+/**
+ * A converted currency without any timeline has no FX rates. Showing $0.00 /
+ * 0.00% would contradict the empty chart, so the KPI cards are hidden instead.
+ * The default currency keeps its existing zero-value behaviour.
+ */
+export function hasNetworthKpiData(
+  selected: CurrencyNetworth | undefined,
+  points: Networth[]
+): boolean {
+  return !selected || points.length > 0;
 }
 
 function xirrOf(flows: { date: dayjs.Dayjs; amount: number }[]): number {
