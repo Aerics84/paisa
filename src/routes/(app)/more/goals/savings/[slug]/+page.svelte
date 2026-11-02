@@ -8,7 +8,8 @@
     type Forecast,
     type Point,
     type Posting,
-    type AssetBreakdown
+    type AssetBreakdown,
+    type GoalIntelligenceData
   } from "$lib/utils";
   import { onMount, tick, onDestroy } from "svelte";
   import ARIMAPromise from "arima/async";
@@ -18,7 +19,11 @@
     findBreakPoints,
     project,
     solvePMTOrNper,
-    renderInvestmentTimeline
+    renderInvestmentTimeline,
+    analyzeGoal,
+    goalDelayLabel,
+    goalStatusLabel,
+    type GoalIntelligence
   } from "$lib/goals";
   import _ from "lodash";
   import LevelItem from "$lib/components/LevelItem.svelte";
@@ -53,6 +58,11 @@
     postings: Posting[] = [],
     latestPostings: Posting[] = [],
     balances: Record<string, AssetBreakdown> = {},
+    intelligence: GoalIntelligence | undefined,
+    intelligenceData: GoalIntelligenceData | undefined,
+    statusLabel = "",
+    projectionDate = "",
+    delayLabel = "",
     destroyCallback = () => {};
 
   onDestroy(async () => {
@@ -73,7 +83,8 @@
       name,
       xirr,
       paymentPerPeriod,
-      balances
+      balances,
+      intelligence: intelligenceData
     } = await ajax("/api/goals/savings/:name", null, data));
 
     latestPostings = _.chain(postings)
@@ -83,8 +94,24 @@
       .value();
 
     if (targetSavings != 0) {
-      progressPercent = (savingsTotal / targetSavings) * 100;
+      progressPercent = Math.max(0, Math.min(100, (intelligenceData?.progressRatio ?? 0) * 100));
     }
+
+    const goal = {
+      type: "savings",
+      name,
+      id: `savings-${name}`,
+      icon,
+      current: savingsTotal,
+      target: targetSavings,
+      targetDate,
+      priority: 0,
+      intelligence: intelligenceData
+    };
+    intelligence = analyzeGoal(goal);
+    statusLabel = goalStatusLabel(goal, intelligence);
+    projectionDate = intelligence.projectedCompletionDate?.format("DD MMM YYYY") ?? "";
+    delayLabel = goalDelayLabel(intelligence);
 
     ({ pmt, targetDate } = solvePMTOrNper(
       targetSavings,
@@ -138,12 +165,30 @@
         subtitle={targetDateObject?.isValid() ? targetDateObject.format("DD MMM YYYY") : null}
       />
 
-      {#if pmt > 0}
+      {#if intelligence?.requiredMonthlyContribution !== undefined}
         <LevelItem
           title="Monthly Investment needed"
-          value={formatCurrency(pmt)}
+          value={formatCurrency(intelligence.requiredMonthlyContribution)}
           color={COLORS.secondary}
           subtitle={rate > 0 ? `Expected <b>${formatFloat(rate, 2)}</b> rate of return` : null}
+        />
+      {/if}
+      <LevelItem
+        title="Goal Status"
+        value={statusLabel}
+        color={intelligence?.attention === "critical"
+          ? COLORS.lossText
+          : intelligence?.attention === "warning"
+            ? COLORS.tertiary
+            : COLORS.gainText}
+        subtitle={delayLabel || null}
+      />
+      {#if projectionDate}
+        <LevelItem
+          title="Projection"
+          value={projectionDate}
+          color={COLORS.primary}
+          subtitle={delayLabel || null}
         />
       {/if}
     </nav>

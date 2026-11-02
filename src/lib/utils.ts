@@ -622,6 +622,7 @@ export interface RetirementGoalProgress {
   icon: string;
   postings: Posting[];
   balances: Record<string, AssetBreakdown>;
+  intelligence?: GoalIntelligenceData;
 }
 
 export interface SavingsGoalProgress {
@@ -639,6 +640,8 @@ export interface SavingsGoalProgress {
   icon: string;
   paymentPerPeriod: number;
   balances: Record<string, AssetBreakdown>;
+  contributionHistory?: GoalContributionMonth[];
+  intelligence?: GoalIntelligenceData;
 }
 
 export interface Legend {
@@ -845,6 +848,36 @@ export interface GoalSummary {
   target: number;
   targetDate: string;
   priority: number;
+  intelligence?: GoalIntelligenceData;
+}
+
+export interface GoalContributionMonth {
+  month: string;
+  amount: number;
+}
+
+// Analysis of a goal computed by the backend. Dates are YYYY-MM-DD strings.
+export interface GoalIntelligenceData {
+  progressRatio: number;
+  remainingAmount: number;
+  validTarget: boolean;
+  requiredMonthlyContribution?: number;
+  actualMonthlyContribution?: number;
+  contributionMonthsObserved: number;
+  activeContributionMonths: number;
+  paceCoverage?: number;
+  paceGap?: number;
+  projectedCompletionDate?: string;
+  configuredCompletionDate?: string;
+  projectionSource?: "recent-pace" | "configured-payment" | "assumed-growth";
+  delayMonths?: number;
+  state: "active" | "completed" | "overdue";
+  scheduleStatus: "on-track" | "behind" | "at-risk" | "insufficient-data" | "no-deadline";
+  attention: "none" | "warning" | "critical";
+  deadlineSource: "configured" | "derived-from-payment" | "none";
+  targetDate?: string;
+  annualReturn?: number;
+  reasons: string[];
 }
 
 export interface SheetLineResult {

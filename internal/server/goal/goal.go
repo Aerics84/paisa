@@ -4,6 +4,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
+	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
@@ -11,14 +12,15 @@ import (
 )
 
 type GoalSummary struct {
-	Type       string          `json:"type"`
-	Name       string          `json:"name"`
-	Id         string          `json:"id"`
-	Icon       string          `json:"icon"`
-	Current    decimal.Decimal `json:"current"`
-	Target     decimal.Decimal `json:"target"`
-	TargetDate string          `json:"targetDate"`
-	Priority   int             `json:"priority"`
+	Type         string                    `json:"type"`
+	Name         string                    `json:"name"`
+	Id           string                    `json:"id"`
+	Icon         string                    `json:"icon"`
+	Current      decimal.Decimal           `json:"current"`
+	Target       decimal.Decimal           `json:"target"`
+	TargetDate   string                    `json:"targetDate"`
+	Priority     int                       `json:"priority"`
+	Intelligence *service.GoalIntelligence `json:"intelligence,omitempty"`
 }
 
 func GetGoalSummaries(db *gorm.DB) []GoalSummary {
@@ -27,11 +29,18 @@ func GetGoalSummaries(db *gorm.DB) []GoalSummary {
 	assetPostings = service.PopulateMarketPrice(db, assetPostings)
 
 	for _, goal := range config.GetConfig().Goals.Retirement {
-		summaries = append(summaries, getRetirementSummary(db, assetPostings, goal))
+		summary := getRetirementSummary(db, assetPostings, goal)
+		intelligence := analyze(summary.Type, summary.Current, summary.Target, "", 0, 0, nil)
+		summary.Intelligence = &intelligence
+		summaries = append(summaries, summary)
 	}
 
 	for _, goal := range config.GetConfig().Goals.Savings {
-		summaries = append(summaries, getSavingsSummary(db, assetPostings, goal))
+		summary := getSavingsSummary(db, assetPostings, goal)
+		history := contributionHistory(assetPostings, goal.Accounts, utils.Now())
+		intelligence := analyze(summary.Type, summary.Current, summary.Target, goal.TargetDate, goal.Rate, goal.PaymentPerPeriod, history)
+		summary.Intelligence = &intelligence
+		summaries = append(summaries, summary)
 	}
 
 	return summaries

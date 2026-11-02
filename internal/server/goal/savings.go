@@ -7,6 +7,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/service"
+	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -38,21 +39,24 @@ func getSavingsDetail(db *gorm.DB, conf config.SavingsGoal) gin.H {
 	savingsWithCapitalGains = service.PopulateMarketPrice(db, savingsWithCapitalGains)
 
 	balances := assets.ComputeBreakdowns(db, savingsWithCapitalGains, false)
+	history := contributionHistory(savingsWithCapitalGains, conf.Accounts, utils.Now())
 
 	return gin.H{
-		"type":             "savings",
-		"name":             conf.Name,
-		"icon":             conf.Icon,
-		"investmentTotal":  investmentTotal,
-		"savingsTotal":     savingsTotal,
-		"gainTotal":        savingsTotal.Sub(investmentTotal),
-		"savingsTimeline":  accounting.RunningBalance(db, savings),
-		"target":           decimal.NewFromFloat(conf.Target),
-		"targetDate":       conf.TargetDate,
-		"rate":             conf.Rate,
-		"paymentPerPeriod": conf.PaymentPerPeriod,
-		"xirr":             service.XIRR(db, savingsWithCapitalGains),
-		"postings":         savingsWithCapitalGains,
-		"balances":         balances,
+		"type":                "savings",
+		"name":                conf.Name,
+		"icon":                conf.Icon,
+		"investmentTotal":     investmentTotal,
+		"savingsTotal":        savingsTotal,
+		"gainTotal":           savingsTotal.Sub(investmentTotal),
+		"savingsTimeline":     accounting.RunningBalance(db, savings),
+		"target":              decimal.NewFromFloat(conf.Target),
+		"targetDate":          conf.TargetDate,
+		"rate":                conf.Rate,
+		"paymentPerPeriod":    conf.PaymentPerPeriod,
+		"xirr":                service.XIRR(db, savingsWithCapitalGains),
+		"postings":            savingsWithCapitalGains,
+		"balances":            balances,
+		"contributionHistory": history,
+		"intelligence":        analyze("savings", savingsTotal, decimal.NewFromFloat(conf.Target), conf.TargetDate, conf.Rate, conf.PaymentPerPeriod, history),
 	}
 }

@@ -54,6 +54,47 @@ time_zone: UTC
 	assert.True(t, savingsTotal.Equal(decimal.NewFromInt(100)), "future postings must not inflate savings, got %s", savingsTotal)
 }
 
+func TestRetirementDetailIncludesIntelligence(t *testing.T) {
+	require.NoError(t, config.LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: EUR
+time_zone: UTC
+`), ""))
+
+	db, err := gorm.Open(sqlite.Open("file:retirement-intelligence?mode=memory&cache=shared"), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.AutoMigrate(&posting.Posting{}, &cache.Cache{}, &price.Price{}))
+
+	service.ClearInterestCache()
+	service.ClearPriceCache()
+	t.Cleanup(service.ClearInterestCache)
+	t.Cleanup(service.ClearPriceCache)
+
+	date := utils.BeginningOfDay(utils.Now())
+	rows := []posting.Posting{
+		{TransactionID: "today", Date: date, Payee: "Buy", Account: "Assets:Test", Commodity: "EUR", Quantity: decimal.NewFromInt(100), Amount: decimal.NewFromInt(100)},
+	}
+	require.NoError(t, db.Create(&rows).Error)
+
+	detail := getRetirementDetail(db, config.RetirementGoal{
+		Name:           "Test",
+		Savings:        []string{"Assets:Test"},
+		YearlyExpenses: 45000,
+		SWR:            4,
+	})
+
+	intelligence, ok := detail["intelligence"].(service.GoalIntelligence)
+	require.True(t, ok)
+	assert.True(t, intelligence.ValidTarget)
+	assert.Equal(t, "active", intelligence.State)
+	assert.Equal(t, "no-deadline", intelligence.ScheduleStatus)
+	assert.Equal(t, "none", intelligence.Attention)
+	assert.Equal(t, "none", intelligence.DeadlineSource)
+	assert.Nil(t, intelligence.RequiredMonthlyContribution)
+	assert.InDelta(t, 100.0/1125000.0, intelligence.ProgressRatio, 1e-12)
+}
+
 func TestRetirementDetailExcludesInterestFromInvestmentTotal(t *testing.T) {
 	require.NoError(t, config.LoadConfig([]byte(`
 journal_path: main.ledger

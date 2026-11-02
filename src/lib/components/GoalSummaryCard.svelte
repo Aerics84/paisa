@@ -1,6 +1,7 @@
 <script lang="ts">
   import { iconGlyph } from "$lib/icon";
   import { formatCurrency, formatPercentage, type GoalSummary } from "$lib/utils";
+  import { analyzeGoal, goalDelayLabel, goalStatusShortLabel } from "$lib/goals";
   import _ from "lodash";
   import LevelItem from "$lib/components/LevelItem.svelte";
   import Progress from "$lib/components/Progress.svelte";
@@ -20,15 +21,15 @@
     return "";
   }
 
-  function percentComplete(goal: GoalSummary) {
-    if (goal.target === 0) {
-      return 0;
-    }
-
-    return (goal.current / goal.target) * 100;
-  }
-
-  $: completed = percentComplete(goal);
+  $: analysis = analyzeGoal(goal);
+  $: completed = analysis.progressRatio * 100;
+  $: status = goalStatusShortLabel(goal, analysis);
+  $: required =
+    analysis.state === "active" && (analysis.requiredMonthlyContribution ?? 0) > 0
+      ? analysis.requiredMonthlyContribution
+      : undefined;
+  $: projection = analysis.projectedCompletionDate;
+  $: delay = goalDelayLabel(analysis);
 </script>
 
 <div class="box p-3 goal-summary-card" class:mb-3={small}>
@@ -71,5 +72,21 @@
   <div class="flex justify-between has-text-grey">
     <div>{formatPercentage(completed / 100, 2)}</div>
     <div>{formatDate(goal.targetDate)}</div>
+  </div>
+  <div class="is-size-7 has-text-grey mt-2">
+    <div class="flex justify-between">
+      <span>{status}</span>
+      {#if required !== undefined}
+        <span>{formatCurrency(required)}/mo needed</span>
+      {/if}
+    </div>
+    {#if projection}
+      <div class="flex justify-between">
+        <span>Projected {projection.format("DD MMM YYYY")}</span>
+        {#if delay}
+          <span>{delay}</span>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>
