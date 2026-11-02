@@ -7,6 +7,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
@@ -169,4 +170,42 @@ func TestGrandfatheredPurchasePrice(t *testing.T) {
 			assert.True(t, grandfatheredPurchasePrice(tc.actual, tc.fmv, tc.sale).Equal(tc.expected))
 		})
 	}
+}
+
+func TestTaxBoundariesUseConfiguredTimeZone(t *testing.T) {
+	originalLocal := time.Local
+	time.Local = time.UTC
+	t.Cleanup(func() { time.Local = originalLocal })
+	t.Cleanup(func() {
+		_ = config.LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: INR
+`), "")
+	})
+
+	require.NoError(t, config.LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: INR
+time_zone: Asia/Kolkata
+`), ""))
+	db := taxTestDBWithConfig(t, "TEST_EQUITY", "100")
+
+	rateChangeSale := equityTax(db,
+		decimal.NewFromInt(10),
+		decimal.NewFromInt(100), time.Date(2020, time.January, 1, 0, 0, 0, 0, config.TimeZone()),
+		decimal.NewFromInt(200), time.Date(2024, time.July, 23, 0, 0, 0, 0, config.TimeZone()),
+	)
+	assert.True(t, rateChangeSale.LongTerm.Equal(decimal.NewFromInt(125)),
+		"sale on 2024-07-23 in Asia/Kolkata must use the new 12.5%% long-term rate")
+
+	exemptionEndSale := equityTax(db,
+		decimal.NewFromInt(10),
+		decimal.NewFromInt(100), time.Date(2016, time.January, 1, 0, 0, 0, 0, config.TimeZone()),
+		decimal.NewFromInt(150), time.Date(2018, time.April, 1, 0, 0, 0, 0, config.TimeZone()),
+	)
+	assert.True(t, exemptionEndSale.Taxable.Equal(decimal.NewFromInt(500)),
+		"sale on 2018-04-01 in Asia/Kolkata must be taxed, not exempt")
+	assert.True(t, exemptionEndSale.LongTerm.Equal(decimal.NewFromInt(50)))
 }

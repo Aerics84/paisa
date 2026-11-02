@@ -11,15 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
-var EQUITY_GRANDFATHER_DATE, DEBT_INDEXATION_REVOCATION_DATE, CII_START_DATE, EQUITY_LONG_TERM_TAX_START_DATE, EQUITY_RATE_CHANGE_DATE time.Time
-
-func init() {
-	EQUITY_GRANDFATHER_DATE, _ = time.ParseInLocation("2006-01-02", "2018-02-01", config.TimeZone())
-	DEBT_INDEXATION_REVOCATION_DATE, _ = time.ParseInLocation("2006-01-02", "2023-04-01", config.TimeZone())
-	CII_START_DATE, _ = time.ParseInLocation("2006-01-02", "2001-03-31", config.TimeZone())
-	EQUITY_LONG_TERM_TAX_START_DATE, _ = time.ParseInLocation("2006-01-02", "2018-04-01", config.TimeZone())
-	EQUITY_RATE_CHANGE_DATE, _ = time.ParseInLocation("2006-01-02", "2024-07-23", config.TimeZone())
+// Tax boundaries are resolved lazily because config.LoadConfig may run after
+// package initialization and can change the configured time zone.
+func configuredDate(value string) time.Time {
+	parsed, _ := time.ParseInLocation("2006-01-02", value, config.TimeZone())
+	return parsed
 }
+
+func equityGrandfatherDate() time.Time        { return configuredDate("2018-02-01") }
+func debtIndexationRevocationDate() time.Time { return configuredDate("2023-04-01") }
+func ciiStartDate() time.Time                 { return configuredDate("2001-03-31") }
+func equityLongTermTaxStartDate() time.Time   { return configuredDate("2018-04-01") }
+func equityRateChangeDate() time.Time         { return configuredDate("2024-07-23") }
 
 type Tax struct {
 	Gain      decimal.Decimal `json:"gain"`
@@ -39,22 +42,22 @@ func Calculate(db *gorm.DB, quantity decimal.Decimal, commodity config.Commodity
 	heldOverAYear := calendarYearsExceed(purchaseDate, sellDate, 1)
 	gain := sellPrice.Mul(quantity).Sub(purchasePrice.Mul(quantity))
 
-	if isEquity && heldOverAYear && sellDate.Before(EQUITY_LONG_TERM_TAX_START_DATE) {
+	if isEquity && heldOverAYear && sellDate.Before(equityLongTermTaxStartDate()) {
 		return Tax{Gain: gain, Taxable: decimal.Zero, ShortTerm: decimal.Zero, LongTerm: decimal.Zero, Slab: decimal.Zero}
 	}
 
-	if isEquity && heldOverAYear && purchaseDate.Before(EQUITY_GRANDFATHER_DATE) {
-		fmv := service.GetUnitPrice(db, commodity.Name, EQUITY_GRANDFATHER_DATE.AddDate(0, 0, -1)).Value
+	if isEquity && heldOverAYear && purchaseDate.Before(equityGrandfatherDate()) {
+		fmv := service.GetUnitPrice(db, commodity.Name, equityGrandfatherDate().AddDate(0, 0, -1)).Value
 		if fmv.IsPositive() {
 			purchasePrice = grandfatheredPurchasePrice(purchasePrice, fmv, sellPrice)
 		}
 	}
 
-	if commodity.TaxCategory == config.Debt && purchaseDate.After(CII_START_DATE) && purchaseDate.Before(DEBT_INDEXATION_REVOCATION_DATE) && calendarYearsExceed(purchaseDate, sellDate, 3) {
+	if commodity.TaxCategory == config.Debt && purchaseDate.After(ciiStartDate()) && purchaseDate.Before(debtIndexationRevocationDate()) && calendarYearsExceed(purchaseDate, sellDate, 3) {
 		purchasePrice = purchasePrice.Mul(decimal.NewFromInt(int64(cii.GetIndex(db, utils.FY(sellDate)))).Div(decimal.NewFromInt(int64(cii.GetIndex(db, utils.FY(purchaseDate))))))
 	}
 
-	if commodity.TaxCategory == config.UnlistedEquity && purchaseDate.After(CII_START_DATE) && calendarYearsExceed(purchaseDate, sellDate, 2) {
+	if commodity.TaxCategory == config.UnlistedEquity && purchaseDate.After(ciiStartDate()) && calendarYearsExceed(purchaseDate, sellDate, 2) {
 		purchasePrice = purchasePrice.Mul(decimal.NewFromInt(int64(cii.GetIndex(db, utils.FY(sellDate)))).Div(decimal.NewFromInt(int64(cii.GetIndex(db, utils.FY(purchaseDate))))))
 	}
 
@@ -73,7 +76,7 @@ func Calculate(db *gorm.DB, quantity decimal.Decimal, commodity config.Commodity
 	}
 
 	if commodity.TaxCategory == config.Debt {
-		if calendarYearsExceed(purchaseDate, sellDate, 3) && purchaseDate.Before(DEBT_INDEXATION_REVOCATION_DATE) {
+		if calendarYearsExceed(purchaseDate, sellDate, 3) && purchaseDate.Before(debtIndexationRevocationDate()) {
 			longTerm = taxable.Mul(decimal.NewFromFloat(0.20))
 		} else {
 			slab = taxable
@@ -100,7 +103,7 @@ func Calculate(db *gorm.DB, quantity decimal.Decimal, commodity config.Commodity
 }
 
 func equityRates(sellDate time.Time) (shortTerm, longTerm decimal.Decimal) {
-	if sellDate.Before(EQUITY_RATE_CHANGE_DATE) {
+	if sellDate.Before(equityRateChangeDate()) {
 		return decimal.NewFromFloat(0.15), decimal.NewFromFloat(0.10)
 	}
 

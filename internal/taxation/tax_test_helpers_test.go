@@ -33,6 +33,14 @@ db_path: paisa.db
 default_currency: INR
 `), ""))
 
+	return taxTestDBWithConfig(t, commodityName, fmv)
+}
+
+// taxTestDBWithConfig assumes the caller loaded the configuration (including
+// the time zone) and only creates the in-memory database.
+func taxTestDBWithConfig(t *testing.T, commodityName, fmv string) *gorm.DB {
+	t.Helper()
+
 	name := strings.NewReplacer("/", "_", "\\", "_", " ", "_", ":", "_").Replace(t.Name())
 	db, err := gorm.Open(sqlite.Open("file:tax-"+name+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
