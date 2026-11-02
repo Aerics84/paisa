@@ -69,6 +69,27 @@ func TestEditorRejectsTraversal(t *testing.T) {
 	}
 }
 
+func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
+	base := t.TempDir()
+	configureEditor(t, base, false)
+
+	for _, name := range []string{"expenses", "expenses.txt"} {
+		result := SaveFile(nil, LedgerFile{Name: name, Content: ""})
+		require.Equal(t, false, result["saved"])
+		require.Equal(t, "File name must end with .ledger", result["message"])
+	}
+}
+
+func TestValidateFileRejectsNestedTraversal(t *testing.T) {
+	base := t.TempDir()
+	configureEditor(t, base, false)
+
+	errors, _, err := validateFile(LedgerFile{Name: "../outside.ledger", Content: ""})
+	require.Error(t, err)
+	require.Len(t, errors, 1)
+	require.Equal(t, "Invalid file name", errors[0].Message)
+}
+
 func TestDeleteBackupsDoesNotExpandFilename(t *testing.T) {
 	for _, api := range fileAPIs {
 		t.Run(api.name, func(t *testing.T) {

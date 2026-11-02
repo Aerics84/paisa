@@ -27,6 +27,7 @@
   export let data: PageData;
   let editorDom: Element;
   let editor: EditorView;
+  let editorFileName = "";
   let filesMap: Record<string, LedgerFile> = {};
   let selectedFile: LedgerFile = null;
   let accounts: string[] = [];
@@ -204,12 +205,17 @@
   }
 
   $: if (selectedFile) {
-    if (!editor || editor.state.doc.toString() != selectedFile.content) {
+    if (
+      !editor ||
+      editorFileName !== selectedFile.name ||
+      editor.state.doc.toString() != selectedFile.content
+    ) {
       if (editor) {
         editor.destroy();
       }
 
       editor = createEditor(selectedFile.content, editorDom, {
+        name: selectedFile.name,
         keybindings,
         autocompletions: {
           string: accounts,
@@ -217,6 +223,7 @@
           unit: commodities
         }
       });
+      editorFileName = selectedFile.name;
       if (lineNumber > 0) {
         moveToLine(editor, lineNumber, true);
         focus(editor);
