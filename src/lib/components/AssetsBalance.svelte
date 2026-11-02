@@ -92,16 +92,7 @@
 </script>
 
 {#if indent}
-  <Table
-    data={tree}
-    tree
-    columns={mobile ? mobileColumns : columns}
-    layout={mobile ? "fitDataTable" : "fitColumns"}
-  />
+  <Table data={tree} tree columns={mobile ? mobileColumns : columns} />
 {:else}
-  <Table
-    data={Object.values(breakdowns)}
-    columns={mobile ? mobileColumns : columns}
-    layout={mobile ? "fitDataTable" : "fitColumns"}
-  />
+  <Table data={Object.values(breakdowns)} columns={mobile ? mobileColumns : columns} />
 {/if}
