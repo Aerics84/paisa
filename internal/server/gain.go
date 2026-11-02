@@ -30,7 +30,7 @@ type AccountGain struct {
 }
 
 func GetGain(db *gorm.DB) gin.H {
-	postings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%").NotAccountPrefix("Assets:Checking").All()
+	postings := query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").NotAccountPrefix("Assets:Checking").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string {
 		if service.IsCapitalGains(p) {
@@ -49,7 +49,7 @@ func GetGain(db *gorm.DB) gin.H {
 
 func GetAccountGain(db *gorm.DB, account string) gin.H {
 	capitalGainsAccount := strings.Replace(account, "Assets", "Income:CapitalGains", 1)
-	postings := query.Init(db).AccountPrefix(account, capitalGainsAccount).All()
+	postings := query.Init(db).UntilToday().AccountPrefix(account, capitalGainsAccount).All()
 	postings = service.PopulateMarketPrice(db, postings)
 	gain := AccountGain{Account: account, XIRR: service.XIRR(db, postings), NetworthTimeline: computeNetworthTimeline(db, postings, accounting.IsLeafAccount(db, account)), Postings: postings}
 

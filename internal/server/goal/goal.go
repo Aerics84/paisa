@@ -23,7 +23,7 @@ type GoalSummary struct {
 
 func GetGoalSummaries(db *gorm.DB) []GoalSummary {
 	summaries := []GoalSummary{}
-	assetPostings := query.Init(db).Like("Assets:%").All()
+	assetPostings := query.Init(db).UntilToday().Like("Assets:%").All()
 	assetPostings = service.PopulateMarketPrice(db, assetPostings)
 
 	for _, goal := range config.GetConfig().Goals.Retirement {

@@ -52,7 +52,7 @@ type AvailableMonthRange struct {
 // checking account for the latest twelve recorded calendar months.
 func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 	points := make([]CheckingBalancePoint, 0)
-	postings := query.Init(db).AccountPrefix("Assets:Checking").All()
+	postings := query.Init(db).UntilToday().AccountPrefix("Assets:Checking").All()
 	if len(postings) == 0 {
 		return points
 	}
@@ -118,7 +118,7 @@ func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 // is never earlier than the current month, so a running month with no postings
 // can still show its month-to-date review.
 func GetAvailableMonthRange(db *gorm.DB) AvailableMonthRange {
-	postings := query.Init(db).All()
+	postings := query.Init(db).UntilToday().All()
 	if len(postings) == 0 {
 		return AvailableMonthRange{}
 	}
@@ -144,7 +144,7 @@ func GetBalance(db *gorm.DB) gin.H {
 }
 
 func doGetBalance(db *gorm.DB, pattern string, rollup bool) gin.H {
-	postings := query.Init(db).Like(pattern, "Income:CapitalGains:%").All()
+	postings := query.Init(db).UntilToday().Like(pattern, "Income:CapitalGains:%").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	breakdowns := ComputeBreakdowns(db, postings, rollup)
 	return gin.H{"asset_breakdowns": breakdowns}
