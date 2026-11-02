@@ -3,7 +3,7 @@
   import _ from "lodash";
   import { ajax, type ScheduleAL } from "$lib/utils";
   import { onMount } from "svelte";
-  import { dateMin, year } from "../../../../store";
+  import { setAllowedDateRange, year } from "../../../../store";
 
   let scheduleAls: Record<string, ScheduleAL>;
   let selectedScheduleAl: ScheduleAL;
@@ -19,10 +19,7 @@
   onMount(async () => {
     ({ schedule_als: scheduleAls } = await ajax("/api/schedule_al"));
 
-    let firstScheduleAl = _.minBy(Object.values(scheduleAls), (e) => e.date);
-    if (firstScheduleAl) {
-      dateMin.set(firstScheduleAl.date);
-    }
+    setAllowedDateRange(_.map(Object.values(scheduleAls), (e) => e.date));
   });
 </script>
 

@@ -10,7 +10,7 @@
     type IncomeStatement,
     firstName
   } from "$lib/utils";
-  import { dateMin, year } from "../../../../store";
+  import { setAllowedDateRange, year } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
   import { iconify } from "$lib/icon";
 
@@ -81,11 +81,8 @@
 
   onMount(async () => {
     ({ yearly } = await ajax("/api/income_statement"));
-    const y = _.minBy(_.values(yearly), (y) => y.date);
     renderer = renderIncomeStatement(svg);
-    if (y) {
-      dateMin.set(y.date);
-    }
+    setAllowedDateRange(_.map(_.values(yearly), (statement) => statement.date));
 
     accountGroups.push({
       key: "income",

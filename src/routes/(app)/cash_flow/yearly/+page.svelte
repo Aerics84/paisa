@@ -3,7 +3,7 @@
   import _ from "lodash";
   import { renderFlow } from "$lib/cash_flow";
   import { ajax, depth, firstName, rem, type Graph, type Legend, type Posting } from "$lib/utils";
-  import { dateMin, year } from "../../../../store";
+  import { setAllowedDateRange, year } from "../../../../store";
   import {
     setCashflowDepthAllowed,
     cashflowExpenseDepth,
@@ -60,10 +60,7 @@
 
   onMount(async () => {
     ({ expenses, graph } = await ajax("/api/expense"));
-    let firstExpense = _.minBy(expenses, (e) => e.date);
-    if (firstExpense) {
-      dateMin.set(firstExpense.date);
-    }
+    setAllowedDateRange(_.map(expenses, (e) => e.date));
 
     setCashflowDepthAllowed(maxDepth("Expenses"), maxDepth("Income"));
   });

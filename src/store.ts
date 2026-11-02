@@ -1,7 +1,7 @@
 import { writable, derived, get } from "svelte/store";
-import * as d3 from "d3";
 
 import dayjs from "dayjs";
+import { dateBounds } from "$lib/date_range";
 import type { AccountTfIdf, LedgerFileError, SheetFileError, SheetLineResult } from "$lib/utils";
 import { askConfirm } from "$lib/confirm";
 import _ from "lodash";
@@ -126,10 +126,10 @@ export const willClearTippy = writable(0);
 export const accountTfIdf = writable<AccountTfIdf>(null);
 
 export function setAllowedDateRange(dates: dayjs.Dayjs[]) {
-  const [start, end] = d3.extent(dates);
-  if (start) {
-    dateMin.set(start);
-    dateMax.set(end);
+  const bounds = dateBounds(dates);
+  if (bounds) {
+    dateMin.set(bounds.dateMin);
+    dateMax.set(bounds.dateMax);
   }
 }
 
