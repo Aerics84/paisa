@@ -2,11 +2,14 @@ package server
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+	"unicode"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
@@ -18,9 +21,30 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	maxImportRequestBytes = 10 << 20
+	maxImportContentBytes = 8 << 20
+)
+
+// importSync is a seam so tests can observe that a successful commit triggers sync.
+var importSync = func(db *gorm.DB) gin.H {
+	return Sync(db, SyncRequest{Journal: true})
+}
+
+// validateImportContent validates proposed journal content with the same
+// temp-file approach used by the editor. It is a seam because release builds
+// embed the ledger binary while development builds use a placeholder.
+var validateImportContent = func(content string) ([]ledger.LedgerFileError, string, error) {
+	return validateFile(LedgerFile{Content: content})
+}
+
 // matchImportAccount resolves a user supplied account name against the accounts
 // already present in the ledger, falling back to the query itself.
 func matchImportAccount(db *gorm.DB, query string) string {
+	if strings.TrimSpace(query) == "" {
+		return ""
+	}
+
 	accounts := accounting.AllAccounts(db)
 	if len(accounts) == 0 {
 		return query
@@ -63,9 +87,16 @@ func matchImportAccount(db *gorm.DB, query string) string {
 // HandleParseStatement parses statement uploads (CSV/OFX/QFX) and applies rules & duplicate scoring.
 func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImportRequestBytes)
+
 		var req importer.IngestionRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(req.Content) > maxImportContentBytes {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "statement content too large"})
 			return
 		}
 
@@ -167,6 +198,8 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImportRequestBytes)
+
 		var req CommitImportRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -176,6 +209,16 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 		trimmedRaw := strings.TrimSpace(req.RawContent)
 		if len(req.Transactions) == 0 && trimmedRaw == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "no transactions to commit"})
+			return
+		}
+
+		if len(req.RawContent) > maxImportContentBytes {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "raw content too large"})
+			return
+		}
+
+		if err := validateCommitRequest(req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -200,10 +243,20 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			contentToAppend = formatTransactionsForCommit(db, req, defaultCommodity)
 		}
 
-		// Write to journal file
 		if err := os.MkdirAll(filepath.Dir(targetFile), 0750); err != nil {
 			log.Warn("Failed to create destination directory: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create directory"})
+			return
+		}
+
+		// Validate the proposed journal content before touching the journal so an
+		// invalid statement can never leave the journal in a broken state.
+		validationErrors, _, err := validateImportContent(contentToAppend)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":  "invalid ledger content",
+				"errors": validationErrors,
+			})
 			return
 		}
 
@@ -213,16 +266,48 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open journal file"})
 			return
 		}
-		defer f.Close()
+
+		info, err := f.Stat()
+		if err != nil {
+			_ = f.Close()
+			log.Warn("Failed to stat journal file: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stat journal file"})
+			return
+		}
+		preWriteSize := info.Size()
 
 		if _, err := f.WriteString(contentToAppend); err != nil {
+			_ = f.Truncate(preWriteSize)
+			_ = f.Close()
 			log.Warn("Failed to write to journal file: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to append to journal"})
 			return
 		}
 
-		// Validate ledger journal
-		errors, _, _ := ledger.Cli().ValidateFile(config.GetJournalPath())
+		if err := f.Sync(); err != nil {
+			_ = f.Truncate(preWriteSize)
+			_ = f.Close()
+			log.Warn("Failed to sync journal file: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sync journal"})
+			return
+		}
+
+		if err := f.Close(); err != nil {
+			_ = os.Truncate(targetFile, preWriteSize)
+			log.Warn("Failed to close journal file: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to close journal"})
+			return
+		}
+
+		syncResult := importSync(db)
+		if success, ok := syncResult["success"].(bool); !ok || !success {
+			if truncateErr := os.Truncate(targetFile, preWriteSize); truncateErr != nil {
+				log.Warn("Failed to rollback journal after sync failure: ", truncateErr)
+			}
+			message, _ := syncResult["message"].(string)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sync journal: " + message})
+			return
+		}
 
 		committedCount := len(req.Transactions)
 		if committedCount == 0 && trimmedRaw != "" {
@@ -233,9 +318,48 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			"success":         true,
 			"committed_count": committedCount,
 			"target_file":     targetFile,
-			"errors":          errors,
+			"errors":          validationErrors,
 		})
 	}
+}
+
+func validateCommitRequest(req CommitImportRequest) error {
+	if strings.TrimSpace(req.BaseAccount) != "" {
+		if err := validateLedgerAccount("base_account", req.BaseAccount); err != nil {
+			return err
+		}
+	} else if len(req.Transactions) > 0 {
+		return fmt.Errorf("base_account is required")
+	}
+
+	for i, tx := range req.Transactions {
+		if _, err := time.Parse("2006-01-02", tx.Date); err != nil {
+			return fmt.Errorf("transaction %d: invalid date %q", i, tx.Date)
+		}
+		if tx.Amount <= 0 || math.IsNaN(tx.Amount) || math.IsInf(tx.Amount, 0) {
+			return fmt.Errorf("transaction %d: amount must be greater than zero", i)
+		}
+		if err := validateLedgerAccount("selected_account", tx.SelectedAccount); err != nil {
+			return fmt.Errorf("transaction %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func validateLedgerAccount(field string, account string) error {
+	if strings.TrimSpace(account) == "" {
+		return fmt.Errorf("%s is required", field)
+	}
+	if strings.ContainsAny(account, "\r\n;") {
+		return fmt.Errorf("%s contains invalid ledger characters", field)
+	}
+	for _, r := range account {
+		if unicode.IsControl(r) {
+			return fmt.Errorf("%s contains invalid control characters", field)
+		}
+	}
+	return nil
 }
 
 func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCommodity string) string {

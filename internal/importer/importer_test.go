@@ -229,6 +229,71 @@ func TestIngestOFX(t *testing.T) {
 	assert.Equal(t, "USD", result.Transactions[1].Currency)
 }
 
+func TestLoadPostingsForIngestionDateWindow(t *testing.T) {
+	db := openTestDB(t)
+
+	makePosting := func(date string, payee string) {
+		txDate, err := time.Parse("2006-01-02", date)
+		require.NoError(t, err)
+		require.NoError(t, db.Create(&posting.Posting{
+			Date:      txDate,
+			Payee:     payee,
+			Amount:    decimal.NewFromFloat(-45.20),
+			Commodity: "INR",
+			Account:   "Assets:Checking",
+		}).Error)
+	}
+
+	makePosting("2026-08-01", "Too Old")
+	makePosting("2026-10-10", "Coffee Shop")
+	makePosting("2026-10-19", "Too New")
+
+	postings := loadPostingsForIngestion(db, []import_rule.CandidateTransaction{
+		{Date: "2026-10-11", Payee: "Coffee Shop", Amount: 45.20, IsDebit: true},
+	})
+
+	require.Len(t, postings, 1)
+	assert.Equal(t, "Coffee Shop", postings[0].Payee)
+}
+
+func TestIngestDuplicateDateWindow(t *testing.T) {
+	db := openTestDB(t)
+
+	inWindowDate, err := time.Parse("2006-01-02", "2026-10-10")
+	require.NoError(t, err)
+	inWindow := &posting.Posting{
+		Date:      inWindowDate,
+		Payee:     "Netflix Subscription",
+		Amount:    decimal.NewFromFloat(-19.99),
+		Commodity: "INR",
+		Account:   "Assets:Checking",
+	}
+	require.NoError(t, db.Create(inWindow).Error)
+
+	outOfWindowDate, err := time.Parse("2006-01-02", "2026-08-01")
+	require.NoError(t, err)
+	require.NoError(t, db.Create(&posting.Posting{
+		Date:      outOfWindowDate,
+		Payee:     "Netflix Subscription",
+		Amount:    decimal.NewFromFloat(-19.99),
+		Commodity: "INR",
+		Account:   "Assets:Checking",
+	}).Error)
+
+	result, err := Ingest(db, IngestionRequest{
+		Format:  FormatCSV,
+		Content: "Date,Description,Debit,Credit\n2026-10-11,Netflix Subscription,19.99,\n",
+	})
+	require.NoError(t, err)
+	require.Len(t, result.Transactions, 1)
+
+	tx := result.Transactions[0]
+	assert.True(t, tx.IsDuplicate)
+	assert.GreaterOrEqual(t, tx.DuplicateScore, 70)
+	assert.Equal(t, inWindow.ID, tx.DuplicateMatchID)
+	assert.Equal(t, 1, result.PossibleDuplicates)
+}
+
 func TestIngestCSVWithRulesAndDuplicates(t *testing.T) {
 	db := openTestDB(t)
 

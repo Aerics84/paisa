@@ -106,10 +106,10 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 	// Fetch active user rules
 	rules, _ := import_rule.ActiveRules(db)
 
-	// Fetch existing ledger postings for duplicate detection and historical payee analysis
-	var existingPostings []posting.Posting
-	db.Select("id, transaction_id, date, payee, account, amount, note").
-		Find(&existingPostings)
+	// Fetch existing ledger postings for duplicate detection and historical payee analysis.
+	// The query is bounded to the statement's date range so large journals do not
+	// require scanning the whole postings table.
+	existingPostings := loadPostingsForIngestion(db, candidates)
 
 	// Build historical payee mapping index
 	historyMap := BuildHistoricalPayeeMap(existingPostings)
@@ -184,6 +184,54 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		PossibleDuplicates: duplicateCount,
 		Transactions:       staged,
 	}, nil
+}
+
+const ingestionDateWindowDays = 7
+
+// loadPostingsForIngestion loads only postings that can be relevant for duplicate
+// detection and historical suggestions around the statement date range.
+func loadPostingsForIngestion(db *gorm.DB, candidates []import_rule.CandidateTransaction) []posting.Posting {
+	minDate, maxDate, ok := candidateDateRange(candidates)
+	if !ok {
+		return nil
+	}
+
+	var existing []posting.Posting
+	db.Select("id, transaction_id, date, payee, account, amount, note").
+		Where("date >= ? AND date <= ?",
+			minDate.AddDate(0, 0, -ingestionDateWindowDays),
+			maxDate.AddDate(0, 0, ingestionDateWindowDays)).
+		Find(&existing)
+
+	return existing
+}
+
+func candidateDateRange(candidates []import_rule.CandidateTransaction) (time.Time, time.Time, bool) {
+	var minDate, maxDate time.Time
+	found := false
+
+	for _, candidate := range candidates {
+		date, err := time.Parse("2006-01-02", candidate.Date)
+		if err != nil {
+			continue
+		}
+
+		if !found {
+			minDate = date
+			maxDate = date
+			found = true
+			continue
+		}
+
+		if date.Before(minDate) {
+			minDate = date
+		}
+		if date.After(maxDate) {
+			maxDate = date
+		}
+	}
+
+	return minDate, maxDate, found
 }
 
 func parseCSVRows(content, delimiter, presetName string, db *gorm.DB) ([]import_rule.CandidateTransaction, error) {
