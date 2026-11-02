@@ -582,6 +582,17 @@ func findBestDuplicateMatch(c import_rule.CandidateTransaction, existing []posti
 		score := 0
 		reasons := []string{}
 
+		// A matching amount and date alone is not enough to flag a duplicate:
+		// recurring amounts with a different merchant must stay distinct.
+		pPayee := normalizeDuplicatePayee(p.Payee + " " + p.Note)
+		cPayee := normalizeDuplicatePayee(c.Payee + " " + c.Memo)
+		if pPayee == "" || cPayee == "" {
+			continue
+		}
+		if !strings.Contains(pPayee, cPayee) && !strings.Contains(cPayee, pPayee) {
+			continue
+		}
+
 		// 1. Amount match
 		pAmt := math.Abs(p.Amount.InexactFloat64())
 
@@ -610,12 +621,8 @@ func findBestDuplicateMatch(c import_rule.CandidateTransaction, existing []posti
 		}
 
 		// 3. Payee / Note similarity
-		pPayee := strings.ToLower(p.Payee + " " + p.Note)
-		cPayee := strings.ToLower(c.Payee + " " + c.Memo)
-		if strings.Contains(pPayee, cPayee) || strings.Contains(cPayee, pPayee) {
-			score += 20
-			reasons = append(reasons, "payee text match")
-		}
+		score += 20
+		reasons = append(reasons, "payee text match")
 
 		if score > highestScore {
 			highestScore = score
@@ -625,4 +632,8 @@ func findBestDuplicateMatch(c import_rule.CandidateTransaction, existing []posti
 	}
 
 	return bestMatch, highestScore, bestReason
+}
+
+func normalizeDuplicatePayee(payee string) string {
+	return strings.Join(strings.Fields(strings.ToLower(payee)), " ")
 }

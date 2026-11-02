@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	txPrefixRe   = regexp.MustCompile(`(?i)\b(UPI|NEFT|IMPS|RTGS|POS|ATM|ACH|BIL|MMT|BBPS|ECOM|VPS|IPS)[-/\s:*]+`)
+	txPrefixRe   = regexp.MustCompile(`(?i)\b(UPI|NEFT|IMPS|RTGS|POS|ATM|ACH|BIL|MMT|BBPS|ECOM|VPS|IPS|PCD)[-/\s:*]+`)
+	timeRe       = regexp.MustCompile(`(?i)\b\d{1,2}:\d{2}(:\d{2})?\b`)
 	delimsRe     = regexp.MustCompile(`[-/|*:_]+|\s+`)
 	multiSpaceRe = regexp.MustCompile(`\s+`)
-	digitsOnlyRe = regexp.MustCompile(`^\d{4,}$`)
-	refCodeRe    = regexp.MustCompile(`(?i)^(REF|TXN|TRN|UTR|RRN|CHQ|AUTH|CRN|ID|NUM|NO)[A-Z0-9]*$`)
+	digitsOnlyRe = regexp.MustCompile(`^\d+$`)
+	refCodeRe    = regexp.MustCompile(`(?i)^(REF|TXN|TRN|UTR|RRN|CHQ|AUTH|CRN|ID|NUM|NO|BEN)[A-Z0-9]*$`)
 	fourDigitsRe = regexp.MustCompile(`\d{4,}`)
 )
 
@@ -20,15 +21,22 @@ func isNoiseToken(w string) bool {
 	}
 	upper := strings.ToUpper(w)
 	switch upper {
-	case "UPI", "NEFT", "IMPS", "RTGS", "POS", "ATM", "ACH", "BIL", "MMT", "BBPS", "ECOM", "VPS", "IPS",
-		"DR", "CR", "IN", "IND", "PVT", "LTD", "BANK":
+	case "UPI", "NEFT", "IMPS", "RTGS", "POS", "ATM", "ACH", "BIL", "MMT", "BBPS", "ECOM", "VPS", "IPS", "PCD", "PHP",
+		"DR", "CR", "IN", "IND", "PVT", "LTD", "BANK", "S",
+		"BKID", "JIOP", "PYTM", "YESB", "SBIN", "HDFC", "ICIC", "UTIB", "BARB", "CNRB", "PUNB", "UBIN", "KKBK":
 		return true
 	}
-	// Pure digits of length >= 4 (dates, amounts, RRN, card numbers)
+	// Tokens made up only of punctuation carry no payee information.
+	if !strings.ContainsFunc(w, func(r rune) bool {
+		return (r >= '0' && r <= '9') || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+	}) {
+		return true
+	}
+	// Pure digits of any length (dates, amounts, RRN, card numbers, times)
 	if digitsOnlyRe.MatchString(w) {
 		return true
 	}
-	// Reference prefixes like REF123, TXN123
+	// Reference prefixes like REF123, TXN123, BEN251026
 	if refCodeRe.MatchString(w) {
 		return true
 	}
@@ -71,8 +79,9 @@ func CleanPayee(raw string) string {
 	// Traverse parts in reverse so the merchant segment after '_' is prioritized
 	for i := len(parts) - 1; i >= 0; i-- {
 		part := parts[i]
-		// Strip payment system prefixes (UPI-, NEFT/, POS etc.)
-		cleaned := txPrefixRe.ReplaceAllString(part, " ")
+		// Strip timestamps (e.g. 23:46) and payment system prefixes (UPI-, NEFT/, POS etc.)
+		cleaned := timeRe.ReplaceAllString(part, " ")
+		cleaned = txPrefixRe.ReplaceAllString(cleaned, " ")
 
 		tokens := delimsRe.Split(cleaned, -1)
 		var meaningful []string

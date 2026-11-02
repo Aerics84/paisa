@@ -2,7 +2,14 @@ import "../happydom";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { parse, render, asRows } from "./spreadsheet";
+import {
+  parse,
+  render,
+  asRows,
+  guessExpenseAccount,
+  consolidateStatementTransactions,
+  isDuplicateStatementTransaction
+} from "./spreadsheet";
 import fs from "fs";
 import helpers from "./template_helpers";
 import _ from "lodash";
@@ -343,3 +350,86 @@ describe("numeric template helpers", () => {
     );
   });
 });
+
+describe("statement import helpers", () => {
+  test("guessExpenseAccount picks a likely category from common merchants", () => {
+    expect(guessExpenseAccount("AMAZON PAY")).toBe("Expenses:Shopping");
+    expect(guessExpenseAccount("INDIAN OIL PETROL PUMP")).toBe("Expenses:Transportation");
+    expect(guessExpenseAccount("BSES BILL PAYMENT")).toBe("Expenses:Utilities");
+    expect(guessExpenseAccount("Swiggy order")).toBe("Expenses:Dining");
+    expect(guessExpenseAccount("Unknown merchant")).toBe("Expenses:Unknown");
+    expect(guessExpenseAccount("Unknown merchant", "Ausgaben")).toBe("Ausgaben:Unknown");
+  });
+
+  test("duplicate matching requires account, amount, date and payee", () => {
+    const base = {
+      account: "Expenses:Food",
+      amount: 500,
+      description: "Restaurant A",
+      date: "2024-01-10T12:00:00"
+    };
+    const options = { dateWindowHours: 48, requirePayee: true };
+
+    expect(isDuplicateStatementTransaction(base, { ...base }, options)).toBe(true);
+    expect(
+      isDuplicateStatementTransaction(
+        base,
+        { ...base, description: "Restaurant B" },
+        options
+      )
+    ).toBe(false);
+    expect(
+      isDuplicateStatementTransaction(base, { ...base, account: "Expenses:Shopping" }, options)
+    ).toBe(false);
+    expect(isDuplicateStatementTransaction(base, { ...base, amount: 501 }, options)).toBe(false);
+    expect(
+      isDuplicateStatementTransaction(base, { ...base, date: "2024-01-13T13:00:00" }, options)
+    ).toBe(false);
+    expect(
+      isDuplicateStatementTransaction(base, { ...base, date: "2024-01-11T11:00:00" }, options)
+    ).toBe(true);
+  });
+
+  test("consolidateStatementTransactions groups by category and month in beancount format", () => {
+    const output = consolidateStatementTransactions(
+      [
+        {
+          date: "2026-03-03",
+          description: "AMAZON PAY",
+          amount: 1299,
+          account: "Liabilities:CreditCard:ICICI",
+          expenseAccount: "Expenses:Shopping"
+        },
+        {
+          date: "2026-03-12",
+          description: "BIG BASKET",
+          amount: 860,
+          account: "Liabilities:CreditCard:ICICI",
+          expenseAccount: "Expenses:Groceries"
+        },
+        {
+          date: "2026-03-20",
+          description: "AMAZON PAY",
+          amount: 1349,
+          account: "Liabilities:CreditCard:ICICI",
+          expenseAccount: "Expenses:Shopping"
+        },
+        {
+          date: "2026-04-02",
+          description: "Uber trip",
+          amount: 420,
+          account: "Liabilities:CreditCard:ICICI",
+          expenseAccount: "Expenses:Transportation"
+        }
+      ],
+      { defaultAccount: "Liabilities:CreditCard:ICICI", dateWindowHours: 48 }
+    );
+
+    expect(output).toContain('2026-03-01 * "Expenses:Shopping"');
+    expect(output).toContain('2026-03-01 * "Expenses:Groceries"');
+    expect(output).toContain('2026-04-01 * "Expenses:Transportation"');
+    expect(output).toContain("Liabilities:CreditCard:ICICI");
+    expect(output).toContain("Expenses:Shopping 2648.00 INR");
+  });
+});
+

@@ -294,6 +294,63 @@ func TestIngestDuplicateDateWindow(t *testing.T) {
 	assert.Equal(t, 1, result.PossibleDuplicates)
 }
 
+func duplicateTestPosting(t *testing.T, date, payee string, amount float64) posting.Posting {
+	t.Helper()
+
+	txDate, err := time.Parse("2006-01-02", date)
+	require.NoError(t, err)
+
+	return posting.Posting{
+		ID:        42,
+		Date:      txDate,
+		Payee:     payee,
+		Amount:    decimal.NewFromFloat(-amount),
+		Commodity: "INR",
+		Account:   "Assets:Checking",
+	}
+}
+
+func TestDuplicateScoreExactMatch(t *testing.T) {
+	existing := []posting.Posting{duplicateTestPosting(t, "2026-10-11", "SWIGGY", 500)}
+
+	match, score, reason := findBestDuplicateMatch(import_rule.CandidateTransaction{
+		Date:   "2026-10-11",
+		Payee:  "SWIGGY",
+		Amount: 500,
+	}, existing)
+
+	require.NotNil(t, match)
+	assert.Equal(t, uint(42), match.ID)
+	assert.GreaterOrEqual(t, score, 70)
+	assert.Contains(t, reason, "exact amount match")
+	assert.Contains(t, reason, "same day")
+	assert.Contains(t, reason, "payee text match")
+}
+
+func TestDuplicateScoreRejectsOldDate(t *testing.T) {
+	existing := []posting.Posting{duplicateTestPosting(t, "2026-10-01", "SWIGGY", 500)}
+
+	_, score, _ := findBestDuplicateMatch(import_rule.CandidateTransaction{
+		Date:   "2026-10-11",
+		Payee:  "SWIGGY",
+		Amount: 500,
+	}, existing)
+
+	assert.Less(t, score, 70)
+}
+
+func TestDuplicateScoreRejectsDifferentMerchant(t *testing.T) {
+	existing := []posting.Posting{duplicateTestPosting(t, "2026-10-11", "AMAZON", 500)}
+
+	_, score, _ := findBestDuplicateMatch(import_rule.CandidateTransaction{
+		Date:   "2026-10-11",
+		Payee:  "SWIGGY",
+		Amount: 500,
+	}, existing)
+
+	assert.Less(t, score, 70)
+}
+
 func TestIngestCSVWithRulesAndDuplicates(t *testing.T) {
 	db := openTestDB(t)
 
