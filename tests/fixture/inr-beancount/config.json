@@ -40,6 +40,7 @@
     },
     "schedule_al": [],
     "allocation_targets": [],
+    "networth_currencies": [],
     "commodities": [],
     "import_templates": [],
     "salary_income_accounts": null,
@@ -115,14 +116,21 @@
               "type": "array",
               "ui:widget": "accounts"
             },
+            "drift": {
+              "default": 5,
+              "description": "Allowed drift tolerance percentage",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
             "name": {
               "type": "string"
             },
             "target": {
               "description": "Target percentage",
               "maximum": 100,
-              "minimum": 1,
-              "type": "integer"
+              "minimum": 0,
+              "type": "number"
             }
           },
           "required": [
@@ -175,6 +183,10 @@
         "items": {
           "additionalProperties": false,
           "properties": {
+            "display_name": {
+              "description": "Optional human-readable label for tooltips. The commodity name remains the ledger identifier.",
+              "type": "string"
+            },
             "germany_partial_exemption_rate": {
               "description": "Optional Germany-specific partial exemption rate for eligible funds or ETFs. Set to 0 for assets that are explicitly not eligible.",
               "maximum": 1,
@@ -186,10 +198,6 @@
             },
             "name": {
               "description": "Name of the commodity",
-              "type": "string"
-            },
-            "display_name": {
-              "description": "Optional human-readable label for tooltips. The commodity name remains the ledger identifier.",
               "type": "string"
             },
             "price": {
@@ -207,7 +215,8 @@
                     "com-purifiedbytes-nps",
                     "com-purifiedbytes-metal",
                     "com-yahoo-eu-metal",
-                    "co-alphavantage"
+                    "co-alphavantage",
+                    "com-allratestoday"
                   ],
                   "type": "string"
                 }
@@ -236,6 +245,7 @@
                 "stock",
                 "nps",
                 "metal",
+                "currency",
                 "unknown"
               ],
               "type": "string"
@@ -602,6 +612,37 @@
         "description": "The locale used to format numbers. The list of locales supported depends on your browser. It's known to work well with en-US and en-IN.",
         "pattern": "^[a-z]{2}-[A-Z]{2}$",
         "type": "string"
+      },
+      "networth_currencies": {
+        "default": [],
+        "description": "Additional currencies in which the networth and gain pages show amounts, timelines and XIRR. The rate is taken from the price of the commodity (in the default currency).",
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "commodity": {
+              "description": "Commodity whose price is the exchange rate. Example: $",
+              "type": "string"
+            },
+            "name": {
+              "description": "Currency name shown in the UI. Example: USD",
+              "type": "string"
+            },
+            "symbol": {
+              "description": "Symbol shown before amounts. Defaults to the commodity",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "commodity"
+          ],
+          "type": "object",
+          "ui:header": "name"
+        },
+        "itemsUniqueProperties": [
+          "name"
+        ],
+        "type": "array"
       },
       "readonly": {
         "description": "Run in readonly mode.",

@@ -614,7 +614,7 @@
     {
       "name": "Cash",
       "target": 25,
-      "current": 81.14330056906363,
+      "current": 81.14,
       "aggregates": {
         "Assets": {
           "date": "0001-01-01T00:00:00Z",
@@ -641,12 +641,21 @@
           "account": "Assets:Savings:Tagesgeld",
           "market_amount": 1200
         }
-      }
+      },
+      "market_amount": 4705.5,
+      "drift": 56.14,
+      "drift_tolerance": 5,
+      "status": "overweight",
+      "accounts": [
+        "Assets:Checking:*",
+        "Assets:Savings:*"
+      ],
+      "commodities": []
     },
     {
       "name": "Equity",
       "target": 75,
-      "current": 18.85669943093637,
+      "current": 18.86,
       "aggregates": {
         "Assets": {
           "date": "0001-01-01T00:00:00Z",
@@ -663,7 +672,43 @@
           "account": "Assets:Equity:VWCE",
           "market_amount": 1093.5
         }
-      }
+      },
+      "market_amount": 1093.5,
+      "drift": -56.14,
+      "drift_tolerance": 5,
+      "status": "underweight",
+      "accounts": [
+        "Assets:Equity:*"
+      ],
+      "commodities": []
     }
-  ]
+  ],
+  "rebalance": {
+    "mode": "full_rebalance",
+    "cash_amount": 0,
+    "total_before": 5799,
+    "total_after": 5799,
+    "items": [
+      {
+        "name": "Cash",
+        "target": 25,
+        "current": 81.14,
+        "market_amount": 4705.5,
+        "target_amount": 1449.75,
+        "action": "SELL",
+        "amount": 3255.75,
+        "new_percent": 25
+      },
+      {
+        "name": "Equity",
+        "target": 75,
+        "current": 18.86,
+        "market_amount": 1093.5,
+        "target_amount": 4349.25,
+        "action": "BUY",
+        "amount": 3255.75,
+        "new_percent": 75
+      }
+    ]
+  }
 }
