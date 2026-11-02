@@ -470,24 +470,29 @@ func TestIngestCSVWithRulesAndDuplicates(t *testing.T) {
 	assert.Equal(t, "", tx3.SelectedAccount)
 	assert.False(t, tx3.IsDuplicate)
 }
-func TestIngestAlreadyImported(t *testing.T) {
-	db := openTestDB(t)
+func useTempIngestConfigDir(t *testing.T) string {
+	t.Helper()
 
 	root := t.TempDir()
 	previousConfigDir := ingestConfigDir
 	ingestConfigDir = func() string { return root }
 	t.Cleanup(func() { ingestConfigDir = previousConfigDir })
+	return root
+}
+
+func TestIngestAlreadyImported(t *testing.T) {
+	db := openTestDB(t)
+	useTempIngestConfigDir(t)
 
 	content := `Date,Description,Debit,Credit
 2026-09-15,Coffee Shop,150.00,
 `
-	contentHash := sha256HexString(content)
 	req := IngestionRequest{
 		Format:        FormatCSV,
 		Content:       content,
 		SourceType:    "bank",
 		OriginalPath:  "statements/checking.csv",
-		ContentSHA256: contentHash,
+		ContentSHA256: sha256HexString(content),
 	}
 
 	first, err := Ingest(db, req)
@@ -512,23 +517,82 @@ func TestIngestAlreadyImported(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, third.AlreadyImported)
 	require.Len(t, third.Transactions, 1)
+}
 
-	// A manifest produced by an older parser version must be re-ingested.
-	_, err = importmanifest.Write(root, importmanifest.Manifest{
+func TestIngestAlreadyImportedForOlderContent(t *testing.T) {
+	db := openTestDB(t)
+	useTempIngestConfigDir(t)
+
+	contentA := `Date,Description,Debit,Credit
+2026-09-15,Coffee Shop,150.00,
+`
+	contentB := `Date,Description,Debit,Credit
+2026-09-16,Book Store,42.00,
+`
+	reqA := IngestionRequest{
+		Format:        FormatCSV,
+		Content:       contentA,
+		SourceType:    "bank",
+		OriginalPath:  "statements/checking.csv",
+		ContentSHA256: sha256HexString(contentA),
+	}
+	reqB := reqA
+	reqB.Content = contentB
+	reqB.ContentSHA256 = sha256HexString(contentB)
+
+	_, err := Ingest(db, reqA)
+	require.NoError(t, err)
+	_, err = Ingest(db, reqB)
+	require.NoError(t, err)
+
+	// A is no longer the latest manifest for the path, but its manifest still
+	// exists under its deterministic import id.
+	again, err := Ingest(db, reqA)
+	require.NoError(t, err)
+	assert.True(t, again.AlreadyImported)
+	assert.Equal(t, 0, again.TotalParsed)
+	assert.Empty(t, again.Transactions)
+}
+
+func TestIngestReparsesWhenParserVersionChanges(t *testing.T) {
+	db := openTestDB(t)
+	root := useTempIngestConfigDir(t)
+
+	content := `Date,Description,Debit,Credit
+2026-09-17,Grocer,25.00,
+`
+	req := IngestionRequest{
+		Format:        FormatCSV,
+		Content:       content,
+		SourceType:    "bank",
+		OriginalPath:  "statements/parser-version.csv",
+		ContentSHA256: sha256HexString(content),
+	}
+
+	// Seed the only manifest for this path with an older parser version. The
+	// future timestamp guarantees it is the latest entry independent of the
+	// wall clock.
+	_, err := importmanifest.Write(root, importmanifest.Manifest{
 		ImportID:      importmanifest.ImportID(req.SourceType, req.OriginalPath, req.ContentSHA256),
 		SourceType:    req.SourceType,
 		OriginalPath:  req.OriginalPath,
 		ContentSHA256: req.ContentSHA256,
-		ImportedAt:    "2026-01-01T00:00:00Z",
+		ImportedAt:    "2099-01-01T00:00:00Z",
 		Status:        "staged",
 		Parser:        importmanifest.ParserInfo{Name: IngestionParserName, Version: "0"},
 	}, []string{})
 	require.NoError(t, err)
 
-	fourth, err := Ingest(db, req)
+	result, err := Ingest(db, req)
 	require.NoError(t, err)
-	assert.False(t, fourth.AlreadyImported)
-	require.Len(t, fourth.Transactions, 1)
+	assert.False(t, result.AlreadyImported)
+	require.Len(t, result.Transactions, 1)
+
+	// Re-ingestion is now idempotent under the current parser version.
+	again, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.True(t, again.AlreadyImported)
+	assert.Empty(t, again.Transactions)
 }
 
 func sha256HexString(value string) string {

@@ -4,8 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/csv"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -128,6 +131,38 @@ func resolveIngestionProvenance(req IngestionRequest) (ingestionProvenance, erro
 	}, nil
 }
 
+// readByID loads a manifest directly from its deterministic import directory.
+// Unlike ReadLatest, this keeps idempotency working after a newer version of
+// the same path has been imported.
+func readByID(root, sourceType, importID string) (manifest.Manifest, bool, error) {
+	if strings.TrimSpace(root) == "" {
+		return manifest.Manifest{}, false, fmt.Errorf("import root is required")
+	}
+	if sourceType == "" || sourceType == "." || sourceType == ".." ||
+		filepath.Base(sourceType) != sourceType ||
+		strings.ContainsAny(sourceType, `/\`) ||
+		strings.Contains(sourceType, ":") {
+		return manifest.Manifest{}, false, fmt.Errorf("source_type must be a single path segment")
+	}
+	if len(importID) != 64 {
+		return manifest.Manifest{}, false, fmt.Errorf("import_id must be a 64 character SHA-256 hex string")
+	}
+
+	data, err := os.ReadFile(filepath.Join(root, "imports", sourceType, importID, "manifest.json"))
+	if os.IsNotExist(err) {
+		return manifest.Manifest{}, false, nil
+	}
+	if err != nil {
+		return manifest.Manifest{}, false, err
+	}
+
+	var m manifest.Manifest
+	if err := json.Unmarshal(data, &m); err != nil {
+		return manifest.Manifest{}, false, err
+	}
+	return m, true, nil
+}
+
 // Ingest parses input and enriches every transaction with rules and duplicate checks.
 func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 	provenance, err := resolveIngestionProvenance(req)
@@ -136,19 +171,18 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 	}
 
 	if provenance.present {
-		manifests, err := manifest.ReadLatest(ingestConfigDir(), provenance.sourceType)
+		importID := manifest.ImportID(provenance.sourceType, provenance.originalPath, provenance.contentHash)
+		existing, found, err := readByID(ingestConfigDir(), provenance.sourceType, importID)
 		if err != nil {
-			return nil, fmt.Errorf("read import manifests: %w", err)
+			return nil, fmt.Errorf("read import manifest: %w", err)
 		}
-		for _, m := range manifests {
-			if m.OriginalPath == provenance.originalPath &&
-				strings.EqualFold(m.ContentSHA256, provenance.contentHash) &&
-				m.Parser.Version == IngestionParserVersion {
-				return &IngestionResult{
-					AlreadyImported: true,
-					Transactions:    []StagedTransaction{},
-				}, nil
-			}
+		if found &&
+			strings.EqualFold(existing.ContentSHA256, provenance.contentHash) &&
+			existing.Parser.Version == IngestionParserVersion {
+			return &IngestionResult{
+				AlreadyImported: true,
+				Transactions:    []StagedTransaction{},
+			}, nil
 		}
 	}
 
