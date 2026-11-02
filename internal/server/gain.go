@@ -66,7 +66,12 @@ func GetAccountGain(db *gorm.DB, account string) gin.H {
 	timeline := computeNetworthTimeline(db, postings, accounting.IsLeafAccount(db, account))
 	today := utils.Now()
 	postingReturns := lo.FilterMap(postings, func(p posting.Posting, _ int) (service.PostingReturn, bool) {
-		return service.ComputePostingReturn(p, today)
+		result, ok := service.ComputePostingReturn(p, today)
+		if !ok {
+			return service.PostingReturn{}, false
+		}
+		result.PostingID = p.ID
+		return result, true
 	})
 	gain := AccountGain{Account: account, XIRR: service.XIRR(db, postings), NetworthTimeline: timeline, Postings: postings, PostingReturns: postingReturns, Currencies: computeCurrencyAccountGains(db, postings, timeline)}
 

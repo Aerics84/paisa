@@ -11,6 +11,9 @@ import (
 
 // PostingReturn is the unrealized return of a single commodity posting (one lot).
 type PostingReturn struct {
+	// PostingID identifies the source posting, so consumers can associate a
+	// return with its lot instead of relying on array positions.
+	PostingID      uint            `json:"posting_id"`
 	UnrealizedGain decimal.Decimal `json:"unrealized_gain"`
 	HoldingDays    int             `json:"holding_days"`
 	// AnnualizedReturn is a compound annual rate in percent (the same scale as

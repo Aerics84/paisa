@@ -186,6 +186,7 @@ export interface CurrencyAccountGain {
 }
 
 export interface PostingReturn {
+  posting_id: number;
   unrealized_gain: number;
   holding_days: number;
   annualized_return: number | null;
