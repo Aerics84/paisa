@@ -195,14 +195,14 @@ tax_deductions:
 
 func TestTaxDeductionAccountsRejectsWildcardOrNonExpenseAccount(t *testing.T) {
 	for _, account := range []string{"Expenses:Health:*", "Assets:Checking", "Expenses"} {
-		err := LoadConfig([]byte(fmt.Sprintf(`
+		err := LoadConfig(fmt.Appendf(nil, `
 journal_path: test.ledger
 db_path: test.db
 tax_deductions:
   accounts:
     - account: %s
       category: health
-`, account)), "")
+`, account), "")
 		assert.Error(t, err, account)
 	}
 }

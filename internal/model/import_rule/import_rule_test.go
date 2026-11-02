@@ -17,8 +17,9 @@ func openTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+//go:fix inline
 func float64Ptr(value float64) *float64 {
-	return &value
+	return new(value)
 }
 
 func TestRuleEvaluateMatchTypes(t *testing.T) {
@@ -98,8 +99,8 @@ func TestRuleEvaluateAmountRange(t *testing.T) {
 		PayeePattern:   "Uber",
 		PayeeMatchType: MatchContains,
 		TxType:         TxTypeDebit,
-		MinAmount:      float64Ptr(500),
-		MaxAmount:      float64Ptr(1000),
+		MinAmount:      new(float64(500)),
+		MaxAmount:      new(float64(1000)),
 		TargetAccount:  "Expenses:Transport",
 	}
 
@@ -291,7 +292,7 @@ func TestRulePersistence(t *testing.T) {
 		PayeePattern:   "Uber",
 		PayeeMatchType: MatchContains,
 		TxType:         TxTypeDebit,
-		MinAmount:      float64Ptr(100),
+		MinAmount:      new(float64(100)),
 		TargetAccount:  "Expenses:Transport",
 		Tags:           []string{"#commute", "#work"},
 	}

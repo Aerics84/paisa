@@ -168,7 +168,7 @@ func TestGetUnitPriceReturnsZeroWithoutPanic(t *testing.T) {
 func TestPriceCacheConcurrentClearAndRead(t *testing.T) {
 	db := openTestDB(t)
 	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		wg.Add(2)
 		go func() { defer wg.Done(); _, _ = FindUnitPrice(db, "EUR", time.Now()) }()
 		go func() { defer wg.Done(); ClearPriceCache() }()

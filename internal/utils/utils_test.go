@@ -36,9 +36,9 @@ func TestSetNowUsesUTC(t *testing.T) {
 
 func TestOpenDBUsesWALAndBusyTimeout(t *testing.T) {
 	dir := t.TempDir()
-	require.NoError(t, config.LoadConfig([]byte(fmt.Sprintf(
+	require.NoError(t, config.LoadConfig(fmt.Appendf(nil,
 		"journal_path: %s/main.ledger\ndb_path: %s/test.db\n", dir, dir,
-	)), ""))
+	), ""))
 	db, err := OpenDB()
 	require.NoError(t, err)
 	sqlDB, err := db.DB()
@@ -54,9 +54,9 @@ func TestOpenDBUsesWALAndBusyTimeout(t *testing.T) {
 
 func TestOpenDBAppliesPragmasToEveryConnection(t *testing.T) {
 	dir := t.TempDir()
-	require.NoError(t, config.LoadConfig([]byte(fmt.Sprintf(
+	require.NoError(t, config.LoadConfig(fmt.Appendf(nil,
 		"journal_path: %s/main.ledger\ndb_path: %s/test.db\n", dir, dir,
-	)), ""))
+	), ""))
 	db, err := OpenDB()
 	require.NoError(t, err)
 	sqlDB, err := db.DB()

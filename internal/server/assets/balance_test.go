@@ -128,7 +128,7 @@ func TestCheckingBalanceTimelineKeepsInternalTransfersNeutral(t *testing.T) {
 func TestCheckingBalanceTimelineLimitsToLatestTwelveRecordedMonths(t *testing.T) {
 	db := openBalanceTestDB(t)
 
-	for index := 0; index < 14; index++ {
+	for index := range 14 {
 		month := time.Date(2021, time.January, 10, 0, 0, 0, 0, time.UTC).AddDate(0, index, 0)
 		date := month.Format("2006-01-02")
 		addCheckingPosting(t, db, "salary-month-"+month.Format("2006-01"), date, "Assets:Checking:Bank", "100")

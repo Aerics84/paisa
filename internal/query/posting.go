@@ -2,6 +2,7 @@ package query
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -83,17 +84,18 @@ func (q *Query) Credit() *Query {
 }
 
 func (q *Query) AccountPrefix(account ...string) *Query {
-	query := "account like ? or account = ?"
+	var query strings.Builder
+	query.WriteString("account like ? or account = ?")
 	for range account[1:] {
-		query += " or account like ? or account = ?"
+		query.WriteString(" or account like ? or account = ?")
 	}
 
-	args := make([]interface{}, len(account)*2)
+	args := make([]any, len(account)*2)
 	for i, a := range account {
 		args[i*2] = a + ":%"
 		args[i*2+1] = a
 	}
-	q.context = q.context.Where(query, args...)
+	q.context = q.context.Where(query.String(), args...)
 	return q
 }
 
@@ -103,16 +105,17 @@ func (q *Query) NotAccountPrefix(account string) *Query {
 }
 
 func (q *Query) Like(accounts ...string) *Query {
-	query := "account like ?"
+	var query strings.Builder
+	query.WriteString("account like ?")
 	for range accounts[1:] {
-		query += " or account like ?"
+		query.WriteString(" or account like ?")
 	}
 
-	args := make([]interface{}, len(accounts))
+	args := make([]any, len(accounts))
 	for i, a := range accounts {
 		args[i] = a
 	}
-	q.context = q.context.Where(query, args...)
+	q.context = q.context.Where(query.String(), args...)
 	return q
 }
 
@@ -121,7 +124,7 @@ func (q *Query) NotLike(account string) *Query {
 	return q
 }
 
-func (q *Query) Where(query interface{}, args ...interface{}) *Query {
+func (q *Query) Where(query any, args ...any) *Query {
 	q.context = q.context.Where(query, args...)
 	return q
 }

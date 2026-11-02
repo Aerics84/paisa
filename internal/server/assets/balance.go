@@ -78,7 +78,7 @@ func GetCheckingBalanceTimeline(db *gorm.DB) []CheckingBalancePoint {
 	lastMonth := utils.BeginningOfMonth(postings[len(postings)-1].Date)
 	windowStart := lastMonth.AddDate(0, -11, 0)
 	monthByKey := make(map[string]time.Time, len(keys))
-	for index := 0; index < 12; index++ {
+	for index := range 12 {
 		month := windowStart.AddDate(0, index, 0)
 		key := month.Format("2006-01")
 		keys = append(keys, key)
@@ -159,7 +159,7 @@ func ComputeBreakdowns(db *gorm.DB, postings []posting.Posting, rollup bool) map
 
 		if rollup {
 			var parts []string
-			for _, part := range strings.Split(p.Account, ":") {
+			for part := range strings.SplitSeq(p.Account, ":") {
 				parts = append(parts, part)
 				accounts[strings.Join(parts, ":")] = false
 			}

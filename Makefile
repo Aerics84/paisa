@@ -3,6 +3,8 @@
 .PHONY: preflight-critical
 .PHONY: prepush
 .PHONY: audit
+.PHONY: modern
+.PHONY: modern-fix
 
 VERSION := $(shell cat VERSION)
 GO_VERSION_LDFLAGS := -ldflags "-X github.com/ananthakumaran/paisa/internal/version.current=$(VERSION)"
@@ -41,6 +43,14 @@ lint:
 
 audit:
 	node scripts/security-gate.mjs
+
+modern:
+	go fix -diff ./...
+	cd desktop && go fix -diff ./...
+
+modern-fix:
+	go fix ./...
+	cd desktop && go fix ./...
 
 preflight-critical:
 	GO_VERSION_LDFLAGS='$(GO_VERSION_LDFLAGS)' bash ./scripts/preflight-critical.sh

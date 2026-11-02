@@ -62,8 +62,8 @@ type Holding struct {
 	CurrentValue string        `json:"current_value,omitempty"`
 	Currency     string        `json:"currency,omitempty"`
 	OverlapKey   string        `json:"overlap_key,omitempty"`
-	Security     Security      `json:"security,omitempty"`
-	Source       HoldingSource `json:"source,omitempty"`
+	Security     Security      `json:"security"`
+	Source       HoldingSource `json:"source"`
 }
 
 // ManualBalance is an imported asset or liability balance. A balance_type of

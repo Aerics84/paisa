@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -507,16 +508,13 @@ var headerCurrencyRe = regexp.MustCompile(`(?i)\(([A-Z]{3})\)|\b(INR|USD|EUR|GBP
 
 // detectHeaderRow scans the top rows of a statement (up to 50 rows) to find where the actual transaction table begins.
 func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, currIdx, fallbackDateIdx int, stmtCurrency string) {
-	maxScan := len(records)
-	if maxScan > 50 {
-		maxScan = 50
-	}
+	maxScan := min(len(records), 50)
 
 	bestHeaderIdx := -1
 	bestScore := -1
 	bDate, bDesc, bDebit, bCredit, bAmount, bDrCr, bCurr, bFallbackDate := -1, -1, -1, -1, -1, -1, -1, -1
 
-	for i := 0; i < maxScan; i++ {
+	for i := range maxScan {
 		row := records[i]
 		if len(row) == 0 || allEmpty(row) {
 			continue
@@ -647,10 +645,8 @@ func findColumnIndex(header []string, targets []string) int {
 	// First pass: exact match (case-insensitive)
 	for i, h := range header {
 		clean := strings.ToLower(strings.TrimSpace(h))
-		for _, target := range targets {
-			if clean == target {
-				return i
-			}
+		if slices.Contains(targets, clean) {
+			return i
 		}
 	}
 	// Second pass: substring match for targets with length > 2

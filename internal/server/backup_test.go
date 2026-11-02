@@ -170,7 +170,7 @@ func TestGenerateBackupZipSkipsUnsafePaths(t *testing.T) {
 	require.NoError(t, err)
 
 	journalPath := filepath.Join(journalDir, "main.beancount")
-	require.NoError(t, os.WriteFile(journalPath, []byte(fmt.Sprintf("include %s\n", strconv.Quote(filepath.ToSlash(relativeOutside)))), 0644))
+	require.NoError(t, os.WriteFile(journalPath, fmt.Appendf(nil, "include %s\n", strconv.Quote(filepath.ToSlash(relativeOutside))), 0644))
 
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "beancount", "")
 
