@@ -145,6 +145,12 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, Sync(db, syncRequest))
 	})
 
+	router.POST("/api/import/statement", HandleParseStatement(db))
+	router.POST("/api/import/commit", HandleCommitImport(db))
+	router.GET("/api/rules", HandleGetRules(db))
+	router.POST("/api/rules", HandleSaveRule(db))
+	router.DELETE("/api/rules/:id", HandleDeleteRule(db))
+
 	router.GET("/api/dashboard", func(c *gin.Context) {
 		c.JSON(200, GetDashboard(db))
 	})

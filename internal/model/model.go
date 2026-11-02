@@ -9,6 +9,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/cache"
 	"github.com/ananthakumaran/paisa/internal/model/cii"
 	"github.com/ananthakumaran/paisa/internal/model/commodity"
+	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	mutualfundModel "github.com/ananthakumaran/paisa/internal/model/mutualfund/scheme"
 	npsModel "github.com/ananthakumaran/paisa/internal/model/nps/scheme"
 	"github.com/ananthakumaran/paisa/internal/model/portfolio"
@@ -30,6 +31,7 @@ func AutoMigrate(db *gorm.DB) {
 	db.AutoMigrate(&portfolio.Portfolio{})
 	db.AutoMigrate(&price.Price{})
 	db.AutoMigrate(&cii.CII{})
+	db.AutoMigrate(&import_rule.Rule{})
 	db.AutoMigrate(&cache.Cache{})
 }
 
