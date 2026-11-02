@@ -52,3 +52,12 @@
 </script>
 
 <div class="overflow-x-auto box py-0" style="max-width: 100%;" bind:this={tableComponent}></div>
+
+<style lang="scss">
+  /* Do not stretch the table box beyond the last column; otherwise the row
+     background continues past the final header cell. */
+  :global(.tabulator) {
+    width: fit-content !important;
+    max-width: 100%;
+  }
+</style>
