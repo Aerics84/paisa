@@ -1,12 +1,15 @@
 package importer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	importmanifest "github.com/ananthakumaran/paisa/internal/importer/manifest"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/shopspring/decimal"
@@ -466,4 +469,69 @@ func TestIngestCSVWithRulesAndDuplicates(t *testing.T) {
 	tx3 := result.Transactions[2]
 	assert.Equal(t, "", tx3.SelectedAccount)
 	assert.False(t, tx3.IsDuplicate)
+}
+func TestIngestAlreadyImported(t *testing.T) {
+	db := openTestDB(t)
+
+	root := t.TempDir()
+	previousConfigDir := ingestConfigDir
+	ingestConfigDir = func() string { return root }
+	t.Cleanup(func() { ingestConfigDir = previousConfigDir })
+
+	content := `Date,Description,Debit,Credit
+2026-09-15,Coffee Shop,150.00,
+`
+	contentHash := sha256HexString(content)
+	req := IngestionRequest{
+		Format:        FormatCSV,
+		Content:       content,
+		SourceType:    "bank",
+		OriginalPath:  "statements/checking.csv",
+		ContentSHA256: contentHash,
+	}
+
+	first, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.False(t, first.AlreadyImported)
+	assert.Equal(t, 1, first.TotalParsed)
+	require.Len(t, first.Transactions, 1)
+
+	second, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.True(t, second.AlreadyImported)
+	assert.Equal(t, 0, second.TotalParsed)
+	assert.Empty(t, second.Transactions)
+
+	// The same path with new content is a new import.
+	otherContent := `Date,Description,Debit,Credit
+2026-09-16,Book Store,42.00,
+`
+	req.Content = otherContent
+	req.ContentSHA256 = sha256HexString(otherContent)
+	third, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.False(t, third.AlreadyImported)
+	require.Len(t, third.Transactions, 1)
+
+	// A manifest produced by an older parser version must be re-ingested.
+	_, err = importmanifest.Write(root, importmanifest.Manifest{
+		ImportID:      importmanifest.ImportID(req.SourceType, req.OriginalPath, req.ContentSHA256),
+		SourceType:    req.SourceType,
+		OriginalPath:  req.OriginalPath,
+		ContentSHA256: req.ContentSHA256,
+		ImportedAt:    "2026-01-01T00:00:00Z",
+		Status:        "staged",
+		Parser:        importmanifest.ParserInfo{Name: IngestionParserName, Version: "0"},
+	}, []string{})
+	require.NoError(t, err)
+
+	fourth, err := Ingest(db, req)
+	require.NoError(t, err)
+	assert.False(t, fourth.AlreadyImported)
+	require.Len(t, fourth.Transactions, 1)
+}
+
+func sha256HexString(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
 }

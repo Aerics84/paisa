@@ -106,6 +106,13 @@ func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		if result.AlreadyImported {
+			log.WithFields(log.Fields{
+				"source_type":   req.SourceType,
+				"original_path": req.OriginalPath,
+			}).Info("statement already imported")
+		}
+
 		c.JSON(http.StatusOK, result)
 	}
 }

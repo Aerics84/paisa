@@ -1,7 +1,9 @@
 package importer
 
 import (
+	"crypto/sha256"
 	"encoding/csv"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"regexp"
@@ -11,11 +13,23 @@ import (
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
+	"github.com/ananthakumaran/paisa/internal/importer/manifest"
 	"github.com/ananthakumaran/paisa/internal/importer/ofx"
 	"github.com/ananthakumaran/paisa/internal/model/import_rule"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"gorm.io/gorm"
 )
+
+const (
+	// IngestionParserName identifies the statement parser in import manifests.
+	IngestionParserName = "paisa-import"
+	// IngestionParserVersion changes whenever parsing semantics change enough
+	// that a previously imported statement must be parsed again.
+	IngestionParserVersion = "1"
+)
+
+// ingestConfigDir is a seam so tests can keep manifests inside a temp directory.
+var ingestConfigDir = config.GetConfigDir
 
 // IngestionFormat denotes the input file type.
 type IngestionFormat string
@@ -61,6 +75,12 @@ type IngestionRequest struct {
 	PresetName    string          `json:"preset_name,omitempty"`
 	BaseAccount   string          `json:"base_account,omitempty"` // e.g., Assets:Checking:Chase
 	SourceAccount string          `json:"source_account,omitempty"`
+
+	// Provenance is optional. When SourceType and OriginalPath are supplied,
+	// ContentSHA256 is derived from Content if the caller did not provide it.
+	SourceType    string `json:"source_type,omitempty"`
+	OriginalPath  string `json:"original_path,omitempty"`
+	ContentSHA256 string `json:"content_sha256,omitempty"`
 }
 
 // IngestionResult returns the staged candidate list.
@@ -68,11 +88,70 @@ type IngestionResult struct {
 	TotalParsed        int                 `json:"total_parsed"`
 	AutoCategorized    int                 `json:"auto_categorized"`
 	PossibleDuplicates int                 `json:"possible_duplicates"`
+	AlreadyImported    bool                `json:"already_imported"`
 	Transactions       []StagedTransaction `json:"transactions"`
+}
+
+type ingestionProvenance struct {
+	present      bool
+	sourceType   string
+	originalPath string
+	contentHash  string
+}
+
+func resolveIngestionProvenance(req IngestionRequest) (ingestionProvenance, error) {
+	sourceType := strings.TrimSpace(req.SourceType)
+	originalPath := strings.TrimSpace(req.OriginalPath)
+	contentHash := strings.ToLower(strings.TrimSpace(req.ContentSHA256))
+
+	if sourceType == "" && originalPath == "" && contentHash == "" {
+		return ingestionProvenance{}, nil
+	}
+	if sourceType == "" || originalPath == "" {
+		return ingestionProvenance{}, fmt.Errorf("source_type and original_path must be provided together")
+	}
+
+	if contentHash == "" {
+		sum := sha256.Sum256([]byte(req.Content))
+		contentHash = hex.EncodeToString(sum[:])
+	} else if len(contentHash) != 64 {
+		return ingestionProvenance{}, fmt.Errorf("content_sha256 must be a 64 character SHA-256 hex string")
+	} else if _, err := hex.DecodeString(contentHash); err != nil {
+		return ingestionProvenance{}, fmt.Errorf("content_sha256 must be a SHA-256 hex string")
+	}
+
+	return ingestionProvenance{
+		present:      true,
+		sourceType:   sourceType,
+		originalPath: originalPath,
+		contentHash:  contentHash,
+	}, nil
 }
 
 // Ingest parses input and enriches every transaction with rules and duplicate checks.
 func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
+	provenance, err := resolveIngestionProvenance(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if provenance.present {
+		manifests, err := manifest.ReadLatest(ingestConfigDir(), provenance.sourceType)
+		if err != nil {
+			return nil, fmt.Errorf("read import manifests: %w", err)
+		}
+		for _, m := range manifests {
+			if m.OriginalPath == provenance.originalPath &&
+				strings.EqualFold(m.ContentSHA256, provenance.contentHash) &&
+				m.Parser.Version == IngestionParserVersion {
+				return &IngestionResult{
+					AlreadyImported: true,
+					Transactions:    []StagedTransaction{},
+				}, nil
+			}
+		}
+	}
+
 	var candidates []import_rule.CandidateTransaction
 
 	switch strings.ToLower(string(req.Format)) {
@@ -178,12 +257,35 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		staged = append(staged, item)
 	}
 
-	return &IngestionResult{
+	result := &IngestionResult{
 		TotalParsed:        len(staged),
 		AutoCategorized:    autoCatCount,
 		PossibleDuplicates: duplicateCount,
 		Transactions:       staged,
-	}, nil
+	}
+
+	if provenance.present {
+		importManifest := manifest.Manifest{
+			RecordType:    manifest.RecordTypeImportManifest,
+			ImportID:      manifest.ImportID(provenance.sourceType, provenance.originalPath, provenance.contentHash),
+			SourceType:    provenance.sourceType,
+			OriginalPath:  provenance.originalPath,
+			ContentSHA256: provenance.contentHash,
+			ImportedAt:    time.Now().UTC().Format(time.RFC3339Nano),
+			Status:        "staged",
+			Parser:        manifest.ParserInfo{Name: IngestionParserName, Version: IngestionParserVersion},
+			RowCounts: manifest.RowCounts{
+				Read:     len(candidates),
+				Accepted: len(staged),
+			},
+			Errors: []manifest.ImportError{},
+		}
+		if _, err := manifest.Write(ingestConfigDir(), importManifest, staged); err != nil {
+			return nil, fmt.Errorf("write import manifest: %w", err)
+		}
+	}
+
+	return result, nil
 }
 
 const ingestionDateWindowDays = 7

@@ -775,6 +775,7 @@ export interface IngestionResult {
   total_parsed: number;
   auto_categorized: number;
   possible_duplicates: number;
+  already_imported: boolean;
   transactions: StagedTransaction[];
 }
 
