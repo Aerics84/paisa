@@ -303,6 +303,8 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, GetLogs())
 	})
 
+	router.GET("/api/backup/export", HandleExportBackup)
+
 	router.GET("/api/editor/files", func(c *gin.Context) {
 		c.JSON(200, GetFiles(db))
 	})
