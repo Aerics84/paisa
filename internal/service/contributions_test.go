@@ -35,6 +35,24 @@ func contributionTestPosting(date string, transactionID, account, commodity stri
 	}
 }
 
+func TestMonthlyContributionsMatchesParentAccount(t *testing.T) {
+	asOf := time.Date(2026, time.September, 5, 0, 0, 0, 0, time.UTC)
+	currency := config.DefaultCurrency()
+	posts := []posting.Posting{
+		contributionTestPosting("2026-06-01", "saving", "Assets:Savings:Bank", currency, "10000", "10000"),
+		contributionTestPosting("2026-06-01", "saving", "Assets:Outside", currency, "-10000", "-10000"),
+	}
+	db := openContributionTestDB(t, "contributions-parent-account")
+	require.NoError(t, db.Create(&posts).Error)
+
+	result := MonthlyContributions(db, posts, []string{"Assets:Savings"}, asOf)
+
+	require.Len(t, result, 3)
+	require.True(t, decimal.RequireFromString("10000").Equal(result[0].Amount), "expected 10000 got %s", result[0].Amount)
+	require.True(t, result[1].Amount.IsZero())
+	require.True(t, result[2].Amount.IsZero())
+}
+
 func TestMonthlyContributionsClassifiesCashFlows(t *testing.T) {
 	asOf := time.Date(2026, time.September, 5, 0, 0, 0, 0, time.UTC)
 	currency := config.DefaultCurrency()

@@ -2,6 +2,7 @@ package service
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -63,63 +64,62 @@ func monthlyContributions(ps []posting.Posting, accounts []string, asOf time.Tim
 	return result
 }
 
-// filterContributions matches capital-gains postings against the asset account
-// they belong to. This fork's accounting.FilterByGlob does not remap them, so
-// the reference behaviour is kept local to contribution accounting.
+// filterContributions mirrors accounting.FilterByGlob, including its
+// capital-gains remapping and its treatment of a plain account as matching
+// itself and all subaccounts. It is local only to avoid importing accounting,
+// which already depends on this package.
 func filterContributions(ps []posting.Posting, accounts []string) []posting.Posting {
-	globals := make([]string, 0, len(accounts))
-	for _, account := range accounts {
-		if account != "" {
-			globals = append(globals, account)
+	positives := make([]string, 0, len(accounts))
+	negatives := make([]string, 0, len(accounts))
+	for _, accountGlob := range accounts {
+		if accountGlob == "" {
+			continue
 		}
-	}
-	if len(globals) == 0 {
-		return ps
+		if accountGlob[0] == '!' {
+			if len(accountGlob) > 1 {
+				negatives = append(negatives, accountGlob[1:])
+			}
+			continue
+		}
+		positives = append(positives, accountGlob)
 	}
 
-	negatePresent := false
-	for _, glob := range globals {
-		if glob[0] == '!' {
-			negatePresent = true
-			break
+	matches := func(globs []string, account string) bool {
+		for _, glob := range globs {
+			match, err := matchContributionGlob(glob, account)
+			if err != nil {
+				continue
+			}
+			if match {
+				return true
+			}
 		}
+		return false
 	}
 
 	selected := make([]posting.Posting, 0, len(ps))
 	for _, p := range ps {
-		matched := negatePresent
-		for _, glob := range globals {
-			negative := false
-			if glob[0] == '!' {
-				negative = true
-				glob = glob[1:]
-			}
-
-			account := p.Account
-			if utils.IsParent(p.Account, "Income:CapitalGains") {
-				account = CapitalGainsSourceAccount(p.Account)
-			}
-			match, err := filepath.Match(glob, account)
-			if err != nil {
-				match = false
-			}
-			if negative {
-				match = !match
-			}
-
-			if negatePresent {
-				if !match {
-					matched = false
-					break
-				}
-			} else if match {
-				matched = true
-				break
-			}
+		account := p.Account
+		if IsCapitalGains(p) {
+			account = CapitalGainsSourceAccount(p.Account)
 		}
-		if matched {
+
+		if matches(negatives, account) {
+			continue
+		}
+		if len(positives) == 0 || matches(positives, account) {
 			selected = append(selected, p)
 		}
 	}
 	return selected
+}
+
+// matchContributionGlob keeps accounting.FilterByGlob's semantics: a pattern
+// containing "*" is a filepath glob, while a plain account also matches all of
+// its subaccounts.
+func matchContributionGlob(pattern string, account string) (bool, error) {
+	if strings.Contains(pattern, "*") {
+		return filepath.Match(pattern, account)
+	}
+	return utils.IsSameOrParent(account, pattern), nil
 }
