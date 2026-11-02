@@ -142,7 +142,7 @@ export function consolidateStatementTransactions(
   for (const tx of deduped) {
     const amount = Math.abs(tx.amount);
     const date = tx.date.includes("-") ? tx.date.slice(0, 7) : "1970-01";
-    const key = `${date}|${tx.expenseAccount || "Expenses:Unknown"}`;
+    const key = `${date}|${tx.expenseAccount || "Expenses:Unknown"}|${tx.account || defaultAccount}`;
 
     const current = groups.get(key) || {
       month: date,
@@ -171,41 +171,44 @@ const EXPENSE_KEYWORDS: Array<[string, RegExp[]]> = [
   [
     "Expenses:Groceries",
     [
-      /grocery|grocer|mart|supermarket|bigbasket|milk|vegetable|fruit|dairy|reliance fresh|dmart|fresh|foodmart/i
+      /\b(?:grocery|groceries|grocer|mart|supermarket|bigbasket|milk|vegetables?|fruits?|dairy|reliance fresh|dmart|fresh|foodmart)\b/i
     ]
   ],
   [
     "Expenses:Dining",
-    [/restaurant|cafe|coffee|zomato|swiggy|pizza|burger|bistro|food court|canteen|dining/i]
+    [/\b(?:restaurant|cafe|coffee|zomato|swiggy|pizza|burger|bistro|food court|canteen|dining)\b/i]
   ],
   [
     "Expenses:Transportation",
     [
-      /uber|ola|metro|fuel|petrol|diesel|rail|bus|cab|taxi|parking|toll|travel|auto|transport|indian oil|bharat petrol/i
+      /\b(?:uber|ola|metro|fuel|petrol|diesel|rail|bus|cab|taxi|parking|toll|auto|transport|indian oil|bharat petrol)\b/i
     ]
   ],
   [
     "Expenses:Shopping",
-    [/amazon|flipkart|myntra|shop|shopping|marketplace|retail|ebay|store|paytm|online purchase/i]
+    [/\b(?:amazon|flipkart|myntra|shop|shopping|marketplace|retail|ebay|store|paytm|online purchase)\b/i]
   ],
   [
     "Expenses:Utilities",
     [
-      /electricity|water|gas|wifi|internet|mobile|phone|recharge|broadband|utility|bill|bse|bescom|airtel|jio|vodafone/i
+      /\b(?:electricity|water|gas|wifi|internet|mobile|phone|recharge|broadband|utility|bill|bse|bescom|airtel|jio|vodafone)\b/i
     ]
   ],
   [
     "Expenses:Health",
-    [/doctor|hospital|pharmacy|clinic|apollo|health|medical|medplus|wellness|insurance|optical/i]
+    [/\b(?:doctor|hospital|pharmacy|clinic|apollo|health|medical|medplus|wellness|optical)\b/i]
   ],
-  ["Expenses:Travel", [/flight|hotel|booking|airline|railway|irctc|airbnb|holiday|trip|travel/i]],
+  [
+    "Expenses:Travel",
+    [/\b(?:flight|hotel|booking|airline|railway|irctc|airbnb|holiday|trip|travel)\b/i]
+  ],
   [
     "Expenses:Entertainment",
-    [/netflix|spotify|movie|cinema|games|entertainment|youtube|streaming/i]
+    [/\b(?:netflix|spotify|movie|cinema|games|entertainment|youtube|streaming)\b/i]
   ],
-  ["Expenses:Education", [/school|college|course|tuition|exam|books|udemy|education|academy/i]],
-  ["Expenses:Insurance", [/insurance|premium|policy|lic|mutual|cover|renewal/i]],
-  ["Expenses:Investment", [/sip|mutual fund|nps|brokerage|stock|investment|trading|etf/i]]
+  ["Expenses:Education", [/\b(?:school|college|course|tuition|exam|books|udemy|education|academy)\b/i]],
+  ["Expenses:Investment", [/\b(?:sip|mutual fund|nps|brokerage|stock|investment|trading|etf)\b/i]],
+  ["Expenses:Insurance", [/\b(?:insurance|premium|policy|lic|cover|renewal)\b/i]]
 ];
 
 export function guessExpenseAccount(

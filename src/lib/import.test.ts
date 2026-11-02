@@ -361,6 +361,39 @@ describe("statement import helpers", () => {
     expect(guessExpenseAccount("Unknown merchant", "Ausgaben")).toBe("Ausgaben:Unknown");
   });
 
+  test("guessExpenseAccount prefers specific categories and uses word boundaries", () => {
+    expect(guessExpenseAccount("LIC Insurance Premium")).toBe("Expenses:Insurance");
+    expect(guessExpenseAccount("MUTUAL FUND SIP")).toBe("Expenses:Investment");
+    expect(guessExpenseAccount("business dinner")).not.toBe("Expenses:Transportation");
+    expect(guessExpenseAccount("bus ticket")).toBe("Expenses:Transportation");
+  });
+
+  test("consolidateStatementTransactions keeps separate source accounts", () => {
+    const output = consolidateStatementTransactions(
+      [
+        {
+          date: "2026-03-03",
+          description: "AMAZON PAY",
+          amount: 100,
+          account: "Liabilities:CreditCard:ICICI",
+          expenseAccount: "Expenses:Shopping"
+        },
+        {
+          date: "2026-03-04",
+          description: "AMAZON PAY",
+          amount: 200,
+          account: "Assets:Checking:HDFC",
+          expenseAccount: "Expenses:Shopping"
+        }
+      ],
+      { defaultAccount: "Liabilities:CreditCard:ICICI", dateWindowHours: 48 }
+    );
+
+    expect(output).toContain('2026-03-01 * "Expenses:Shopping"');
+    expect(output).toContain("Liabilities:CreditCard:ICICI -100.00 INR");
+    expect(output).toContain("Assets:Checking:HDFC -200.00 INR");
+  });
+
   test("duplicate matching requires account, amount, date and payee", () => {
     const base = {
       account: "Expenses:Food",
