@@ -506,7 +506,7 @@
                 <tr>
                   <th></th>
                   {#each _.range(0, columnCount) as ci}
-                    <th class="has-background-light">{String.fromCharCode(65 + ci)}</th>
+                    <th class="has-background-light">{spreadsheetModule?.columnName(ci) ?? ""}</th>
                   {/each}
                 </tr>
               </thead>

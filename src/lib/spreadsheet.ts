@@ -186,7 +186,9 @@ const EXPENSE_KEYWORDS: Array<[string, RegExp[]]> = [
   ],
   [
     "Expenses:Shopping",
-    [/\b(?:amazon|flipkart|myntra|shop|shopping|marketplace|retail|ebay|store|paytm|online purchase)\b/i]
+    [
+      /\b(?:amazon|flipkart|myntra|shop|shopping|marketplace|retail|ebay|store|paytm|online purchase)\b/i
+    ]
   ],
   [
     "Expenses:Utilities",
@@ -206,7 +208,10 @@ const EXPENSE_KEYWORDS: Array<[string, RegExp[]]> = [
     "Expenses:Entertainment",
     [/\b(?:netflix|spotify|movie|cinema|games|entertainment|youtube|streaming)\b/i]
   ],
-  ["Expenses:Education", [/\b(?:school|college|course|tuition|exam|books|udemy|education|academy)\b/i]],
+  [
+    "Expenses:Education",
+    [/\b(?:school|college|course|tuition|exam|books|udemy|education|academy)\b/i]
+  ],
   ["Expenses:Investment", [/\b(?:sip|mutual fund|nps|brokerage|stock|investment|trading|etf)\b/i]],
   ["Expenses:Insurance", [/\b(?:insurance|premium|policy|lic|cover|renewal)\b/i]]
 ];
@@ -250,13 +255,24 @@ export function parse(file: File): Promise<Result> {
   throw new Error(`Unsupported file type ${extension}`);
 }
 
+export function columnName(index: number): string {
+  let name = "";
+  let value = index + 1;
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    value = Math.floor((value - 1) / 26);
+  }
+  return name;
+}
+
 export function asRows(result: Result): Array<Record<string, any>> {
   if (result.rows) {
     return _.map(result.rows, (row, i) => {
       const dataRow = result.data[i] || [];
       return _.chain(dataRow)
         .map((cell, j) => {
-          return [String.fromCharCode(65 + j), cell];
+          return [columnName(j), cell];
         })
         .concat([["index", i as any]])
         .concat(_.toPairs(row))
@@ -268,7 +284,7 @@ export function asRows(result: Result): Array<Record<string, any>> {
   return _.map(result.data, (row, i) => {
     return _.chain(row)
       .map((cell, j) => {
-        return [String.fromCharCode(65 + j), cell];
+        return [columnName(j), cell];
       })
       .concat([["index", i as any]])
       .fromPairs()
@@ -276,20 +292,17 @@ export function asRows(result: Result): Array<Record<string, any>> {
   });
 }
 
-const COLUMN_REFS = _.chain(_.range(65, 90))
-  .map((i) => String.fromCharCode(i))
-  .map((a) => [a, a])
-  .fromPairs()
-  .value();
-
 export function render(
   rows: Array<Record<string, any>>,
   template: Handlebars.TemplateDelegate,
   options: { reverse?: boolean; trim?: boolean } = {}
 ) {
+  const widestRow = _.maxBy(rows, _.size);
+  const columns = _.range(Math.max(26, _.size(widestRow) - 1)).map(columnName);
+  const columnRefs = _.zipObject(columns, columns);
   const output: string[] = [];
   _.each(rows, (row) => {
-    let rendered = template(_.assign({ ROW: row, SHEET: rows }, COLUMN_REFS));
+    let rendered = template(_.assign({ ROW: row, SHEET: rows }, columnRefs));
     if (options.trim) {
       rendered = _.trim(rendered);
     }

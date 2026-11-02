@@ -6,6 +6,7 @@ import {
   parse,
   render,
   asRows,
+  columnName,
   guessExpenseAccount,
   consolidateStatementTransactions,
   isDuplicateStatementTransaction
@@ -405,11 +406,7 @@ describe("statement import helpers", () => {
 
     expect(isDuplicateStatementTransaction(base, { ...base }, options)).toBe(true);
     expect(
-      isDuplicateStatementTransaction(
-        base,
-        { ...base, description: "Restaurant B" },
-        options
-      )
+      isDuplicateStatementTransaction(base, { ...base, description: "Restaurant B" }, options)
     ).toBe(false);
     expect(
       isDuplicateStatementTransaction(base, { ...base, account: "Expenses:Shopping" }, options)
@@ -466,3 +463,54 @@ describe("statement import helpers", () => {
   });
 });
 
+describe("spreadsheet columns beyond Z (#276)", () => {
+  test("maps multi-letter columns without changing row indices", () => {
+    const rows = asRows({
+      data: [Array.from({ length: 703 }, (_, i) => `cell-${i + 1}`)]
+    });
+    for (const [column, expected] of [
+      ["A", "cell-1"],
+      ["Z", "cell-26"],
+      ["AA", "cell-27"],
+      ["AB", "cell-28"],
+      ["AZ", "cell-52"],
+      ["BA", "cell-53"],
+      ["ZZ", "cell-702"],
+      ["AAA", "cell-703"]
+    ]) {
+      assert.strictEqual(rows[0][column], expected);
+    }
+    assert.strictEqual(rows[0].index, 0);
+    assert.strictEqual(rows[0]["["], undefined);
+  });
+
+  test("renders cell values and bare column references after Z", () => {
+    const rows = asRows({
+      data: [Array.from({ length: 28 }, (_, i) => `cell-${i + 1}`)]
+    });
+    const template = Handlebars.compile("{{ROW.Z}}|{{ROW.AA}}|{{ROW.AB}}|{{Z}}|{{AA}}|{{AB}}");
+    assert.strictEqual(render(rows, template), "cell-26|cell-27|cell-28|Z|AA|AB");
+  });
+
+  test("column references are available even on shorter rows", () => {
+    const rows = asRows({
+      data: [["header"], Array.from({ length: 28 }, (_, i) => `cell-${i + 1}`)]
+    });
+    const template = Handlebars.compile(
+      "{{#if (eq ROW.index 0)}}{{findBelow AA}}|{{findBelow AB}}{{/if}}"
+    );
+    assert.strictEqual(render(rows, template), "cell-27|cell-28");
+    assert.strictEqual(
+      render(asRows({ data: [["header"]] }), Handlebars.compile("{{A}}|{{Y}}|{{Z}}")),
+      "A|Y|Z"
+    );
+  });
+
+  test("columnName converts indices past Z", () => {
+    assert.strictEqual(columnName(0), "A");
+    assert.strictEqual(columnName(25), "Z");
+    assert.strictEqual(columnName(26), "AA");
+    assert.strictEqual(columnName(701), "ZZ");
+    assert.strictEqual(columnName(702), "AAA");
+  });
+});
