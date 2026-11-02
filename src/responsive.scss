@@ -27,31 +27,11 @@
   }
 }
 
-// Keep the viewport from scrolling horizontally on phones and let long
-// navigation labels and breadcrumb trails wrap instead of overflowing.
+// Keep the viewport from scrolling horizontally on phones.
 @include mobile {
   html,
   body {
     max-width: 100vw;
     overflow-x: hidden;
-  }
-
-  .navbar-dropdown {
-    max-width: 100%;
-
-    .navbar-item,
-    .navbar-link {
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-  }
-
-  .breadcrumb {
-    white-space: normal;
-
-    ul,
-    ol {
-      flex-wrap: wrap;
-    }
   }
 }

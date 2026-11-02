@@ -1648,4 +1648,49 @@ div.is-hoverable:hover {
     min-width: 44px;
     min-height: 44px;
   }
+
+  // The compact topbar sizing has a higher specificity than the global
+  // `.button`/`.select select` rule above, so re-assert the touch target.
+  .paisa-topbar__controls .button,
+  .paisa-topbar__controls .select select,
+  .paisa-topbar__filters .button,
+  .paisa-topbar__filters .select select,
+  .paisa-topbar__controls > .dropdown .dropdown-trigger .button,
+  .paisa-topbar__controls > .dropdown-trigger .button,
+  .paisa-topbar__filters > .dropdown .dropdown-trigger .button,
+  .paisa-topbar__filters > .dropdown-trigger .button {
+    min-height: 44px;
+    height: auto;
+  }
+
+  // The theme switcher is a plain button, so the `.button` rules above do
+  // not reach it.
+  .paisa-topbar__controls .theme-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  // Let long navigation labels and breadcrumb trails wrap instead of
+  // overflowing. These live here (after Bulma) rather than in
+  // responsive.scss, which is emitted before app.scss.
+  .navbar-dropdown {
+    max-width: 100%;
+
+    .navbar-item,
+    .navbar-link {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .breadcrumb {
+    white-space: normal;
+
+    ul,
+    ol {
+      flex-wrap: wrap;
+    }
+  }
 }
