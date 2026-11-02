@@ -71,6 +71,30 @@ func TestReconcileBankBalanceDirection(t *testing.T) {
 	assert.Empty(t, report.Issues)
 }
 
+func TestReconcileBankWithoutBalanceIsSkipped(t *testing.T) {
+	report := BuildReconciliation(ReconciliationInput{
+		BankStatements: []BankStatement{
+			{
+				Source: "Umsatzanzeige.csv",
+				Transactions: []BankTransaction{
+					{Date: "2026-11-02", Debit: "10.00", Currency: "EUR"},
+				},
+			},
+		},
+	})
+
+	require.Len(t, report.BankBalances, 1)
+	check := report.BankBalances[0]
+	assert.Equal(t, "skipped", check.Status)
+	assert.Equal(t, "unavailable", check.Direction)
+	assert.Equal(t, "EUR", check.Currency)
+	assert.Nil(t, check.OpeningBalance)
+	assert.Nil(t, check.ClosingBalance)
+	assert.Equal(t, "incomplete", report.Status)
+	require.Len(t, report.Issues, 1)
+	assert.Contains(t, report.Issues[0], "no balance column")
+}
+
 func TestReconcileBankMismatch(t *testing.T) {
 	report := BuildReconciliation(ReconciliationInput{
 		BankStatements: []BankStatement{

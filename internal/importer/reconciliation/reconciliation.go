@@ -178,12 +178,15 @@ func BuildReconciliation(input ReconciliationInput) ReconciliationReport {
 
 	hasBankWarning := false
 	hasBankError := false
+	skippedStatements := 0
 	for _, bank := range bankBalances {
 		switch bank.Status {
 		case "error":
 			hasBankError = true
 		case "warning":
 			hasBankWarning = true
+		case "skipped":
+			skippedStatements++
 		}
 	}
 
@@ -192,6 +195,12 @@ func BuildReconciliation(input ReconciliationInput) ReconciliationReport {
 		status = "error"
 	} else if len(issues) > 0 || hasBankWarning {
 		status = "warning"
+	} else if skippedStatements > 0 {
+		status = "incomplete"
+	}
+
+	if skippedStatements > 0 {
+		issues = append(issues, fmt.Sprintf("%d imported statement(s) have no balance column; balance checks were skipped.", skippedStatements))
 	}
 
 	return ReconciliationReport{
@@ -213,10 +222,10 @@ func reconcileBank(statement BankStatement) BankBalanceCheck {
 		}
 	}
 
-	currency := "INR"
-	for _, row := range rows {
-		if strings.TrimSpace(row.Currency) != "" {
-			currency = row.Currency
+	currency := ""
+	for _, transaction := range statement.Transactions {
+		if strings.TrimSpace(transaction.Currency) != "" {
+			currency = transaction.Currency
 			break
 		}
 	}
@@ -226,11 +235,11 @@ func reconcileBank(statement BankStatement) BankBalanceCheck {
 			Source:           statement.Source,
 			Currency:         currency,
 			TransactionCount: len(statement.Transactions),
-			Direction:        "unknown",
+			Direction:        "unavailable",
 			OpeningBalance:   nil,
 			ClosingBalance:   nil,
 			MismatchCount:    0,
-			Status:           "warning",
+			Status:           "skipped",
 		}
 	}
 

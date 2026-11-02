@@ -825,11 +825,11 @@ export interface BankBalanceCheck {
   source: string;
   currency: string;
   transaction_count: number;
-  direction: "ascending" | "descending" | "unknown";
+  direction: "ascending" | "descending" | "unknown" | "unavailable";
   opening_balance: string | null;
   closing_balance: string | null;
   mismatch_count: number;
-  status: "ok" | "warning" | "error";
+  status: "ok" | "warning" | "error" | "skipped";
 }
 
 /** Mirrors internal/importer/reconciliation.DuplicateHolding. */
@@ -860,7 +860,7 @@ export interface TaxYearCheck {
 /** Mirrors internal/importer/reconciliation.ReconciliationReport. */
 export interface ReconciliationReport {
   generated_at: string;
-  status: "ok" | "warning" | "error";
+  status: "ok" | "warning" | "error" | "incomplete";
   bank_balances: BankBalanceCheck[];
   duplicate_holdings: DuplicateHolding[];
   portfolio_totals: CurrencyTotal[];

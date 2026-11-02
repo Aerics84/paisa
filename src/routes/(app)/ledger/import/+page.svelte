@@ -278,6 +278,9 @@
     if (status === "warning") {
       return "is-warning";
     }
+    if (status === "incomplete" || status === "skipped") {
+      return "is-info";
+    }
     return "is-danger";
   }
 </script>
@@ -557,9 +560,10 @@
             </div>
 
             <p class="is-size-7 has-text-grey mb-4">
-              Holdings, portfolio totals and tax-year completeness require data that the current
-              statement import flow does not produce. Those sections stay empty until holdings or
-              tax records are imported through a dedicated data source.
+              Reconciliation compares each imported statement's running balance with its
+              transactions. It can only check statements that include a balance column. Holdings,
+              portfolio totals and tax-year completeness require a separate holdings/tax data
+              source, so those sections stay empty for statement imports.
             </p>
 
             <h4 class="title is-6 mb-2">Bank Balance Checks</h4>
@@ -581,17 +585,26 @@
                   </thead>
                   <tbody>
                     {#each reconciliation.bank_balances as check}
-                      <tr>
-                        <td>{check.source}</td>
-                        <td>{check.currency}</td>
-                        <td>{check.direction}</td>
-                        <td class="has-text-right">{check.opening_balance ?? "—"}</td>
-                        <td class="has-text-right">{check.closing_balance ?? "—"}</td>
-                        <td class="has-text-right">{check.mismatch_count}</td>
-                        <td>
-                          <span class="tag {statusTagClass(check.status)}">{check.status}</span>
-                        </td>
-                      </tr>
+                      {#if check.status === "skipped"}
+                        <tr>
+                          <td colspan="7" class="has-text-grey">
+                            <strong>{check.source}</strong>: no balance column in this statement —
+                            balance check skipped.
+                          </td>
+                        </tr>
+                      {:else}
+                        <tr>
+                          <td>{check.source}</td>
+                          <td>{check.currency || "—"}</td>
+                          <td>{check.direction}</td>
+                          <td class="has-text-right">{check.opening_balance ?? "—"}</td>
+                          <td class="has-text-right">{check.closing_balance ?? "—"}</td>
+                          <td class="has-text-right">{check.mismatch_count}</td>
+                          <td>
+                            <span class="tag {statusTagClass(check.status)}">{check.status}</span>
+                          </td>
+                        </tr>
+                      {/if}
                     {/each}
                   </tbody>
                 </table>
