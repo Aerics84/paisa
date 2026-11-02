@@ -36,10 +36,22 @@
     resolveBreadcrumbTrail,
     type NavigationLink
   } from "$lib/navigation";
+  import { resolveFinancialYear } from "$lib/financial_year";
 
   export let isBurger: boolean = null;
 
   const readonly = USER_CONFIG.readonly;
+
+  $: years = forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear);
+
+  // The shared year starts empty and the range changes once a page has
+  // loaded its data, so keep the selection within it (latest by default).
+  $: {
+    const next = resolveFinancialYear($year, years);
+    if (next !== $year) {
+      year.set(next);
+    }
+  }
 
   onMount(async () => {
     if (get(year) == "") {
@@ -416,8 +428,8 @@
       <div class="has-text-centered">
         <div class="select is-small">
           <select bind:value={$year}>
-            {#each forEachFinancialYear($dateMin, $dateMax).reverse() as fy}
-              <option>{financialYear(fy)}</option>
+            {#each years as fy}
+              <option>{fy}</option>
             {/each}
           </select>
         </div>
