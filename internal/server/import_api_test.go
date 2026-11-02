@@ -204,6 +204,61 @@ func TestHandleCommitImport(t *testing.T) {
 	assert.Contains(t, string(content), "Expenses:Food:Dining")
 }
 
+func TestHandleCommitImportValidatesCombinedBeancountJournal(t *testing.T) {
+	db := openImportTestDB(t)
+
+	journalPath := filepath.Join(t.TempDir(), "main.beancount")
+	const existing = `option "title" "Test"
+
+2000-01-01 open Assets:Checking
+2000-01-01 open Expenses:Food:Dining
+`
+	seedImportJournal(t, journalPath, existing)
+	loadImportTestConfig(t, fmt.Sprintf(
+		"journal_path: '%s'\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: beancount\n",
+		filepath.ToSlash(journalPath),
+	))
+	router := buildImportTestRouter(db)
+	stubImportSyncSuccess(t)
+
+	originalValidate := validateImportContent
+	t.Cleanup(func() { validateImportContent = originalValidate })
+
+	var validated string
+	validateImportContent = func(content string) ([]ledger.LedgerFileError, string, error) {
+		validated = content
+		return nil, "", nil
+	}
+
+	payload := `{
+		"base_account": "Assets:Checking",
+		"transactions": [
+			{
+				"date": "2026-10-11",
+				"payee": "Coffee Shop",
+				"amount": 45.20,
+				"currency": "INR",
+				"is_debit": true,
+				"selected_account": "Expenses:Food:Dining"
+			}
+		]
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/api/import/commit", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, validated, `open Assets:Checking`)
+	assert.Contains(t, validated, `open Expenses:Food:Dining`)
+	assert.Contains(t, validated, `2026-10-11 * "Coffee Shop"`)
+
+	content, err := os.ReadFile(journalPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), `open Assets:Checking`)
+	assert.Contains(t, string(content), `2026-10-11 * "Coffee Shop"`)
+}
+
 func TestHandleCommitImportRejectsEmpty(t *testing.T) {
 	db := openImportTestDB(t)
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n")

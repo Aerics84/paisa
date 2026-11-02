@@ -249,9 +249,18 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Validate the proposed journal content before touching the journal so an
-		// invalid statement can never leave the journal in a broken state.
-		validationErrors, _, err := validateImportContent(contentToAppend)
+		// Validate the existing journal plus the proposed append before touching
+		// the real journal so an invalid statement can never leave it broken.
+		// Validating only the fragment breaks beancount, which needs the main
+		// journal's open directives to check the proposed transactions.
+		existingJournal, err := readJournalForValidation(targetFile)
+		if err != nil {
+			log.Warn("Failed to read journal file for validation: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read journal file"})
+			return
+		}
+
+		validationErrors, _, err := validateImportContent(combineJournalContent(existingJournal, contentToAppend))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":  "invalid ledger content",
@@ -360,6 +369,27 @@ func validateLedgerAccount(field string, account string) error {
 		}
 	}
 	return nil
+}
+
+func readJournalForValidation(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
+func combineJournalContent(existing string, appendContent string) string {
+	if existing == "" {
+		return appendContent
+	}
+	if !strings.HasSuffix(existing, "\n") {
+		existing += "\n"
+	}
+	return existing + appendContent
 }
 
 func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCommodity string) string {
