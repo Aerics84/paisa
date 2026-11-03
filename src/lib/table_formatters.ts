@@ -38,7 +38,7 @@ export function indendedAssetAccountName(cell: CellComponent) {
     children = `(${data._children?.length})`;
   }
   return `
-<span class="truncate" style="display: block; max-width: 100%;" title="${_.escape(account)}">
+<span class="truncate" style="display: inline-block; max-width: 100%; vertical-align: bottom;" title="${_.escape(account)}">
   <span class="has-text-grey custom-icon">${iconText(account)}</span>
   <a href="/assets/gain/${account}"${commodityAttributes(data)}>${lastName(account)}</a>
   <span class="has-text-grey-light is-size-7">${children}</span>
@@ -54,7 +54,7 @@ export function indendedLiabilityAccountName(cell: CellComponent) {
     children = `(${data._children?.length})`;
   }
   return `
-<span class="truncate" style="display: block; max-width: 100%;" title="${_.escape(account)}">
+<span class="truncate" style="display: inline-block; max-width: 100%; vertical-align: bottom;" title="${_.escape(account)}">
   <span class="has-text-grey custom-icon">${iconText(account)}</span>
   <span>${lastName(account)}</span>
   <span class="has-text-grey-light is-size-7">${children}</span>
@@ -66,7 +66,7 @@ export function accountName(cell: CellComponent) {
   const account = cell.getValue();
   const data = cell.getData() as TreeRow;
   return `
-<span class="truncate" style="display: block; max-width: 100%;" title="${_.escape(account)}">
+<span class="truncate" style="display: inline-block; max-width: 100%; vertical-align: bottom;" title="${_.escape(account)}">
   <span class="has-text-grey custom-icon">${iconText(account)}</span>
   <a href="/assets/gain/${account}"${commodityAttributes(data)}>${account}</a>
 </span>
