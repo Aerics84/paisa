@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -230,6 +229,10 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		return nil, fmt.Errorf("unsupported format %q", req.Format)
 	}
 
+	if len(candidates) == 0 && strings.TrimSpace(req.Content) != "" {
+		return nil, fmt.Errorf("no transaction rows detected; check the delimiter (comma, semicolon or tab), locale, and column headers")
+	}
+
 	// Fetch active user rules
 	rules, _ := import_rule.ActiveRules(db)
 
@@ -426,15 +429,49 @@ func candidateDateRange(candidates []import_rule.CandidateTransaction) (time.Tim
 	return minDate, maxDate, found
 }
 
+func detectCSVDelimiter(content, requested string) rune {
+	// A non-default delimiter chosen by the user is authoritative. The UI
+	// defaults to comma, so detect the real delimiter for comma requests.
+	if runes := []rune(requested); len(runes) == 1 && runes[0] != ',' {
+		return runes[0]
+	}
+
+	// Statements often start with metadata lines that contain no delimiter.
+	// Look at several non-empty lines and use the delimiter that appears most
+	// often on a single line.
+	delimiters := []rune{',', ';', '\t', '|'}
+	counts := map[rune]int{',': 0, ';': 0, '\t': 0, '|': 0}
+	lines := 0
+	for line := range strings.SplitSeq(content, "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		lines++
+		for _, delimiter := range delimiters {
+			if count := strings.Count(line, string(delimiter)); count > counts[delimiter] {
+				counts[delimiter] = count
+			}
+		}
+		if lines >= 20 {
+			break
+		}
+	}
+
+	best := ','
+	bestCount := 0
+	for _, delimiter := range delimiters {
+		if counts[delimiter] > bestCount {
+			best = delimiter
+			bestCount = counts[delimiter]
+		}
+	}
+	return best
+}
+
 func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale string) ([]import_rule.CandidateTransaction, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	reader.FieldsPerRecord = -1
-	if delimiter != "" {
-		runes := []rune(delimiter)
-		if len(runes) == 1 {
-			reader.Comma = runes[0]
-		}
-	}
+	reader.Comma = detectCSVDelimiter(content, delimiter)
 
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -448,7 +485,26 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale str
 	if headerIdx < 0 || dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
 		return nil, fmt.Errorf("could not detect valid transaction table header in statement")
 	}
-	balanceIdx := findColumnIndex(records[headerIdx], []string{"balance", "closing balance", "running balance", "saldo"})
+	balanceIdx := findColumnIndex(records[headerIdx], []string{"balance", "closing balance", "running balance", "saldo", "kontostand", "neuer saldo", "saldo nach buchung"})
+
+	// A single amount column with both positive and negative values is a signed
+	// column: positive means credit, negative means debit. Without a negative
+	// value it is more likely a charges-only statement, where the existing
+	// debit default is safer.
+	signedAmountColumn := false
+	if amountIdx >= 0 {
+		for _, row := range records[headerIdx+1:] {
+			if amountIdx >= len(row) {
+				continue
+			}
+			rawAmount := strings.TrimSpace(row[amountIdx])
+			if strings.HasPrefix(rawAmount, "-") ||
+				(strings.HasPrefix(rawAmount, "(") && strings.HasSuffix(rawAmount, ")")) {
+				signedAmountColumn = true
+				break
+			}
+		}
+	}
 
 	var candidates []import_rule.CandidateTransaction
 
@@ -533,8 +589,11 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale str
 						isDebit = false
 					} else if d {
 						isDebit = true
+					} else if signedAmountColumn {
+						isDebit = false
 					} else {
-						// Fallback: positive amount in single amount column usually treated as debit unless sign indicates otherwise
+						// Fallback: positive amount in a charges-only statement is
+						// treated as debit unless a sign indicates otherwise.
 						isDebit = true
 					}
 				}
@@ -584,11 +643,11 @@ func detectHeaderRow(records [][]string) (headerIdx, dateIdx, descIdx, debitIdx,
 			continue
 		}
 
-		dIdx := findColumnIndex(row, []string{"transaction date", "txn date", "value date", "trans date", "date", "datum", "buchungstag"})
-		deIdx := findColumnIndex(row, []string{"narration", "description", "particulars", "memo", "payee", "details", "name", "beschreibung", "buchungstext", "verwendungszweck"})
+		dIdx := findColumnIndex(row, []string{"transaction date", "txn date", "value date", "trans date", "date", "datum", "buchungstag", "buchung", "valuta", "valutadatum"})
+		deIdx := findColumnIndex(row, []string{"narration", "description", "particulars", "memo", "payee", "details", "name", "beschreibung", "buchungstext", "verwendungszweck", "auftraggeber", "empfänger", "empfaenger", "transaction text", "text"})
 		drIdx := findColumnIndex(row, []string{"debit amount", "withdrawal", "debit", "dr", "soll"})
 		crIdx := findColumnIndex(row, []string{"credit amount", "deposit", "credit", "cr", "haben"})
-		aIdx := findColumnIndex(row, []string{"amount (inr)", "net amount", "trans amount", "amount", "betrag"})
+		aIdx := findColumnIndex(row, []string{"amount (inr)", "net amount", "trans amount", "amount", "betrag", "umsatz"})
 		cIdx := findColumnIndex(row, []string{"currency", "curr", "ccy", "iso currency", "währung", "waehrung"})
 		drCr := findDrCrIndicatorIndex(row, aIdx)
 
@@ -706,18 +765,22 @@ func findDrCrIndicatorIndex(header []string, amountIdx int) int {
 }
 
 func findColumnIndex(header []string, targets []string) int {
-	// First pass: exact match (case-insensitive)
-	for i, h := range header {
-		clean := strings.ToLower(strings.TrimSpace(h))
-		if slices.Contains(targets, clean) {
-			return i
+	// Respect target priority: more specific names come before generic ones.
+	// First pass: exact match (case-insensitive).
+	for _, target := range targets {
+		for i, h := range header {
+			if strings.ToLower(strings.TrimSpace(h)) == target {
+				return i
+			}
 		}
 	}
-	// Second pass: substring match for targets with length > 2
-	for i, h := range header {
-		clean := strings.ToLower(strings.TrimSpace(h))
-		for _, target := range targets {
-			if len(target) > 2 && strings.Contains(clean, target) {
+	// Second pass: substring match for targets with length > 2, in priority order.
+	for _, target := range targets {
+		if len(target) <= 2 {
+			continue
+		}
+		for i, h := range header {
+			if strings.Contains(strings.ToLower(strings.TrimSpace(h)), target) {
 				return i
 			}
 		}
