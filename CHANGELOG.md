@@ -61,6 +61,13 @@ fixes found during release testing.
 - Validate nested journal files against their own directory so relative
   includes resolve correctly, and return validation errors instead of
   terminating the server.
+- Detect comma, semicolon, tab and pipe delimiters automatically, accept
+  common German bank headers such as `Buchung`, `Auftraggeber` and
+  `Saldo`, and report an explicit error when a statement yields no rows.
+- Treat positive values in a signed amount column as credits and keep the
+  existing debit default for charges-only statements.
+- Show the reconciliation panel only in Statement Staging, which is the
+  flow that records the provenance manifests it reads.
 
 ### 0.8.6.1 (2026-10-31)
 
