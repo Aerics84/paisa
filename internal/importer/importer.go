@@ -73,14 +73,31 @@ type StagedTransaction struct {
 	DuplicateReason  string `json:"duplicate_reason,omitempty"`
 }
 
+// IngestionColumnMapping explicitly maps statement columns. Indexes are
+// zero-based; -1 means the column is absent. HeaderRow is the zero-based row
+// containing the column names. When supplied, this bypasses the language-
+// specific header heuristics.
+type IngestionColumnMapping struct {
+	HeaderRow   int `json:"header_row"`
+	Date        int `json:"date"`
+	Description int `json:"description"`
+	Debit       int `json:"debit"`
+	Credit      int `json:"credit"`
+	Amount      int `json:"amount"`
+	Balance     int `json:"balance"`
+	Currency    int `json:"currency"`
+	DrCr        int `json:"dr_cr"`
+}
+
 // IngestionRequest specifies payload for statement parsing.
 type IngestionRequest struct {
-	Format        IngestionFormat `json:"format"`
-	Content       string          `json:"content"`
-	Delimiter     string          `json:"delimiter,omitempty"`
-	PresetName    string          `json:"preset_name,omitempty"`
-	BaseAccount   string          `json:"base_account,omitempty"` // e.g., Assets:Checking:Chase
-	SourceAccount string          `json:"source_account,omitempty"`
+	Format        IngestionFormat         `json:"format"`
+	Content       string                  `json:"content"`
+	Delimiter     string                  `json:"delimiter,omitempty"`
+	PresetName    string                  `json:"preset_name,omitempty"`
+	BaseAccount   string                  `json:"base_account,omitempty"` // e.g., Assets:Checking:Chase
+	SourceAccount string                  `json:"source_account,omitempty"`
+	ColumnMapping *IngestionColumnMapping `json:"column_mapping,omitempty"`
 
 	// Provenance is optional. When SourceType and OriginalPath are supplied,
 	// ContentSHA256 is derived from Content if the caller did not provide it.
@@ -219,7 +236,7 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 		}
 
 	case string(FormatCSV), string(FormatExcel), string(FormatPDF), "":
-		parsed, err := parseCSVRows(req.Content, req.Delimiter, req.PresetName, db, req.Locale)
+		parsed, err := parseCSVRows(req.Content, req.Delimiter, req.PresetName, db, req.Locale, req.ColumnMapping)
 		if err != nil {
 			return nil, err
 		}
@@ -287,10 +304,21 @@ func Ingest(db *gorm.DB, req IngestionRequest) (*IngestionResult, error) {
 			item.Confidence = "rule"
 			autoCatCount++
 		} else {
-			// Suggest offset account using historical postings, merchant taxonomy, or heuristics
+			// Suggest offset account using historical postings, merchant taxonomy, or heuristics.
 			suggestedAcc, conf := SuggestOffsetAccount(c, existingAccounts, historyMap)
+			if suggestedAcc == "" {
+				fallback := "Expenses:Unknown"
+				if !c.IsDebit {
+					fallback = "Income:Unknown"
+				}
+				suggestedAcc = ResolveBestMatchingAccount(fallback, existingAccounts, c.IsDebit)
+				conf = "fallback"
+			}
 			if suggestedAcc != "" {
 				item.SuggestedAccount = suggestedAcc
+				// Pre-select suggestions so the staging table is committable
+				// immediately; the user can still override every row.
+				item.SelectedAccount = suggestedAcc
 				item.Confidence = conf
 			}
 		}
@@ -468,7 +496,7 @@ func detectCSVDelimiter(content, requested string) rune {
 	return best
 }
 
-func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale string) ([]import_rule.CandidateTransaction, error) {
+func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale string, mapping *IngestionColumnMapping) ([]import_rule.CandidateTransaction, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	reader.FieldsPerRecord = -1
 	reader.Comma = detectCSVDelimiter(content, delimiter)
@@ -482,10 +510,63 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale str
 	}
 
 	headerIdx, dateIdx, descIdx, debitIdx, creditIdx, amountIdx, drCrIdx, currIdx, fallbackDateIdx, stmtCurrency := detectHeaderRow(records)
-	if headerIdx < 0 || dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
-		return nil, fmt.Errorf("could not detect valid transaction table header in statement")
+	balanceIdx := -1
+	merchantIdx := -1
+	textIdx := -1
+
+	if mapping != nil {
+		if mapping.HeaderRow < 0 || mapping.HeaderRow >= len(records) {
+			return nil, fmt.Errorf("column mapping: header row %d is outside the statement", mapping.HeaderRow)
+		}
+		headerIdx = mapping.HeaderRow
+		headerWidth := len(records[headerIdx])
+		normalize := func(value int) int {
+			if value < 0 {
+				return -1
+			}
+			return value
+		}
+		dateIdx = normalize(mapping.Date)
+		descIdx = normalize(mapping.Description)
+		debitIdx = normalize(mapping.Debit)
+		creditIdx = normalize(mapping.Credit)
+		amountIdx = normalize(mapping.Amount)
+		balanceIdx = normalize(mapping.Balance)
+		currIdx = normalize(mapping.Currency)
+		drCrIdx = normalize(mapping.DrCr)
+		fallbackDateIdx = -1
+		merchantIdx = descIdx
+		textIdx = descIdx
+
+		indexes := []struct {
+			name  string
+			value int
+		}{
+			{"date", dateIdx},
+			{"description", descIdx},
+			{"debit", debitIdx},
+			{"credit", creditIdx},
+			{"amount", amountIdx},
+			{"balance", balanceIdx},
+			{"currency", currIdx},
+			{"dr_cr", drCrIdx},
+		}
+		for _, item := range indexes {
+			if item.value >= headerWidth {
+				return nil, fmt.Errorf("column mapping: %s index %d is outside the header row", item.name, item.value)
+			}
+		}
+		if dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
+			return nil, fmt.Errorf("column mapping must include a date column and an amount, debit or credit column")
+		}
+	} else {
+		if headerIdx < 0 || dateIdx < 0 || (debitIdx < 0 && creditIdx < 0 && amountIdx < 0) {
+			return nil, fmt.Errorf("could not detect valid transaction table header in statement; open Column Mapping to choose the columns manually")
+		}
+		balanceIdx = findColumnIndex(records[headerIdx], []string{"balance", "closing balance", "running balance", "saldo", "kontostand", "neuer saldo", "saldo nach buchung"})
+		merchantIdx = findColumnIndex(records[headerIdx], []string{"auftraggeber", "empfänger", "empfaenger", "payee", "name", "narration"})
+		textIdx = findColumnIndex(records[headerIdx], []string{"buchungstext", "verwendungszweck", "description", "particulars", "details", "memo", "text"})
 	}
-	balanceIdx := findColumnIndex(records[headerIdx], []string{"balance", "closing balance", "running balance", "saldo", "kontostand", "neuer saldo", "saldo nach buchung"})
 
 	// A single amount column with both positive and negative values is a signed
 	// column: positive means credit, negative means debit. Without a negative
@@ -529,9 +610,25 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale str
 			continue
 		}
 
-		desc := ""
-		if descIdx >= 0 && descIdx < len(row) {
-			desc = strings.TrimSpace(row[descIdx])
+		cellAt := func(index int) string {
+			if index >= 0 && index < len(row) {
+				return strings.TrimSpace(row[index])
+			}
+			return ""
+		}
+
+		merchant := cellAt(merchantIdx)
+		text := cellAt(textIdx)
+		desc := merchant
+		if desc == "" {
+			desc = text
+		}
+		if desc == "" {
+			desc = cellAt(descIdx)
+		}
+		memo := text
+		if memo == "" {
+			memo = desc
 		}
 
 		var amt float64
@@ -615,7 +712,7 @@ func parseCSVRows(content, delimiter, presetName string, db *gorm.DB, locale str
 			candidates = append(candidates, import_rule.CandidateTransaction{
 				Date:     dateStr,
 				Payee:    desc,
-				Memo:     desc,
+				Memo:     memo,
 				Amount:   amt,
 				Currency: rowCurr,
 				IsDebit:  isDebit,

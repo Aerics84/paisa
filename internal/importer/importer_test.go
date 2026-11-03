@@ -96,7 +96,7 @@ func TestParseCSVDebitCreditColumns(t *testing.T) {
 2026-09-16,Salary Deposit,,3500.00
 `
 
-	candidates, err := parseCSVRows(content, "", "", db, "en-IN")
+	candidates, err := parseCSVRows(content, "", "", db, "en-IN", nil)
 	require.NoError(t, err)
 	require.Len(t, candidates, 2)
 
@@ -520,7 +520,9 @@ func TestIngestCSVWithRulesAndDuplicates(t *testing.T) {
 	assert.False(t, tx2.IsDuplicate)
 
 	tx3 := result.Transactions[2]
-	assert.Equal(t, "", tx3.SelectedAccount)
+	assert.Equal(t, "Expenses:Unknown", tx3.SelectedAccount)
+	assert.Equal(t, "Expenses:Unknown", tx3.SuggestedAccount)
+	assert.Equal(t, "fallback", tx3.Confidence)
 	assert.False(t, tx3.IsDuplicate)
 }
 func useTempIngestConfigDir(t *testing.T) string {

@@ -66,6 +66,14 @@ fixes found during release testing.
   `Saldo`, and report an explicit error when a statement yields no rows.
 - Treat positive values in a signed amount column as credits and keep the
   existing debit default for charges-only statements.
+- Allow explicit column mapping for any bank or language, including a
+  chosen header row, with the mapping remembered per header signature.
+- Prefer the merchant column as the payee and keep the transaction text
+  as the memo, and pre-select rule, history, taxonomy and fallback
+  suggestions so staged rows are ready to commit.
+- Remember the staging source account between imports.
+- Keep account-tree indentation when table cells truncate long account
+  names.
 - Show the reconciliation panel only in Statement Staging, which is the
   flow that records the provenance manifests it reads.
 

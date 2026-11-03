@@ -12,14 +12,223 @@
     type StagedTransaction
   } from "$lib/utils";
   import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
-  import { buildStatementRequest } from "$lib/import_provenance";
+  import { buildStatementRequest, type IngestionColumnMapping } from "$lib/import_provenance";
+  import Papa from "papaparse";
 
   let accountsList: string[] = $state([]);
   let defaultCurrency: string = $state(globalThis.USER_CONFIG?.default_currency || "");
 
   let stagedTransactions: StagedTransaction[] = $state([]);
   let includedStaged: boolean[] = $state([]);
-  let selectedAccount: string = $state("");
+  const baseAccountStorageKey = "paisa:statement-base-account";
+  let selectedAccount: string = $state(
+    typeof localStorage === "undefined" ? "" : localStorage.getItem(baseAccountStorageKey) || ""
+  );
+
+  $effect(() => {
+    if (typeof localStorage !== "undefined" && selectedAccount.trim()) {
+      localStorage.setItem(baseAccountStorageKey, selectedAccount.trim());
+    }
+  });
+
+  type MappingKey = Exclude<keyof IngestionColumnMapping, "header_row">;
+
+  let mappingRows: string[][] = $state([]);
+  let mappingHeaderRow: number = $state(0);
+  let mappingEnabled: boolean = $state(false);
+  let mappingError: string | null = $state(null);
+  let columnMapping: IngestionColumnMapping = $state(emptyColumnMapping());
+
+  const mappingFields: Array<{ key: MappingKey; label: string }> = [
+    { key: "date", label: "Date *" },
+    { key: "description", label: "Description / Payee" },
+    { key: "amount", label: "Amount" },
+    { key: "debit", label: "Debit" },
+    { key: "credit", label: "Credit" },
+    { key: "balance", label: "Balance" },
+    { key: "currency", label: "Currency" },
+    { key: "dr_cr", label: "Dr / Cr" }
+  ];
+
+  function emptyColumnMapping(): IngestionColumnMapping {
+    return {
+      header_row: 0,
+      date: -1,
+      description: -1,
+      debit: -1,
+      credit: -1,
+      amount: -1,
+      balance: -1,
+      currency: -1,
+      dr_cr: -1
+    };
+  }
+
+  function mappingColumns(): string[] {
+    return mappingRows[mappingHeaderRow] || [];
+  }
+
+  function mappingStorageKey(headers: string[]): string {
+    const signature = headers
+      .map((header) =>
+        String(header ?? "")
+          .trim()
+          .toLowerCase()
+      )
+      .join("|");
+    return `paisa:statement-column-mapping:${signature}`;
+  }
+
+  function findHeaderIndex(headers: string[], names: string[]): number {
+    for (const name of names) {
+      const index = headers.indexOf(name);
+      if (index >= 0) return index;
+    }
+    for (const name of names) {
+      if (name.length <= 2) continue;
+      const index = headers.findIndex((header) => header.includes(name));
+      if (index >= 0) return index;
+    }
+    return -1;
+  }
+
+  function suggestColumnMapping() {
+    const headers = mappingColumns().map((header) =>
+      String(header ?? "")
+        .trim()
+        .toLowerCase()
+    );
+    columnMapping = {
+      header_row: mappingHeaderRow,
+      date: findHeaderIndex(headers, [
+        "transaction date",
+        "txn date",
+        "value date",
+        "trans date",
+        "date",
+        "datum",
+        "buchungstag",
+        "buchung",
+        "valuta",
+        "valutadatum"
+      ]),
+      description: findHeaderIndex(headers, [
+        "auftraggeber",
+        "empfänger",
+        "empfaenger",
+        "payee",
+        "name",
+        "narration",
+        "description",
+        "buchungstext",
+        "verwendungszweck"
+      ]),
+      amount: findHeaderIndex(headers, ["amount", "betrag", "umsatz"]),
+      debit: findHeaderIndex(headers, ["debit amount", "withdrawal", "debit", "dr", "soll"]),
+      credit: findHeaderIndex(headers, ["credit amount", "deposit", "credit", "cr", "haben"]),
+      balance: findHeaderIndex(headers, [
+        "balance",
+        "closing balance",
+        "running balance",
+        "saldo",
+        "kontostand"
+      ]),
+      currency: findHeaderIndex(headers, [
+        "currency",
+        "curr",
+        "ccy",
+        "iso currency",
+        "währung",
+        "waehrung"
+      ]),
+      dr_cr: findHeaderIndex(headers, [
+        "dr / cr",
+        "dr/cr",
+        "dr cr",
+        "d/c",
+        "type",
+        "txn type",
+        "transaction type"
+      ])
+    };
+  }
+
+  function persistMapping() {
+    const headers = mappingColumns();
+    if (headers.length === 0 || typeof localStorage === "undefined") return;
+    localStorage.setItem(mappingStorageKey(headers), JSON.stringify(columnMapping));
+  }
+
+  function restoreMapping(headers: string[]): boolean {
+    if (typeof localStorage === "undefined") return false;
+    const saved = localStorage.getItem(mappingStorageKey(headers));
+    if (!saved) return false;
+    try {
+      columnMapping = {
+        ...emptyColumnMapping(),
+        ...JSON.parse(saved),
+        header_row: mappingHeaderRow
+      };
+      mappingEnabled = true;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function prepareMappingPreview() {
+    mappingError = null;
+    if (detectedFormat === "ofx" || detectedFormat === "qfx" || !rawFileContent.trim()) {
+      mappingRows = [];
+      mappingEnabled = false;
+      return;
+    }
+
+    try {
+      const parsed = Papa.parse<string[]>(rawFileContent, {
+        delimiter: delimiter && delimiter !== "," ? delimiter : undefined,
+        skipEmptyLines: false
+      });
+      mappingRows = (parsed.data as string[][]).slice(0, 50);
+      if (mappingRows.length === 0) {
+        mappingEnabled = false;
+        return;
+      }
+
+      let bestRow = 0;
+      let bestCount = -1;
+      for (let index = 0; index < Math.min(mappingRows.length, 20); index++) {
+        const count = mappingRows[index].filter((cell) => String(cell ?? "").trim() !== "").length;
+        if (count > bestCount) {
+          bestCount = count;
+          bestRow = index;
+        }
+      }
+      mappingHeaderRow = bestRow;
+      if (restoreMapping(mappingRows[bestRow])) {
+        return;
+      }
+      suggestColumnMapping();
+      mappingEnabled = false;
+    } catch (e) {
+      mappingError = errorMessage(e);
+      mappingRows = [];
+      mappingEnabled = false;
+    }
+  }
+
+  function changeMappingHeaderRow(value: number) {
+    mappingHeaderRow = value;
+    columnMapping = { ...columnMapping, header_row: value };
+    if (!restoreMapping(mappingRows[value] || [])) {
+      suggestColumnMapping();
+    }
+  }
+
+  function updateMapping(key: MappingKey, value: number) {
+    columnMapping = { ...columnMapping, [key]: value };
+    persistMapping();
+  }
   let delimiter: string = $state(",");
   let detectedFormat: IngestionFormat = $state("csv");
   let rawFileContent: string = $state("");
@@ -105,6 +314,7 @@
         rawFileContent = await file.text();
         detectedFormat = detectIngestionFormat(ext, rawFileContent);
       }
+      prepareMappingPreview();
       await runIngest();
     } catch (e) {
       parseErrorMessage = errorMessage(e);
@@ -122,6 +332,7 @@
     detectedFormat = detectIngestionFormat("txt", pasteContent);
     uploadedFileName = null;
     pastedStatement = true;
+    prepareMappingPreview();
     await runIngest();
   }
 
@@ -140,7 +351,8 @@
         baseAccount: selectedAccount,
         fileName: uploadedFileName || undefined,
         pasted: pastedStatement,
-        locale: globalThis.USER_CONFIG?.locale || "en-IN"
+        locale: globalThis.USER_CONFIG?.locale || "en-IN",
+        columnMapping: mappingEnabled ? columnMapping : undefined
       });
 
       const response = await ajax<IngestionResult & { error?: string }>("/api/import/statement", {
@@ -151,6 +363,11 @@
 
       if (response.error) {
         parseErrorMessage = response.error;
+        if (
+          /column mapping|could not detect valid transaction table header/i.test(response.error)
+        ) {
+          mappingEnabled = true;
+        }
         stagedTransactions = [];
         includedStaged = [];
         currentImportID = null;
@@ -390,6 +607,68 @@
       </div>
     </div>
 
+    {#if mappingRows.length > 0 && detectedFormat !== "ofx" && detectedFormat !== "qfx"}
+      <div class="box p-3 mb-3">
+        <div class="field is-grouped is-align-items-center mb-2">
+          <label class="checkbox is-size-7">
+            <input type="checkbox" bind:checked={mappingEnabled} />
+            Use column mapping
+          </label>
+          <span class="help is-size-7 ml-3">
+            Override the detected columns for any bank or language.
+          </span>
+        </div>
+
+        {#if mappingError}
+          <p class="help is-danger">{mappingError}</p>
+        {/if}
+
+        {#if mappingEnabled}
+          <div class="field mb-2">
+            <label class="label is-small" for="statement-header-row">Header row</label>
+            <div class="select is-small is-fullwidth">
+              <select
+                id="statement-header-row"
+                value={mappingHeaderRow}
+                onchange={(e) => changeMappingHeaderRow(Number(e.currentTarget.value))}
+              >
+                {#each mappingRows.slice(0, Math.min(mappingRows.length, 20)) as row, index}
+                  <option value={index}>
+                    Row {index + 1}: {row
+                      .filter((cell) => String(cell ?? "").trim())
+                      .slice(0, 4)
+                      .join(" | ") || "(empty)"}
+                  </option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div class="columns is-multiline is-mobile mb-0">
+            {#each mappingFields as field}
+              <div class="column is-3">
+                <label class="label is-small" for={`statement-map-${field.key}`}
+                  >{field.label}</label
+                >
+                <div class="select is-small is-fullwidth">
+                  <select
+                    id={`statement-map-${field.key}`}
+                    value={columnMapping[field.key]}
+                    onchange={(e) => updateMapping(field.key, Number(e.currentTarget.value))}
+                  >
+                    <option value={-1}>—</option>
+                    {#each mappingColumns() as header, index}
+                      <option value={index}>{index + 1}: {header || "(empty)"}</option>
+                    {/each}
+                  </select>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
+
     <div class="box p-3 mb-3">
       <h4 class="title is-6 mb-2">2. Statement Account</h4>
       <div class="field mb-3">
@@ -409,7 +688,9 @@
             {/each}
           </datalist>
         </div>
-        <p class="help is-size-7">The physical account whose statement you are importing.</p>
+        <p class="help is-size-7">
+          The physical account whose statement you are importing. Remembered for the next import.
+        </p>
       </div>
 
       <div class="field is-grouped is-align-items-center mb-0">
@@ -421,6 +702,7 @@
             style="width: 50px"
             maxlength="1"
             bind:value={delimiter}
+            onchange={prepareMappingPreview}
           />
         </div>
         <button

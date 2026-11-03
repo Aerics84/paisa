@@ -1,5 +1,17 @@
 import type { IngestionFormat } from "./utils";
 
+export interface IngestionColumnMapping {
+  header_row: number;
+  date: number;
+  description: number;
+  debit: number;
+  credit: number;
+  amount: number;
+  balance: number;
+  currency: number;
+  dr_cr: number;
+}
+
 export interface StatementRequestOptions {
   format: IngestionFormat;
   content: string;
@@ -8,6 +20,7 @@ export interface StatementRequestOptions {
   fileName?: string;
   pasted?: boolean;
   locale?: string;
+  columnMapping?: IngestionColumnMapping;
 }
 
 export interface StatementRequest {
@@ -18,6 +31,7 @@ export interface StatementRequest {
   source_type: string;
   original_path: string;
   locale: string;
+  column_mapping?: IngestionColumnMapping;
 }
 
 function basename(path: string): string {
@@ -48,7 +62,8 @@ export function buildStatementRequest(options: StatementRequestOptions): Stateme
       base_account: options.baseAccount,
       source_type: sourceType,
       original_path: sourceType === "csv" ? "pasted.csv" : "pasted-statement",
-      locale
+      locale,
+      column_mapping: options.columnMapping
     };
   }
 
@@ -73,6 +88,7 @@ export function buildStatementRequest(options: StatementRequestOptions): Stateme
     base_account: options.baseAccount,
     source_type: sourceType,
     original_path: name || `statement.${sourceType}`,
-    locale
+    locale,
+    column_mapping: options.columnMapping
   };
 }
