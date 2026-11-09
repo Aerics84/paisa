@@ -8,7 +8,7 @@
       "cashAmount": 12097.5625128704,
       "balanceUnits": 0,
       "latestPrice": 0,
-      "xirr": 3.21,
+      "xirr": 3.2,
       "gainAmount": 245.7,
       "absoluteReturn": 0.0024860938240577
     },
@@ -54,7 +54,7 @@
       "withdrawalAmount": 10027.3,
       "marketAmount": 0,
       "cashAmount": 0,
-      "balanceUnits": 100,
+      "balanceUnits": -100,
       "latestPrice": 0,
       "xirr": 170.5,
       "gainAmount": 27.3,

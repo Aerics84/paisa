@@ -78,7 +78,7 @@
       "withdrawalAmount": 10027.3,
       "marketAmount": 0,
       "cashAmount": 0,
-      "balanceUnits": 100,
+      "balanceUnits": -100,
       "latestPrice": 0,
       "xirr": 170.5,
       "gainAmount": 27.3,

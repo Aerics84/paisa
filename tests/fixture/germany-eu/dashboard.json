@@ -33,10 +33,11 @@
         "investmentAmount": 0,
         "withdrawalAmount": 0,
         "marketAmount": 3505.5,
+        "cashAmount": 3505.5,
         "balanceUnits": 0,
         "latestPrice": 0,
         "xirr": 0,
-        "gainAmount": 3505.5,
+        "gainAmount": 0,
         "absoluteReturn": 0
       }
     }
