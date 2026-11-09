@@ -298,6 +298,13 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 	return errors, "", err
 }
 
+func parseBeancountNumber(value string) (decimal.Decimal, error) {
+	value = strings.TrimSpace(value)
+	value = strings.TrimPrefix(value, "Decimal('")
+	value = strings.TrimSuffix(value, "')")
+	return decimal.NewFromString(value)
+}
+
 func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Posting, error) {
 	pricesTree := buildPricesTree(prices)
 
@@ -326,7 +333,8 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		TagPeriod
 		TaxCategory
 	)
-	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,units(position).number,cost(position).number,cost(position).currency,filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
+	// Stringify decimals to bypass bean-query's precision-losing numeric CSV renderer.
+	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,str(number(units(position))),str(number(cost(position))),currency(cost(position)),filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
 
 	path, err := binary.LookPath("bean-query")
 	if err != nil {
@@ -356,7 +364,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 			return nil, err
 		}
 
-		quantity, err := decimal.NewFromString(strings.TrimSpace(record[Quantity]))
+		quantity, err := parseBeancountNumber(record[Quantity])
 		if err != nil {
 			return nil, err
 		}
@@ -365,7 +373,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		costCurrency := utils.UnQuote(strings.TrimSpace(record[CostCurrency]))
 		amount := quantity
 		if amountText != "" {
-			amount, err = decimal.NewFromString(amountText)
+			amount, err = parseBeancountNumber(amountText)
 			if err != nil {
 				return nil, err
 			}

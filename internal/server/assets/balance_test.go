@@ -5,7 +5,10 @@ import (
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
+	"github.com/ananthakumaran/paisa/internal/model/cache"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
+	"github.com/ananthakumaran/paisa/internal/model/price"
+	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -52,7 +55,13 @@ commodities:
 	name := t.Name()
 	db, err := gorm.Open(sqlite.Open("file:"+name+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&posting.Posting{}))
+	require.NoError(t, db.AutoMigrate(&posting.Posting{}, &cache.Cache{}, &price.Price{}))
+
+	service.ClearInterestCache()
+	service.ClearPriceCache()
+	t.Cleanup(service.ClearInterestCache)
+	t.Cleanup(service.ClearPriceCache)
+
 	return db
 }
 
@@ -222,6 +231,60 @@ func TestBalanceExcludesFuturePostings(t *testing.T) {
 	leaf, found := breakdowns["Assets:Checking:Bank"]
 	require.True(t, found)
 	require.True(t, leaf.MarketAmount.Equal(decimal.NewFromInt(1000)), "future postings must not inflate the balance, got %s", leaf.MarketAmount)
+}
+
+func TestComputeBreakdownZeroesReturnsForCheckingAccounts(t *testing.T) {
+	db := openBalanceTestDB(t)
+	postings := []posting.Posting{
+		{
+			TransactionID: "salary",
+			Date:          balanceTestDate("2025-06-10"),
+			Account:       "Assets:Checking:Bank",
+			Commodity:     "EUR",
+			Quantity:      decimal.NewFromInt(1000),
+			Amount:        decimal.NewFromInt(1000),
+			MarketAmount:  decimal.NewFromInt(1000),
+		},
+	}
+
+	breakdowns := ComputeBreakdowns(db, postings, true)
+	checking := breakdowns["Assets:Checking:Bank"]
+
+	require.True(t, checking.GainAmount.Equal(decimal.Zero), "checking accounts must not report an investment gain, got %s", checking.GainAmount)
+	require.True(t, checking.XIRR.Equal(decimal.Zero), "checking accounts must not report an XIRR, got %s", checking.XIRR)
+	require.True(t, checking.AbsoluteReturn.Equal(decimal.Zero), "checking accounts must not report an absolute return, got %s", checking.AbsoluteReturn)
+}
+
+func TestComputeBreakdownExcludesCashFromParentGroupGain(t *testing.T) {
+	db := openBalanceTestDB(t)
+	postings := []posting.Posting{
+		{
+			TransactionID: "salary",
+			Date:          balanceTestDate("2025-06-10"),
+			Account:       "Assets:Checking:Bank",
+			Commodity:     "EUR",
+			Quantity:      decimal.NewFromInt(1000),
+			Amount:        decimal.NewFromInt(1000),
+			MarketAmount:  decimal.NewFromInt(1000),
+		},
+		{
+			TransactionID: "buy",
+			Date:          balanceTestDate("2025-06-10"),
+			Account:       "Assets:Investments:VWCE",
+			Commodity:     "VWCE",
+			Quantity:      decimal.NewFromInt(10),
+			Amount:        decimal.NewFromInt(1000),
+			MarketAmount:  decimal.NewFromInt(1200),
+		},
+	}
+
+	breakdowns := ComputeBreakdowns(db, postings, true)
+	parent := breakdowns["Assets"]
+
+	require.True(t, parent.InvestmentAmount.Equal(decimal.NewFromInt(1000)), "checking must not count as an investment, got %s", parent.InvestmentAmount)
+	require.True(t, parent.CashAmount.Equal(decimal.NewFromInt(1000)), "cash must be reported separately, got %s", parent.CashAmount)
+	require.True(t, parent.MarketAmount.Equal(decimal.NewFromInt(2200)), "market value must still include cash, got %s", parent.MarketAmount)
+	require.True(t, parent.GainAmount.Equal(decimal.NewFromInt(200)), "parent gain must only cover investments, got %s", parent.GainAmount)
 }
 
 func TestComputeBreakdownsIncludesConfiguredCommodityMetadata(t *testing.T) {

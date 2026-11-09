@@ -34,6 +34,47 @@ func requireBeancount3(t *testing.T) {
 	}
 }
 
+func TestParseBeancountNumberAcceptsDecimalWrapper(t *testing.T) {
+	value, err := parseBeancountNumber("Decimal('99.7652')")
+	require.NoError(t, err)
+	assert.True(t, value.Equal(decimal.RequireFromString("99.7652")))
+
+	value, err = parseBeancountNumber("0.76")
+	require.NoError(t, err)
+	assert.True(t, value.Equal(decimal.RequireFromString("0.76")))
+}
+
+func TestBeancountParseCommodityWithDigits(t *testing.T) {
+	requireBeancount3(t)
+
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.beancount")
+	require.NoError(t, os.WriteFile(journal, []byte(`
+1970-01-01 open Assets:Checking
+1970-01-01 open Assets:Equity:ABC1DE
+1970-01-01 commodity ABC1DE
+1970-01-01 commodity USD
+
+2022-01-08 txn "Buy"
+  Assets:Equity:ABC1DE   0.76 ABC1DE {131.27 USD}
+  Assets:Checking
+`), 0600))
+	loadBeancountTestConfig(t, journal, "USD")
+
+	postings, err := (Beancount{}).Parse(journal, nil)
+	require.NoError(t, err)
+
+	byAccount := map[string]*posting.Posting{}
+	for _, p := range postings {
+		byAccount[p.Account] = p
+	}
+
+	equity, ok := byAccount["Assets:Equity:ABC1DE"]
+	require.True(t, ok)
+	assert.True(t, equity.Quantity.Equal(decimal.RequireFromString("0.76")), "quantity: %s", equity.Quantity)
+	assert.True(t, equity.Amount.Equal(decimal.RequireFromString("99.7652")), "cost amount: %s", equity.Amount)
+}
+
 func TestParseBeancountPricesCSV(t *testing.T) {
 	output := `date,currency,amount.number,amount.currency
 2022-01-07,NIFTY,100,INR

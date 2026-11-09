@@ -1,6 +1,7 @@
 <script lang="ts">
   import Toggleable from "$lib/components/Toggleable.svelte";
   import ValueChange from "$lib/components/ValueChange.svelte";
+  import { preferredSource } from "$lib/price_source";
   import { ajax, formatCurrency, type Price } from "$lib/utils";
   import { toast } from "bulma-toast";
   import _ from "lodash";
@@ -95,6 +96,7 @@
             <tbody class="has-text-grey-dark">
               {#each Object.keys(prices) as commodity}
                 {@const p = prices[commodity][0]}
+                {@const source = preferredSource(prices[commodity]) ?? p}
                 <Toggleable>
                   <tr
                     class={active ? "is-active" : ""}
@@ -134,8 +136,8 @@
                     <td class="has-text-right"
                       ><ValueChange value={change(prices[commodity], 365 * 5, 7)} /></td
                     >
-                    <td>{p.commodity_type}</td>
-                    <td>{p.commodity_id}</td>
+                    <td>{source.commodity_type}</td>
+                    <td>{source.commodity_id}</td>
                   </tr>
                   <tr slot="content">
                     <td colspan="10"></td>

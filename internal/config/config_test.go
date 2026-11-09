@@ -12,6 +12,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestLoadConfigNormalizesLegacyFinBodhiProviderCodes(t *testing.T) {
+	err := LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+commodities:
+  - name: GOLD
+    type: metal
+    price:
+      provider: com-purifiedbytes-metal
+      code: gold-999
+  - name: NPS_HDFC_E
+    type: nps
+    price:
+      provider: com-purifiedbytes-nps
+      code: SM008001
+`), "")
+	require.NoError(t, err)
+
+	cfg := GetConfig()
+	require.Len(t, cfg.Commodities, 2)
+	assert.Equal(t, "com-finbodhi-metal", cfg.Commodities[0].Price.Provider)
+	assert.Equal(t, "com-finbodhi-nps", cfg.Commodities[1].Price.Provider)
+}
+
 func TestGermanyEURegionalProfileAppliesDefaults(t *testing.T) {
 	err := LoadConfig([]byte(`
 journal_path: main.ledger

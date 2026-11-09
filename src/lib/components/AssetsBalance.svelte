@@ -63,7 +63,20 @@
       formatter: nonZeroCurrency
     },
     { title: "Market Value", field: "marketAmount", hozAlign: "right", formatter: nonZeroCurrency },
-    { title: "Change", field: "gainAmount", hozAlign: "right", formatter: formatCurrencyChange },
+    {
+      title: "Cash",
+      field: "cashAmount",
+      headerTooltip: "Checking balance included in Market Value. Cash has no gain or XIRR.",
+      hozAlign: "right",
+      formatter: nonZeroCurrency
+    },
+    {
+      title: "Investment Change",
+      field: "gainAmount",
+      headerTooltip: "Gain on investments only. Excludes cash (checking) accounts.",
+      hozAlign: "right",
+      formatter: formatCurrencyChange
+    },
     { title: "XIRR", field: "xirr", hozAlign: "right", formatter: nonZeroFloatChange },
     {
       title: "Absolute Return",
@@ -77,9 +90,9 @@
   const mobileColumns: ColumnDefinition[] = [
     columns[0],
     columns[4],
-    columns[5],
     columns[6],
     columns[7],
+    columns[8],
     columns[1],
     columns[2],
     columns[3]

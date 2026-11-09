@@ -23,6 +23,7 @@ type AssetBreakdown struct {
 	InvestmentAmount decimal.Decimal `json:"investmentAmount"`
 	WithdrawalAmount decimal.Decimal `json:"withdrawalAmount"`
 	MarketAmount     decimal.Decimal `json:"marketAmount"`
+	CashAmount       decimal.Decimal `json:"cashAmount"`
 	BalanceUnits     decimal.Decimal `json:"balanceUnits"`
 	LatestPrice      decimal.Decimal `json:"latestPrice"`
 	XIRR             decimal.Decimal `json:"xirr"`
@@ -228,6 +229,9 @@ func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string
 		return !service.IsCapitalGains(p)
 	})
 	marketAmount := accounting.CurrentBalance(psWithoutCapitalGains)
+	cashAmount := accounting.CurrentBalance(lo.Filter(psWithoutCapitalGains, func(p posting.Posting, _ int) bool {
+		return utils.IsCheckingAccount(p.Account)
+	}))
 	var balanceUnits decimal.Decimal
 	if leaf {
 		balanceUnits = lo.Reduce(ps, func(acc decimal.Decimal, p posting.Posting, _ int) decimal.Decimal {
@@ -238,12 +242,23 @@ func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string
 		}, decimal.Zero)
 	}
 
-	xirr := service.XIRR(db, ps)
-	netInvestment := investmentAmount.Sub(withdrawalAmount)
-	gainAmount := marketAmount.Sub(netInvestment)
+	xirr := decimal.Zero
+	gainAmount := decimal.Zero
 	absoluteReturn := decimal.Zero
-	if !investmentAmount.IsZero() {
-		absoluteReturn = marketAmount.Sub(netInvestment).Div(investmentAmount)
+	investmentPostings := lo.Filter(ps, func(p posting.Posting, _ int) bool {
+		account := p.Account
+		if service.IsCapitalGains(p) {
+			account = service.CapitalGainsSourceAccount(p.Account)
+		}
+		return !utils.IsCheckingAccount(account)
+	})
+	if !utils.IsCheckingAccount(group) && len(investmentPostings) > 0 {
+		xirr = service.XIRR(db, investmentPostings)
+		netInvestment := investmentAmount.Sub(withdrawalAmount)
+		gainAmount = marketAmount.Sub(cashAmount).Sub(netInvestment)
+		if !investmentAmount.IsZero() {
+			absoluteReturn = gainAmount.Div(investmentAmount)
+		}
 	}
 	commodityName, commodityLabel, commodityCode := "", "", ""
 	if leaf {
@@ -253,6 +268,7 @@ func ComputeBreakdown(db *gorm.DB, ps []posting.Posting, leaf bool, group string
 		InvestmentAmount: investmentAmount,
 		WithdrawalAmount: withdrawalAmount,
 		MarketAmount:     marketAmount,
+		CashAmount:       cashAmount,
 		XIRR:             xirr,
 		Group:            group,
 		BalanceUnits:     balanceUnits,

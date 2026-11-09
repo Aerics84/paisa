@@ -286,8 +286,8 @@
                   "enum": [
                     "in-mfapi",
                     "com-yahoo",
-                    "com-purifiedbytes-nps",
-                    "com-purifiedbytes-metal",
+                    "com-finbodhi-nps",
+                    "com-finbodhi-metal",
                     "com-yahoo-eu-metal",
                     "co-alphavantage",
                     "com-allratestoday"

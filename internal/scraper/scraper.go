@@ -27,9 +27,9 @@ func GetProviderByCode(code string) price.PriceProvider {
 	switch code {
 	case "in-mfapi":
 		return &mutualfund.PriceProvider{}
-	case "com-purifiedbytes-nps":
+	case "com-finbodhi-nps":
 		return &nps.PriceProvider{}
-	case "com-purifiedbytes-metal":
+	case "com-finbodhi-metal":
 		return &metal.PriceProvider{}
 	case "com-yahoo-eu-metal":
 		return &metal.EuPriceProvider{}

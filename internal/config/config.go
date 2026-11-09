@@ -441,12 +441,36 @@ func LoadConfigFile(path string) {
 	log.Info("Using config file: ", path)
 }
 
+func normalizePriceProvider(provider string) string {
+	switch provider {
+	case "com-purifiedbytes-nps":
+		return "com-finbodhi-nps"
+	case "com-purifiedbytes-metal":
+		return "com-finbodhi-metal"
+	}
+	return provider
+}
+
+func normalizeConfig(value any) {
+	root, _ := value.(map[string]any)
+	commodities, _ := root["commodities"].([]any)
+	for _, value := range commodities {
+		commodity, _ := value.(map[string]any)
+		price, _ := commodity["price"].(map[string]any)
+		if provider, ok := price["provider"].(string); ok {
+			price["provider"] = normalizePriceProvider(provider)
+		}
+	}
+}
+
 func LoadConfig(content []byte, cp string) error {
 	var configJson any
 	err := yaml.Unmarshal(content, &configJson)
 	if err != nil {
 		return err
 	}
+
+	normalizeConfig(configJson)
 
 	rawConfig := map[string]any{}
 	err = yaml.Unmarshal(content, &rawConfig)
@@ -463,6 +487,10 @@ func LoadConfig(content []byte, cp string) error {
 	err = yaml.Unmarshal(content, &config)
 	if err != nil {
 		return err
+	}
+
+	for i := range config.Commodities {
+		config.Commodities[i].Price.Provider = normalizePriceProvider(config.Commodities[i].Price.Provider)
 	}
 
 	err = mergo.Merge(&config, defaultConfig, mergo.WithOverrideEmptySlice)

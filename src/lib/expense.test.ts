@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import dayjs from "dayjs";
 
 import {
+  breakdownLabelWidth,
   byExpenseGroup,
   expenseBreadcrumb,
   expenseColorKey,
   filterExpenseScope,
+  formatBreakdownLabel,
   hasExpenseChildGroups,
   normalizeExpenseDetailScope,
   ROOT_EXPENSE_SCOPE
@@ -33,6 +35,23 @@ function posting(account: string, amount: number): Posting {
     balance: amount
   };
 }
+
+describe("expense breakdown labels", () => {
+  test("formats the amount and percentage for a breakdown row", () => {
+    const label = formatBreakdownLabel(50, 100);
+
+    expect(label).toContain("50.00");
+    expect(label.trimEnd().endsWith("50.00%")).toBe(true);
+  });
+
+  test("keeps the minimum label width for short labels", () => {
+    expect(breakdownLabelWidth(["12345"], 135)).toBe(135);
+  });
+
+  test("grows the label width with the longest label", () => {
+    expect(breakdownLabelWidth(["12345678901234567890"], 135)).toBe(176);
+  });
+});
 
 describe("expense drilldown helpers", () => {
   const postings = [

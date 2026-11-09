@@ -4,6 +4,27 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.6.3 (2026-11-09)
+
+Fork adoptions from upstream commits between 2 and 9 November 2026.
+
+- Stop subtracting budget rollover twice from the projected month-end
+  balance and budget deficit.
+- Treat credit-card bills as paid when the remaining balance is below
+  one currency unit after bank rounding, and show "No dues" for bills
+  without a meaningful amount due.
+- Report checking accounts as cash instead of investments: no gain, XIRR
+  or absolute return, a separate cash amount in the asset balance, and
+  parent-group gains that exclude checking balances.
+- Size expense breakdown labels from the longest amount and percentage
+  so long labels no longer overlap the bars.
+- Show a commodity's provider type and id on the price page when the
+  newest price comes from a ledger `P` directive.
+- Rename the Purified Bytes providers to FinBodhi while continuing to
+  accept the legacy `com-purifiedbytes-*` configuration codes.
+- Parse Beancount numbers through stringified values so commodities with
+  digits and high-precision costs are imported correctly.
+
 ### 0.8.6.2 (2026-11-02)
 
 Fork adoptions from upstream and the active Paisa forks, plus follow-up

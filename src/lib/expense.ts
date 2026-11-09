@@ -1,8 +1,18 @@
 import * as d3 from "d3";
 import _ from "lodash";
-import { type Posting } from "./utils";
+import { formatCurrency, formatFixedWidthFloat, type Posting } from "./utils";
 
 export const ROOT_EXPENSE_SCOPE = "Expenses";
+
+export function formatBreakdownLabel(amount: number, total: number) {
+  return `${formatCurrency(amount)} ${formatFixedWidthFloat((amount / total) * 100, 6)}%`;
+}
+
+export function breakdownLabelWidth(labels: string[], minWidth = 135) {
+  // Monospace labels need about 8px per character, plus two characters of padding.
+  const length = d3.max(labels, (label) => label.length) || 0;
+  return Math.max(minWidth, (length + 2) * 8);
+}
 
 function scopeParts(scope: string) {
   return scope.split(":").filter(Boolean);
