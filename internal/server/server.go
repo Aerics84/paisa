@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/cache"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
 	"github.com/ananthakumaran/paisa/internal/ledger"
@@ -39,6 +40,11 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
+	// Do not trust X-Forwarded-For from arbitrary clients. Otherwise a caller
+	// can rotate the header to bypass the per-IP rate limiter.
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.Warnf("could not disable trusted proxies: %v", err)
+	}
 	if enableCompression {
 		router.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
@@ -46,6 +52,15 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	router.Use(Logger(log.StandardLogger()), gin.Recovery())
 
 	router.Use(TokenAuthMiddleware())
+
+	// Another process (for example `paisa update` from a timer) can change the
+	// database. Drop the in-memory caches when it signals that it finished.
+	router.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
+			cache.ClearIfStale()
+		}
+		c.Next()
+	})
 
 	router.GET("/robots.txt", func(c *gin.Context) {
 		c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte("User-agent: *\nDisallow: /"))
@@ -243,7 +258,12 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		}
 
 		provider := c.Param("provider")
-		c.JSON(200, ClearPriceProviderCache(db, provider))
+		result, err := ClearPriceProviderCache(db, provider)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+		c.JSON(200, result)
 	})
 
 	router.POST("/api/price/autocomplete", func(c *gin.Context) {
@@ -253,7 +273,12 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 			return
 		}
 
-		c.JSON(200, GetPriceAutoCompletions(db, autoCompleteRequest))
+		result, err := GetPriceAutoCompletions(db, autoCompleteRequest)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+		c.JSON(200, result)
 	})
 
 	router.GET("/api/transaction/balanced", func(c *gin.Context) {

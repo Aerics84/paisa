@@ -6,10 +6,12 @@ import _ from "lodash";
 import tippy from "tippy.js";
 import COLORS from "./colors";
 import {
+  contentWidth,
   formatCurrency,
   formatCurrencyCrude,
   formatCurrencyCrudeWithLocale,
   formatFloat,
+  isMobile,
   now,
   rem,
   restName,
@@ -31,8 +33,104 @@ const typeScale = d3
   .domain(lineKeys)
   .range([COLORS.primary, COLORS.secondary, COLORS.tertiary]);
 
+// Phone layout: one bar per account (what you put in, plus what it earned or lost)
+// with the XIRR at the end of the row. The desktop version is three panels wide.
+function renderOverviewMobile(gains: Gain[]) {
+  const id = "#d3-gain-overview";
+  const svg = d3.select(id);
+  const parent = document.getElementById(id.substring(1)).parentElement;
+  const margin = { top: rem(8), right: rem(46), bottom: rem(22), left: rem(112) };
+  const fullWidth = contentWidth(parent);
+  const width = fullWidth - margin.left - margin.right;
+  const height = gains.length * rem(34);
+  svg.attr("width", fullWidth).attr("height", height + margin.top + margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const names = gains.map((a) => restName(a.account));
+  const y = d3.scaleBand().range([0, height]).domain(names).padding(0.35);
+  const invested = (a: Gain) => a.networth.investmentAmount;
+  const gainOf = (a: Gain) => a.networth.gainAmount;
+  const x = d3
+    .scaleLinear()
+    .range([0, width])
+    .domain([0, _.max(gains.map((a) => invested(a) + Math.max(gainOf(a), 0))) || 1]);
+
+  g.append("g")
+    .attr("class", "axis y")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(3).tickSize(-height).tickFormat(formatCurrencyCrude));
+
+  g.append("g").attr("class", "axis y dark link").call(d3.axisLeft(y).tickSize(0));
+  g.selectAll(".axis.y.dark.link .tick").on("click", (_event, label) => {
+    goto(`/assets/gain/Assets:${label}`);
+  });
+
+  gains.forEach((a) => {
+    const top = y(restName(a.account));
+    const gain = gainOf(a);
+    const base = gain >= 0 ? invested(a) : invested(a) + gain;
+    const extra = Math.abs(gain);
+    const row = g.append("g").attr("transform", `translate(0,${top})`);
+    row
+      .append("rect")
+      .attr("fill", COLORS.secondary)
+      .attr("fill-opacity", 0.8)
+      .attr("rx", 3)
+      .attr("height", y.bandwidth())
+      .attr("width", Math.max(0, x(base)));
+    row
+      .append("rect")
+      .attr("fill", gain >= 0 ? COLORS.gain : COLORS.loss)
+      .attr("rx", 3)
+      .attr("x", x(base))
+      .attr("height", y.bandwidth())
+      .attr("width", Math.max(0, x(base + extra) - x(base)));
+    row
+      .append("text")
+      .text(`${formatFloat(a.xirr, 1)}%`)
+      .attr("text-anchor", "end")
+      .attr("dominant-baseline", "middle")
+      .style(
+        "fill",
+        chroma(a.xirr < 0 ? COLORS.loss : COLORS.gain)
+          .darken()
+          .hex()
+      )
+      .style("font-weight", 600)
+      .attr("x", width + margin.right - rem(2))
+      .attr("y", y.bandwidth() / 2);
+  });
+
+  g.append("g")
+    .selectAll("rect")
+    .data(gains)
+    .enter()
+    .append("rect")
+    .attr("fill", "transparent")
+    .attr("data-tippy-content", (a: Gain) =>
+      tooltip([
+        ["Account", [a.account, "has-text-weight-bold has-text-right"]],
+        ["Invested", [formatCurrency(invested(a)), "has-text-weight-bold has-text-right"]],
+        ["Gain", [formatCurrency(gainOf(a)), "has-text-weight-bold has-text-right"]],
+        [
+          "Balance",
+          [formatCurrency(a.networth.balanceAmount), "has-text-weight-bold has-text-right"]
+        ],
+        ["XIRR", [formatFloat(a.xirr), "has-text-weight-bold has-text-right"]]
+      ])
+    )
+    .attr("x", 0)
+    .attr("y", (a) => y(restName(a.account)) - rem(3))
+    .attr("height", y.bandwidth() + rem(6))
+    .attr("width", width);
+}
+
 export function renderOverview(gains: Gain[]) {
   gains = _.sortBy(gains, (g) => g.account);
+  if (isMobile()) {
+    renderOverviewMobile(gains);
+    return;
+  }
   const BAR_HEIGHT = rem(15);
   const id = "#d3-gain-overview";
   const svg = d3.select(id),
@@ -520,10 +618,7 @@ export function renderAccountOverview(
         content: tooltip([
           ["Date", d.date.format("DD MMM YYYY")],
           ["Balance", [fmt(d.balanceAmount), "has-text-weight-bold has-text-right"]],
-          [
-            "Net Investment",
-            [fmt(d.netInvestmentAmount), "has-text-weight-bold has-text-right"]
-          ],
+          ["Net Investment", [fmt(d.netInvestmentAmount), "has-text-weight-bold has-text-right"]],
           ["Gain / Loss", [fmt(d.gainAmount), "has-text-weight-bold has-text-right"]]
         ])
       });

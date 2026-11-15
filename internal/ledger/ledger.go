@@ -281,12 +281,23 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 		return errors, utils.Dos2Unix(output.String()), nil
 	}
 
+	return parseBeancountErrors(error.String()), "", err
+}
+
+func parseBeancountErrors(stderr string) []LedgerFileError {
+	errors := []LedgerFileError{}
 	re := regexp.MustCompile(`(?:.*):([0-9]+):\s+(.+)`)
 
-	lines := strings.SplitSeq(utils.Dos2Unix(error.String()), "\n")
-	for line := range lines {
+	for line := range strings.SplitSeq(utils.Dos2Unix(stderr), "\n") {
 		match := re.FindStringSubmatch(line)
 		if len(match) == 0 {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			if len(errors) == 0 {
+				errors = append(errors, LedgerFileError{Message: line})
+				continue
+			}
 			lastError := errors[len(errors)-1]
 			lastError.Message = lastError.Message + "\n" + line
 			errors[len(errors)-1] = lastError
@@ -295,7 +306,7 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 			errors = append(errors, LedgerFileError{LineFrom: lineno, LineTo: lineno, Message: match[2]})
 		}
 	}
-	return errors, "", err
+	return errors
 }
 
 func parseBeancountNumber(value string) (decimal.Decimal, error) {
@@ -884,8 +895,9 @@ func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, 
 		TransactionNote
 		TaxCategory
 		TaxCategoryLegacy
+		Virtual
 	)
-	args := append(append([]string{"--args-only", "-f", journalPath}, flags...), "csv", "--csv-format", "%(quoted(date)),%(quoted(payee)),%(quoted(display_account)),%(quoted(commodity(scrub(display_amount)))),%(quoted(quantity(scrub(display_amount)))),%(quoted(quantity(scrub(market(amount,date,'"+config.DefaultCurrency()+"') * 100000000)))),%(quoted(xact.filename)),%(quoted(xact.id)),%(quoted(cleared ? \"*\" : (pending ? \"!\" : \"\"))),%(quoted(xact.beg_line)),%(quoted(xact.end_line)),%(quoted(quantity(lot_price(amount)))),%(quoted(commodity(lot_price(amount)))),%(quoted(tag('Recurring'))),%(quoted(tag('Period'))),%(quoted(note)),%(quoted(xact.note)),%(quoted(tag('tax_category'))),%(quoted(tag('TaxRelevant')))\n")
+	args := append(append([]string{"--args-only", "-f", journalPath}, flags...), "csv", "--csv-format", "%(quoted(date)),%(quoted(payee)),%(quoted(display_account)),%(quoted(commodity(scrub(display_amount)))),%(quoted(quantity(scrub(display_amount)))),%(quoted(quantity(scrub(market(amount,date,'"+config.DefaultCurrency()+"') * 100000000)))),%(quoted(xact.filename)),%(quoted(xact.id)),%(quoted(cleared ? \"*\" : (pending ? \"!\" : \"\"))),%(quoted(xact.beg_line)),%(quoted(xact.end_line)),%(quoted(quantity(lot_price(amount)))),%(quoted(commodity(lot_price(amount)))),%(quoted(tag('Recurring'))),%(quoted(tag('Period'))),%(quoted(note)),%(quoted(xact.note)),%(quoted(tag('tax_category'))),%(quoted(tag('TaxRelevant'))),%(quoted(virtual ? \"1\" : \"\"))\n")
 
 	ledgerPath, err := binary.LedgerBinaryPath()
 	if err != nil {
@@ -906,6 +918,7 @@ func execLedgerCommand(journalPath string, flags []string) ([]*posting.Posting, 
 	if err != nil {
 		return nil, err
 	}
+	records = filterVirtualLedgerRecords(records, Virtual)
 
 	dir := filepath.Dir(config.GetJournalPath())
 

@@ -4,6 +4,25 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.6.4 (2026-11-15)
+
+Fork adoptions from upstream v0.8.0 and active Paisa forks. The breaking
+quote-currency migration and the India-only FinBodhi providers from
+upstream v0.8.0 are intentionally not included.
+
+- Invalidate the server's in-memory caches when `paisa update` finishes
+  in another process, and always clear them after a partly failed sync.
+- Skip Ledger virtual postings (`[Account]`, `(Account)`) so they no
+  longer pollute account lists, balances or editor autocomplete.
+- Continue syncing the remaining commodities when a configured price
+  provider code is unknown, and return HTTP 400 instead of a panic from
+  the price-provider maintenance endpoints.
+- Ignore untrusted `X-Forwarded-For` headers when deriving the client IP,
+  so the per-IP rate limiter cannot be bypassed.
+- Parse unexpected beancount stderr output without panicking.
+- Show a compact per-account gain overview on phones and size charts
+  without their container padding.
+
 ### 0.8.6.3 (2026-11-09)
 
 Fork adoptions from upstream commits between 2 and 9 November 2026.

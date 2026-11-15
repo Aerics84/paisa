@@ -27,9 +27,16 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: "1.26.10"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: ".bun-version"
+      - name: Install Bun from npm registry
+        shell: bash
+        run: |
+          bun_version="$(cat .bun-version)"
+          mkdir -p "$HOME/.bun/bin"
+          curl -fsSL --retry 5 --retry-all-errors \
+            "https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-${bun_version}.tgz" \
+            | tar -xz -C "$HOME/.bun/bin" --strip-components=2 package/bin/bun
+          "$HOME/.bun/bin/bun" --version
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
       - uses: nixbuild/nix-quick-install-action@v35
       - uses: nix-community/cache-nix-action@v7
         with:

@@ -1630,6 +1630,17 @@ export function isMobile() {
   return window.innerWidth < 769;
 }
 
+// Width available to children: clientWidth includes the element's own padding,
+// so charts that size themselves to it overflow by that padding.
+export function contentWidth(element: HTMLElement) {
+  const style = getComputedStyle(element);
+  return (
+    element.clientWidth -
+    (parseFloat(style.paddingLeft) || 0) -
+    (parseFloat(style.paddingRight) || 0)
+  );
+}
+
 export function rem(value: number) {
   if (isMobile()) {
     return value * 0.857;

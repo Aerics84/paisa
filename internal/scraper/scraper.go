@@ -40,6 +40,6 @@ func GetProviderByCode(code string) price.PriceProvider {
 	case "com-allratestoday":
 		return &currency.PriceProvider{}
 	}
-	log.Fatal("Unknown price provider: ", code)
+	log.Warn("Unknown price provider: ", code)
 	return nil
 }

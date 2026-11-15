@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/ananthakumaran/paisa/internal/cache"
 	"github.com/ananthakumaran/paisa/internal/model"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	log "github.com/sirupsen/logrus"
@@ -40,6 +41,10 @@ var updateCmd = &cobra.Command{
 		if syncAll {
 			model.SyncCII(db)
 		}
+
+		// Tell a running `paisa serve` that the data changed, so it drops
+		// its in-memory caches without a restart or an API call.
+		cache.MarkSynced()
 	},
 }
 
