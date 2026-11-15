@@ -22,6 +22,8 @@ upstream v0.8.0 are intentionally not included.
 - Parse unexpected beancount stderr output without panicking.
 - Show a compact per-account gain overview on phones and size charts
   without their container padding.
+- Build with Go 1.26.11 to address GO-2026-6859 (HTTP/1 server crash in
+  `net/http`).
 
 ### 0.8.6.3 (2026-11-09)
 

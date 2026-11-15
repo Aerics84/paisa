@@ -46,4 +46,5 @@ brand/*.png
 /.superpowers/
 *.db-shm
 *.db-wal
+*.db.synced
 .pi

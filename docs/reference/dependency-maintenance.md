@@ -29,7 +29,7 @@ Validated end state before the freeze commit:
 | ----------------------------------------------------- | -------------------------------------- |
 | Node / npm                                            | 24.22.1 / 11.19.1                      |
 | Bun / bun-types                                       | 1.4.4 / 1.4.4                          |
-| Go                                                    | 1.26.10                                |
+| Go                                                    | 1.26.11                                |
 | hledger                                               | 1.52.4 (Hackage override)              |
 | beancount                                             | 2.3.6 (v3 deferred)                    |
 | Svelte / SvelteKit / Vite                             | 5.57.3 / 3.1.0 / 8.3.5                 |
@@ -248,7 +248,7 @@ The full local audit list is kept at `.cache/dependency-refresh/go-outdated-phas
 | Base image                  | Digest (documented, not pinned)                                           |
 | --------------------------- | ------------------------------------------------------------------------- |
 | `node:24.22.1-alpine3.24`   | `sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53` |
-| `golang:1.26.10-alpine3.24` | `sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308` |
+| `golang:1.26.11-alpine3.24` | `sha256:ae52b5bc6ed045a9ed26ab03dc19327a802a9cc9aa8b27ed57f5c6b60579b0bb` |
 | `alpine:3.24.3`             | `sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a` |
 
 The Dockerfiles keep the tags. Digests are recorded for auditability only, so builds are maintainable but not bit-for-bit reproducible; a tag can point to a different image later. Pin the digests in a separate change if strict reproducibility is required.

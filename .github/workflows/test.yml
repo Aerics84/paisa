@@ -26,7 +26,7 @@ jobs:
           npm --version
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.26.10"
+          go-version: "1.26.11"
       - name: Install Bun from npm registry
         shell: bash
         run: |

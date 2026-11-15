@@ -30,6 +30,11 @@ day; see [dependency-maintenance.md](dependency-maintenance.md#npm-12) and
 Nix uses `nixos-26.05`; its dev shell provides Node 24.21.0, Go 1.26.10 and Bun
 1.3.13, so CI Bun steps intentionally use `.bun-version` (1.4.4).
 
+> **Security refresh 2026-11-15:** CI and the Docker build images moved to Go
+> 1.26.11 for GO-2026-6859 (`net/http` server crash). The tables above describe
+> the original 2026-10-28 freeze; see
+> [dependency-maintenance.md](dependency-maintenance.md) for the current state.
+
 ## Lockfile Hashes
 
 From `freeze-e9bcb60…/locks.json` (SHA-256 of the manifest file:
