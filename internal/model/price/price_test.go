@@ -147,3 +147,24 @@ func TestLatestDate(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC), got)
 }
+
+func TestUpsertMergedHandlesLargeSeries(t *testing.T) {
+	db := openPriceTestDB(t)
+
+	const count = 7001
+	start := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
+	prices := make([]*Price, 0, count)
+	for i := 0; i < count; i++ {
+		prices = append(prices, &Price{
+			Date:  start.AddDate(0, 0, i),
+			Value: decimal.NewFromInt(int64(i + 1)),
+		})
+	}
+
+	require.NoError(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", prices, true))
+
+	got := loadPrices(t, db, config.Stock, "AAPL")
+	require.Len(t, got, count)
+	assert.Equal(t, "1", got[0].Value.String())
+	assert.Equal(t, "7001", got[count-1].Value.String())
+}

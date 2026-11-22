@@ -114,7 +114,7 @@ func UpsertMerged(db *gorm.DB, commodityType config.CommodityType, commodityName
 			return err
 		}
 
-		return tx.Create(&rows).Error
+		return tx.CreateInBatches(&rows, 500).Error
 	})
 }
 
@@ -139,6 +139,6 @@ func UpsertAllByType(db *gorm.DB, commodityType config.CommodityType, prices []P
 			return nil
 		}
 
-		return tx.Create(&prices).Error
+		return tx.CreateInBatches(&prices, 500).Error
 	})
 }
