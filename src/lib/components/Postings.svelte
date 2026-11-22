@@ -1,5 +1,6 @@
 <script lang="ts">
   import { accountColorStyle } from "$lib/colors";
+  import { commodityTooltip } from "$lib/commodity";
   import { iconText } from "$lib/icon";
   import {
     firstName,
@@ -43,6 +44,7 @@
             <div
               class="has-text-right has-text-grey is-size-7 mr-2 truncate mobile-posting-conversion"
               style="max-width: 9rem;"
+              data-tippy-content={commodityTooltip(p.commodity)}
             >
               {conversion}
             </div>
@@ -59,7 +61,10 @@
           {p.account}
         </div>
         <div class="is-flex is-align-items-baseline is-justify-content-right">
-          <div class="has-text-right has-text-grey is-size-7 mr-2 truncate">
+          <div
+            class="has-text-right has-text-grey is-size-7 mr-2 truncate"
+            data-tippy-content={commodityTooltip(p.commodity)}
+          >
             {conversion}
           </div>
           <div class="has-text-right" style="min-width: 50px;">

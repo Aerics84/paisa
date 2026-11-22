@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import _ from "lodash";
+import { findCommodityInfo } from "./commodity";
 import {
   formatCurrency,
   formatFloat,
@@ -343,12 +344,22 @@ function renderPartition(
     .attr("class", "node")
     .attr("data-tippy-content", (d) => {
       const breakdown = byName[d.id];
-      return tooltip([
-        ["Commodity", [breakdown.commodity_name, "has-text-right"]],
+      const info = findCommodityInfo(breakdown.commodity_name);
+      const rows: Array<Array<string | string[]>> = [
+        ["Commodity", [_.escape(info.displayName || breakdown.commodity_name), "has-text-right"]]
+      ];
+      if (info.displayName && info.displayName !== breakdown.commodity_name) {
+        rows.push(["Ledger Name", [_.escape(breakdown.commodity_name), "has-text-right"]]);
+      }
+      if (info.code) {
+        rows.push(["Symbol", [_.escape(info.code), "has-text-right"]]);
+      }
+      rows.push(
         ["Security Count", [breakdown.security_id.split(",").length.toString(), "has-text-right"]],
         ["Amount", [formatCurrency(breakdown.amount), "has-text-weight-bold has-text-right"]],
         ["Percentage", [percent(d), "has-text-weight-bold has-text-right"]]
-      ]);
+      );
+      return tooltip(rows);
     })
     .style("top", (d: any) => d.y0 + "px")
     .style("left", (d: any) => d.x0 + "px")

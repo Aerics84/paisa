@@ -1,5 +1,6 @@
 <script lang="ts">
   import { accountColorStyle } from "$lib/colors";
+  import { commodityTooltip } from "$lib/commodity";
   import PostingNote from "$lib/components/PostingNote.svelte";
   import PostingStatus from "$lib/components/PostingStatus.svelte";
   import SearchQuery from "$lib/components/SearchQuery.svelte";
@@ -138,7 +139,12 @@
                   </div>
                   <div class="has-text-right">{formatCurrency(p.amount, 2)}</div>
                   <div class="has-text-right">{formatCurrency(p.balance, 2)}</div>
-                  <div class="has-text-right">{unlessDefault(p, formatFloat(p.quantity, 4))}</div>
+                  <div
+                    class="has-text-right"
+                    data-tippy-content={unlessDefault(p, commodityTooltip(p.commodity))}
+                  >
+                    {unlessDefault(p, formatFloat(p.quantity, 4))}
+                  </div>
                   <div class="has-text-right">
                     {unlessDefault(p, formatCurrency(Math.abs(p.amount / p.quantity), 4))}
                   </div>

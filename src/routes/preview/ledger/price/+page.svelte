@@ -1,6 +1,7 @@
 <script lang="ts">
   import Toggleable from "$lib/components/Toggleable.svelte";
   import ValueChange from "$lib/components/ValueChange.svelte";
+  import { commodityTooltip } from "$lib/commodity";
   import { ajax, formatCurrency, type Price } from "$lib/utils";
   import { toast } from "bulma-toast";
   import _ from "lodash";
@@ -113,7 +114,9 @@
                       </span>
                     </td>
 
-                    <td>{p.commodity_name}</td>
+                    <td data-tippy-content={commodityTooltip(p.commodity_name)}>
+                      {p.commodity_name}
+                    </td>
                     <td class="whitespace-nowrap">{p.date.format("DD MMM YYYY")}</td>
                     <td class="has-text-right">{formatCurrency(p.value, 4)}</td>
                     <td class="has-text-right"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { commodityTooltip } from "$lib/commodity";
   import { iconify } from "$lib/icon";
   import {
     formatCurrency,
@@ -47,6 +48,7 @@
       <div
         class="has-text-grey mr-1 truncate is-size-7"
         class:is-hidden={posting.quantity == posting.amount}
+        data-tippy-content={commodityTooltip(posting.commodity)}
       >
         {formatFloat(posting.quantity, 4)} @ {formatFloat(posting.amount / posting.quantity, 3)}
       </div>

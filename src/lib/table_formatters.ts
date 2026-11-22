@@ -2,6 +2,9 @@ import { type CellComponent } from "tabulator-tables";
 import _ from "lodash";
 import { formatCurrency, formatFloat, formatPercentage, isZero, lastName } from "./utils";
 import { iconText } from "./icon";
+import { commodityTooltipHtml } from "./commodity";
+
+export { commodityTooltipHtml } from "./commodity";
 
 type TreeRow = {
   _children?: unknown[];
@@ -9,17 +12,6 @@ type TreeRow = {
   commodity_name?: string;
   commodity_code?: string;
 };
-
-export function commodityTooltipHtml(commodity?: string, name?: string, code?: string) {
-  const rows: string[] = [];
-  const displayName = name || commodity || "";
-  if (displayName) rows.push(`<p><strong>${_.escape(displayName)}</strong></p>`);
-  if (code) rows.push(`<p>Symbol: ${_.escape(code)}</p>`);
-  if (commodity && commodity !== displayName && commodity !== code) {
-    rows.push(`<p>Commodity: ${_.escape(commodity)}</p>`);
-  }
-  return rows.join("");
-}
 
 function commodityAttributes(data: TreeRow) {
   const tooltip = commodityTooltipHtml(data.commodity, data.commodity_name, data.commodity_code);

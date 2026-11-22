@@ -57,6 +57,15 @@ interface UserConfig {
     name: string;
     icon: string;
   }[];
+  commodities?: {
+    name: string;
+    display_name?: string;
+    type?: string;
+    price?: {
+      provider?: string;
+      code?: string;
+    };
+  }[];
 }
 
 interface Runtime {
