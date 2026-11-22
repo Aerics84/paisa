@@ -181,6 +181,7 @@ export function startIdlePoll(): void {
 
 export async function startPriceUpdate(full = true): Promise<void> {
   if (watchActive) return;
+  const gen = generation;
 
   let response: SyncResponse;
   try {
@@ -190,12 +191,16 @@ export async function startPriceUpdate(full = true): Promise<void> {
       background: true
     });
   } catch (e) {
-    toast.toast({
-      message: `Failed to start price update: ${e instanceof Error ? e.message : String(e)}`,
-      type: "is-danger"
-    });
+    if (gen === generation) {
+      toast.toast({
+        message: `Failed to start price update: ${e instanceof Error ? e.message : String(e)}`,
+        type: "is-danger"
+      });
+    }
     return;
   }
+
+  if (gen !== generation) return;
 
   if (response.status?.running) {
     if (response.status.job_id > 0) {
@@ -213,13 +218,18 @@ export async function startPriceUpdate(full = true): Promise<void> {
 }
 
 export async function checkPriceUpdate(): Promise<void> {
+  const gen = generation;
   let status: PriceUpdateStatus;
   try {
     status = await ajax("/api/sync/status", { background: true });
   } catch {
-    startIdlePoll();
+    if (gen === generation) {
+      startIdlePoll();
+    }
     return;
   }
+
+  if (gen !== generation) return;
 
   lastSeenJobID = status.last_job_id;
   lastSeenJobIDSeeded = true;
