@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/cache"
@@ -63,6 +65,21 @@ func priceSyncOutcomeForCLI(db *gorm.DB, includeCII bool) pricesync.Outcome {
 	return pricesync.OutcomeFromResults(result.Succeeded, result.Failed, result.Errors, warnings)
 }
 
+// priceFailureMessage returns the message used to exit non-zero after a failed
+// price run. Per-commodity errors are preferred; when the outcome has no error
+// text the failed commodity names are named instead.
+func priceFailureMessage(outcome pricesync.Outcome) string {
+	if outcome.Error != "" {
+		return outcome.Error
+	}
+
+	if len(outcome.FailedCommodities) > 0 {
+		return fmt.Sprintf("Failed to update prices for: %s", strings.Join(outcome.FailedCommodities, ", "))
+	}
+
+	return "Price update failed"
+}
+
 var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Sync journal data",
@@ -73,10 +90,14 @@ var updateCmd = &cobra.Command{
 		}
 
 		syncAll := !updateJournal && !updateCommodities && !updatePortfolios
+		failure := ""
 
 		if syncAll || updateJournal {
 			message, err := model.SyncJournal(db)
 			if err != nil {
+				// Prices are upserted before the postings are parsed, so a
+				// journal failure can still have changed the database.
+				cache.MarkSynced()
 				log.Fatal(message)
 			}
 		}
@@ -95,19 +116,27 @@ var updateCmd = &cobra.Command{
 			}
 
 			if !outcome.Success {
-				log.Fatal(outcome.Error)
+				failure = priceFailureMessage(outcome)
 			}
 		}
 
 		if syncAll || updatePortfolios {
 			if err := model.SyncPortfolios(db); err != nil {
-				log.Fatal(err)
+				if failure == "" {
+					failure = err.Error()
+				} else {
+					log.Error(err)
+				}
 			}
 		}
 
 		// Tell a running `paisa serve` that the data changed, so it drops
 		// its in-memory caches without a restart or an API call.
 		cache.MarkSynced()
+
+		if failure != "" {
+			log.Fatal(failure)
+		}
 	},
 }
 
