@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	ecbUSDHistoryURL    = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml"
-	yahooChartURLFormat = "https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y"
+	ecbUSDHistoryURL         = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml"
+	yahooChartURLFormat      = "https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y"
+	yahooChartSinceURLFormat = "https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&period1=%d&period2=%d"
 )
 
 var troyOunceInGrams = decimal.RequireFromString("31.1034768")
@@ -28,6 +29,8 @@ var yahooMetalNow = time.Now
 
 type EuPriceProvider struct {
 }
+
+var _ price.RangeProvider = (*EuPriceProvider)(nil)
 
 func (p *EuPriceProvider) Code() string {
 	return "com-yahoo-eu-metal"
@@ -58,13 +61,24 @@ func (p *EuPriceProvider) ClearCache(db *gorm.DB) {
 }
 
 func (p *EuPriceProvider) GetPrices(code string, commodityName string) ([]*price.Price, error) {
+	return p.fetchPrices(code, commodityName, nil)
+}
+
+// GetPricesSince returns the metal prices on or after `since`. Only the
+// requested window is fetched, so an incremental sync does not walk back the
+// full 50-year range.
+func (p *EuPriceProvider) GetPricesSince(code string, commodityName string, since time.Time) ([]*price.Price, error) {
+	return p.fetchPrices(code, commodityName, &since)
+}
+
+func (p *EuPriceProvider) fetchPrices(code string, commodityName string, since *time.Time) ([]*price.Price, error) {
 	ticker, ok := yahooMetalTicker(code)
 	if !ok {
 		return nil, fmt.Errorf("unsupported EU metal code: %s", code)
 	}
 
 	log.Infof("Fetching EU metal price history from Yahoo Finance for %s", code)
-	chart, err := getYahooChart(ticker)
+	chart, err := getYahooChart(ticker, since)
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +187,16 @@ func exchangeDay(timestamp int64, gmtOffset int) string {
 	return time.Unix(timestamp+int64(gmtOffset), 0).UTC().Format("2006-01-02")
 }
 
-func getYahooChart(ticker string) (*yahooChartResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf(yahooChartURLFormat, ticker), nil)
+// getYahooChart fetches the Yahoo chart data for the given ticker. When since
+// is nil the full 50 year range is requested, otherwise only the window
+// between since and now is requested.
+func getYahooChart(ticker string, since *time.Time) (*yahooChartResponse, error) {
+	chartURL := fmt.Sprintf(yahooChartURLFormat, ticker)
+	if since != nil {
+		chartURL = fmt.Sprintf(yahooChartSinceURLFormat, ticker, since.Unix(), time.Now().Unix())
+	}
+
+	req, err := http.NewRequest("GET", chartURL, nil)
 	if err != nil {
 		return nil, err
 	}
