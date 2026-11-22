@@ -65,6 +65,115 @@ func TestParseHLegerPrices(t *testing.T) {
 	assert.Len(t, parsedPrices, 0)
 }
 
+func TestParsePricesCommodityNames(t *testing.T) {
+	parsers := []struct {
+		name   string
+		prefix string
+		parse  func(string, string) ([]price.Price, error)
+	}{
+		{"Ledger", "P 2022/02/01 00:00:00 ", parseLedgerPrices},
+		{"hledger", "P 2022-02-01 ", parseHLedgerPrices},
+	}
+	cases := []struct {
+		name      string
+		fields    string
+		currency  string
+		commodity string
+		value     float64
+	}{
+		{"Zerodha fund", `"AXIS SMALL CAP FUND - DIRECT PLAN" 12.9 INR`, "INR", "AXIS SMALL CAP FUND - DIRECT PLAN", 12.9},
+		{"space without punctuation", `"Small Cap" 12.9 INR`, "INR", "Small Cap", 12.9},
+		{"consecutive spaces", `"Small  Cap" 12.9 INR`, "INR", "Small  Cap", 12.9},
+		{"Unicode and punctuation", `"Épargne & Revenu" 12.9 EUR`, "EUR", "Épargne & Revenu", 12.9},
+		{"starts with digits", `"2025 Growth Fund" 12.9 INR`, "INR", "2025 Growth Fund", 12.9},
+		{"punctuation without spaces", `"FUND-2025.A" 12.9 INR`, "INR", "FUND-2025.A", 12.9},
+		{"quoted currency after amount", `"Small Cap" 1.25 "Quote Currency 2"`, "Quote Currency 2", "Small Cap", 1.25},
+		{"quoted currency before amount", `"Small Cap" "Quote Currency 2" 1.25`, "Quote Currency 2", "Small Cap", 1.25},
+		{"bare commodity", `NIFTY 12.9 INR`, "INR", "NIFTY", 12.9},
+	}
+
+	for _, parser := range parsers {
+		t.Run(parser.name, func(t *testing.T) {
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					prices, err := parser.parse(parser.prefix+tc.fields+"\n", tc.currency)
+					require.NoError(t, err)
+					require.Len(t, prices, 1)
+					assertPriceEqual(t, prices[0], "2022/02/01", tc.commodity, tc.value)
+					assert.Equal(t, tc.commodity, prices[0].CommodityID)
+				})
+			}
+
+			t.Run("mixed quoted and bare rows", func(t *testing.T) {
+				output := parser.prefix + "NIFTY 100 INR\n" +
+					parser.prefix + "\"Small Cap\" 12.9 INR\n" +
+					parser.prefix + "SENSEX 200 INR\n"
+				prices, err := parser.parse(output, "INR")
+				require.NoError(t, err)
+				require.Len(t, prices, 3)
+				assertPriceEqual(t, prices[0], "2022/02/01", "NIFTY", 100)
+				assertPriceEqual(t, prices[1], "2022/02/01", "Small Cap", 12.9)
+				assertPriceEqual(t, prices[2], "2022/02/01", "SENSEX", 200)
+			})
+		})
+	}
+}
+
+func TestParseBeanQueryPrices(t *testing.T) {
+	const header = "date,currency,str(number(amount)),currency(amount)\r\n"
+	data := header +
+		"2022-01-07,NIFTY,100.273,INR\r\n" +
+		"2022-01-08,INR,0.0125,USD\r\n" +
+		"2022-01-09,ABC1DE,1E-8,INR\r\n" +
+		"2022-01-10,INR,0,EUR\r\n" +
+		"2022-01-11,USD,0.9,EUR\r\n"
+	prices, err := parseBeanQueryPrices([]byte(data), "INR")
+	require.NoError(t, err)
+	require.Len(t, prices, 3)
+	assertPriceEqual(t, prices[0], "2022/01/07", "NIFTY", 100.273)
+	assertPriceEqual(t, prices[1], "2022/01/08", "USD", 80)
+	assertPriceEqual(t, prices[2], "2022/01/09", "ABC1DE", 1e-8)
+	assert.Equal(t, "0.00000001", prices[2].Value.String())
+
+	prices, err = parseBeanQueryPrices([]byte(header), "INR")
+	require.NoError(t, err)
+	assert.Empty(t, prices)
+
+	_, err = parseBeanQueryPrices(nil, "INR")
+	require.ErrorContains(t, err, "no price CSV header")
+}
+
+func TestBeancountPriceTable(t *testing.T) {
+	assert.Equal(t, "prices", beancountPriceTable("Beancount 2.3.6"))
+	assert.Equal(t, "prices", beancountPriceTable("  Beancount 2."))
+	assert.Equal(t, "prices", beancountPriceTable("beanquery 0.2.0, beancount 2.3.6"))
+	assert.Equal(t, "#prices", beancountPriceTable("Beancount 3.0.0"))
+	assert.Equal(t, "#prices", beancountPriceTable("beanquery 0.2.0, beancount 3.2.3"))
+	assert.Equal(t, "#prices", beancountPriceTable("beanquery 0.2.0"))
+}
+
+func TestBeancountRecordLineNumber(t *testing.T) {
+	record := make([]string, 15)
+	record[9] = "42"
+	record[11] = "*"
+
+	line, editable, err := beancountRecordLineNumber(record, 11, 9)
+	require.NoError(t, err)
+	assert.True(t, editable)
+	assert.Equal(t, uint64(42), line)
+
+	record[11] = "P"
+	line, editable, err = beancountRecordLineNumber(record, 11, 9)
+	require.NoError(t, err)
+	assert.False(t, editable)
+	assert.Equal(t, uint64(0), line)
+
+	record[11] = "*"
+	record[9] = "not-a-number"
+	_, _, err = beancountRecordLineNumber(record, 11, 9)
+	require.Error(t, err)
+}
+
 func TestParseAmount(t *testing.T) {
 	commodity, amount, _ := parseAmount("0.9 USD")
 	assert.Equal(t, "USD", commodity)

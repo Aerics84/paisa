@@ -256,6 +256,32 @@ func (HLedgerCLI) Files(journalPath string) ([]string, error) {
 	return journalFiles(journalPath), nil
 }
 
+func runBeanQuery(journalPath, format, query string) ([]byte, error) {
+	path, err := binary.LookPath("bean-query")
+	if err != nil {
+		return nil, fmt.Errorf("bean-query is required (install beanquery for Beancount 3): %w", err)
+	}
+
+	var output, stderr bytes.Buffer
+	if err := utils.Exec(path, &output, &stderr, "-f", format, journalPath, query); err != nil {
+		return nil, fmt.Errorf("bean-query: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return output.Bytes(), nil
+}
+
+func beanQueryVersion() (string, error) {
+	path, err := binary.LookPath("bean-query")
+	if err != nil {
+		return "", fmt.Errorf("bean-query is required (install beanquery for Beancount 3): %w", err)
+	}
+
+	var output, stderr bytes.Buffer
+	if err := utils.Exec(path, &output, &stderr, "--version"); err != nil {
+		return "", fmt.Errorf("bean-query --version: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return strings.TrimSpace(output.String()), nil
+}
+
 func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, error) {
 	errors := []LedgerFileError{}
 
@@ -267,18 +293,12 @@ func (Beancount) ValidateFile(journalPath string) ([]LedgerFileError, string, er
 	var output, error bytes.Buffer
 	err = utils.Exec(path, &output, &error, journalPath)
 	if err == nil {
-
-		path, err = binary.LookPath("bean-query")
+		preview, err := runBeanQuery(journalPath, "text", "SELECT account, str(sum(position)) AS balance GROUP BY account ORDER BY account")
 		if err != nil {
-			return errors, "", err
-		}
-
-		err = utils.Exec(path, &output, &error, "-f", "text", journalPath, "BALANCES")
-		if err != nil {
-			log.Error(error.String())
+			log.Error(err)
 			return nil, "", err
 		}
-		return errors, utils.Dos2Unix(output.String()), nil
+		return errors, utils.Dos2Unix(string(preview)), nil
 	}
 
 	return parseBeancountErrors(error.String()), "", err
@@ -316,6 +336,18 @@ func parseBeancountNumber(value string) (decimal.Decimal, error) {
 	return decimal.NewFromString(value)
 }
 
+func beancountRecordLineNumber(record []string, statusIndex, lineIndex int) (uint64, bool, error) {
+	if strings.TrimSpace(record[statusIndex]) == "P" {
+		return 0, false, nil
+	}
+
+	lineNumber, err := strconv.ParseUint(strings.TrimSpace(record[lineIndex]), 10, 64)
+	if err != nil {
+		return 0, false, err
+	}
+	return lineNumber, true, nil
+}
+
 func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Posting, error) {
 	pricesTree := buildPricesTree(prices)
 
@@ -337,7 +369,7 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		Amount
 		CostCurrency
 		FileName
-		Location
+		LineNumber
 		TransactionID
 		Status
 		TagRecurring
@@ -345,29 +377,20 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 		TaxCategory
 	)
 	// Stringify decimals to bypass bean-query's precision-losing numeric CSV renderer.
-	args := []string{"-f", "csv", journalPath, "select date,payee,narration,account,currency,str(number(units(position))),str(number(cost(position))),currency(cost(position)),filename,location,id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')"}
-
-	path, err := binary.LookPath("bean-query")
+	// Look up source metadata directly: standalone beanquery's filename and
+	// location columns can fail on generated postings from Beancount 2.
+	output, err := runBeanQuery(journalPath, "csv", "select date,payee,narration,account,currency,str(number(units(position))),str(number(cost(position))),currency(cost(position)),ANY_META('filename'),ANY_META('lineno'),id,flag,ANY_META('recurring'),ANY_META('period'),META('tax_category')")
 	if err != nil {
-		return postings, err
-	}
-
-	var output, error bytes.Buffer
-	err = utils.Exec(path, &output, &error, args...)
-	if err != nil {
-		log.Error(error.String())
 		return nil, err
 	}
 
-	reader := csv.NewReader(bytes.NewBuffer(output.Bytes()))
+	reader := csv.NewReader(bytes.NewReader(output))
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
 	dir := filepath.Dir(config.GetJournalPath())
-
-	locationRegex := regexp.MustCompile(`.*:(\d+):`)
 
 	for _, record := range records[1:] {
 		date, err := time.ParseInLocation("2006-01-02", record[Date], config.TimeZone())
@@ -419,25 +442,24 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 			status = "unmarked"
 		}
 
-		match := locationRegex.FindStringSubmatch(strings.TrimSpace(record[Location]))
-		if len(match) == 0 {
-			return nil, fmt.Errorf("Could not parse location: %s", record[Location])
-		}
-
-		lineNumber, err := strconv.ParseUint(match[1], 10, 64)
+		lineNumber, editable, err := beancountRecordLineNumber(record, Status, LineNumber)
 		if err != nil {
 			return nil, err
 		}
 
-		r := transactionRanges[record[TransactionID]]
-		if r.Begin == 0 || r.Begin > lineNumber {
-			r.Begin = lineNumber
-		}
+		// Padding is generated from directives, not a transaction that can be edited.
+		// Older bean-query versions report line 0; newer ones report the balance line.
+		if editable {
+			r := transactionRanges[record[TransactionID]]
+			if r.Begin == 0 || r.Begin > lineNumber {
+				r.Begin = lineNumber
+			}
 
-		if r.End == 0 || r.End < lineNumber {
-			r.End = lineNumber
+			if r.End == 0 || r.End < lineNumber {
+				r.End = lineNumber
+			}
+			transactionRanges[record[TransactionID]] = r
 		}
-		transactionRanges[record[TransactionID]] = r
 
 		posting := posting.Posting{
 			Date:          date,
@@ -467,22 +489,34 @@ func (Beancount) Parse(journalPath string, prices []price.Price) ([]*posting.Pos
 	return postings, nil
 }
 
+func beancountPriceTable(version string) string {
+	if strings.Contains(strings.ToLower(strings.TrimSpace(version)), "beancount 2.") {
+		return "prices"
+	}
+	return "#prices"
+}
+
 func (Beancount) Prices(journalPath string) ([]price.Price, error) {
-	var prices []price.Price
-	path, err := binary.LookPath("bean-query")
+	version, err := beanQueryVersion()
 	if err != nil {
-		log.Error(err)
-		return prices, err
+		return nil, err
 	}
 
-	var output, error bytes.Buffer
-	err = utils.Exec(path, &output, &error, "-f", "csv", journalPath, "SELECT date, currency, amount.number, amount.currency FROM prices")
-	if err != nil {
-		log.Error(error.String())
-		return prices, err
+	table := beancountPriceTable(version)
+	query := fmt.Sprintf("SELECT date, currency, amount.number, amount.currency FROM %s", table)
+	if table == "#prices" {
+		query = "SELECT date, currency, str(number(amount)), currency(amount) FROM #prices ORDER BY date, currency"
 	}
 
-	return parseBeancountPrices(utils.Dos2Unix(output.String()), config.DefaultCurrency())
+	output, err := runBeanQuery(journalPath, "csv", query)
+	if err != nil {
+		return nil, err
+	}
+
+	if table == "prices" {
+		return parseBeancountPrices(utils.Dos2Unix(string(output)), config.DefaultCurrency())
+	}
+	return parseBeanQueryPrices(output, config.DefaultCurrency())
 }
 
 func parseHLedgerCommodities(journalPath string) ([]string, error) {
@@ -509,9 +543,12 @@ func parseHLedgerCommodities(journalPath string) ([]string, error) {
 	return commodities, nil
 }
 
+// A quote starts a quoted commodity, never a bare one.
+const priceCommodityPattern = `("[^"\r\n]+"|[^\s\d."-]+)`
+
 func parseLedgerPrices(output string, defaultCurrency string) ([]price.Price, error) {
 	var prices []price.Price
-	re := regexp.MustCompile(`P (\d{4}\/\d{2}\/\d{2}) (?:\d{2}:\d{2}:\d{2}) ([^\s\d.-]+|"[^"]+") ([^\n]+)\n`)
+	re := regexp.MustCompile(`P (\d{4}/\d{2}/\d{2}) (?:\d{2}:\d{2}:\d{2}) ` + priceCommodityPattern + ` ([^\n]+)\n`)
 	matches := re.FindAllStringSubmatch(output, -1)
 
 	for _, match := range matches {
@@ -539,7 +576,7 @@ func parseLedgerPrices(output string, defaultCurrency string) ([]price.Price, er
 
 func parseHLedgerPrices(output string, defaultCurrency string) ([]price.Price, error) {
 	var prices []price.Price
-	re := regexp.MustCompile(`P (\d{4}-\d{2}-\d{2}) ([^\s\d.-]+|"[^"]+") ([^\n]+)\n`)
+	re := regexp.MustCompile(`P (\d{4}-\d{2}-\d{2}) ` + priceCommodityPattern + ` ([^\n]+)\n`)
 	matches := re.FindAllStringSubmatch(output, -1)
 
 	for _, match := range matches {
@@ -586,30 +623,63 @@ func parseBeancountPrices(output string, defaultCurrency string) ([]price.Price,
 			return nil, fmt.Errorf("unexpected beancount price row: %v", record)
 		}
 
-		date, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(record[0]), config.TimeZone())
-		if err != nil {
-			return nil, err
-		}
-
-		commodity := utils.UnQuote(strings.TrimSpace(record[1]))
 		value, err := decimal.NewFromString(strings.TrimSpace(record[2]))
 		if err != nil {
 			return nil, err
 		}
-		target := utils.UnQuote(strings.TrimSpace(record[3]))
-
-		if target != defaultCurrency {
-			if commodity == defaultCurrency && !value.Equal(decimal.Zero) {
-				commodity = target
-				value = decimal.NewFromInt(1).Div(value)
-			} else {
-				continue
-			}
+		p, err := beancountPrice(record[0], utils.UnQuote(strings.TrimSpace(record[1])), utils.UnQuote(strings.TrimSpace(record[3])), value, defaultCurrency)
+		if err != nil {
+			return nil, err
 		}
-
-		prices = append(prices, price.Price{Date: date, CommodityName: commodity, CommodityID: commodity, CommodityType: config.Unknown, Value: value})
+		if p != nil {
+			prices = append(prices, *p)
+		}
 	}
 	return prices, nil
+}
+
+func parseBeanQueryPrices(data []byte, defaultCurrency string) ([]price.Price, error) {
+	reader := csv.NewReader(bytes.NewReader(data))
+	reader.FieldsPerRecord = 4
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return nil, fmt.Errorf("bean-query returned no price CSV header")
+	}
+
+	var prices []price.Price
+	for _, record := range records[1:] {
+		value, err := parseBeancountNumber(record[2])
+		if err != nil {
+			return nil, err
+		}
+		p, err := beancountPrice(record[0], utils.UnQuote(strings.TrimSpace(record[1])), utils.UnQuote(strings.TrimSpace(record[3])), value, defaultCurrency)
+		if err != nil {
+			return nil, err
+		}
+		if p != nil {
+			prices = append(prices, *p)
+		}
+	}
+	return prices, nil
+}
+
+func beancountPrice(dateString, commodity, target string, value decimal.Decimal, defaultCurrency string) (*price.Price, error) {
+	if target != defaultCurrency {
+		if commodity != defaultCurrency || value.IsZero() {
+			return nil, nil
+		}
+		commodity = target
+		value = decimal.NewFromInt(1).Div(value)
+	}
+
+	date, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(dateString), config.TimeZone())
+	if err != nil {
+		return nil, err
+	}
+	return &price.Price{Date: date, CommodityName: commodity, CommodityID: commodity, CommodityType: config.Unknown, Value: value}, nil
 }
 
 func (Beancount) Files(journalPath string) ([]string, error) {

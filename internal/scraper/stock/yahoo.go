@@ -87,6 +87,12 @@ func (r *Result) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	for _, quote := range raw.Indicators.Quote {
+		if len(quote.Close) != len(raw.Timestamp) {
+			return fmt.Errorf("mismatched timestamps (%d) and closes (%d)", len(raw.Timestamp), len(quote.Close))
+		}
+	}
+
 	*r = Result{
 		Meta:       raw.Meta,
 		Timestamp:  make([]int64, 0, len(raw.Timestamp)),

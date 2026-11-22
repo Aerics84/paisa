@@ -4,6 +4,26 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.6.5 (2026-11-22)
+
+P0/P2 adoptions from upstream commits between 15 and 22 November 2026.
+
+- Embed IANA timezone data so named time zones load even when the
+  operating system or container has no timezone database.
+- Parse quoted commodity names with spaces and punctuation in Ledger and
+  hledger price output, so funds such as
+  `"AXIS SMALL CAP FUND - DIRECT PLAN"` keep their names during price sync.
+- Reject Yahoo price responses whose timestamp and close arrays differ in
+  length instead of panicking; cached prices and the remaining commodities
+  continue to sync.
+- Generate imported ledger entries with `YYYY-MM-DD` dates and quoted
+  payees and consolidated descriptions, so spaces and punctuation cannot
+  corrupt the journal.
+- Support Beancount 3 through `bean-query`: read source locations from
+  `ANY_META('filename')`/`ANY_META('lineno')`, skip generated padding
+  postings, and import prices from the `#prices` table. Beancount 2 keeps
+  using the `prices` table.
+
 ### 0.8.6.4 (2026-11-15)
 
 Fork adoptions from upstream v0.8.0 and active Paisa forks. The breaking

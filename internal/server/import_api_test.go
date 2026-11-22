@@ -199,7 +199,7 @@ func TestHandleCommitImport(t *testing.T) {
 
 	content, err := os.ReadFile(journalPath)
 	require.NoError(t, err)
-	assert.Contains(t, string(content), "2026/10/11 * Smart Ba")
+	assert.Contains(t, string(content), `2026-10-11 * "Smart Ba"`)
 	assert.Contains(t, string(content), "Assets:Checking")
 	assert.Contains(t, string(content), "-45.20 INR")
 	assert.Contains(t, string(content), "Expenses:Food:Dining")
@@ -678,17 +678,54 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n")
 	ledgerOut := formatTransactionsForCommit(db, req, "INR")
-	assert.Contains(t, ledgerOut, "2026/10/11 * Coffee Shop")
+	assert.Contains(t, ledgerOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, ledgerOut, "-45.20 INR")
+	assert.NotContains(t, ledgerOut, "2026/10/11")
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: hledger\n")
 	hledgerOut := formatTransactionsForCommit(db, req, "INR")
-	assert.Contains(t, hledgerOut, "2026/10/11 * Coffee Shop")
+	assert.Contains(t, hledgerOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, hledgerOut, "-45.20 INR")
+	assert.NotContains(t, hledgerOut, "2026/10/11")
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: beancount\n")
 	beancountOut := formatTransactionsForCommit(db, req, "INR")
 	assert.Contains(t, beancountOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, beancountOut, "-45.20 INR")
 	assert.NotContains(t, beancountOut, "2026/10/11")
+}
+
+func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
+	db := openImportTestDB(t)
+
+	req := CommitImportRequest{
+		BaseAccount: "Assets:Checking",
+		GroupByDate: true,
+		Transactions: []CommitCandidateTransaction{
+			{
+				Date:            "2026/10/11",
+				Payee:           "Coffee Shop",
+				Amount:          45.20,
+				Currency:        "INR",
+				IsDebit:         true,
+				SelectedAccount: "Expenses:Food:Dining",
+			},
+			{
+				Date:            "2026/10/11",
+				Payee:           "Bakery & Café",
+				Amount:          12.50,
+				Currency:        "INR",
+				IsDebit:         true,
+				SelectedAccount: "Expenses:Food:Groceries",
+			},
+		},
+	}
+
+	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n")
+	out := formatTransactionsForCommit(db, req, "INR")
+
+	assert.Contains(t, out, `2026-10-11 * "Consolidated Debits (2 items)"`)
+	assert.NotContains(t, out, "2026/10/11")
+	assert.Contains(t, out, "Coffee Shop")
+	assert.Contains(t, out, "Bakery Café")
 }

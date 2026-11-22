@@ -299,6 +299,15 @@ func TestYahooResultUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestYahooResultUnmarshalJSONRejectsMismatchedArrays(t *testing.T) {
+	data := `{"timestamp":[100,200],"meta":{"currency":"INR"},"indicators":{"quote":[{"close":[10]}]}}`
+
+	var result Result
+	err := json.Unmarshal([]byte(data), &result)
+
+	require.ErrorContains(t, err, "mismatched timestamps (2) and closes (1)")
+}
+
 func TestNormalizeYahooCurrency(t *testing.T) {
 	for _, tc := range []struct {
 		in    string
