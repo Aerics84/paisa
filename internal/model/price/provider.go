@@ -1,6 +1,10 @@
 package price
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type AutoCompleteItem struct {
 	Label string `json:"label"`
@@ -22,4 +26,11 @@ type PriceProvider interface {
 	AutoComplete(db *gorm.DB, field string, filter map[string]string) []AutoCompleteItem
 	ClearCache(db *gorm.DB)
 	GetPrices(code string, commodityName string) ([]*Price, error)
+}
+
+// RangeProvider is an optional capability for providers that can fetch only
+// the prices on or after a given date. The sync engine uses it for incremental
+// updates; providers without it fall back to GetPrices.
+type RangeProvider interface {
+	GetPricesSince(code string, commodityName string, since time.Time) ([]*Price, error)
 }

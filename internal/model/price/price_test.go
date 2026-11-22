@@ -15,7 +15,7 @@ import (
 func openPriceTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open("file:price-upsert?mode=memory&cache=shared"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&Price{}))
 
@@ -26,6 +26,14 @@ func openPriceTestDB(t *testing.T) *gorm.DB {
 	})
 
 	return db
+}
+
+func loadPrices(t *testing.T, db *gorm.DB, commodityType config.CommodityType, commodityName string) []Price {
+	t.Helper()
+
+	var rows []Price
+	require.NoError(t, db.Where("commodity_type = ? and commodity_name = ?", commodityType, commodityName).Order("date").Find(&rows).Error)
+	return rows
 }
 
 func TestUpsertAllByTypeUnknownKeepsCurrencyQuotes(t *testing.T) {
@@ -104,4 +112,38 @@ func TestUpsertAllByTypeNameAndIDReplacesOnlyCurrencyQuotes(t *testing.T) {
 	require.NoError(t, db.Where("commodity_type = ?", config.Unknown).Find(&unknownRows).Error)
 	require.Len(t, unknownRows, 1)
 	assert.True(t, unknownRows[0].Value.Equal(decimal.NewFromInt(81)))
+}
+
+func TestUpsertMergedPreservesRowsMissingFromResponse(t *testing.T) {
+	db := openPriceTestDB(t)
+	require.NoError(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", []*Price{
+		priceAt(18, "100"), priceAt(19, "101"), priceAt(20, "102"),
+	}, true))
+
+	require.NoError(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", []*Price{
+		priceAt(20, "120"), priceAt(21, "121"),
+	}, false))
+
+	got := loadPrices(t, db, config.Stock, "AAPL")
+	require.Len(t, got, 4)
+	assert.Equal(t, "100", got[0].Value.String())
+	assert.Equal(t, "101", got[1].Value.String())
+	assert.Equal(t, "120", got[2].Value.String())
+	assert.Equal(t, "121", got[3].Value.String())
+}
+
+func TestUpsertMergedEmptyReplaceDoesNotDelete(t *testing.T) {
+	db := openPriceTestDB(t)
+	require.NoError(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", []*Price{priceAt(20, "100")}, true))
+	require.Error(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", nil, true))
+	assert.Len(t, loadPrices(t, db, config.Stock, "AAPL"), 1)
+}
+
+func TestLatestDate(t *testing.T) {
+	db := openPriceTestDB(t)
+	require.NoError(t, UpsertMerged(db, config.Stock, "AAPL", "AAPL", []*Price{priceAt(18, "100"), priceAt(20, "102")}, true))
+	got, ok, err := LatestDate(db, config.Stock, "AAPL", "AAPL")
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC), got)
 }

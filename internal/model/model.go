@@ -58,7 +58,9 @@ func SyncJournal(db *gorm.DB) (string, error) {
 		return err.Error(), err
 	}
 
-	price.UpsertAllByType(db, config.Unknown, prices)
+	if err := price.UpsertAllByType(db, config.Unknown, prices); err != nil {
+		return err.Error(), err
+	}
 
 	postings, err := ledger.Cli().Parse(config.GetJournalPath(), prices)
 	if err != nil {
@@ -99,7 +101,12 @@ func syncCommodities(db *gorm.DB, all []config.Commodity) error {
 			continue
 		}
 
-		price.UpsertAllByTypeNameAndID(db, commodity.Type, name, code, prices)
+		err = price.UpsertAllByTypeNameAndID(db, commodity.Type, name, code, prices)
+		if err != nil {
+			log.Error(err)
+			errors = append(errors, fmt.Errorf("Failed to persist price for %s: %w", name, err))
+			continue
+		}
 	}
 
 	if len(errors) > 0 {
