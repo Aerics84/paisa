@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate-fonts": "node download-svgs.js && node generate-font.js"
+    "generate-fonts": "node download-svgs.js && node generate-font.js",
+    "postinstall": "node scripts/patch-jimp-file-type.mjs"
   },
   "dependencies": {
     "@iconify/json": "^2.2.549",
@@ -13,5 +14,12 @@
     "svg2ttf": "^6.1.0",
     "svgicons2svgfont": "^16.0.0",
     "ttf2woff2": "^8.0.1"
+  },
+  "overrides": {
+    "file-type": "22.3.0",
+    "phin": "3.7.1",
+    "node-gyp": "12.3.0",
+    "glob": "14.0.6",
+    "minimatch": "11.0.9"
   }
 }
