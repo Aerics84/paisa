@@ -250,6 +250,38 @@ NZD, PHP, PLN, RON, SEK, SGD, THB, TRY, USD and ZAR. Both the currency
 and your default currency need to be in this list. The commodity type
 must be `currency`.
 
+## Automatic price updates
+
+While `paisa serve` is running, the commodity prices are updated
+automatically in the background, so there is no need to click
+**Update Prices** after every market close.
+
+- The server runs the update at the configured slot, 22:30 from Monday
+  to Friday by default. The slot is set with the
+  [`price_update`](./config.md#price-updates) settings, and a run that
+  was missed, for example because the server was not running, is caught
+  up when the server starts or the next time the UI is opened.
+- The automatic run is incremental. Only the missing prices are
+  fetched, with a seven day overlap, so late corrections from the
+  provider are picked up as well. The stored price history is merged
+  and never replaced by an incremental run.
+- **Update Prices** in the UI always does a full refresh of the price
+  history, and it runs in the background.
+- The status of a run is reported with a toast notification. The UI is
+  never blocked while the prices are fetched, the new prices are shown
+  after the page refreshes.
+- A failing cost inflation index (CII) fetch is only a warning, the
+  price update itself still succeeds.
+
+`paisa update` remains a full refresh. After a successful run it also
+marks the price state as fresh, so the server does not run a redundant
+automatic update afterwards.
+
+Paisa assumes a single writer per database. Do not run `paisa update`
+and a second server against the same database at the same time. SQLite
+serializes the short writes, but the processes do not coordinate their
+network runs.
+
 ## RealEstate
 
 Some commodities like real estate are bought once and the price
@@ -298,8 +330,12 @@ P 2023/05/01 00:00:00 USD 81.75 INR
 
 ## Update
 
-Paisa fetches the latest price of the commodities only when you
-**update** the prices. This can be done via UI using the dropdown in
-the top right hand side corner or via `paisa update` command. Make
-sure to update the prices after you make any changes to your journal
-file or you want to fetch the latest value of the commodities.
+Paisa fetches the latest price of the commodities when you **update**
+the prices. This can be done via UI using the dropdown in the top right
+hand side corner or via `paisa update` command. Make sure to update the
+prices after you make any changes to your journal file or you want to
+fetch the latest value of the commodities.
+
+See [Automatic price updates](#automatic-price-updates) for the
+background schedule that keeps the prices up to date without a manual
+update.

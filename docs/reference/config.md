@@ -127,6 +127,20 @@ financial_year_starting_month: 4
 # OPTIONAL, DEFAULT: 0
 week_starting_day: 0
 
+## Price updates
+price_update:
+  # Enable automatic price updates
+  # OPTIONAL, ENUM: yes, no, DEFAULT: yes
+  enabled: "yes"
+
+  # Local time in the configured time zone
+  # OPTIONAL, DEFAULT: "22:30"
+  time: "22:30"
+
+  # Days on which prices are updated automatically
+  # OPTIONAL, DEFAULT: [mon, tue, wed, thu, fri]
+  days: [mon, tue, wed, thu, fri]
+
 # When strict mode is enabled, all the accounts and commodities should
 # be defined before use. This is same as --pedantic flag in ledger and
 # --strict flag in hledger. Doesn't apply to beancount.
@@ -358,3 +372,31 @@ credit_cards:
     expiration_date: "2029-05-01"
     # Required, the expiration date of the card
 ```
+
+### Price updates
+
+Paisa can keep the commodity prices up to date on its own. While
+`paisa serve` is running, the prices are fetched in the background at
+the configured slot, so there is no need to click **Update Prices**
+after every market close.
+
+- The automatic update runs at `price_update.time` on every day listed
+  in `price_update.days`. The default is 22:30 from Monday to Friday,
+  which is after the market close.
+- The time is a wall clock time in the `time_zone` configured above, so
+  the update follows the market hours of that time zone. When
+  `time_zone` is unset, the system time zone is used.
+- A run that was missed, for example because the server was not
+  running, is caught up when the server starts or the next time the UI
+  is opened.
+- Changes to the `price_update` settings apply immediately, the server
+  does not need to be restarted.
+- In readonly mode automatic price updates are disabled.
+- **Update Prices** in the UI always performs a full refresh of the
+  price history, in the background.
+- An invalid `time` or an unknown day is logged as a warning and
+  ignored. When that leaves no valid day at all, Monday to Friday are
+  used.
+
+See [Automatic price updates](./commodities.md#automatic-price-updates)
+for the details of the background runs.

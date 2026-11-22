@@ -8,6 +8,8 @@ document the upstream releases this fork builds on; the short-lived
 
 P0/P2 adoptions from upstream commits between 15 and 22 November 2026.
 
+- Price updates now run automatically after market close on weekdays and in
+  the background, without blocking the UI.
 - Embed IANA timezone data so named time zones load even when the
   operating system or container has no timezone database.
 - Parse quoted commodity names with spaces and punctuation in Ledger and
