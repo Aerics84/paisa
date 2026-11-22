@@ -281,12 +281,19 @@ price_update:
 	assert.Equal(t, "20:00", got.Time)
 }
 
-func TestPriceUpdateRejectsInvalidValues(t *testing.T) {
+func TestPriceUpdateRejectsInvalidEnabledAndUnknownKeys(t *testing.T) {
 	base := "journal_path: main.ledger\ndb_path: paisa.db\n"
 	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  enabled: maybe\n"), ""))
-	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  time: \"25:00\"\n"), ""))
-	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  days: [funday]\n"), ""))
 	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  unknown: value\n"), ""))
+}
+
+func TestPriceUpdateAcceptsInvalidScheduleValues(t *testing.T) {
+	base := "journal_path: main.ledger\ndb_path: paisa.db\n"
+	require.NoError(t, LoadConfig([]byte(base+"price_update:\n  time: \"25:00\"\n"), ""))
+	assert.Equal(t, "25:00", GetConfig().EffectivePriceUpdate().Time)
+
+	require.NoError(t, LoadConfig([]byte(base+"price_update:\n  days: [funday]\n"), ""))
+	assert.Equal(t, []string{"funday"}, GetConfig().EffectivePriceUpdate().Days)
 }
 
 func TestSaveConfigObjectRoundTripsPriceUpdate(t *testing.T) {

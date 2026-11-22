@@ -948,15 +948,14 @@
         },
         "time": {
           "type": "string",
-          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
           "default": "22:30",
-          "description": "Local time in the configured time zone."
+          "description": "Local time in the configured time zone. Invalid values are accepted and fall back to 22:30 at runtime."
         },
         "days": {
           "type": "array",
-          "items": { "type": "string", "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] },
+          "items": { "type": "string" },
           "default": ["mon", "tue", "wed", "thu", "fri"],
-          "description": "Days on which prices are updated automatically."
+          "description": "Days on which prices are updated automatically. Invalid values are accepted and fall back to Monday to Friday at runtime."
         }
       },
       "additionalProperties": false
