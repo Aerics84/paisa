@@ -13,6 +13,8 @@ let idleTimer: NodeJS.Timeout | null = null;
 let watchActive = false;
 let watchStartedAt = 0;
 let lastSeenJobID = 0;
+let lastSeenJobIDSeeded = false;
+let generation = 0;
 
 function clearIdle(): void {
   if (idleTimer !== null) {
@@ -30,6 +32,7 @@ function clearWatch(): void {
 }
 
 export function stopPriceUpdateWatcher(): void {
+  generation += 1;
   clearWatch();
   clearIdle();
 }
@@ -43,9 +46,14 @@ export function shouldRefreshAfter(status: PriceUpdateStatus): boolean {
   return !status.running && status.last_job_success;
 }
 
-async function finish(status: PriceUpdateStatus): Promise<void> {
+async function finish(status: PriceUpdateStatus, gen: number): Promise<void> {
   if (status.last_job_success) {
-    toast.toast({ message: "Prices updated", type: "is-success" });
+    if (shouldRefreshAfter(status) && !hasUnsavedWork() && document.visibilityState === "visible") {
+      toast.toast({ message: "Prices updated", type: "is-success" });
+      await refresh();
+    } else {
+      toast.toast({ message: "Prices updated – visible on next navigation", type: "is-info" });
+    }
   } else if (status.last_partial_success_at) {
     toast.toast({
       message: `Prices partially updated: ${(status.failed_commodities || []).join(", ")}`,
@@ -58,16 +66,12 @@ async function finish(status: PriceUpdateStatus): Promise<void> {
     });
   }
 
-  if (shouldRefreshAfter(status)) {
-    if (!hasUnsavedWork() && document.visibilityState === "visible") {
-      await refresh();
-    } else {
-      toast.toast({
-        message: "Prices updated – visible on next navigation",
-        type: "is-info"
-      });
-    }
-  }
+  lastSeenJobID = status.last_job_id;
+  lastSeenJobIDSeeded = true;
+
+  if (gen !== generation) return;
+
+  startIdlePoll();
 }
 
 export function watchJob(jobID: number): void {
@@ -75,20 +79,22 @@ export function watchJob(jobID: number): void {
   watchActive = true;
   watchStartedAt = Date.now();
   clearIdle();
+  const gen = generation;
 
   function scheduleNext(): void {
-    if (!watchActive) return;
+    if (!watchActive || gen !== generation) return;
     const elapsed = Date.now() - watchStartedAt;
     if (elapsed >= MAX_WATCH_MS) {
       clearWatch();
+      startIdlePoll();
       return;
     }
     const interval = elapsed < FAST_PHASE ? FAST_INTERVAL : SLOW_INTERVAL;
-    watchTimer = setTimeout(poll, interval);
+    watchTimer = setTimeout(() => void poll(), interval);
   }
 
   async function poll(): Promise<void> {
-    if (!watchActive) return;
+    if (gen !== generation) return;
     let status: PriceUpdateStatus;
     try {
       status = await ajax("/api/sync/status", { background: true });
@@ -97,17 +103,25 @@ export function watchJob(jobID: number): void {
       return;
     }
 
-    if (jobIsComplete(status, jobID)) {
+    if (gen !== generation) return;
+
+    if (status.last_job_id !== jobID) {
       clearWatch();
-      if (status.last_job_id !== jobID) {
-        return; // a newer job has taken over; stop silently
+      if (status.running && status.job_id > 0) {
+        watchJob(status.job_id);
+      } else if (!status.running && status.last_job_id > jobID) {
+        await finish(status, gen);
+      } else {
+        lastSeenJobID = status.last_job_id;
+        lastSeenJobIDSeeded = true;
+        startIdlePoll();
       }
-      await finish(status);
       return;
     }
 
-    if (status.last_job_id !== jobID) {
-      clearWatch(); // newer job has taken over; stop silently
+    if (jobIsComplete(status, jobID)) {
+      clearWatch();
+      await finish(status, gen);
       return;
     }
 
@@ -121,9 +135,11 @@ export function startIdlePoll(): void {
   if (idleTimer !== null) return;
 
   async function tick(): Promise<void> {
+    const gen = generation;
     idleTimer = null;
+
     if (document.visibilityState !== "visible") {
-      idleTimer = setTimeout(tick, IDLE_INTERVAL);
+      idleTimer = setTimeout(() => void tick(), IDLE_INTERVAL);
       return;
     }
 
@@ -131,12 +147,17 @@ export function startIdlePoll(): void {
     try {
       status = await ajax("/api/sync/status", { background: true });
     } catch {
-      idleTimer = setTimeout(tick, IDLE_INTERVAL);
+      if (gen === generation) {
+        idleTimer = setTimeout(() => void tick(), IDLE_INTERVAL);
+      }
       return;
     }
 
-    if (lastSeenJobID === 0) {
+    if (gen !== generation) return;
+
+    if (!lastSeenJobIDSeeded) {
       lastSeenJobID = status.last_job_id;
+      lastSeenJobIDSeeded = true;
     }
 
     if (status.running) {
@@ -146,14 +167,16 @@ export function startIdlePoll(): void {
       }
       // A synchronous/foreign run is active with no job id; keep idling.
     } else if (status.last_job_id > lastSeenJobID) {
-      lastSeenJobID = status.last_job_id;
-      await finish(status);
+      await finish(status, gen);
+      return;
     }
 
-    idleTimer = setTimeout(tick, IDLE_INTERVAL);
+    if (gen === generation) {
+      idleTimer = setTimeout(() => void tick(), IDLE_INTERVAL);
+    }
   }
 
-  idleTimer = setTimeout(tick, IDLE_INTERVAL);
+  idleTimer = setTimeout(() => void tick(), IDLE_INTERVAL);
 }
 
 export async function startPriceUpdate(full = true): Promise<void> {
@@ -175,8 +198,15 @@ export async function startPriceUpdate(full = true): Promise<void> {
   }
 
   if (response.status?.running) {
-    toast.toast({ message: "Updating prices in the background", type: "is-info" });
-    watchJob(response.status.job_id);
+    if (response.status.job_id > 0) {
+      toast.toast({ message: "Updating prices in the background", type: "is-info" });
+      watchJob(response.status.job_id);
+    } else {
+      // A foreign/foreground run occupies the runner (job_id === 0); we cannot
+      // watch it, so report it and keep the idle poll alive.
+      toast.toast({ message: "A price update is already running", type: "is-info" });
+      startIdlePoll();
+    }
   } else if (response.started === false) {
     toast.toast({ message: "A price update is already running", type: "is-info" });
   }
@@ -190,6 +220,9 @@ export async function checkPriceUpdate(): Promise<void> {
     startIdlePoll();
     return;
   }
+
+  lastSeenJobID = status.last_job_id;
+  lastSeenJobIDSeeded = true;
 
   if (status.running && status.job_id > 0) {
     watchJob(status.job_id);
