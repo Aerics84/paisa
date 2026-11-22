@@ -258,3 +258,56 @@ func TestManagerWakeRecomputesNextRun(t *testing.T) {
 		return atomic.LoadInt32(&calls) >= 1
 	}, time.Second, 10*time.Millisecond)
 }
+
+func TestManagerSchedulerDoesNotStartJobAfterCancellation(t *testing.T) {
+	store := NewMemoryStateStore()
+	now := time.Date(2026, 11, 23, 22, 45, 0, 0, berlin(t))
+
+	var calls int32
+	syncFn := func(SyncOptions) Outcome {
+		atomic.AddInt32(&calls, 1)
+		return Outcome{Success: true}
+	}
+
+	m := newTestManager(store, now, func() config.Config { return testConfig(true) }, syncFn)
+
+	// Cancel before the scheduler starts: a cancelled scheduler must never
+	// launch a catch-up job, even though the state is stale.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	m.StartScheduler(ctx)
+
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(0), atomic.LoadInt32(&calls))
+
+	// A wake after cancellation must not start a job either.
+	m.Wake()
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(0), atomic.LoadInt32(&calls))
+}
+
+func TestManagerSuccessClearsPartialSuccess(t *testing.T) {
+	store := NewMemoryStateStore()
+	now := time.Date(2026, 11, 23, 22, 45, 0, 0, berlin(t))
+
+	// Simulate a previous partial run.
+	require.NoError(t, store.Save(State{
+		LastSuccessAt:        now.Add(-2 * time.Hour),
+		LastPartialSuccessAt: now.Add(-time.Hour),
+		LastJobID:            3,
+	}))
+
+	syncFn := func(SyncOptions) Outcome { return Outcome{Success: true} }
+	m := newTestManager(store, now, func() config.Config { return testConfig(true) }, syncFn)
+
+	_, started := m.Start(SyncOptions{}, StartManual)
+	require.True(t, started)
+	require.Eventually(t, func() bool {
+		return !m.Status(now).Running
+	}, time.Second, 10*time.Millisecond)
+
+	state, err := store.Load()
+	require.NoError(t, err)
+	assert.False(t, state.LastSuccessAt.IsZero())
+	assert.True(t, state.LastPartialSuccessAt.IsZero())
+}

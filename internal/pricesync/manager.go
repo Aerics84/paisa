@@ -225,6 +225,7 @@ func (m *Manager) run(opts SyncOptions, jobID uint64) {
 	switch {
 	case outcome.Success:
 		m.state.LastSuccessAt = now
+		m.state.LastPartialSuccessAt = time.Time{}
 	case outcome.Partial:
 		m.state.LastPartialSuccessAt = now
 	}
@@ -263,8 +264,12 @@ func (m *Manager) schedulerLoop(ctx context.Context) {
 	defer log.Info("Price update scheduler stopped")
 
 	for {
+		if ctx.Err() != nil {
+			return
+		}
+
 		status := m.Status(m.now())
-		if status.ShouldUpdate {
+		if status.ShouldUpdate && ctx.Err() == nil {
 			m.Start(SyncOptions{Full: false}, StartAutomatic)
 		}
 
