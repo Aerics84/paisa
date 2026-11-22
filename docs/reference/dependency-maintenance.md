@@ -38,9 +38,11 @@ Validated end state before the freeze commit:
 
 `npm outdated` reports only `typescript 6.0.3 → 7.0.2`, deliberately deferred because typescript-eslint, SvelteKit and svelte-check do not accept TypeScript 7 yet. After the 2026-10-29 transitive refresh, `go list -m -u all` reports 53 tooling/optional-backend updates outside the import graph; all direct modules and the compiled module graph are current.
 
-This snapshot is historical: npm moved to 12.2.1 on 2026-10-29 and beancount moved to 3.2.3 on the same day. All other rows remain current.
+This snapshot is historical: npm moved to 12.2.1 on 2026-10-29, beancount moved to 3.2.3 on the same day, and the 2026-11-22 security refresh moved SvelteKit to 3.4.0, ESLint to 10.15.0 and the typescript-eslint family to 8.73.0.
 
 Security findings at the freeze: root npm 4 low, `tools/fontgen` npm 7 moderate, 0 high/critical, govulncheck 0 called and 1 not-called. No scanner errors. The follow-ups are the remaining tooling-only Go modules and the NixOS 26.11 refresh within two weeks of its release.
+
+Current security state (2026-11-22): both npm targets report **0 findings**. The unused `nodemon` dependency was removed and `tools/fontgen` now overrides fixed `file-type`/`glob`/`minimatch`/`node-gyp`/`phin` transitives; its temporary Jimp compatibility shim is `tools/fontgen/scripts/patch-jimp-file-type.mjs`. `govulncheck` remains at 0 called / 1 not-called finding.
 
 ## Dependency Audit Gate
 

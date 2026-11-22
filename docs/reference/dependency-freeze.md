@@ -35,6 +35,14 @@ Nix uses `nixos-26.05`; its dev shell provides Node 24.21.0, Go 1.26.10 and Bun
 > the original 2026-10-28 freeze; see
 > [dependency-maintenance.md](dependency-maintenance.md) for the current state.
 
+> **Security refresh 2026-11-22:** both npm targets now report **0 audit
+> findings**. The unused `nodemon` dependency was removed, SvelteKit and the
+> lint tooling were refreshed within their existing ranges, and `tools/fontgen`
+> pins fixed `file-type`/`glob`/`minimatch`/`node-gyp`/`phin` transitives.
+> Its temporary Jimp compatibility shim lives in
+> `tools/fontgen/scripts/patch-jimp-file-type.mjs`. `govulncheck` remains at
+> 0 called / 1 not-called finding.
+
 ## Lockfile Hashes
 
 From `freeze-e9bcb60…/locks.json` (SHA-256 of the manifest file:
