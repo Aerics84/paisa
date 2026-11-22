@@ -133,6 +133,16 @@ export function setAllowedDateRange(dates: dayjs.Dayjs[]) {
   }
 }
 
+export const importStagingDirty = writable(false);
+
+export function hasUnsavedWork(): boolean {
+  return (
+    get(editorState).hasUnsavedChanges ||
+    get(sheetEditorState).hasUnsavedChanges ||
+    get(importStagingDirty)
+  );
+}
+
 export const willRefresh = writable(0);
 export async function refresh(): Promise<boolean> {
   if (get(editorState).hasUnsavedChanges) {

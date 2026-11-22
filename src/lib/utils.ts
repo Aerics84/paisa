@@ -874,6 +874,36 @@ export interface Log {
   msg: string;
 }
 
+/** Mirrors internal/pricesync.Status. */
+export interface PriceUpdateStatus {
+  enabled: boolean;
+  managed: boolean;
+  running: boolean;
+  job_id: number;
+  last_job_id: number;
+  last_job_success: boolean;
+  stale: boolean;
+  should_update: boolean;
+  last_attempt_at: string | null;
+  last_success_at: string | null;
+  last_partial_success_at: string | null;
+  last_error: string;
+  last_warning: string;
+  failed_commodities: string[];
+  next_run_at: string | null;
+}
+
+/** Mirrors the /api/sync response (both foreground and background variants). */
+export interface SyncResponse {
+  success: boolean;
+  started?: boolean;
+  status?: PriceUpdateStatus;
+  message?: string;
+  partial?: boolean;
+  failed_commodities?: string[];
+  warning?: string;
+}
+
 export interface CreditCardBill {
   openingBalance: number;
   closingBalance: number;
@@ -1171,10 +1201,8 @@ export function ajax(
   options?: RequestOptions
 ): Promise<{ success: boolean; message: string }>;
 
-export function ajax(
-  route: "/api/sync",
-  options?: RequestOptions
-): Promise<{ success: boolean; message: string }>;
+export function ajax(route: "/api/sync/status"): Promise<PriceUpdateStatus>;
+export function ajax(route: "/api/sync", options?: RequestOptions): Promise<SyncResponse>;
 export function ajax(
   route: "/api/price/providers",
   options?: RequestOptions

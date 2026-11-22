@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dropzone from "svelte-file-dropzone";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import * as toast from "bulma-toast";
   import RuleStudioModal from "./RuleStudioModal.svelte";
   import TransactionStagingTable from "./TransactionStagingTable.svelte";
@@ -14,6 +14,7 @@
   import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
   import { buildStatementRequest, type IngestionColumnMapping } from "$lib/import_provenance";
   import Papa from "papaparse";
+  import { importStagingDirty } from "../../store";
 
   let accountsList: string[] = $state([]);
   let defaultCurrency: string = $state(globalThis.USER_CONFIG?.default_currency || "");
@@ -30,6 +31,11 @@
       localStorage.setItem(baseAccountStorageKey, selectedAccount.trim());
     }
   });
+
+  $effect(() => {
+    importStagingDirty.set(stagedTransactions.length > 0);
+  });
+  onDestroy(() => importStagingDirty.set(false));
 
   type MappingKey = Exclude<keyof IngestionColumnMapping, "header_row">;
 

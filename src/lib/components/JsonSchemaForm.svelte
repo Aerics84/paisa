@@ -45,6 +45,22 @@
     });
   }
 
+  function toggle() {
+    open = !open;
+    if (!open) return;
+    if (value == null || typeof value !== "object") {
+      value = {};
+    }
+    for (const [childKey, childSchema] of sortedProperties(schema) as [string, Schema][]) {
+      if (
+        childSchema.type === "object" &&
+        (value[childKey] == null || typeof value[childKey] !== "object")
+      ) {
+        value[childKey] = {};
+      }
+    }
+  }
+
   function documentation(schema: Schema) {
     if (schema.description) {
       return `<p style="max-width: 300px">${schema.description}</p>`;
@@ -276,7 +292,7 @@
       class="is-link is-light invertable"
       data-tippy-content={documentation(schema)}
       type="button"
-      on:click={(_e) => (open = !open)}
+      on:click={(_e) => toggle()}
     >
       <span>{schema["ui:header"] ? value[schema["ui:header"]] || title : title}</span>
       <span class="icon is-small">
