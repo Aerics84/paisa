@@ -152,8 +152,25 @@ func normalizeYahooCurrency(currency string) (string, float64) {
 }
 
 func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
+	return getYahooHistory(ticker, commodityName, nil)
+}
+
+// GetHistorySince returns the price history on or after `since`. Only the
+// requested window is fetched so an incremental sync does not walk back the
+// full 50-year range.
+func GetHistorySince(ticker string, commodityName string, since time.Time) ([]*price.Price, error) {
+	return getYahooHistory(ticker, commodityName, &since)
+}
+
+func getYahooHistory(ticker, commodityName string, since *time.Time) ([]*price.Price, error) {
 	log.Info("Fetching stock price history from Yahoo")
-	response, err := getTicker(ticker)
+	var response *Response
+	var err error
+	if since == nil {
+		response, err = getTicker(ticker)
+	} else {
+		response, err = getTickerSince(ticker, *since)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +188,12 @@ func GetHistory(ticker string, commodityName string) ([]*price.Price, error) {
 	if !utils.IsCurrency(quoteCurrency) {
 		needExchangePrice = true
 		exchangeTicker := fmt.Sprintf("%s%s=X", quoteCurrency, config.DefaultCurrency())
-		exchangeResponse, err := getTicker(exchangeTicker)
+		var exchangeResponse *Response
+		if since == nil {
+			exchangeResponse, err = getTicker(exchangeTicker)
+		} else {
+			exchangeResponse, err = getTickerSince(exchangeTicker, *since)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -255,13 +277,32 @@ func getTicker(ticker string) (*Response, error) {
 	return response, err
 }
 
+func getTickerSince(ticker string, since time.Time) (*Response, error) {
+	response, err := fetchTickerSince(ticker, since, false)
+	if err != nil && retryable(err) {
+		return fetchTickerSince(ticker, since, true)
+	}
+	return response, err
+}
+
 func fetchTicker(ticker string, refresh bool) (*Response, error) {
+	return fetchTickerURL(fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y", ticker), refresh)
+}
+
+func fetchTickerSince(ticker string, since time.Time, refresh bool) (*Response, error) {
+	return fetchTickerURL(fmt.Sprintf(
+		"https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&period1=%d&period2=%d",
+		ticker, since.Unix(), time.Now().Unix(),
+	), refresh)
+}
+
+func fetchTickerURL(chartURL string, refresh bool) (*Response, error) {
 	crumb, err := yahooSessionState.getCrumb(refresh)
 	if err != nil {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://query2.finance.yahoo.com/v8/finance/chart/%s?interval=1d&range=50y&crumb=%s", ticker, url.QueryEscape(crumb))
+	url := fmt.Sprintf("%s&crumb=%s", chartURL, url.QueryEscape(crumb))
 	req, err := newYahooRequest(url)
 	if err != nil {
 		return nil, err
@@ -433,6 +474,8 @@ func firstYahooResult(ticker string, response *Response) (Result, error) {
 type YahooPriceProvider struct {
 }
 
+var _ price.RangeProvider = (*YahooPriceProvider)(nil)
+
 func (p *YahooPriceProvider) Code() string {
 	return "com-yahoo"
 }
@@ -460,4 +503,8 @@ func (p *YahooPriceProvider) ClearCache(db *gorm.DB) {
 
 func (p *YahooPriceProvider) GetPrices(code string, commodityName string) ([]*price.Price, error) {
 	return GetHistory(code, commodityName)
+}
+
+func (p *YahooPriceProvider) GetPricesSince(code string, commodityName string, since time.Time) ([]*price.Price, error) {
+	return GetHistorySince(code, commodityName, since)
 }
