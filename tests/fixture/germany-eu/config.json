@@ -718,6 +718,51 @@
         ],
         "type": "array"
       },
+      "price_update": {
+        "additionalProperties": false,
+        "description": "Automatic price updates for configured commodities.",
+        "properties": {
+          "days": {
+            "default": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri"
+            ],
+            "description": "Days on which prices are updated automatically.",
+            "items": {
+              "enum": [
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri",
+                "sat",
+                "sun"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "enabled": {
+            "default": "yes",
+            "description": "Enable automatic price updates.",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "type": "string"
+          },
+          "time": {
+            "default": "22:30",
+            "description": "Local time in the configured time zone.",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "readonly": {
         "description": "Run in readonly mode.",
         "type": "boolean",
