@@ -169,7 +169,7 @@ func BuildWithManager(db *gorm.DB, enableCompression bool, manager *pricesync.Ma
 		}
 
 		if syncRequest.Background {
-			if syncRequest.Journal || syncRequest.Portfolios {
+			if !syncRequest.Prices || syncRequest.Journal || syncRequest.Portfolios {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "background is only supported for prices"})
 				return
 			}

@@ -116,6 +116,27 @@ func TestBackgroundSyncIgnoresJournalAndPortfolios(t *testing.T) {
 	}
 }
 
+func TestBackgroundSyncRequiresPrices(t *testing.T) {
+	db := openSyncTestDB(t)
+
+	var calls int32
+	syncFn := func(pricesync.SyncOptions) pricesync.Outcome {
+		atomic.AddInt32(&calls, 1)
+		return pricesync.Outcome{Success: true}
+	}
+	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
+	router := BuildWithManager(db, false, manager)
+
+	body := `{"background":true}`
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/sync", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, int32(0), atomic.LoadInt32(&calls))
+}
+
 func TestReadonlyBackgroundSyncIsNoop(t *testing.T) {
 	db := openSyncTestDBWithConfig(t, `
 journal_path: main.ledger
