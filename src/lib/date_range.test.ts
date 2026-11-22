@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, describe, expect, it } from "bun:test";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { dateBounds } from "./date_range";
@@ -8,7 +8,16 @@ import { financialYear, forEachFinancialYear } from "./utils";
 dayjs.extend(isSameOrBefore);
 // The default config uses a January start; use the Indian April start for the
 // integration case below so the data ending in March belongs to 2023-24.
-globalThis.USER_CONFIG = { financial_year_starting_month: 4 } as never;
+const previousConfig = (globalThis as any).USER_CONFIG;
+globalThis.USER_CONFIG = { ...previousConfig, financial_year_starting_month: 4 } as never;
+
+afterAll(() => {
+  if (previousConfig === undefined) {
+    delete (globalThis as any).USER_CONFIG;
+  } else {
+    (globalThis as any).USER_CONFIG = previousConfig;
+  }
+});
 
 describe("dateBounds", () => {
   it("returns the earliest and latest dates from unsorted data", () => {
