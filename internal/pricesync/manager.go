@@ -151,7 +151,7 @@ func (m *Manager) statusLocked(now time.Time) Status {
 		FailedCommodities:    m.state.FailedCommodities,
 	}
 
-	if running {
+	if m.running {
 		status.JobID = m.jobID
 	}
 

@@ -311,3 +311,37 @@ func TestManagerSuccessClearsPartialSuccess(t *testing.T) {
 	assert.False(t, state.LastSuccessAt.IsZero())
 	assert.True(t, state.LastPartialSuccessAt.IsZero())
 }
+
+func TestManagerStatusReportsZeroJobIDForForeignRun(t *testing.T) {
+	store := NewMemoryStateStore()
+	now := time.Date(2026, 11, 23, 22, 45, 0, 0, berlin(t))
+
+	// A previous manager job finished successfully.
+	require.NoError(t, store.Save(State{LastJobID: 7, LastJobSuccess: true}))
+
+	runner := NewRunner()
+	m := New(nil, func() config.Config { return testConfig(true) }, store,
+		func(SyncOptions) Outcome { return Outcome{Success: true} }, runner,
+		func() time.Time { return now })
+
+	// Idle: no job is reported.
+	status := m.Status(now)
+	assert.False(t, status.Running)
+	assert.Equal(t, uint64(0), status.JobID)
+	assert.Equal(t, uint64(7), status.LastJobID)
+
+	// A foreign/foreground sync holds the runner without a manager job: the
+	// status must report running with a zero job id, keeping last_job_id.
+	require.True(t, runner.TryStart())
+	status = m.Status(now)
+	assert.True(t, status.Running)
+	assert.Equal(t, uint64(0), status.JobID)
+	assert.Equal(t, uint64(7), status.LastJobID)
+
+	// Releasing the runner returns to the idle status.
+	runner.Finish()
+	status = m.Status(now)
+	assert.False(t, status.Running)
+	assert.Equal(t, uint64(0), status.JobID)
+	assert.Equal(t, uint64(7), status.LastJobID)
+}
