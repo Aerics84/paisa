@@ -225,7 +225,7 @@ func fetchCommodityPrices(db *gorm.DB, commodity config.Commodity, provider pric
 
 	since := latest.AddDate(0, 0, -7)
 
-	prices, err := fetchSince(provider, code, name, since)
+	prices, usedFullFetch, err := fetchSince(provider, code, name, since)
 	if err != nil {
 		return nil, false, err
 	}
@@ -237,9 +237,13 @@ func fetchCommodityPrices(db *gorm.DB, commodity config.Commodity, provider pric
 		}), false, nil
 	}
 
-	// The provider returned nothing usable for the window, for example
-	// because it does not support range requests. Fall back to a full fetch,
-	// but only accept it if it still covers the requested window.
+	if usedFullFetch {
+		return nil, false, err
+	}
+
+	// The provider supports a range but returned nothing usable for the
+	// window. Fall back to a full fetch, but only accept it if it still
+	// covers the requested window.
 	log.Infof("Incremental fetch for %s failed (%s), falling back to full history", name, err)
 	prices, err = provider.GetPrices(code, name)
 	if err != nil {
@@ -252,11 +256,13 @@ func fetchCommodityPrices(db *gorm.DB, commodity config.Commodity, provider pric
 	return validated, false, nil
 }
 
-func fetchSince(provider price.PriceProvider, code string, name string, since time.Time) ([]*price.Price, error) {
+func fetchSince(provider price.PriceProvider, code string, name string, since time.Time) ([]*price.Price, bool, error) {
 	if rangeProvider, ok := provider.(price.RangeProvider); ok {
-		return rangeProvider.GetPricesSince(code, name, since)
+		prices, err := rangeProvider.GetPricesSince(code, name, since)
+		return prices, false, err
 	}
-	return provider.GetPrices(code, name)
+	prices, err := provider.GetPrices(code, name)
+	return prices, true, err
 }
 
 func SyncCII(db *gorm.DB) error {
@@ -264,7 +270,6 @@ func SyncCII(db *gorm.DB) error {
 	log.Info("Fetching taxation related info")
 	ciis, err := india.GetCostInflationIndex()
 	if err != nil {
-		log.Error(err)
 		return fmt.Errorf("Failed to fetch CII: %w", err)
 	}
 	cii.UpsertAll(db, ciis)

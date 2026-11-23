@@ -1,13 +1,16 @@
 package pricesync
 
 import (
+	"bytes"
 	"context"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +31,31 @@ func testConfig(enabled bool) config.Config {
 
 func newTestManager(store StateStore, now time.Time, cfg func() config.Config, syncFn func(SyncOptions) Outcome) *Manager {
 	return New(nil, cfg, store, syncFn, NewRunner(), func() time.Time { return now })
+}
+
+func TestManagerCachesInvalidScheduleWarnings(t *testing.T) {
+	var logs bytes.Buffer
+	previousOutput := log.StandardLogger().Out
+	log.SetOutput(&logs)
+	t.Cleanup(func() {
+		log.SetOutput(previousOutput)
+	})
+
+	cfg := testConfig(true)
+	cfg.PriceUpdate = &config.PriceUpdateConfig{
+		Enabled: config.Yes,
+		Time:    "25:00",
+		Days:    []string{"funday"},
+	}
+	now := time.Date(2026, 11, 23, 22, 45, 0, 0, berlin(t))
+	m := newTestManager(NewMemoryStateStore(), now, func() config.Config { return cfg },
+		func(SyncOptions) Outcome { return Outcome{Success: true} })
+
+	for i := 0; i < 5; i++ {
+		m.Status(now)
+	}
+
+	assert.Equal(t, 1, strings.Count(logs.String(), "Unknown price update day"))
 }
 
 func TestManagerStartIsAsyncAndAssignsJobID(t *testing.T) {
@@ -118,6 +146,9 @@ func TestManagerRecordsPartialFailure(t *testing.T) {
 	assert.True(t, status.LastJobPartial)
 	assert.Equal(t, []string{"NFLX"}, status.FailedCommodities)
 	assert.Equal(t, "boom", status.LastError)
+
+	status.FailedCommodities[0] = "MUTATED"
+	assert.Equal(t, []string{"NFLX"}, m.Status(now).FailedCommodities)
 
 	state, err := store.Load()
 	require.NoError(t, err)

@@ -2,6 +2,7 @@ package pricesync
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,6 +65,11 @@ type Manager struct {
 	wake   chan struct{}
 	cancel context.CancelFunc
 	once   sync.Once
+
+	scheduleMu     sync.Mutex
+	scheduleKey    string
+	scheduleValue  Schedule
+	scheduleCached bool
 }
 
 // New returns a Manager that loads its initial state from store. A load error
@@ -101,8 +107,33 @@ func New(db *gorm.DB, cfg func() config.Config, store StateStore, syncFn func(Sy
 
 // schedule derives the Schedule from the current configuration.
 func (m *Manager) schedule() Schedule {
-	cfg := m.cfg()
-	return ParseSchedule(cfg.EffectivePriceUpdate(), m.location(cfg))
+	return m.scheduleFor(m.cfg())
+}
+
+// scheduleFor returns a parsed schedule for cfg, reparsing only when the
+// schedule-relevant configuration changes. ParseSchedule logs warnings for
+// invalid values; caching keeps those warnings from repeating on every status
+// poll.
+func (m *Manager) scheduleFor(cfg config.Config) Schedule {
+	effective := cfg.EffectivePriceUpdate()
+	key := strings.Join([]string{
+		cfg.TimeZone,
+		string(effective.Enabled),
+		effective.Time,
+		strings.Join(effective.Days, ","),
+	}, "\x00")
+
+	m.scheduleMu.Lock()
+	defer m.scheduleMu.Unlock()
+
+	if m.scheduleCached && m.scheduleKey == key {
+		return m.scheduleValue
+	}
+
+	m.scheduleValue = ParseSchedule(effective, m.location(cfg))
+	m.scheduleKey = key
+	m.scheduleCached = true
+	return m.scheduleValue
 }
 
 // location resolves the configured time zone, falling back to the global one.
@@ -124,7 +155,7 @@ func (m *Manager) Status(now time.Time) Status {
 
 func (m *Manager) statusLocked(now time.Time) Status {
 	cfg := m.cfg()
-	schedule := m.schedule()
+	schedule := m.scheduleFor(cfg)
 
 	enabled := schedule.Active && !cfg.Readonly
 	managed := hasManagedCommodity(cfg)
@@ -150,7 +181,7 @@ func (m *Manager) statusLocked(now time.Time) Status {
 		LastPartialSuccessAt: timePtr(m.state.LastPartialSuccessAt),
 		LastError:            m.state.LastError,
 		LastWarning:          m.state.LastWarning,
-		FailedCommodities:    m.state.FailedCommodities,
+		FailedCommodities:    append([]string(nil), m.state.FailedCommodities...),
 	}
 
 	if m.running {

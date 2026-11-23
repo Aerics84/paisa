@@ -35,41 +35,54 @@ func priceSyncOutcome(db *gorm.DB, full bool) pricesync.Outcome {
 	return pricesync.OutcomeFromResults(result.Succeeded, result.Failed, result.Errors, warnings)
 }
 
-// runSync executes every requested sync step and combines their outcomes into
-// a single report.
+// runSync executes the requested sync steps in order. A failure stops the
+// remaining steps, preserving the legacy sync contract: a broken journal must
+// not trigger a price or portfolio run.
 func runSync(db *gorm.DB, request SyncRequest) pricesync.Outcome {
-	outcome := pricesync.Outcome{Success: true}
-	var errors []string
+	warning := ""
 
 	if request.Journal {
 		message, err := model.SyncJournal(db)
 		if err != nil {
-			errors = append(errors, message)
+			if strings.TrimSpace(message) == "" {
+				message = err.Error()
+			}
+			return pricesync.Outcome{Success: false, Error: message}
 		}
 	}
 
 	if request.Prices {
 		price := priceSyncOutcome(db, request.Full)
-		outcome.Partial = price.Partial
-		outcome.FailedCommodities = price.FailedCommodities
-		outcome.Warning = price.Warning
-		if price.Error != "" {
-			errors = append(errors, price.Error)
+		if !price.Success {
+			return price
 		}
+		warning = price.Warning
 	}
 
 	if request.Portfolios {
 		if err := model.SyncPortfolios(db); err != nil {
-			errors = append(errors, err.Error())
+			return pricesync.Outcome{Success: false, Error: err.Error()}
 		}
 	}
 
-	if len(errors) > 0 {
-		outcome.Success = false
-		outcome.Error = strings.Join(errors, "\n")
-	}
+	return pricesync.Outcome{Success: true, Warning: warning}
+}
 
-	return outcome
+func syncResponse(outcome pricesync.Outcome) gin.H {
+	response := gin.H{"success": outcome.Success}
+	if outcome.Error != "" {
+		response["message"] = outcome.Error
+	}
+	if outcome.Partial {
+		response["partial"] = true
+	}
+	if len(outcome.FailedCommodities) > 0 {
+		response["failed_commodities"] = outcome.FailedCommodities
+	}
+	if outcome.Warning != "" {
+		response["warning"] = outcome.Warning
+	}
+	return response
 }
 
 func Sync(db *gorm.DB, request SyncRequest) gin.H {
@@ -82,13 +95,7 @@ func Sync(db *gorm.DB, request SyncRequest) gin.H {
 	}
 	cache.Clear()
 	cache.MarkSynced()
-	return gin.H{
-		"success":            outcome.Success,
-		"message":            outcome.Error,
-		"partial":            outcome.Partial,
-		"failed_commodities": outcome.FailedCommodities,
-		"warning":            outcome.Warning,
-	}
+	return syncResponse(outcome)
 }
 
 // NewPriceManager builds a price update manager whose sync function runs a

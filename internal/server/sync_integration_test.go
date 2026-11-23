@@ -1,8 +1,12 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -110,4 +114,56 @@ func TestPartialRunInvalidatesCacheOnce(t *testing.T) {
 	saved, err := store.Load()
 	require.NoError(t, err)
 	assert.Equal(t, []string{"NFLX"}, saved.FailedCommodities)
+}
+
+// TestBackgroundSyncHTTPEndToEnd exercises the public POST /api/sync and
+// GET /api/sync/status routes with a manager-backed fake sync function.
+func TestBackgroundSyncHTTPEndToEnd(t *testing.T) {
+	db := openSyncIntegrationTestDB(t)
+	store := pricesync.NewMemoryStateStore()
+	runner := pricesync.NewRunner()
+
+	var syncErr error
+	manager := pricesync.New(db, config.GetConfig, store,
+		func(pricesync.SyncOptions) pricesync.Outcome {
+			syncErr = price.UpsertMerged(db, config.Stock, "MSFT", "MSFT",
+				[]*price.Price{{
+					Date:  time.Date(2026, 11, 20, 0, 0, 0, 0, config.TimeZone()),
+					Value: decimal.NewFromInt(200),
+				}}, true)
+			cache.Clear()
+			cache.MarkSynced()
+			return pricesync.Outcome{Success: true}
+		}, runner, time.Now)
+
+	router := BuildWithManager(db, false, manager)
+
+	post := httptest.NewRequest(http.MethodPost, "/api/sync", strings.NewReader(`{"prices":true,"background":true}`))
+	post.Header.Set("Content-Type", "application/json")
+	postResponse := httptest.NewRecorder()
+	router.ServeHTTP(postResponse, post)
+	require.Equal(t, http.StatusAccepted, postResponse.Code)
+
+	var started struct {
+		Started bool             `json:"started"`
+		Status  pricesync.Status `json:"status"`
+	}
+	require.NoError(t, json.Unmarshal(postResponse.Body.Bytes(), &started))
+	require.True(t, started.Started)
+	require.True(t, started.Status.Running)
+
+	require.Eventually(t, func() bool {
+		return !manager.Status(time.Now()).Running
+	}, 2*time.Second, 10*time.Millisecond)
+	require.NoError(t, syncErr)
+
+	get := httptest.NewRequest(http.MethodGet, "/api/sync/status", nil)
+	getResponse := httptest.NewRecorder()
+	router.ServeHTTP(getResponse, get)
+	require.Equal(t, http.StatusOK, getResponse.Code)
+
+	var final pricesync.Status
+	require.NoError(t, json.Unmarshal(getResponse.Body.Bytes(), &final))
+	assert.True(t, final.LastJobSuccess)
+	assert.False(t, final.Stale)
 }

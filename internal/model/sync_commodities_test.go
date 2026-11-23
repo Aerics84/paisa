@@ -103,6 +103,47 @@ func syncTestPrices(t *testing.T, db *gorm.DB, typ config.CommodityType, name st
 	return rows
 }
 
+type plainProvider struct {
+	full      []*price.Price
+	fullCalls int
+}
+
+func (p *plainProvider) Code() string                                  { return "plain" }
+func (p *plainProvider) Label() string                                 { return "plain" }
+func (p *plainProvider) Description() string                           { return "plain" }
+func (p *plainProvider) AutoCompleteFields() []price.AutoCompleteField { return nil }
+func (p *plainProvider) AutoComplete(*gorm.DB, string, map[string]string) []price.AutoCompleteItem {
+	return nil
+}
+func (p *plainProvider) ClearCache(*gorm.DB) {}
+func (p *plainProvider) GetPrices(string, string) ([]*price.Price, error) {
+	p.fullCalls++
+	return p.full, nil
+}
+
+func TestSyncCommoditiesDoesNotRepeatFullFetchOnFallback(t *testing.T) {
+	db := openSyncTestDB(t)
+	now := syncTestDate(2026, 11, 24)
+	seedSyncPrices(t, db, config.Stock, "GOLD", "gold",
+		syncTestDate(2026, 11, 18), syncTestDate(2026, 11, 20))
+
+	// A plain provider has no range support. Its full response contains no
+	// price at/after the seven-day window, so the incremental run must fail
+	// after exactly one full fetch instead of downloading the same response
+	// a second time.
+	plain := &plainProvider{
+		full: []*price.Price{{Date: syncTestDate(2026, 11, 10), Value: decimal.NewFromInt(200)}},
+	}
+	stubProviderLookup(t, map[string]price.PriceProvider{"plain": plain})
+
+	result := syncCommodities(db,
+		[]config.Commodity{syncTestCommodity("GOLD", config.Stock, "plain", "gold")},
+		SyncCommoditiesOptions{Full: false, Now: now, Concurrency: 1})
+
+	require.Len(t, result.Failed, 1)
+	assert.Equal(t, 1, plain.fullCalls)
+}
+
 func TestSyncCommoditiesUsesIncrementalSince(t *testing.T) {
 	db := openSyncTestDB(t)
 	now := syncTestDate(2026, 11, 24)

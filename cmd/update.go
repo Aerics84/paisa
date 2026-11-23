@@ -96,6 +96,9 @@ var updateCmd = &cobra.Command{
 		if syncAll || updateJournal {
 			message, err := model.SyncJournal(db)
 			if err != nil {
+				if strings.TrimSpace(message) == "" {
+					message = err.Error()
+				}
 				// Prices are upserted before the postings are parsed, so a
 				// journal failure can still have changed the database.
 				cache.MarkSynced()

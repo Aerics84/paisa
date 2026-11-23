@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -159,13 +157,11 @@ func (s *FileStateStore) Load() (State, error) {
 		if os.IsNotExist(err) {
 			return State{}, nil
 		}
-		log.Errorf("Failed to read price update state %s: %v", s.path, err)
 		return State{}, fmt.Errorf("read price update state %s: %w", s.path, err)
 	}
 
 	var state State
 	if err := json.Unmarshal(data, &state); err != nil {
-		log.Errorf("Failed to decode price update state %s: %v", s.path, err)
 		return State{}, fmt.Errorf("decode price update state %s: %w", s.path, err)
 	}
 
@@ -178,46 +174,40 @@ func (s *FileStateStore) Load() (State, error) {
 
 // Save writes the state file. The state is written to a temporary file in the
 // same directory which is flushed and then renamed over the state file, so a
-// crash never leaves a half written file behind. Errors are returned and
-// logged, they never abort the caller.
+// crash never leaves a half written file behind. Errors are returned to the
+// caller; persisting state never aborts the server.
 func (s *FileStateStore) Save(state State) error {
 	state.SchemaVersion = stateSchemaVersion
 
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
-		log.Errorf("Failed to encode price update state: %v", err)
 		return fmt.Errorf("encode price update state: %w", err)
 	}
 
 	dir := filepath.Dir(s.path)
 	tmp, err := os.CreateTemp(dir, stateTempPattern)
 	if err != nil {
-		log.Errorf("Failed to create temporary price update state file in %s: %v", dir, err)
 		return fmt.Errorf("create temporary price update state file: %w", err)
 	}
 	tmpPath := tmp.Name()
 
 	if _, err := tmp.Write(data); err != nil {
 		discardTempFile(tmp, tmpPath)
-		log.Errorf("Failed to write price update state %s: %v", tmpPath, err)
 		return fmt.Errorf("write price update state: %w", err)
 	}
 
 	if err := tmp.Sync(); err != nil {
 		discardTempFile(tmp, tmpPath)
-		log.Errorf("Failed to sync price update state %s: %v", tmpPath, err)
 		return fmt.Errorf("sync price update state: %w", err)
 	}
 
 	if err := tmp.Close(); err != nil {
 		os.Remove(tmpPath)
-		log.Errorf("Failed to close price update state %s: %v", tmpPath, err)
 		return fmt.Errorf("close price update state: %w", err)
 	}
 
 	if err := os.Rename(tmpPath, s.path); err != nil {
 		os.Remove(tmpPath)
-		log.Errorf("Failed to replace price update state %s: %v", s.path, err)
 		return fmt.Errorf("replace price update state %s: %w", s.path, err)
 	}
 

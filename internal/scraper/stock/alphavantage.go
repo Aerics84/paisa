@@ -55,8 +55,11 @@ func (p AlphaVantageExchangePrice) Less(o btree.Item) bool {
 	return p.Date.Before(o.(AlphaVantageExchangePrice).Date)
 }
 
+// alphaVantageHTTPClient is overridden in tests.
+var alphaVantageHTTPClient = http.DefaultClient
+
 func fetch[R any](url string, response *R) error {
-	resp, err := http.Get(url)
+	resp, err := alphaVantageHTTPClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -89,6 +92,10 @@ func fetch[R any](url string, response *R) error {
 }
 
 func getHistory(code, commodityName string) ([]*price.Price, error) {
+	return getHistoryWithOutputSize(code, commodityName, "full")
+}
+
+func getHistoryWithOutputSize(code, commodityName, outputSize string) ([]*price.Price, error) {
 	parts := strings.Split(code, ":")
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("Invalid code: %s", code)
@@ -96,7 +103,7 @@ func getHistory(code, commodityName string) ([]*price.Price, error) {
 	apiKey, ticker, currency := parts[0], parts[1], parts[2]
 
 	log.Info("Fetching stock price history from Alpha Vantage")
-	url := fmt.Sprintf("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=full&apikey=%s", ticker, apiKey)
+	url := fmt.Sprintf("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&outputsize=%s&apikey=%s", ticker, outputSize, apiKey)
 	var response TimeSeriesDailyReponse
 	err := fetch(url, &response)
 	if err != nil {
@@ -108,7 +115,7 @@ func getHistory(code, commodityName string) ([]*price.Price, error) {
 	if !utils.IsCurrency(currency) {
 		needExchangePrice = true
 		log.Info("Fetching exchange rate from Alpha Vantage")
-		url = fmt.Sprintf("https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=%s&to_symbol=%s&outputsize=full&apikey=%s", currency, config.DefaultCurrency(), apiKey)
+		url = fmt.Sprintf("https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=%s&to_symbol=%s&outputsize=%s&apikey=%s", currency, config.DefaultCurrency(), outputSize, apiKey)
 		var response FXSeriesDailyReponse
 		err = fetch(url, &response)
 		if err != nil {
@@ -223,3 +230,9 @@ func (p *AlphaVantagePriceProvider) ClearCache(db *gorm.DB) {
 func (p *AlphaVantagePriceProvider) GetPrices(code string, commodityName string) ([]*price.Price, error) {
 	return getHistory(code, commodityName)
 }
+
+func (p *AlphaVantagePriceProvider) GetPricesSince(code string, commodityName string, _ time.Time) ([]*price.Price, error) {
+	return getHistoryWithOutputSize(code, commodityName, "compact")
+}
+
+var _ price.RangeProvider = (*AlphaVantagePriceProvider)(nil)

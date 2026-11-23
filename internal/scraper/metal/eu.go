@@ -32,6 +32,8 @@ type EuPriceProvider struct {
 
 var _ price.RangeProvider = (*EuPriceProvider)(nil)
 
+var _ price.RangeProvider = (*EuPriceProvider)(nil)
+
 func (p *EuPriceProvider) Code() string {
 	return "com-yahoo-eu-metal"
 }

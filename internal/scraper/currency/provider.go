@@ -39,6 +39,8 @@ var earliest = time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC)
 type PriceProvider struct {
 }
 
+var _ price.RangeProvider = (*PriceProvider)(nil)
+
 func (p *PriceProvider) Code() string {
 	return "com-allratestoday"
 }

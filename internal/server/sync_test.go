@@ -15,6 +15,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/price"
 	"github.com/ananthakumaran/paisa/internal/pricesync"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -255,4 +256,25 @@ func TestConcurrentBackgroundRequestsStartOneJob(t *testing.T) {
 	}
 
 	close(release)
+}
+
+func TestSyncResponseKeepsLegacySuccessShape(t *testing.T) {
+	assert.Equal(t, gin.H{"success": true}, syncResponse(pricesync.Outcome{Success: true}))
+}
+
+func TestSyncResponseIncludesPartialDetails(t *testing.T) {
+	got := syncResponse(pricesync.Outcome{
+		Success:           false,
+		Partial:           true,
+		FailedCommodities: []string{"NFLX"},
+		Error:             "boom",
+		Warning:           "CI",
+	})
+	assert.Equal(t, gin.H{
+		"success":            false,
+		"message":            "boom",
+		"partial":            true,
+		"failed_commodities": []string{"NFLX"},
+		"warning":            "CI",
+	}, got)
 }
