@@ -45,6 +45,11 @@ export function renderMonthlyFlow(
   }
 ) {
   const MAX_BAR_WIDTH = rem(20);
+  const container = document.getElementById(id.substring(1));
+  if (!container || !container.parentElement) {
+    return { renderer: () => {}, legends: [] };
+  }
+
   const svg = d3.select(id),
     margin = {
       top: rem(15),
@@ -52,10 +57,7 @@ export function renderMonthlyFlow(
       bottom: options.rotate ? rem(50) : rem(20),
       left: rem(40)
     },
-    width =
-      document.getElementById(id.substring(1)).parentElement.clientWidth -
-      margin.left -
-      margin.right,
+    width = container.parentElement.clientWidth - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 

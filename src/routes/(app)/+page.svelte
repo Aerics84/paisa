@@ -27,7 +27,7 @@
     type ExpensePace
   } from "$lib/utils";
   import _ from "lodash";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   import BudgetCard from "$lib/components/BudgetCard.svelte";
   import LevelItem from "$lib/components/LevelItem.svelte";
@@ -57,6 +57,11 @@
   let selectedExpenses: Posting[] = [];
   let isEmpty = false;
   let checkingBalances: Record<string, AssetBreakdown> = {};
+  let destroyed = false;
+
+  onDestroy(() => {
+    destroyed = true;
+  });
 
   $: currentExpensePace = expensePace && expensePace.period === month ? expensePace : null;
   $: if (renderer) {
@@ -77,6 +82,9 @@
 
   onMount(async () => {
     const dashboard = await ajax("/api/dashboard");
+    if (destroyed) {
+      return;
+    }
     ({
       expenses,
       cashFlows,

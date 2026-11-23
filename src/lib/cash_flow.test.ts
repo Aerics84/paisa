@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import dayjs from "dayjs";
-import { cashFlowNetValues } from "./cash_flow";
+import { cashFlowNetValues, renderMonthlyFlow } from "./cash_flow";
 import type { CashFlow } from "./utils";
 
 function cashFlow(overrides: Partial<CashFlow> = {}): CashFlow {
@@ -44,5 +44,13 @@ describe("cash flow net values", () => {
       netAfterTax: 0,
       netAfterSaving: 0
     });
+  });
+});
+
+describe("monthly flow renderer", () => {
+  test("returns a no-op renderer when the chart container is gone", () => {
+    const { renderer, legends } = renderMonthlyFlow("#missing-chart");
+    expect(legends).toEqual([]);
+    expect(() => renderer([])).not.toThrow();
   });
 });

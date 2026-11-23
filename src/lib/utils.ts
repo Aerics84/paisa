@@ -1255,47 +1255,50 @@ export async function ajax(
     loading.set(true);
   }
 
-  if (!_.isEmpty(params)) {
-    _.each(params, (value, key) => {
-      route = route.replace(`:${key}`, value);
-    });
-  }
-
-  options = options || {};
-
-  options.headers = {
-    "Content-Type": "application/json"
-  };
-
-  const token = localStorage.getItem(tokenKey);
-  if (!_.isEmpty(token)) {
-    options.headers["X-Auth"] = token;
-  }
-
-  const response = await fetch(route, options);
-  const body = await response.text();
-  if (!background) {
-    loading.set(false);
-  }
-
-  if (response.status == 401 && route != "/api/ping") {
-    logout();
-    await redirectToLogin();
-    error(401, "Unauthorized");
-  }
-
-  return JSON.parse(body, (key, value) => {
-    if (
-      _.isString(value) &&
-      /Date|date|time|now/.test(key) &&
-      /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(
-        value
-      )
-    ) {
-      return parseApiDate(value);
+  try {
+    if (!_.isEmpty(params)) {
+      _.each(params, (value, key) => {
+        route = route.replace(`:${key}`, value);
+      });
     }
-    return value;
-  });
+
+    options = options || {};
+
+    options.headers = {
+      "Content-Type": "application/json"
+    };
+
+    const token = localStorage.getItem(tokenKey);
+    if (!_.isEmpty(token)) {
+      options.headers["X-Auth"] = token;
+    }
+
+    const response = await fetch(route, options);
+    const body = await response.text();
+
+    if (response.status == 401 && route != "/api/ping") {
+      logout();
+      await redirectToLogin();
+      error(401, "Unauthorized");
+    }
+
+    return JSON.parse(body, (key, value) => {
+      if (
+        _.isString(value) &&
+        /Date|date|time|now/.test(key) &&
+        /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(
+          value
+        )
+      ) {
+        return parseApiDate(value);
+      }
+      return value;
+    });
+  } finally {
+    if (!background) {
+      loading.set(false);
+    }
+  }
 }
 
 export async function login(username: string, password: string) {

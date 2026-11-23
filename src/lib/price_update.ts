@@ -1,6 +1,7 @@
 import * as toast from "bulma-toast";
+import { get } from "svelte/store";
 import { ajax, type PriceUpdateStatus, type SyncResponse } from "./utils";
-import { hasUnsavedWork, refresh } from "../store";
+import { hasUnsavedWork, loading, refresh } from "../store";
 
 const FAST_INTERVAL = 2000;
 const SLOW_INTERVAL = 5000;
@@ -58,12 +59,28 @@ export function jobOutcome(status: PriceUpdateStatus): PriceUpdateJobOutcome {
   return "failure";
 }
 
+async function waitForIdle(timeoutMs = 15000): Promise<boolean> {
+  const startedAt = Date.now();
+  while (get(loading) && Date.now() - startedAt < timeoutMs) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return !get(loading);
+}
+
 async function finish(status: PriceUpdateStatus, gen: number): Promise<void> {
   const outcome = jobOutcome(status);
   if (outcome === "success") {
     if (shouldRefreshAfter(status) && !hasUnsavedWork() && document.visibilityState === "visible") {
-      toast.toast({ message: "Prices updated", type: "is-success" });
-      await refresh();
+      // Do not remount the layout while a page request is still in flight.
+      // The dashboard and other pages render D3 charts in onMount and assume
+      // their DOM node still exists when the request resolves.
+      if (await waitForIdle()) {
+        if (gen !== generation) return;
+        toast.toast({ message: "Prices updated", type: "is-success" });
+        await refresh();
+      } else {
+        toast.toast({ message: "Prices updated – visible on next navigation", type: "is-info" });
+      }
     } else {
       toast.toast({ message: "Prices updated – visible on next navigation", type: "is-info" });
     }
