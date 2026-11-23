@@ -57,8 +57,12 @@
         (value[childKey] == null || typeof value[childKey] !== "object")
       ) {
         value[childKey] = {};
-      } else if (childSchema.type === "array" && !Array.isArray(value[childKey])) {
-        value[childKey] = _.cloneDeep(childSchema.default ?? []);
+      } else if (
+        childSchema.type === "array" &&
+        Array.isArray(childSchema.default) &&
+        !Array.isArray(value[childKey])
+      ) {
+        value[childKey] = _.cloneDeep(childSchema.default);
       }
     }
   }
