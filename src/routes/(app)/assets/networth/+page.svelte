@@ -46,6 +46,8 @@
     );
 
     if (_.isEmpty(inRange)) {
+      // D3 owns this container; Svelte only supplies the element.
+      // eslint-disable-next-line svelte/no-dom-manipulating
       svg.innerHTML = "";
       legends = [];
     } else {

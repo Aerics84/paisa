@@ -75,6 +75,10 @@ export default [
       "@typescript-eslint/no-unused-expressions": "off",
       "svelte/no-immutable-reactive-statements": "off",
       "svelte/no-navigation-without-resolve": "off",
+      // The rule's fixer still calls SourceCode#isSpaceBetweenTokens, which
+      // ESLint 10 removed; keep the repo lint gate running until the plugin
+      // catches up.
+      "svelte/no-reactive-functions": "off",
       "svelte/no-reactive-reassign": "off",
       "svelte/prefer-svelte-reactivity": "off",
       "svelte/require-each-key": "off"
