@@ -53,6 +53,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           draft: true
+          body_path: RELEASE_NOTES.md
           files: |
             paisa-*
         env:
