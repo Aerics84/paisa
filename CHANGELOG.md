@@ -4,12 +4,29 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
-### 0.8.6.5 (2026-11-22)
+### 0.8.6.6 (2026-11-23)
 
-P0/P2 adoptions from upstream commits between 15 and 22 November 2026.
+Automatic background price updates and the follow-up hardening.
 
-- Price updates now run automatically after market close on weekdays and in
-  the background, without blocking the UI.
+- Run price updates automatically Monday to Friday at 22:30 in the configured
+  time zone, with catch-up on server start and when the UI opens. The schedule
+  is configurable through the new `price_update` block; readonly deployments
+  and installations without provider-backed commodities are unaffected.
+- Keep the UI responsive during updates: the server runs one background job at
+  a time, exposes its status and job ID, and the web UI only shows a short
+  toast while it watches the job. "Update Prices" now performs a full refresh
+  in the background.
+- Fetch only a seven-day overlap for incremental runs, validate every provider
+  response before writing, merge by date so partial responses never delete
+  history, batch large inserts, and load up to four commodities in parallel.
+- Support time-windowed fetches for Yahoo, currency, EU metal and Alpha Vantage
+  providers; other providers keep their full-history fallback.
+- Persist the last attempt, success, partial success and failure in a
+  versioned state file, let `paisa update` share that state, and report price
+  failures with a non-zero exit code.
+- Keep the configuration editor usable when `price_update` is unset and make
+  invalid schedule values fall back with a single warning instead of blocking
+  startup.
 - Embed IANA timezone data so named time zones load even when the
   operating system or container has no timezone database.
 - Parse quoted commodity names with spaces and punctuation in Ledger and
