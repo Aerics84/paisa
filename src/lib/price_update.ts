@@ -46,6 +46,10 @@ export function shouldRefreshAfter(status: PriceUpdateStatus): boolean {
   return !status.running && status.last_job_success;
 }
 
+export function watchInterval(elapsedMs: number): number {
+  return elapsedMs < FAST_PHASE ? FAST_INTERVAL : SLOW_INTERVAL;
+}
+
 export type PriceUpdateJobOutcome = "success" | "partial" | "failure";
 
 export function jobOutcome(status: PriceUpdateStatus): PriceUpdateJobOutcome {
@@ -100,8 +104,7 @@ export function watchJob(jobID: number): void {
       startIdlePoll();
       return;
     }
-    const interval = elapsed < FAST_PHASE ? FAST_INTERVAL : SLOW_INTERVAL;
-    watchTimer = setTimeout(() => void poll(), interval);
+    watchTimer = setTimeout(() => void poll(), watchInterval(elapsed));
   }
 
   async function poll(): Promise<void> {

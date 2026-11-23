@@ -82,14 +82,16 @@ async function verifyApi(dir: string) {
 async function wait() {
   try {
     await waitPort({ port: port, output: "silent" });
-  } catch (e) {
+  } catch {
     // ignore
   }
 }
 
+const paisaBinary = process.platform === "win32" ? ".\\paisa.exe" : "./paisa";
+
 async function check(directory: string) {
   const process = spawn([
-    "./paisa",
+    paisaBinary,
     "--config",
     path.join(directory, "paisa.yaml"),
     "--port",

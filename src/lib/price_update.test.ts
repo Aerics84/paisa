@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { jobIsComplete, jobOutcome, shouldRefreshAfter } from "./price_update";
+import { jobIsComplete, jobOutcome, shouldRefreshAfter, watchInterval } from "./price_update";
 import type { PriceUpdateStatus } from "./utils";
 
 function status(overrides: Partial<PriceUpdateStatus> = {}): PriceUpdateStatus {
@@ -45,6 +45,18 @@ describe("shouldRefreshAfter", () => {
 
   test("does not refresh after a failed job", () => {
     expect(shouldRefreshAfter(status({ last_job_success: false }))).toBe(false);
+  });
+});
+
+describe("watchInterval", () => {
+  test("polls quickly during the first 30 seconds", () => {
+    expect(watchInterval(0)).toBe(2000);
+    expect(watchInterval(29_999)).toBe(2000);
+  });
+
+  test("polls slowly after the fast phase", () => {
+    expect(watchInterval(30_000)).toBe(5000);
+    expect(watchInterval(60_000)).toBe(5000);
   });
 });
 

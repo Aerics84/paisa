@@ -13,6 +13,7 @@
     "test:imports": "bun test --preload ./src/happydom.ts src/lib/import.test.ts",
     "test:investment": "bun test --preload ./src/happydom.ts src/lib/investment.test.ts",
     "test:monthly": "bun test --preload ./src/happydom.ts src/lib/monthly_review.test.ts",
+    "test": "npm run build && bun test --preload ./src/happydom.ts src && go test ./...",
     "test:regression": "bun test tests/regression.test.ts",
     "test:prepush": "node ./scripts/preflight-critical.mjs",
     "check:format:changed": "node ./scripts/prettier-changed.mjs",

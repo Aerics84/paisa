@@ -31,7 +31,23 @@
   $: title = _.startCase(key);
 
   function newItem(schema: any) {
-    return _.cloneDeep(schema.default[0]);
+    if (Array.isArray(schema.default) && schema.default.length > 0) {
+      return _.cloneDeep(schema.default[0]);
+    }
+
+    switch (schema.items?.type) {
+      case "object":
+        return {};
+      case "string":
+        return "";
+      case "integer":
+      case "number":
+        return 0;
+      case "boolean":
+        return false;
+      default:
+        return {};
+    }
   }
 
   function sortedProperties(schema: Schema) {
