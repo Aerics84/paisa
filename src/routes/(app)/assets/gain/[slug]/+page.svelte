@@ -63,7 +63,7 @@
       ? overview.gainAmount / overview.investmentAmount
       : 0
     : assetBreakdown?.absoluteReturn;
-  $: fmt = (v: number) => symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
+  $: fmt = (v: number) => (symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v));
   $: postings = _.chain(current ? current.postings : gain?.postings || [])
     .sortBy((p) => p.date)
     .reverse()

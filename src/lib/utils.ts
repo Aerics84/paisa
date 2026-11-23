@@ -1202,7 +1202,10 @@ export function ajax(
   options?: RequestOptions
 ): Promise<{ success: boolean; message: string }>;
 
-export function ajax(route: "/api/sync/status", options?: RequestOptions): Promise<PriceUpdateStatus>;
+export function ajax(
+  route: "/api/sync/status",
+  options?: RequestOptions
+): Promise<PriceUpdateStatus>;
 export function ajax(route: "/api/sync", options?: RequestOptions): Promise<SyncResponse>;
 export function ajax(
   route: "/api/price/providers",
