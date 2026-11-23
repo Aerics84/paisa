@@ -27,6 +27,9 @@ Automatic background price updates and the follow-up hardening.
 - Keep the configuration editor usable when `price_update` is unset and make
   invalid schedule values fall back with a single warning instead of blocking
   startup.
+- Keep the UI usable when a background price refresh finishes while a page is
+  still loading, and clear the global loading indicator after failed requests
+  instead of leaving the logo spinner on screen.
 - Embed IANA timezone data so named time zones load even when the
   operating system or container has no timezone database.
 - Parse quoted commodity names with spaces and punctuation in Ledger and
