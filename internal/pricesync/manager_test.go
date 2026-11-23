@@ -115,6 +115,7 @@ func TestManagerRecordsPartialFailure(t *testing.T) {
 	status := m.Status(now)
 	assert.NotNil(t, status.LastPartialSuccessAt)
 	assert.Nil(t, status.LastSuccessAt)
+	assert.True(t, status.LastJobPartial)
 	assert.Equal(t, []string{"NFLX"}, status.FailedCommodities)
 	assert.Equal(t, "boom", status.LastError)
 
@@ -124,6 +125,48 @@ func TestManagerRecordsPartialFailure(t *testing.T) {
 	assert.False(t, state.LastPartialSuccessAt.IsZero())
 	assert.Equal(t, []string{"NFLX"}, state.FailedCommodities)
 	assert.False(t, state.LastJobSuccess)
+	assert.True(t, state.LastJobPartial)
+}
+
+func TestManagerTotalFailureAfterPartialIsNotPartial(t *testing.T) {
+	store := NewMemoryStateStore()
+	now := time.Date(2026, 11, 23, 22, 45, 0, 0, berlin(t))
+
+	// A previous partial run left its timestamp and partial flag behind.
+	require.NoError(t, store.Save(State{
+		LastSuccessAt:        now.Add(-2 * time.Hour),
+		LastPartialSuccessAt: now.Add(-time.Hour),
+		LastJobID:            3,
+		LastJobPartial:       true,
+	}))
+
+	syncFn := func(SyncOptions) Outcome {
+		return Outcome{
+			Success:           false,
+			Partial:           false,
+			FailedCommodities: []string{"AAPL"},
+			Error:             "outage",
+		}
+	}
+
+	m := newTestManager(store, now, func() config.Config { return testConfig(true) }, syncFn)
+
+	_, started := m.Start(SyncOptions{}, StartManual)
+	require.True(t, started)
+	require.Eventually(t, func() bool {
+		return !m.Status(now).Running
+	}, time.Second, 10*time.Millisecond)
+
+	status := m.Status(now)
+	assert.False(t, status.LastJobSuccess)
+	assert.False(t, status.LastJobPartial)
+	assert.Equal(t, "outage", status.LastError)
+	assert.Equal(t, []string{"AAPL"}, status.FailedCommodities)
+
+	state, err := store.Load()
+	require.NoError(t, err)
+	assert.False(t, state.LastJobPartial)
+	assert.Equal(t, "outage", state.LastError)
 }
 
 func TestManagerCooldownAndManualOverride(t *testing.T) {

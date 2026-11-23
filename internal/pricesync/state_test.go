@@ -18,13 +18,14 @@ func TestFileStateStoreRoundTrip(t *testing.T) {
 		SchemaVersion:        1,
 		LastAttemptAt:        time.Date(2026, 11, 20, 22, 30, 0, 0, time.UTC),
 		LastSuccessAt:        time.Date(2026, 11, 20, 22, 30, 31, 0, time.UTC),
-		LastPartialSuccessAt: time.Time{},
+		LastPartialSuccessAt: time.Date(2026, 11, 20, 22, 31, 0, 0, time.UTC),
 		LastError:            "",
 		FailedCommodities:    []string{"NIFTY"},
 		LastDurationMS:       31000,
 		LastFull:             false,
 		LastJobID:            7,
-		LastJobSuccess:       true,
+		LastJobSuccess:       false,
+		LastJobPartial:       true,
 	}
 	require.NoError(t, store.Save(want))
 
@@ -79,6 +80,7 @@ func TestFileStateStoreWritesDocumentedFormat(t *testing.T) {
 	assert.Equal(t, false, got["last_full"])
 	assert.Equal(t, float64(0), got["last_job_id"])
 	assert.Equal(t, false, got["last_job_success"])
+	assert.Equal(t, false, got["last_job_partial"])
 }
 
 func TestFileStateStoreSaveReplacesFileAndLeavesNoTempFiles(t *testing.T) {

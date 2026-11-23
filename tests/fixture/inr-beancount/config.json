@@ -656,7 +656,7 @@
               "thu",
               "fri"
             ],
-            "description": "Days on which prices are updated automatically. Invalid values are accepted and fall back to Monday to Friday at runtime.",
+            "description": "Days on which prices are updated automatically. Invalid days are ignored; if no valid day remains, Mon-Fri is used.",
             "items": {
               "type": "string"
             },

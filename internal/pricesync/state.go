@@ -53,6 +53,8 @@ type State struct {
 	LastJobID uint64
 	// LastJobSuccess is true when the last job finished successfully.
 	LastJobSuccess bool
+	// LastJobPartial is true when the last job partially succeeded.
+	LastJobPartial bool
 }
 
 // stateFile is the on-disk representation of State. Timestamps are stored as
@@ -69,6 +71,7 @@ type stateFile struct {
 	LastFull             bool     `json:"last_full"`
 	LastJobID            uint64   `json:"last_job_id"`
 	LastJobSuccess       bool     `json:"last_job_success"`
+	LastJobPartial       bool     `json:"last_job_partial"`
 }
 
 // MarshalJSON writes the state in the documented on-disk format.
@@ -85,6 +88,7 @@ func (s State) MarshalJSON() ([]byte, error) {
 		LastFull:             s.LastFull,
 		LastJobID:            s.LastJobID,
 		LastJobSuccess:       s.LastJobSuccess,
+		LastJobPartial:       s.LastJobPartial,
 	})
 }
 
@@ -120,6 +124,7 @@ func (s *State) UnmarshalJSON(data []byte) error {
 		LastFull:             file.LastFull,
 		LastJobID:            file.LastJobID,
 		LastJobSuccess:       file.LastJobSuccess,
+		LastJobPartial:       file.LastJobPartial,
 	}
 
 	return nil

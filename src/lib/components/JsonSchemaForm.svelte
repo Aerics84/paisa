@@ -57,6 +57,8 @@
         (value[childKey] == null || typeof value[childKey] !== "object")
       ) {
         value[childKey] = {};
+      } else if (childSchema.type === "array" && !Array.isArray(value[childKey])) {
+        value[childKey] = _.cloneDeep(childSchema.default ?? []);
       }
     }
   }
@@ -330,7 +332,7 @@
     </button>
     {#if open}
       <button
-        on:click={(_e) => (value = [newItem(schema), ...value])}
+        on:click={(_e) => (value = [newItem(schema), ...(value ?? [])])}
         class="config-add"
         aria-label={`Add ${title}`}
         type="button"

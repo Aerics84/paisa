@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { jobIsComplete, shouldRefreshAfter } from "./price_update";
+import { jobIsComplete, jobOutcome, shouldRefreshAfter } from "./price_update";
 import type { PriceUpdateStatus } from "./utils";
 
 function status(overrides: Partial<PriceUpdateStatus> = {}): PriceUpdateStatus {
@@ -10,6 +10,7 @@ function status(overrides: Partial<PriceUpdateStatus> = {}): PriceUpdateStatus {
     job_id: 0,
     last_job_id: 0,
     last_job_success: false,
+    last_job_partial: false,
     stale: false,
     should_update: false,
     last_attempt_at: null,
@@ -44,5 +45,27 @@ describe("shouldRefreshAfter", () => {
 
   test("does not refresh after a failed job", () => {
     expect(shouldRefreshAfter(status({ last_job_success: false }))).toBe(false);
+  });
+});
+
+describe("jobOutcome", () => {
+  test("classifies a successful job", () => {
+    expect(jobOutcome(status({ last_job_success: true }))).toBe("success");
+  });
+
+  test("classifies a partially successful job", () => {
+    expect(jobOutcome(status({ last_job_success: false, last_job_partial: true }))).toBe("partial");
+  });
+
+  test("classifies a failed job even when an earlier partial success exists", () => {
+    expect(
+      jobOutcome(
+        status({
+          last_job_success: false,
+          last_job_partial: false,
+          last_partial_success_at: "2026-11-20T22:30:00Z"
+        })
+      )
+    ).toBe("failure");
   });
 });

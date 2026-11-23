@@ -882,6 +882,7 @@ export interface PriceUpdateStatus {
   job_id: number;
   last_job_id: number;
   last_job_success: boolean;
+  last_job_partial: boolean;
   stale: boolean;
   should_update: boolean;
   last_attempt_at: string | null;

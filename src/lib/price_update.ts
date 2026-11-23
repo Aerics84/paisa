@@ -46,23 +46,34 @@ export function shouldRefreshAfter(status: PriceUpdateStatus): boolean {
   return !status.running && status.last_job_success;
 }
 
+export type PriceUpdateJobOutcome = "success" | "partial" | "failure";
+
+export function jobOutcome(status: PriceUpdateStatus): PriceUpdateJobOutcome {
+  if (status.last_job_success) return "success";
+  if (status.last_job_partial) return "partial";
+  return "failure";
+}
+
 async function finish(status: PriceUpdateStatus, gen: number): Promise<void> {
-  if (status.last_job_success) {
+  const outcome = jobOutcome(status);
+  if (outcome === "success") {
     if (shouldRefreshAfter(status) && !hasUnsavedWork() && document.visibilityState === "visible") {
       toast.toast({ message: "Prices updated", type: "is-success" });
       await refresh();
     } else {
       toast.toast({ message: "Prices updated – visible on next navigation", type: "is-info" });
     }
-  } else if (status.last_partial_success_at) {
+  } else if (outcome === "partial") {
     toast.toast({
       message: `Prices partially updated: ${(status.failed_commodities || []).join(", ")}`,
-      type: "is-warning"
+      type: "is-warning",
+      duration: 10000
     });
   } else {
     toast.toast({
       message: `Price update failed: ${status.last_error || "unknown error"}`,
-      type: "is-danger"
+      type: "is-danger",
+      duration: 10000
     });
   }
 

@@ -45,6 +45,7 @@ func recordPriceUpdate(store pricesync.StateStore, started, finished time.Time, 
 	}
 
 	state.LastJobSuccess = outcome.Success
+	state.LastJobPartial = outcome.Partial
 
 	return store.Save(state)
 }

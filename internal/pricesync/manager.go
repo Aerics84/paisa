@@ -31,6 +31,7 @@ type Status struct {
 	JobID                uint64     `json:"job_id"`
 	LastJobID            uint64     `json:"last_job_id"`
 	LastJobSuccess       bool       `json:"last_job_success"`
+	LastJobPartial       bool       `json:"last_job_partial"`
 	Stale                bool       `json:"stale"`
 	ShouldUpdate         bool       `json:"should_update"`
 	LastAttemptAt        *time.Time `json:"last_attempt_at"`
@@ -141,6 +142,7 @@ func (m *Manager) statusLocked(now time.Time) Status {
 		Running:              running,
 		LastJobID:            m.state.LastJobID,
 		LastJobSuccess:       m.state.LastJobSuccess,
+		LastJobPartial:       m.state.LastJobPartial,
 		Stale:                stale,
 		ShouldUpdate:         should,
 		LastAttemptAt:        timePtr(m.state.LastAttemptAt),
@@ -194,6 +196,7 @@ func (m *Manager) Start(opts SyncOptions, mode StartMode) (Status, bool) {
 	m.state.LastAttemptAt = now
 	m.state.LastJobID = m.jobID
 	m.state.LastJobSuccess = false
+	m.state.LastJobPartial = false
 	m.state.LastFull = opts.Full
 	if err := m.store.Save(m.state); err != nil {
 		log.Errorf("Failed to persist price update state: %v", err)
@@ -221,6 +224,7 @@ func (m *Manager) run(opts SyncOptions, jobID uint64) {
 	m.state.FailedCommodities = outcome.FailedCommodities
 	m.state.LastDurationMS = now.Sub(m.startedAt).Milliseconds()
 	m.state.LastJobSuccess = outcome.Success
+	m.state.LastJobPartial = outcome.Partial
 
 	switch {
 	case outcome.Success:
