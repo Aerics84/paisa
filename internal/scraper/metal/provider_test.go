@@ -1,6 +1,7 @@
 package metal
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -49,6 +50,74 @@ func mustParseMetalTestTime(t *testing.T, value string) time.Time {
 	parsed, err := time.Parse(time.RFC3339, value)
 	require.NoError(t, err)
 	return parsed
+}
+
+// stubYahooMetal installs a metal HTTP client that serves Yahoo chart requests
+// with the given handler and answers ECB requests with a fixed exchange rate
+// history.
+func stubYahooMetal(t *testing.T, chartHandler func(req *http.Request) (*http.Response, error)) {
+	t.Helper()
+
+	previousClient := metalHTTPClient
+	t.Cleanup(func() {
+		metalHTTPClient = previousClient
+	})
+
+	metalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		if strings.Contains(req.URL.String(), "eurofxref-hist.xml") {
+			return &http.Response{
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`
+<Envelope>
+  <Cube>
+    <Cube time="2026-11-15">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+    <Cube time="2026-11-20">
+      <Cube currency="USD" rate="1.0000"/>
+    </Cube>
+  </Cube>
+</Envelope>`)),
+			}, nil
+		}
+
+		return chartHandler(req)
+	})}
+}
+
+// yahooMetalJSONResponse builds a Yahoo chart response for the given dates and
+// closing prices.
+func yahooMetalJSONResponse(t *testing.T, dates []string, closes []float64) *http.Response {
+	t.Helper()
+
+	timestamps := make([]int64, 0, len(dates))
+	for _, date := range dates {
+		parsed, err := time.ParseInLocation("2006-01-02", date, config.TimeZone())
+		require.NoError(t, err)
+		timestamps = append(timestamps, parsed.Unix())
+	}
+
+	payload, err := json.Marshal(map[string]any{
+		"chart": map[string]any{
+			"result": []any{
+				map[string]any{
+					"timestamp": timestamps,
+					"indicators": map[string]any{
+						"quote": []any{
+							map[string]any{"close": closes},
+						},
+					},
+					"meta": map[string]any{"currency": "USD"},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	return &http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(strings.NewReader(string(payload))),
+	}
 }
 
 func TestNormalizeIndiaMetalPrice(t *testing.T) {
@@ -267,4 +336,37 @@ func TestEuPriceProviderKeepsCurrentDayBarAfterSessionEnd(t *testing.T) {
 	require.Len(t, prices, 2)
 	assert.Equal(t, "2024-01-02", prices[1].Date.Format("2006-01-02"))
 	assert.True(t, prices[1].Value.Round(6).Equal(decimal.RequireFromString("2.000000")))
+}
+
+func TestEuPriceProviderSinceUsesPeriodRange(t *testing.T) {
+	loadMetalTestConfig(t)
+
+	var chartURL string
+	stubYahooMetal(t, func(req *http.Request) (*http.Response, error) {
+		chartURL = req.URL.String()
+		return yahooMetalJSONResponse(t, []string{"2026-11-20"}, []float64{2000}), nil
+	})
+
+	prices, err := (&EuPriceProvider{}).GetPricesSince("gold-999", "GOLD", time.Date(2026, 11, 15, 0, 0, 0, 0, config.TimeZone()))
+	require.NoError(t, err)
+	require.NotEmpty(t, prices)
+	assert.Contains(t, chartURL, "period1=")
+	assert.Contains(t, chartURL, "period2=")
+	assert.NotContains(t, chartURL, "range=50y")
+}
+
+func TestEuPriceProviderFullHistoryKeepsRange(t *testing.T) {
+	loadMetalTestConfig(t)
+
+	var chartURL string
+	stubYahooMetal(t, func(req *http.Request) (*http.Response, error) {
+		chartURL = req.URL.String()
+		return yahooMetalJSONResponse(t, []string{"2026-11-20"}, []float64{2000}), nil
+	})
+
+	prices, err := (&EuPriceProvider{}).GetPrices("gold-999", "GOLD")
+	require.NoError(t, err)
+	require.NotEmpty(t, prices)
+	assert.Contains(t, chartURL, "range=50y")
+	assert.NotContains(t, chartURL, "period1=")
 }

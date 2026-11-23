@@ -67,6 +67,22 @@ func TestGetHistoryWalksBackUntilEmpty(t *testing.T) {
 	}
 }
 
+func TestGetHistorySinceOnlyRequestsRecentRange(t *testing.T) {
+	until := time.Date(2026, 11, 22, 0, 0, 0, 0, time.UTC)
+	since := time.Date(2026, 11, 15, 0, 0, 0, 0, time.UTC)
+	var ranges []string
+
+	withServer(t, func(w http.ResponseWriter, r *http.Request) {
+		ranges = append(ranges, strings.TrimPrefix(r.URL.Path, "/"))
+		fmt.Fprint(w, `{"amount":1,"base":"USD","rates":{"2026-11-21":{"INR":95.1},"2026-11-20":{"INR":95.0}}}`)
+	})
+
+	prices, err := GetHistorySince("USD", "INR", "USD", since, until)
+	require.NoError(t, err)
+	require.Len(t, prices, 2)
+	assert.Equal(t, []string{"2026-11-15..2026-11-22"}, ranges)
+}
+
 func TestGetHistorySkipsMissingSymbols(t *testing.T) {
 	until := time.Date(2026, 10, 31, 0, 0, 0, 0, time.UTC)
 

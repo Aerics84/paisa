@@ -417,6 +417,63 @@ func TestGetCrumbSendsBrowserUserAgent(t *testing.T) {
 	}
 }
 
+func TestGetHistorySinceUsesPeriodRange(t *testing.T) {
+	loadYahooTestConfig(t)
+
+	previousClient := yahooHTTPClient
+	t.Cleanup(func() { yahooHTTPClient = previousClient })
+
+	var chartURL string
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
+		if strings.Contains(req.URL.String(), "/AAPL?") {
+			chartURL = req.URL.String()
+			return yahooJSONResponse(yahooChartJSON("EUR", []string{"2026-11-20", "2026-11-21"}, []float64{100, 101})), nil
+		}
+		t.Fatalf("unexpected request: %s", req.URL.String())
+		return nil, nil
+	})}
+
+	prices, err := GetHistorySince("AAPL", "Apple", time.Date(2026, 11, 15, 0, 0, 0, 0, time.UTC))
+	require.NoError(t, err)
+	require.Len(t, prices, 2)
+	assert.Contains(t, chartURL, "period1=")
+	assert.Contains(t, chartURL, "period2=")
+	assert.NotContains(t, chartURL, "range=50y")
+}
+
+func TestGetHistorySinceUsesSamePeriodRangeForExchangeTicker(t *testing.T) {
+	loadYahooTestConfigWithCurrency(t, "INR")
+
+	previousClient := yahooHTTPClient
+	t.Cleanup(func() { yahooHTTPClient = previousClient })
+
+	var stockURL, exchangeURL string
+	yahooHTTPClient = &http.Client{Transport: yahooTestTransport(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case strings.Contains(req.URL.String(), "/AAPL?"):
+			stockURL = req.URL.String()
+			return yahooJSONResponse(yahooChartJSON("USD", []string{"2026-11-20"}, []float64{100})), nil
+		case strings.Contains(req.URL.String(), "/USDINR=X?"):
+			exchangeURL = req.URL.String()
+			return yahooJSONResponse(yahooChartJSON("INR", []string{"2026-11-20"}, []float64{80})), nil
+		default:
+			t.Fatalf("unexpected request: %s", req.URL.String())
+			return nil, nil
+		}
+	})}
+
+	since := time.Date(2026, 11, 15, 0, 0, 0, 0, time.UTC)
+	_, err := GetHistorySince("AAPL", "Apple", since)
+	require.NoError(t, err)
+	require.NotEmpty(t, stockURL)
+	require.NotEmpty(t, exchangeURL)
+	for _, chartURL := range []string{stockURL, exchangeURL} {
+		assert.Contains(t, chartURL, fmt.Sprintf("period1=%d", since.Unix()))
+		assert.Contains(t, chartURL, "period2=")
+		assert.NotContains(t, chartURL, "range=50y")
+	}
+}
+
 func TestGetTickerRefreshesCrumbOnUnauthorized(t *testing.T) {
 	loadYahooTestConfig(t)
 	previousClient := yahooHTTPClient

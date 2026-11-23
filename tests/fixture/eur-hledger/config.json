@@ -635,6 +635,41 @@
         ],
         "type": "array"
       },
+      "price_update": {
+        "additionalProperties": false,
+        "description": "Automatic price updates for configured commodities.",
+        "properties": {
+          "days": {
+            "default": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri"
+            ],
+            "description": "Days on which prices are updated automatically. Invalid days are ignored; if no valid day remains, Mon-Fri is used.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "enabled": {
+            "default": "yes",
+            "description": "Enable automatic price updates.",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "type": "string"
+          },
+          "time": {
+            "default": "22:30",
+            "description": "Local time in the configured time zone. Invalid values are accepted and fall back to 22:30 at runtime.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "readonly": {
         "description": "Run in readonly mode.",
         "type": "boolean",

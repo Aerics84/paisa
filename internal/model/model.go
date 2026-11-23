@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/ledger"
@@ -18,6 +20,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/scraper"
 	"github.com/ananthakumaran/paisa/internal/scraper/india"
 	"github.com/ananthakumaran/paisa/internal/scraper/mutualfund"
+	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -58,7 +61,9 @@ func SyncJournal(db *gorm.DB) (string, error) {
 		return err.Error(), err
 	}
 
-	price.UpsertAllByType(db, config.Unknown, prices)
+	if err := price.UpsertAllByType(db, config.Unknown, prices); err != nil {
+		return err.Error(), err
+	}
 
 	postings, err := ledger.Cli().Parse(config.GetJournalPath(), prices)
 	if err != nil {
@@ -69,47 +74,189 @@ func SyncJournal(db *gorm.DB) (string, error) {
 	return "", nil
 }
 
-func SyncCommodities(db *gorm.DB) error {
-	return syncCommodities(db, commodity.All())
+// getProvider resolves a configured provider code. It is a variable so tests
+// can substitute stub providers.
+var getProvider = scraper.GetProviderByCode
+
+// SyncCommoditiesOptions controls a commodity price sync.
+type SyncCommoditiesOptions struct {
+	// Full forces a complete refresh instead of an incremental one.
+	Full bool
+	// Now bounds plausible provider dates and defaults to utils.Now().
+	Now time.Time
+	// Concurrency is the number of commodities fetched in parallel. It
+	// defaults to 4.
+	Concurrency int
 }
 
-func syncCommodities(db *gorm.DB, all []config.Commodity) error {
+// CommoditySyncResult reports per-commodity outcomes of a sync.
+type CommoditySyncResult struct {
+	Succeeded []string
+	Failed    []string
+	Errors    []string
+}
+
+// Err joins the per-commodity errors, or returns nil when every commodity was
+// synced.
+func (r CommoditySyncResult) Err() error {
+	if len(r.Errors) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s", strings.Join(r.Errors, "\n"))
+}
+
+func SyncCommodities(db *gorm.DB) error {
+	return SyncCommoditiesWithOptions(db, SyncCommoditiesOptions{Full: true}).Err()
+}
+
+func SyncCommoditiesWithOptions(db *gorm.DB, opts SyncCommoditiesOptions) CommoditySyncResult {
+	return syncCommodities(db, commodity.All(), opts)
+}
+
+func syncCommodities(db *gorm.DB, all []config.Commodity, opts SyncCommoditiesOptions) CommoditySyncResult {
 	AutoMigrate(db)
 	log.Info("Fetching commodities price history")
+
+	now := opts.Now
+	if now.IsZero() {
+		now = utils.Now()
+	}
+
+	concurrency := opts.Concurrency
+	if concurrency <= 0 {
+		concurrency = 4
+	}
+
 	commodities := lo.Shuffle(all)
+	jobs := make(chan config.Commodity)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	result := CommoditySyncResult{}
 
-	var errors []error
+	worker := func() {
+		defer wg.Done()
+		for commodity := range jobs {
+			name, err := syncCommodity(db, commodity, opts.Full, now)
+			mu.Lock()
+			if err != nil {
+				log.Error(err)
+				result.Failed = append(result.Failed, commodity.Name)
+				result.Errors = append(result.Errors, err.Error())
+			} else {
+				result.Succeeded = append(result.Succeeded, name)
+			}
+			mu.Unlock()
+		}
+	}
+
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go worker()
+	}
+
 	for _, commodity := range commodities {
-		name := commodity.Name
-		log.Info("Fetching commodity ", name)
-		code := commodity.Price.Code
-		var prices []*price.Price
-		var err error
+		jobs <- commodity
+	}
+	close(jobs)
+	wg.Wait()
 
-		provider := scraper.GetProviderByCode(commodity.Price.Provider)
-		if provider == nil {
-			errors = append(errors, fmt.Errorf("Failed to fetch price for %s: unknown price provider %q", name, commodity.Price.Provider))
-			continue
-		}
-		prices, err = provider.GetPrices(code, name)
+	return result
+}
 
+func syncCommodity(db *gorm.DB, commodity config.Commodity, full bool, now time.Time) (string, error) {
+	name := commodity.Name
+	code := commodity.Price.Code
+	log.Info("Fetching commodity ", name)
+
+	provider := getProvider(commodity.Price.Provider)
+	if provider == nil {
+		return "", fmt.Errorf("Failed to fetch price for %s: unknown price provider %q", name, commodity.Price.Provider)
+	}
+
+	prices, replaceAll, err := fetchCommodityPrices(db, commodity, provider, full, now)
+	if err != nil {
+		return "", fmt.Errorf("Failed to fetch price for %s: %w", name, err)
+	}
+
+	if err := price.UpsertMerged(db, commodity.Type, name, code, prices, replaceAll); err != nil {
+		return "", fmt.Errorf("Failed to persist price for %s: %w", name, err)
+	}
+
+	return name, nil
+}
+
+// fetchCommodityPrices returns the validated prices to persist and whether
+// they replace the stored history. Incremental syncs merge so a partial
+// provider response can never delete rows it omitted.
+func fetchCommodityPrices(db *gorm.DB, commodity config.Commodity, provider price.PriceProvider, full bool, now time.Time) ([]*price.Price, bool, error) {
+	name := commodity.Name
+	code := commodity.Price.Code
+
+	if full {
+		prices, err := provider.GetPrices(code, name)
 		if err != nil {
-			log.Error(err)
-			errors = append(errors, fmt.Errorf("Failed to fetch price for %s: %w", name, err))
-			continue
+			return nil, false, err
 		}
-
-		price.UpsertAllByTypeNameAndID(db, commodity.Type, name, code, prices)
+		validated, err := price.ValidatePrices(prices, price.ValidateOptions{Now: now})
+		if err != nil {
+			return nil, false, err
+		}
+		return validated, true, nil
 	}
 
-	if len(errors) > 0 {
-		var message strings.Builder
-		for _, error := range errors {
-			message.WriteString(error.Error() + "\n")
-		}
-		return fmt.Errorf("%s", strings.Trim(message.String(), "\n"))
+	latest, ok, err := price.LatestDate(db, commodity.Type, name, code)
+	if err != nil {
+		return nil, false, err
 	}
-	return nil
+
+	if !ok {
+		// Nothing stored yet, so there is no incremental window. Fetch the
+		// available history and merge it.
+		prices, err := provider.GetPrices(code, name)
+		if err != nil {
+			return nil, false, err
+		}
+		validated, err := price.ValidatePrices(prices, price.ValidateOptions{Now: now})
+		if err != nil {
+			return nil, false, err
+		}
+		return validated, false, nil
+	}
+
+	since := latest.AddDate(0, 0, -7)
+
+	prices, err := fetchSince(provider, code, name, since)
+	if err != nil {
+		return nil, false, err
+	}
+
+	validated, err := price.ValidatePrices(prices, price.ValidateOptions{Since: since, Now: now, RequireSince: true})
+	if err == nil {
+		return lo.Filter(validated, func(p *price.Price, _ int) bool {
+			return !p.Date.Before(since)
+		}), false, nil
+	}
+
+	// The provider returned nothing usable for the window, for example
+	// because it does not support range requests. Fall back to a full fetch,
+	// but only accept it if it still covers the requested window.
+	log.Infof("Incremental fetch for %s failed (%s), falling back to full history", name, err)
+	prices, err = provider.GetPrices(code, name)
+	if err != nil {
+		return nil, false, err
+	}
+	validated, err = price.ValidatePrices(prices, price.ValidateOptions{Since: since, Now: now, RequireSince: true})
+	if err != nil {
+		return nil, false, err
+	}
+	return validated, false, nil
+}
+
+func fetchSince(provider price.PriceProvider, code string, name string, since time.Time) ([]*price.Price, error) {
+	if rangeProvider, ok := provider.(price.RangeProvider); ok {
+		return rangeProvider.GetPricesSince(code, name, since)
+	}
+	return provider.GetPrices(code, name)
 }
 
 func SyncCII(db *gorm.DB) error {

@@ -1,13 +1,20 @@
 <script lang="ts">
   import { afterNavigate, beforeNavigate } from "$app/navigation";
+  import { onDestroy, onMount } from "svelte";
   import { followCursor, delegate, hideAll } from "tippy.js";
   import _ from "lodash";
   import Spinner from "$lib/components/Spinner.svelte";
   import Navbar from "$lib/components/Navbar.svelte";
   import GlobalConfirmDialog from "$lib/components/GlobalConfirmDialog.svelte";
   import { willClearTippy, willRefresh } from "../../store";
+  import { checkPriceUpdate, stopPriceUpdateWatcher } from "$lib/price_update";
 
   let isBurger: boolean = null;
+
+  onMount(() => {
+    void checkPriceUpdate();
+  });
+  onDestroy(stopPriceUpdateWatcher);
 
   function clearTippy() {
     hideAll();

@@ -119,6 +119,12 @@ type Account struct {
 	Icon string `json:"icon" yaml:"icon"`
 }
 
+type PriceUpdateConfig struct {
+	Enabled BoolType `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Time    string   `json:"time,omitempty" yaml:"time,omitempty"`
+	Days    []string `json:"days,omitempty" yaml:"days,omitempty"`
+}
+
 type UserAccount struct {
 	Username string `json:"username" yaml:"username"`
 	Password string `json:"password" yaml:"password"`
@@ -205,6 +211,8 @@ type Config struct {
 
 	TaxDeductions *TaxDeductionsConfig `json:"tax_deductions,omitempty" yaml:"tax_deductions,omitempty"`
 
+	PriceUpdate *PriceUpdateConfig `json:"price_update,omitempty" yaml:"price_update,omitempty"`
+
 	ScheduleALs []ScheduleAL `json:"schedule_al" yaml:"schedule_al"`
 
 	AllocationTargets []AllocationTarget `json:"allocation_targets" yaml:"allocation_targets"`
@@ -278,6 +286,33 @@ func TaxDeductionAccounts() []TaxDeductionAccount {
 		rules = *config.TaxDeductions.Accounts
 	}
 	return append([]TaxDeductionAccount(nil), rules...)
+}
+
+// DefaultPriceUpdateConfig returns the default schedule for automatic price updates.
+func DefaultPriceUpdateConfig() PriceUpdateConfig {
+	return PriceUpdateConfig{
+		Enabled: Yes,
+		Time:    "22:30",
+		Days:    []string{"mon", "tue", "wed", "thu", "fri"},
+	}
+}
+
+// EffectivePriceUpdate merges the optional price_update block with the defaults.
+func (c Config) EffectivePriceUpdate() PriceUpdateConfig {
+	cfg := DefaultPriceUpdateConfig()
+	if c.PriceUpdate == nil {
+		return cfg
+	}
+	if c.PriceUpdate.Enabled != "" {
+		cfg.Enabled = c.PriceUpdate.Enabled
+	}
+	if c.PriceUpdate.Time != "" {
+		cfg.Time = c.PriceUpdate.Time
+	}
+	if len(c.PriceUpdate.Days) > 0 {
+		cfg.Days = append([]string(nil), c.PriceUpdate.Days...)
+	}
+	return cfg
 }
 
 func regionalProfileDefaults(profile RegionalProfileType) Config {

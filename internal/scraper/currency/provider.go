@@ -99,6 +99,10 @@ func (p *PriceProvider) GetPrices(code string, commodityName string) ([]*price.P
 	return GetHistory(code, config.DefaultCurrency(), commodityName, time.Now())
 }
 
+func (p *PriceProvider) GetPricesSince(code string, commodityName string, since time.Time) ([]*price.Price, error) {
+	return GetHistorySince(code, config.DefaultCurrency(), commodityName, since, time.Now())
+}
+
 type rangeResponse struct {
 	Rates map[string]map[string]decimal.Decimal `json:"rates"`
 }
@@ -106,6 +110,24 @@ type rangeResponse struct {
 // GetHistory returns the daily price of 1 unit of currency `from`
 // expressed in `to`, up to `until`.
 func GetHistory(from, to, commodityName string, until time.Time) ([]*price.Price, error) {
+	return getHistoryBetween(from, to, commodityName, earliest, until)
+}
+
+// GetHistorySince returns the daily price of 1 unit of currency `from`
+// expressed in `to`, between `since` and `until`. Only the requested window
+// is fetched, so an incremental sync does not walk back to 1999.
+func GetHistorySince(from, to, commodityName string, since, until time.Time) ([]*price.Price, error) {
+	if since.Before(earliest) {
+		since = earliest
+	}
+	return getHistoryBetween(from, to, commodityName, since, until)
+}
+
+// getHistoryBetween returns the daily price of 1 unit of currency `from`
+// expressed in `to`, for the window between `since` and `until`. The window
+// is fetched in chunks of at most `chunkDays` days, walking backwards from
+// `until` until a chunk has no rates.
+func getHistoryBetween(from, to, commodityName string, since, until time.Time) ([]*price.Price, error) {
 	from = strings.ToUpper(strings.TrimSpace(from))
 	to = strings.ToUpper(strings.TrimSpace(to))
 	if from == "" || to == "" {
@@ -119,10 +141,10 @@ func GetHistory(from, to, commodityName string, until time.Time) ([]*price.Price
 
 	var prices []*price.Price
 	end := until
-	for !end.Before(earliest) {
+	for !end.Before(since) {
 		start := end.AddDate(0, 0, -chunkDays)
-		if start.Before(earliest) {
-			start = earliest
+		if start.Before(since) {
+			start = since
 		}
 
 		chunk, err := fetchRange(from, to, commodityName, start, end)

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { sync } from "$lib/sync";
   import { isLoggedIn, isMobile, logout, supportsPortfolioAnalysis } from "$lib/utils";
+  import { startPriceUpdate } from "$lib/price_update";
   import { refresh } from "../../store";
   import { obscure } from "../../persisted_store";
   import { goto } from "$app/navigation";
@@ -50,7 +51,7 @@
         <span>Sync Journal</span>
       </button>
       <button
-        on:click={(_e) => syncWithLoader({ prices: true })}
+        on:click={(_e) => startPriceUpdate(true)}
         class="dropdown-item icon-text button-reset w-full has-text-left"
         type="button"
       >

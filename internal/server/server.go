@@ -1,15 +1,19 @@
 package server
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
@@ -19,6 +23,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/ledger"
 	"github.com/ananthakumaran/paisa/internal/model/template"
 	"github.com/ananthakumaran/paisa/internal/prediction"
+	"github.com/ananthakumaran/paisa/internal/pricesync"
 	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/server/goal"
 	"github.com/ananthakumaran/paisa/internal/server/liabilities"
@@ -37,6 +42,10 @@ import (
 var monthlyRouteMonthPattern = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
 
 func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
+	return BuildWithManager(db, enableCompression, NewPriceManager(db, pricesync.NewMemoryStateStore()))
+}
+
+func BuildWithManager(db *gorm.DB, enableCompression bool, manager *pricesync.Manager) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -105,6 +114,8 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 			return
 		}
 
+		manager.Wake()
+
 		c.JSON(200, gin.H{"success": true})
 	})
 
@@ -157,7 +168,21 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 			return
 		}
 
+		if syncRequest.Background {
+			if !syncRequest.Prices || syncRequest.Journal || syncRequest.Portfolios {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "background is only supported for prices"})
+				return
+			}
+			status, started := manager.Start(pricesync.SyncOptions{Full: syncRequest.Full}, pricesync.StartManual)
+			c.JSON(http.StatusAccepted, gin.H{"success": true, "started": started, "status": status})
+			return
+		}
+
 		c.JSON(200, Sync(db, syncRequest))
+	})
+
+	router.GET("/api/sync/status", func(c *gin.Context) {
+		c.JSON(200, manager.Status(time.Now()))
 	})
 
 	router.POST("/api/import/statement", HandleParseStatement(db))
@@ -242,7 +267,13 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 			return
 		}
 
-		c.JSON(200, ClearPriceCache(db))
+		if !pricesync.DefaultRunner.TryStart() {
+			c.JSON(http.StatusConflict, gin.H{"success": false, "message": "price update already running"})
+			return
+		}
+		result := ClearPriceCache(db)
+		pricesync.DefaultRunner.Finish()
+		c.JSON(200, result)
 	})
 	router.GET("/api/price", func(c *gin.Context) {
 		c.JSON(200, GetPrices(db))
@@ -494,7 +525,8 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 }
 
 func Listen(db *gorm.DB, host string, port int) {
-	router := Build(db, true)
+	manager := NewPriceManager(db, pricesync.NewFileStateStore(pricesync.StatePathForDB(config.GetDBPath())))
+	router := BuildWithManager(db, true, manager)
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 
 	displayHost := host
@@ -502,9 +534,27 @@ func Listen(db *gorm.DB, host string, port int) {
 		displayHost = "localhost"
 	}
 	log.Infof("Listening on http://%s", net.JoinHostPort(displayHost, strconv.Itoa(port)))
-	err := router.Run(address)
-	if err != nil {
-		log.Fatal(err)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	manager.StartScheduler(ctx)
+
+	srv := &http.Server{Addr: address, Handler: router}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	manager.Stop()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Errorf("server shutdown: %v", err)
 	}
 }
 

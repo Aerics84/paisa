@@ -246,6 +246,91 @@ func TestTaxDeductionSchemaCategoriesMatchCatalog(t *testing.T) {
 	assert.ElementsMatch(t, taxcategory.CategoryKeys(), got)
 }
 
+func TestPriceUpdateDefaultsWhenBlockMissing(t *testing.T) {
+	require.NoError(t, LoadConfig([]byte("journal_path: main.ledger\ndb_path: paisa.db\n"), ""))
+	got := GetConfig().EffectivePriceUpdate()
+	assert.Equal(t, Yes, got.Enabled)
+	assert.Equal(t, "22:30", got.Time)
+	assert.Equal(t, []string{"mon", "tue", "wed", "thu", "fri"}, got.Days)
+}
+
+func TestPriceUpdateReadsExplicitValues(t *testing.T) {
+	require.NoError(t, LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+price_update:
+  enabled: no
+  time: "18:05"
+  days: [sat, sun]
+`), ""))
+	got := GetConfig().EffectivePriceUpdate()
+	assert.Equal(t, No, got.Enabled)
+	assert.Equal(t, "18:05", got.Time)
+	assert.Equal(t, []string{"sat", "sun"}, got.Days)
+}
+
+func TestPriceUpdateEmptyEnabledDefaultsToYes(t *testing.T) {
+	require.NoError(t, LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+price_update:
+  time: "20:00"
+`), ""))
+	got := GetConfig().EffectivePriceUpdate()
+	assert.Equal(t, Yes, got.Enabled)
+	assert.Equal(t, "20:00", got.Time)
+}
+
+func TestPriceUpdateRejectsInvalidEnabledAndUnknownKeys(t *testing.T) {
+	base := "journal_path: main.ledger\ndb_path: paisa.db\n"
+	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  enabled: maybe\n"), ""))
+	assert.Error(t, LoadConfig([]byte(base+"price_update:\n  unknown: value\n"), ""))
+}
+
+func TestPriceUpdateAcceptsInvalidScheduleValues(t *testing.T) {
+	base := "journal_path: main.ledger\ndb_path: paisa.db\n"
+	require.NoError(t, LoadConfig([]byte(base+"price_update:\n  time: \"25:00\"\n"), ""))
+	assert.Equal(t, "25:00", GetConfig().EffectivePriceUpdate().Time)
+
+	require.NoError(t, LoadConfig([]byte(base+"price_update:\n  days: [funday]\n"), ""))
+	assert.Equal(t, []string{"funday"}, GetConfig().EffectivePriceUpdate().Days)
+}
+
+func TestSaveConfigObjectRoundTripsPriceUpdate(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\nprice_update:\n  time: \"20:00\"\n"), 0644))
+	configPath = ""
+	LoadConfigFile(path)
+
+	require.NoError(t, SaveConfigObject(GetConfig()))
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.NotContains(t, string(content), "enabled: \"\"")
+	assert.NotContains(t, string(content), "time: \"\"")
+
+	require.NoError(t, LoadConfig(content, ""))
+	got := GetConfig().EffectivePriceUpdate()
+	assert.Equal(t, Yes, got.Enabled)
+	assert.Equal(t, "20:00", got.Time)
+	assert.Equal(t, []string{"mon", "tue", "wed", "thu", "fri"}, got.Days)
+}
+
+func TestSaveConfigObjectOmitsUnsetPriceUpdate(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\n"), 0644))
+	configPath = ""
+	LoadConfigFile(path)
+
+	require.NoError(t, SaveConfigObject(GetConfig()))
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.NotContains(t, string(content), "price_update")
+}
+
 func TestSaveConfigObjectRoundTripsUnsetTaxDeductions(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "paisa.yaml")
