@@ -103,8 +103,6 @@ jobs:
           npm run test:investment
           npm run test:monthly
 
-      - run: npm run test:unit
-
       - run: npm run check:coverage
 
       - name: P-PDF

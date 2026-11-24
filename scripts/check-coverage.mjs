@@ -1,5 +1,5 @@
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { run } from "./lib/changed-files.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,32 +55,49 @@ function stripAnsi(text) {
 /**
  * Extract the aggregate coverage row that `bun test --coverage` prints:
  *
+ *   File                 | % Funcs | % Lines | Uncovered Line #s
  *   All files            |   78.77 |   76.98 |
  *
- * The table columns are `% Funcs` and `% Lines`; Bun 1.4.4 reports no
- * statement or branch metrics.
+ * Columns are located through the header row so a reordered or truncated table
+ * cannot silently map the wrong metric. Bun 1.4.4 reports no statement or
+ * branch metrics.
  */
 export function parseCoverageSummary(output) {
-  const line = stripAnsi(output)
-    .split(/\r?\n/)
-    .find((candidate) => /^\s*All files\s*\|/.test(candidate));
+  const rows = stripAnsi(output).split(/\r?\n/);
 
+  const header = rows.find(
+    (row) => row.includes("% Funcs") && row.includes("% Lines") && row.includes("|")
+  );
+  if (!header) {
+    throw new Error("coverage output has no '% Funcs' / '% Lines' header row");
+  }
+
+  const headerCells = header.split("|").map((cell) => cell.trim());
+  const functionsIndex = headerCells.indexOf("% Funcs");
+  const linesIndex = headerCells.indexOf("% Lines");
+
+  const line = rows.find((row) => /^\s*All files\s*\|/.test(row));
   if (!line) {
     throw new Error("coverage output has no 'All files' row");
   }
 
   const cells = line.split("|").map((cell) => cell.trim());
-  if (cells.length < 3) {
-    throw new Error(`unexpected 'All files' row: ${line.trim()}`);
-  }
+  const readCell = (index, label) => {
+    const cell = cells[index];
+    if (index < 0 || cell === undefined || cell === "") {
+      throw new Error(`'All files' row has no ${label} value: ${line.trim()}`);
+    }
+    const value = Number(cell);
+    if (!Number.isFinite(value)) {
+      throw new Error(`'All files' row has a non-numeric ${label} value: ${line.trim()}`);
+    }
+    return value;
+  };
 
-  const functions = Number(cells[1]);
-  const lines = Number(cells[2]);
-  if (!Number.isFinite(functions) || !Number.isFinite(lines)) {
-    throw new Error(`unexpected 'All files' row: ${line.trim()}`);
-  }
-
-  return { functions, lines };
+  return {
+    functions: readCell(functionsIndex, "% Funcs"),
+    lines: readCell(linesIndex, "% Lines")
+  };
 }
 
 export function evaluateCoverage(summary, thresholds) {
@@ -161,6 +178,6 @@ async function main() {
   console.log("coverage gate: passed");
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (import.meta.main) {
   await main();
 }

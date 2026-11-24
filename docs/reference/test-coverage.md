@@ -55,6 +55,6 @@ Bun 1.4.4 reports only `% Funcs` and `% Lines`. Even with `--coverage-reporter=l
 
 ## Where the suite runs
 
-- `.github/workflows/test.yml` runs `npm run test:unit` and `npm run check:coverage` after `npm run check`.
-- `.github/workflows/npm12-gate.yml` runs the same two steps after the P-JS gate on Linux, macOS and Windows.
+- `.github/workflows/test.yml` runs `npm run check:coverage` after `npm run check`; the gate executes the full suite, so CI does not run `test:unit` a second time.
+- `.github/workflows/npm12-gate.yml` runs `npm run check:coverage` after the P-JS gate on Linux, macOS and Windows.
 - `scripts/preflight-critical.mjs` (`npm run test:prepush`) runs the full frontend suite before the build and Go steps. The suite itself takes roughly 1.5 s, well inside the pre-push budget. The pre-push hook does not run the coverage gate; keep that in CI only.
