@@ -11,7 +11,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type AccountBudget struct {
@@ -32,19 +31,22 @@ type Budget struct {
 	Forecast           decimal.Decimal `json:"forecast"`
 }
 
-func GetBudget(db *gorm.DB) BudgetResponse {
+func GetBudget(deps Deps) BudgetResponse {
+	db := deps.DB
 	forecastPostings := query.Init(db).Like("Expenses:%").Forecast().All()
 	expenses := query.Init(db).Like("Expenses:%").All()
-	return computeBudet(db, forecastPostings, expenses)
+	return computeBudet(deps, forecastPostings, expenses)
 }
 
-func GetCurrentBudget(db *gorm.DB) BudgetResponse {
+func GetCurrentBudget(deps Deps) BudgetResponse {
+	db := deps.DB
 	forecastPostings := query.Init(db).Like("Expenses:%").Forecast().UntilThisMonthEnd().All()
 	expenses := query.Init(db).Like("Expenses:%").UntilThisMonthEnd().All()
-	return computeBudet(db, forecastPostings, expenses)
+	return computeBudet(deps, forecastPostings, expenses)
 }
 
-func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Posting) BudgetResponse {
+func computeBudet(deps Deps, forecastPostings, expensesPostings []posting.Posting) BudgetResponse {
+	db := deps.DB
 	checkingBalance := accounting.CostSum(query.Init(db).AccountPrefix("Assets:Checking").All())
 	availableForBudgeting := checkingBalance
 
@@ -59,7 +61,7 @@ func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Post
 	budgetsByMonth := make(map[string]Budget)
 	balance := make(map[string]decimal.Decimal)
 
-	currentMonth := lo.Must(time.ParseInLocation("2006-01", utils.Now().Format("2006-01"), config.TimeZone()))
+	currentMonth := lo.Must(time.ParseInLocation("2006-01", utils.Now().Format("2006-01"), deps.Config.TimeZone()))
 
 	if len(forecastPostings) > 0 {
 		start := utils.BeginningOfMonth(forecastPostings[0].Date)
@@ -70,7 +72,7 @@ func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Post
 			accountBudgets := make([]AccountBudget, 0)
 
 			forecastsByMonth := forecasts[month]
-			date := lo.Must(time.ParseInLocation("2006-01", month, config.TimeZone()))
+			date := lo.Must(time.ParseInLocation("2006-01", month, deps.Config.TimeZone()))
 			expensesByMonth, ok := expenses[month]
 			if !ok {
 				expensesByMonth = []posting.Posting{}
@@ -86,7 +88,7 @@ func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Post
 					es = []posting.Posting{}
 				}
 
-				budget := buildBudget(date, account, balance[account], fs, es, date.Before(currentMonth))
+				budget := buildBudget(date, account, balance[account], fs, es, date.Before(currentMonth), deps.Config)
 				if budget.Available.IsPositive() {
 					balance[account] = budget.Available
 				} else {
@@ -138,7 +140,7 @@ func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Post
 	}
 }
 
-func buildBudget(date time.Time, account string, balance decimal.Decimal, forecasts []posting.Posting, expenses []posting.Posting, past bool) AccountBudget {
+func buildBudget(date time.Time, account string, balance decimal.Decimal, forecasts []posting.Posting, expenses []posting.Posting, past bool, store *config.Store) AccountBudget {
 	forecast := accounting.CostSum(forecasts)
 	actual := accounting.CostSum(expenses)
 
@@ -147,7 +149,7 @@ func buildBudget(date time.Time, account string, balance decimal.Decimal, foreca
 	if past {
 		available = decimal.Zero
 	}
-	if config.GetConfig().Budget.Rollover == config.Yes {
+	if store.Get().Budget.Rollover == config.Yes {
 		rollover = balance
 		available = balance.Add(forecast.Sub(actual))
 	}

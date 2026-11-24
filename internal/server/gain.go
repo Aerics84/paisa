@@ -40,7 +40,8 @@ type AccountGain struct {
 	Currencies       []CurrencyAccountGain   `json:"currencies"`
 }
 
-func GetGain(db *gorm.DB) GainResponse {
+func GetGain(deps Deps) GainResponse {
+	db := deps.DB
 	postings := query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").NotAccountPrefix("Assets:Checking").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string {
@@ -58,7 +59,8 @@ func GetGain(db *gorm.DB) GainResponse {
 	return GainResponse{GainBreakdown: gains}
 }
 
-func GetAccountGain(db *gorm.DB, account string) AccountGainResponse {
+func GetAccountGain(deps Deps, account string) AccountGainResponse {
+	db := deps.DB
 	capitalGainsAccount := strings.Replace(account, "Assets", "Income:CapitalGains", 1)
 	postings := query.Init(db).UntilToday().AccountPrefix(account, capitalGainsAccount).All()
 	postings = service.PopulateMarketPrice(db, postings)
@@ -81,7 +83,7 @@ func GetAccountGain(db *gorm.DB, account string) AccountGainResponse {
 	if postings == nil {
 		postings = []posting.Posting{}
 	}
-	currencies := computeCurrencyAccountGains(db, postings, timeline)
+	currencies := computeCurrencyAccountGains(db, postings, timeline, deps.Config)
 	if currencies == nil {
 		currencies = []CurrencyAccountGain{}
 	}
@@ -99,8 +101,8 @@ func GetAccountGain(db *gorm.DB, account string) AccountGainResponse {
 	return AccountGainResponse{GainTimelineBreakdown: gain, PortfolioAllocation: portfolio_groups, AssetBreakdown: assetBreakdown}
 }
 
-func computeCurrencyAccountGains(db *gorm.DB, postings []posting.Posting, timeline []Networth) []CurrencyAccountGain {
-	currencies := config.GetConfig().NetworthCurrencies
+func computeCurrencyAccountGains(db *gorm.DB, postings []posting.Posting, timeline []Networth, store *config.Store) []CurrencyAccountGain {
+	currencies := store.Get().NetworthCurrencies
 	result := make([]CurrencyAccountGain, 0, len(currencies))
 	for _, nc := range currencies {
 		symbol := nc.Symbol

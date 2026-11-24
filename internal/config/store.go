@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"dario.cat/mergo"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -181,6 +182,91 @@ func (s *Store) Path() string {
 // ConfigDir returns the directory containing the configuration file.
 func (s *Store) ConfigDir() string {
 	return filepath.Dir(s.Path())
+}
+
+// JournalPath returns the absolute path of the journal file.
+func (s *Store) JournalPath() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if !filepath.IsAbs(s.config.JournalPath) {
+		return filepath.Join(filepath.Dir(s.configPath), s.config.JournalPath)
+	}
+
+	return s.config.JournalPath
+}
+
+// SheetDir returns the directory containing the sheet files, creating it when
+// necessary.
+func (s *Store) SheetDir() string {
+	s.mu.RLock()
+	dir := s.config.SheetsDirectory
+	configDir := filepath.Dir(s.configPath)
+	s.mu.RUnlock()
+
+	if dir == "" {
+		return filepath.Dir(s.JournalPath())
+	}
+
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(configDir, dir)
+	}
+
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		log.Fatal("Failed to create sheets directory", err)
+	}
+
+	return dir
+}
+
+// DBPath returns the absolute path of the database file.
+func (s *Store) DBPath() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if !filepath.IsAbs(s.config.DBPath) {
+		return filepath.Join(filepath.Dir(s.configPath), s.config.DBPath)
+	}
+
+	return s.config.DBPath
+}
+
+// TaxDeductionAccounts returns the configured tax deduction rules, falling
+// back to the built-in defaults.
+func (s *Store) TaxDeductionAccounts() []TaxDeductionAccount {
+	rules := defaultTaxDeductionAccounts
+	if cfg := s.Get(); cfg.TaxDeductions != nil && cfg.TaxDeductions.Accounts != nil {
+		rules = *cfg.TaxDeductions.Accounts
+	}
+	return append([]TaxDeductionAccount(nil), rules...)
+}
+
+// SupportsTaxFeatures reports whether the configured tax regime has tax
+// reports in the UI.
+func (s *Store) SupportsTaxFeatures() bool {
+	regime := s.Get().TaxRegime
+	return regime == TaxRegimeIndia || regime == TaxRegimeGermany
+}
+
+// SupportsIndiaTaxFeatures reports whether the India tax reports apply.
+func (s *Store) SupportsIndiaTaxFeatures() bool {
+	return s.Get().TaxRegime == TaxRegimeIndia
+}
+
+// SupportsScheduleAL reports whether Schedule AL applies.
+func (s *Store) SupportsScheduleAL() bool {
+	return s.Get().TaxRegime == TaxRegimeIndia
+}
+
+// SupportsGermanyTaxFeatures reports whether the Germany tax reports apply.
+func (s *Store) SupportsGermanyTaxFeatures() bool {
+	return s.Get().TaxRegime == TaxRegimeGermany
+}
+
+// Save validates content, installs it as the current snapshot and writes it to
+// the bound path.
+func (s *Store) Save(content []byte) error {
+	return s.saveContent(content)
 }
 
 // TimeZone returns the configured time zone, falling back to time.Local.

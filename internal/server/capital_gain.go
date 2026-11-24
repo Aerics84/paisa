@@ -32,9 +32,10 @@ type CapitalGain struct {
 	FY          map[string]FYCapitalGain `json:"fy"`
 }
 
-func GetCapitalGains(db *gorm.DB) CapitalGainsResponse {
+func GetCapitalGains(deps Deps) CapitalGainsResponse {
 	capitalGains := map[string]CapitalGain{}
-	if config.SupportsIndiaTaxFeatures() {
+	if deps.Config.SupportsIndiaTaxFeatures() {
+		db := deps.DB
 		commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
 			return (c.Type == config.MutualFund || c.Type == config.Stock) &&
 				(c.TaxCategory == config.Debt || c.TaxCategory == config.Equity || c.TaxCategory == config.Equity65 || c.TaxCategory == config.Equity35 || c.TaxCategory == config.UnlistedEquity)

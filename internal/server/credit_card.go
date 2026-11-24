@@ -41,22 +41,24 @@ type CreditCardBill struct {
 	Transactions         []transaction.Transaction `json:"transactions"`
 }
 
-func GetCreditCards(db *gorm.DB) CreditCardsResponse {
+func GetCreditCards(deps Deps) CreditCardsResponse {
+	db := deps.DB
 	creditCards := []CreditCardSummary{}
 
-	for _, creditCardConfig := range config.GetConfig().CreditCards {
+	for _, creditCardConfig := range deps.Config.Get().CreditCards {
 		ps := query.Init(db).Where("account = ?", creditCardConfig.Account).All()
-		creditCards = append(creditCards, buildCreditCard(db, creditCardConfig, ps, false))
+		creditCards = append(creditCards, buildCreditCard(db, creditCardConfig, ps, false, deps.Config))
 	}
 
 	return CreditCardsResponse{CreditCards: creditCards}
 }
 
-func GetCreditCard(db *gorm.DB, account string) CreditCardResponse {
-	for _, creditCardConfig := range config.GetConfig().CreditCards {
+func GetCreditCard(deps Deps, account string) CreditCardResponse {
+	db := deps.DB
+	for _, creditCardConfig := range deps.Config.Get().CreditCards {
 		if creditCardConfig.Account == account {
 			ps := query.Init(db).Where("account = ?", creditCardConfig.Account).All()
-			creditCard := buildCreditCard(db, creditCardConfig, ps, true)
+			creditCard := buildCreditCard(db, creditCardConfig, ps, true, deps.Config)
 			return CreditCardResponse{CreditCard: &creditCard, Found: true}
 		}
 	}
@@ -79,14 +81,14 @@ func yearlySpends(db *gorm.DB, date time.Time, postings []posting.Posting) map[s
 	return yearlySpends
 }
 
-func buildCreditCard(db *gorm.DB, creditCardConfig config.CreditCard, ps []posting.Posting, includePostings bool) CreditCardSummary {
-	bills := computeBills(db, creditCardConfig, ps, includePostings)
+func buildCreditCard(db *gorm.DB, creditCardConfig config.CreditCard, ps []posting.Posting, includePostings bool, store *config.Store) CreditCardSummary {
+	bills := computeBills(db, creditCardConfig, ps, includePostings, store)
 	balance := decimal.Zero
 	if len(bills) > 0 {
 		balance = bills[len(bills)-1].ClosingBalance
 	}
 
-	expirationDate, err := time.ParseInLocation("2006-01-02", creditCardConfig.ExpirationDate, config.TimeZone())
+	expirationDate, err := time.ParseInLocation("2006-01-02", creditCardConfig.ExpirationDate, store.TimeZone())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +109,7 @@ func buildCreditCard(db *gorm.DB, creditCardConfig config.CreditCard, ps []posti
 	}
 }
 
-func computeBills(db *gorm.DB, creditCardConfig config.CreditCard, ps []posting.Posting, includePostings bool) []CreditCardBill {
+func computeBills(db *gorm.DB, creditCardConfig config.CreditCard, ps []posting.Posting, includePostings bool, store *config.Store) []CreditCardBill {
 	bills := []CreditCardBill{}
 
 	grouped := accounting.GroupByMonthlyBillingCycle(ps, creditCardConfig.StatementEndDay)
@@ -118,7 +120,7 @@ func computeBills(db *gorm.DB, creditCardConfig config.CreditCard, ps []posting.
 	unpaidBill := 0
 
 	for _, month := range utils.SortedKeys(grouped) {
-		statementEndDate, err := time.ParseInLocation("2006-01", month, config.TimeZone())
+		statementEndDate, err := time.ParseInLocation("2006-01", month, store.TimeZone())
 		if err != nil {
 			log.Fatal(err)
 		}

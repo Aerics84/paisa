@@ -13,7 +13,6 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 const EXTENSION = ".paisa"
@@ -25,8 +24,9 @@ type SheetFile struct {
 	Operation string   `json:"operation"`
 }
 
-func GetSheets(db *gorm.DB) SheetFilesResponse {
-	dir := config.GetSheetDir()
+func GetSheets(deps Deps) SheetFilesResponse {
+	db := deps.DB
+	dir := deps.Config.SheetDir()
 	paths, _ := doublestar.FilepathGlob(dir + "/**/*" + EXTENSION)
 
 	files := []SheetFile{}
@@ -40,8 +40,8 @@ func GetSheets(db *gorm.DB) SheetFilesResponse {
 	return SheetFilesResponse{Files: files, Postings: nonNilSlice(postings)}
 }
 
-func GetSheet(file SheetFile) SheetFileResponse {
-	dir := config.GetSheetDir()
+func GetSheet(file SheetFile, store *config.Store) SheetFileResponse {
+	dir := store.SheetDir()
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
 		return SheetFileResponse{Message: "Invalid file name"}
@@ -49,14 +49,14 @@ func GetSheet(file SheetFile) SheetFileResponse {
 	return SheetFileResponse{File: readSheetFile(dir, filePath)}
 }
 
-func DeleteSheetBackups(file SheetFile) SheetFileResponse {
-	dir := config.GetSheetDir()
+func DeleteSheetBackups(file SheetFile, store *config.Store) SheetFileResponse {
+	dir := store.SheetDir()
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
 		return SheetFileResponse{Message: "Invalid file name"}
 	}
 
-	if !config.GetConfig().Readonly {
+	if !store.Get().Readonly {
 		versions := utils.Glob(filePath, ".backup.*")
 		for _, version := range versions {
 			err := os.Remove(version)
@@ -69,8 +69,8 @@ func DeleteSheetBackups(file SheetFile) SheetFileResponse {
 	return SheetFileResponse{File: readSheetFileWithVersions(dir, filePath)}
 }
 
-func SaveSheetFile(db *gorm.DB, file SheetFile) SheetSaveResponse {
-	dir := config.GetSheetDir()
+func SaveSheetFile(deps Deps, file SheetFile) SheetSaveResponse {
+	dir := deps.Config.SheetDir()
 
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {

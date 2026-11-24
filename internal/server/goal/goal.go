@@ -23,9 +23,9 @@ type GoalSummary struct {
 	Intelligence *service.GoalIntelligence `json:"intelligence,omitempty"`
 }
 
-func GetGoalSummaries(db *gorm.DB) []GoalSummary {
+func GetGoalSummaries(db *gorm.DB, store *config.Store) []GoalSummary {
 	summaries := []GoalSummary{}
-	goals := config.GetConfig().Goals
+	goals := store.Get().Goals
 	assetPostings := query.Init(db).UntilToday().Like("Assets:%").All()
 	assetPostings = service.PopulateMarketPrice(db, assetPostings)
 
@@ -64,13 +64,13 @@ func GetGoalSummaries(db *gorm.DB) []GoalSummary {
 //
 // TODO(api): replace this with an explicit discriminated result if a caller
 // ever needs exhaustive goal-kind handling.
-func GetGoalDetails(db *gorm.DB, goalType string, name string) any {
+func GetGoalDetails(db *gorm.DB, goalType string, name string, store *config.Store) any {
 	switch goalType {
 	case "retirement":
-		conf, _ := lo.Find(config.GetConfig().Goals.Retirement, func(conf config.RetirementGoal) bool { return conf.Name == name })
+		conf, _ := lo.Find(store.Get().Goals.Retirement, func(conf config.RetirementGoal) bool { return conf.Name == name })
 		return getRetirementDetail(db, conf)
 	case "savings":
-		conf, _ := lo.Find(config.GetConfig().Goals.Savings, func(conf config.SavingsGoal) bool { return conf.Name == name })
+		conf, _ := lo.Find(store.Get().Goals.Savings, func(conf config.SavingsGoal) bool { return conf.Name == name })
 		return getSavingsDetail(db, conf)
 	}
 	return struct{}{}

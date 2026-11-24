@@ -57,7 +57,7 @@ func testPriceManager(t *testing.T, db *gorm.DB) *pricesync.Manager {
 
 func TestNewPriceManagerNonNil(t *testing.T) {
 	db := openSyncTestDB(t)
-	manager := NewPriceManager(db, pricesync.NewMemoryStateStore())
+	manager := NewPriceManager(testDeps(db), pricesync.NewMemoryStateStore())
 	require.NotNil(t, manager)
 }
 

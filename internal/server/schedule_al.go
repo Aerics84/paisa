@@ -10,7 +10,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type ScheduleALSection struct {
@@ -46,11 +45,12 @@ type ScheduleAL struct {
 	Date    time.Time         `json:"date"`
 }
 
-func GetScheduleAL(db *gorm.DB) ScheduleALResponse {
-	if !config.SupportsScheduleAL() {
+func GetScheduleAL(deps Deps) ScheduleALResponse {
+	if !deps.Config.SupportsScheduleAL() {
 		return ScheduleALResponse{ScheduleALs: map[string]ScheduleAL{}}
 	}
 
+	db := deps.DB
 	postings := query.Init(db).Like("Assets:%", "Liabilities:%").All()
 	var scheduleALs map[string]ScheduleAL = make(map[string]ScheduleAL)
 
@@ -64,14 +64,14 @@ func GetScheduleAL(db *gorm.DB) ScheduleALResponse {
 		}
 
 		start = start.AddDate(0, 0, -1)
-		scheduleALs[utils.FYHuman(start)] = ScheduleAL{Entries: computeScheduleAL(postings), Date: start}
+		scheduleALs[utils.FYHuman(start)] = ScheduleAL{Entries: computeScheduleAL(postings, deps.Config), Date: start}
 	}
 
 	return ScheduleALResponse{ScheduleALs: scheduleALs}
 }
 
-func computeScheduleAL(postings []posting.Posting) []ScheduleALEntry {
-	scheduleALConfigs := config.GetConfig().ScheduleALs
+func computeScheduleAL(postings []posting.Posting, store *config.Store) []ScheduleALEntry {
+	scheduleALConfigs := store.Get().ScheduleALs
 
 	return lo.Map(Sections, func(section ScheduleALSection, _ int) ScheduleALEntry {
 		config, found := lo.Find(scheduleALConfigs, func(scheduleALConfig config.ScheduleAL) bool {

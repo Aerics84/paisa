@@ -8,7 +8,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 // ExpensePaceSummary projects the current month's spending at the pace so far.
@@ -42,12 +41,13 @@ func expensePaceSummary(expenses map[string][]posting.Posting, budget BudgetResp
 	}
 }
 
-func GetDashboard(db *gorm.DB) DashboardResponse {
+func GetDashboard(deps Deps) DashboardResponse {
+	db := deps.DB
 	expenses := GetCurrentExpense(db)
 	if expenses == nil {
 		expenses = map[string][]posting.Posting{}
 	}
-	budget := GetCurrentBudget(db)
+	budget := GetCurrentBudget(deps)
 	return DashboardResponse{
 		CheckingBalances:        assets.GetCheckingBalance(db),
 		CheckingBalanceTimeline: nonNilSlice(assets.GetCheckingBalanceTimeline(db)),
@@ -59,7 +59,7 @@ func GetDashboard(db *gorm.DB) DashboardResponse {
 		TransactionSequences:    nonNilSlice(ComputeRecurringTransactions(query.Init(db).All())),
 		Transactions:            nonNilSlice(GetLatestTransactions(db)),
 		Budget:                  budget,
-		GoalSummaries:           nonNilSlice(goal.GetGoalSummaries(db)),
+		GoalSummaries:           nonNilSlice(goal.GetGoalSummaries(db, deps.Config)),
 	}
 }
 

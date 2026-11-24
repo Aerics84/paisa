@@ -59,14 +59,14 @@ func emptyFlowGraph() Graph {
 	return Graph{Nodes: []Node{}, Links: []Link{}}
 }
 
-func monthlyIncome(postings []posting.Posting) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+func monthlyIncome(postings []posting.Posting, store *config.Store) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 	grossSalary := decimal.Zero
 	grossOther := decimal.Zero
 	netTax := decimal.Zero
 
 	for _, p := range postings {
 		switch {
-		case isSalaryIncome(p.Account):
+		case isSalaryIncome(p.Account, store):
 			grossSalary = grossSalary.Sub(p.Amount)
 		case utils.FirstName(p.Account) == "Income":
 			grossOther = grossOther.Sub(p.Amount)
@@ -88,8 +88,8 @@ func monthlyExpense(postings []posting.Posting) decimal.Decimal {
 	return total
 }
 
-func monthlyInvestmentContributions(postings []posting.Posting) decimal.Decimal {
-	postings = accounting.FilterOutInternalTransfers(postings, config.GetConfig().TransferAccounts)
+func monthlyInvestmentContributions(postings []posting.Posting, store *config.Store) decimal.Decimal {
+	postings = accounting.FilterOutInternalTransfers(postings, store.Get().TransferAccounts)
 	total := decimal.Zero
 	for _, p := range postings {
 		if utils.FirstName(p.Account) == "Assets" && !utils.IsCheckingAccount(p.Account) {
@@ -118,7 +118,7 @@ func monthlyIncomeAvailable(postings []posting.Posting) bool {
 	return false
 }
 
-func computeMonthlyIncomeTrend(db *gorm.DB, selectedStart time.Time, currentMonth time.Time) []MonthlyMetricPoint {
+func computeMonthlyIncomeTrend(db *gorm.DB, selectedStart time.Time, currentMonth time.Time, store *config.Store) []MonthlyMetricPoint {
 	points := make([]MonthlyMetricPoint, 0, 3)
 
 	for offset := 2; offset >= 0; offset-- {
@@ -137,7 +137,7 @@ func computeMonthlyIncomeTrend(db *gorm.DB, selectedStart time.Time, currentMont
 		}
 
 		if point.Available {
-			grossSalary, grossOther, netTax := monthlyIncome(postings)
+			grossSalary, grossOther, netTax := monthlyIncome(postings, store)
 			point.Value = grossSalary.Add(grossOther).Sub(netTax)
 		}
 
@@ -464,7 +464,8 @@ func computeMonthlyPerformance(db *gorm.DB, monthPostings []posting.Posting, per
 
 // GetMonthlyReview derives every period-specific number from postings in the
 // selected calendar month. Current balances are deliberately not part of it.
-func GetMonthlyReview(db *gorm.DB, month time.Time) MonthlyReview {
+func GetMonthlyReview(deps Deps, month time.Time) MonthlyReview {
+	db := deps.DB
 	periodStart := utils.BeginningOfMonth(month)
 	currentMonth := utils.BeginningOfMonth(utils.Now())
 	todayEnd := utils.EndOfToday()
@@ -486,7 +487,7 @@ func GetMonthlyReview(db *gorm.DB, month time.Time) MonthlyReview {
 		ActivityState:     MonthlyActivityNone,
 		PeriodComplete:    periodComplete,
 		FlowGraph:         emptyFlowGraph(),
-		NetIncomeTrend:    computeMonthlyIncomeTrend(db, periodStart, currentMonth),
+		NetIncomeTrend:    computeMonthlyIncomeTrend(db, periodStart, currentMonth, deps.Config),
 		BestPerformers:    []MonthlyPositionPerformance{},
 		WeakestPerformers: []MonthlyPositionPerformance{},
 		PerformanceState:  MonthlyPerformanceNotAvailable,
@@ -497,12 +498,12 @@ func GetMonthlyReview(db *gorm.DB, month time.Time) MonthlyReview {
 	} else {
 		review.ActivityState = MonthlyActivityReady
 
-		grossSalary, grossOther, netTax := monthlyIncome(postings)
+		grossSalary, grossOther, netTax := monthlyIncome(postings, deps.Config)
 		review.NetTax = netTax
 		review.NetIncomeAfterTax = grossSalary.Add(grossOther).Sub(netTax)
 		review.NetExpense = monthlyExpense(postings)
 		review.Surplus = review.NetIncomeAfterTax.Sub(review.NetExpense)
-		review.InvestmentContributions = monthlyInvestmentContributions(postings)
+		review.InvestmentContributions = monthlyInvestmentContributions(postings, deps.Config)
 		review.DividendIncome = monthlyDividendIncome(postings)
 		for _, p := range postings {
 			if utils.FirstName(p.Account) == "Income" {

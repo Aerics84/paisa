@@ -23,12 +23,10 @@ import (
 func TestImportReconciliationJSONContract(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "paisa.yaml")
-	require.NoError(t, config.LoadConfig([]byte(
+	store := config.NewStore()
+	require.NoError(t, store.Load([]byte(
 		"journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n",
 	), configPath))
-	t.Cleanup(func() {
-		_ = config.LoadConfig([]byte("journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"), "")
-	})
 
 	importID := manifest.ImportID("csv", "fixtures/bank.csv", "fixture-content-hash")
 	balance1000 := 1100.00
@@ -52,7 +50,7 @@ func TestImportReconciliationJSONContract(t *testing.T) {
 	require.NoError(t, err)
 
 	db := openImportTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/import/reconciliation", nil)
 	rec := httptest.NewRecorder()

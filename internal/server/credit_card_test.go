@@ -51,7 +51,7 @@ time_zone: UTC
 		},
 	}
 
-	bills := computeBills(nil, creditCard, postings, false)
+	bills := computeBills(nil, creditCard, postings, false, config.DefaultStore())
 	require.Len(t, bills, 2)
 	require.NotNil(t, bills[0].PaidDate, "a rounded payment within one currency unit must mark the bill as paid")
 	require.True(t, bills[0].PaidDate.Equal(creditCardTestDate(t, "2022-02-10")))

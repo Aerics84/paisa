@@ -59,7 +59,7 @@ func TestGetTaxOverviewBuildsSelectedYear(t *testing.T) {
 	}
 	require.NoError(t, db.Create(&rows).Error)
 
-	overview, err := GetTaxOverview(db, "2025")
+	overview, err := GetTaxOverview(testDeps(db), "2025")
 	require.NoError(t, err)
 
 	assert.Equal(t, "2025", overview.SelectedYear)
@@ -84,7 +84,7 @@ func TestTaxOverviewJSONUsesNumbersForDecimals(t *testing.T) {
 		Account: "Expenses:Health", Amount: decimal.RequireFromString("100"),
 	}).Error)
 
-	overview, err := GetTaxOverview(db, "2025")
+	overview, err := GetTaxOverview(testDeps(db), "2025")
 	require.NoError(t, err)
 	body, err := json.Marshal(overview)
 	require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestGetTaxOverviewDefaultsToPreviousYear(t *testing.T) {
 	loadTaxOverviewConfig(t)
 	db := openTaxOverviewTestDB(t)
 
-	overview, err := GetTaxOverview(db, "")
+	overview, err := GetTaxOverview(testDeps(db), "")
 	require.NoError(t, err)
 	assert.Equal(t, "2025", overview.SelectedYear)
 }
@@ -132,7 +132,7 @@ func TestTaxOverviewYearValidation(t *testing.T) {
 func TestGetTaxOverviewAllowsValidYearWithoutPostings(t *testing.T) {
 	loadTaxOverviewConfig(t)
 	db := openTaxOverviewTestDB(t)
-	overview, err := GetTaxOverview(db, "2019")
+	overview, err := GetTaxOverview(testDeps(db), "2019")
 	require.NoError(t, err)
 	assert.Equal(t, "2019", overview.SelectedYear)
 	assert.NotEmpty(t, overview.Sections)
@@ -164,7 +164,7 @@ func TestGetTaxOverviewIncludesIncomeTaxPayments(t *testing.T) {
 		Amount:        decimal.RequireFromString("110"),
 	}).Error)
 
-	overview, err := GetTaxOverview(db, "2025")
+	overview, err := GetTaxOverview(testDeps(db), "2025")
 	require.NoError(t, err)
 	require.True(t, overview.IncomeTaxPayments.Total.Equal(decimal.RequireFromString("110")))
 }

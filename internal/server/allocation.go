@@ -68,7 +68,8 @@ type RebalanceRequest struct {
 	Mode string          `json:"mode"`
 }
 
-func GetAllocation(db *gorm.DB) AllocationResponse {
+func GetAllocation(deps Deps) AllocationResponse {
+	db := deps.DB
 	postings := query.Init(db).UntilToday().Like("Assets:%").All()
 
 	now := utils.EndOfToday()
@@ -84,7 +85,7 @@ func GetAllocation(db *gorm.DB) AllocationResponse {
 	if aggregates_timeline == nil {
 		aggregates_timeline = []map[string]Aggregate{}
 	}
-	allocation_targets := computeAllocationTargets(db, postings)
+	allocation_targets := computeAllocationTargets(db, postings, deps.Config)
 	if allocation_targets == nil {
 		allocation_targets = []AllocationTarget{}
 	}
@@ -158,9 +159,9 @@ func computeAggregateTimeline(db *gorm.DB, postings []posting.Posting) []map[str
 	return timeline
 }
 
-func computeAllocationTargets(db *gorm.DB, postings []posting.Posting) []AllocationTarget {
+func computeAllocationTargets(db *gorm.DB, postings []posting.Posting, store *config.Store) []AllocationTarget {
 	var targetAllocations []AllocationTarget
-	allocationTargetConfigs := config.GetConfig().AllocationTargets
+	allocationTargetConfigs := store.Get().AllocationTargets
 
 	if len(postings) == 0 || len(allocationTargetConfigs) == 0 {
 		return targetAllocations
@@ -397,8 +398,9 @@ func ComputeRebalancePlan(targets []AllocationTarget, cash decimal.Decimal, mode
 	}
 }
 
-func RebalanceHandler(db *gorm.DB) gin.HandlerFunc {
+func RebalanceHandler(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		db := deps.DB
 		var req RebalanceRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -418,7 +420,7 @@ func RebalanceHandler(db *gorm.DB) gin.HandlerFunc {
 			p.MarketAmount = service.GetMarketPrice(db, p, now)
 			return p
 		})
-		targets := computeAllocationTargets(db, postings)
+		targets := computeAllocationTargets(db, postings, deps.Config)
 		plan := ComputeRebalancePlan(targets, req.Cash, req.Mode)
 		c.JSON(http.StatusOK, plan)
 	}
@@ -453,9 +455,9 @@ func validateAllocationTargets(targets []config.AllocationTarget) error {
 	return nil
 }
 
-func SaveAllocationTargetsHandler() gin.HandlerFunc {
+func SaveAllocationTargetsHandler(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(http.StatusOK, SaveAllocationTargetsResponse{Success: true})
 			return
 		}
@@ -471,9 +473,10 @@ func SaveAllocationTargetsHandler() gin.HandlerFunc {
 			return
 		}
 
-		cfg := config.GetConfig()
-		cfg.AllocationTargets = targets
-		if err := config.SaveConfigObject(cfg); err != nil {
+		if err := deps.Config.Update(func(cfg *config.Config) error {
+			cfg.AllocationTargets = targets
+			return nil
+		}); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save configuration: " + err.Error()})
 			return
 		}

@@ -29,18 +29,20 @@ const (
 )
 
 // importSync is a seam so tests can observe that a successful commit triggers sync.
-var importSync = func(db *gorm.DB) gin.H {
-	return Sync(db, SyncRequest{Journal: true})
+var importSync = func(deps Deps) gin.H {
+	return Sync(deps, SyncRequest{Journal: true})
 }
 
 // importManifestRoot is a seam so tests can keep manifests inside a temp directory.
-var importManifestRoot = config.GetConfigDir
+var importManifestRoot = func(store *config.Store) string {
+	return store.ConfigDir()
+}
 
 // validateImportContent validates proposed journal content with the same
 // temp-file approach used by the editor. It is a seam because release builds
 // embed the ledger binary while development builds use a placeholder.
-var validateImportContent = func(content string) ([]ledger.LedgerFileError, string, error) {
-	return validateFile(LedgerFile{Content: content})
+var validateImportContent = func(store *config.Store, content string) ([]ledger.LedgerFileError, string, error) {
+	return validateFile(LedgerFile{Content: content}, store)
 }
 
 // matchImportAccount resolves a user supplied account name against the accounts
@@ -90,8 +92,9 @@ func matchImportAccount(db *gorm.DB, query string) string {
 }
 
 // HandleParseStatement parses statement uploads (CSV/OFX/QFX) and applies rules & duplicate scoring.
-func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
+func HandleParseStatement(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		db := deps.DB
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImportRequestBytes)
 
 		var req importer.IngestionRequest
@@ -124,9 +127,9 @@ func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 
 // HandleGetReconciliation returns a read-only reconciliation report built from
 // the latest import manifests. It never writes to the import store.
-func HandleGetReconciliation() gin.HandlerFunc {
+func HandleGetReconciliation(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		report := reconciliation.BuildReconciliationFromManifests(config.GetConfigDir())
+		report := reconciliation.BuildReconciliationFromManifests(deps.Config.ConfigDir())
 		c.JSON(http.StatusOK, ReconciliationResponse{ReconciliationReport: report})
 	}
 }
@@ -144,9 +147,9 @@ func HandleGetRules(db *gorm.DB) gin.HandlerFunc {
 }
 
 // HandleSaveRule creates or updates an import rule.
-func HandleSaveRule(db *gorm.DB) gin.HandlerFunc {
+func HandleSaveRule(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Readonly mode"})
 			return
 		}
@@ -157,7 +160,7 @@ func HandleSaveRule(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := import_rule.Save(db, &r); err != nil {
+		if err := import_rule.Save(deps.DB, &r); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -167,9 +170,9 @@ func HandleSaveRule(db *gorm.DB) gin.HandlerFunc {
 }
 
 // HandleDeleteRule deletes an import rule by ID.
-func HandleDeleteRule(db *gorm.DB) gin.HandlerFunc {
+func HandleDeleteRule(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Readonly mode"})
 			return
 		}
@@ -181,7 +184,7 @@ func HandleDeleteRule(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := import_rule.Delete(db, uint(id)); err != nil {
+		if err := import_rule.Delete(deps.DB, uint(id)); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -214,9 +217,10 @@ type CommitCandidateTransaction struct {
 }
 
 // HandleCommitImport writes the approved staged transactions to the journal file.
-func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
+func HandleCommitImport(deps Deps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		db := deps.DB
+		if deps.Config.Get().Readonly {
 			c.JSON(http.StatusOK, gin.H{"success": true, "message": "Readonly mode"})
 			return
 		}
@@ -247,23 +251,23 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 
 		defaultCommodity := req.Commodity
 		if defaultCommodity == "" {
-			defaultCommodity = config.DefaultCurrency()
+			defaultCommodity = deps.Config.Get().DefaultCurrency
 		}
 		if defaultCommodity == "" {
 			defaultCommodity = "INR"
 		}
 
-		if strings.TrimSpace(config.GetConfig().JournalPath) == "" {
+		if strings.TrimSpace(deps.Config.Get().JournalPath) == "" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "journal path is not configured"})
 			return
 		}
-		targetFile := config.GetJournalPath()
+		targetFile := deps.Config.JournalPath()
 
 		var contentToAppend string
 		if trimmedRaw != "" {
 			contentToAppend = "\n" + trimmedRaw + "\n"
 		} else {
-			contentToAppend = formatTransactionsForCommit(db, req, defaultCommodity)
+			contentToAppend = formatTransactionsForCommit(db, req, defaultCommodity, deps.Config)
 		}
 
 		if err := os.MkdirAll(filepath.Dir(targetFile), 0750); err != nil {
@@ -283,7 +287,7 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		validationErrors, _, err := validateImportContent(combineJournalContent(existingJournal, contentToAppend))
+		validationErrors, _, err := validateImportContent(deps.Config, combineJournalContent(existingJournal, contentToAppend))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":  "invalid ledger content",
@@ -331,7 +335,7 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		syncResult := importSync(db)
+		syncResult := importSync(deps)
 		if success, ok := syncResult["success"].(bool); !ok || !success {
 			if truncateErr := os.Truncate(targetFile, preWriteSize); truncateErr != nil {
 				log.Warn("Failed to rollback journal after sync failure: ", truncateErr)
@@ -346,7 +350,7 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 			committedCount = 1
 		}
 
-		manifestCommitted := markImportManifestCommitted(req)
+		manifestCommitted := markImportManifestCommitted(req, deps.Config)
 
 		c.JSON(http.StatusOK, CommitImportResponse{
 			Success:           true,
@@ -382,13 +386,13 @@ func convertImportValidationErrors(errors []ledger.LedgerFileError) []ImportVali
 // successful commit to status "committed". A missing or unreadable manifest is
 // reported to the caller as a boolean instead of failing an already-applied
 // journal append.
-func markImportManifestCommitted(req CommitImportRequest) bool {
+func markImportManifestCommitted(req CommitImportRequest, store *config.Store) bool {
 	importID := strings.TrimSpace(req.ImportID)
 	if importID == "" {
 		return false
 	}
 
-	root := importManifestRoot()
+	root := importManifestRoot(store)
 	sourceType := strings.TrimSpace(req.SourceType)
 	if sourceType == "" {
 		found, err := manifest.FindSourceType(root, importID)
@@ -466,9 +470,9 @@ func combineJournalContent(existing string, appendContent string) string {
 	return existing + appendContent
 }
 
-func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCommodity string) string {
+func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCommodity string, store *config.Store) string {
 	var sb strings.Builder
-	dialect := config.GetConfig().LedgerCli
+	dialect := store.Get().LedgerCli
 	baseAcc := matchImportAccount(db, req.BaseAccount)
 	if baseAcc == "" {
 		baseAcc = req.BaseAccount

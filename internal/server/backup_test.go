@@ -97,7 +97,7 @@ func TestGenerateBackupZipContainsExpectedFilesAndExcludesDB(t *testing.T) {
 
 	writeBackupTestConfig(t, journalPath, dbPath, "ledger", "")
 
-	zipData, filename, err := GenerateBackupZip(false)
+	zipData, filename, err := GenerateBackupZip(config.DefaultStore(), false)
 	require.NoError(t, err)
 	assert.NotEmpty(t, zipData)
 	assert.True(t, strings.HasPrefix(filename, "paisa-backup-"), "filename %q should start with paisa-backup-", filename)
@@ -125,7 +125,7 @@ func TestGenerateBackupZipRedactsSecrets(t *testing.T) {
 
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", extra)
 
-	zipData, _, err := GenerateBackupZip(false)
+	zipData, _, err := GenerateBackupZip(config.DefaultStore(), false)
 	require.NoError(t, err)
 
 	entries := readBackupEntries(t, zipData)
@@ -148,7 +148,7 @@ func TestGenerateBackupZipIncludesSecretsWhenRequested(t *testing.T) {
 
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", extra)
 
-	zipData, _, err := GenerateBackupZip(true)
+	zipData, _, err := GenerateBackupZip(config.DefaultStore(), true)
 	require.NoError(t, err)
 
 	entries := readBackupEntries(t, zipData)
@@ -174,7 +174,7 @@ func TestGenerateBackupZipSkipsUnsafePaths(t *testing.T) {
 
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "beancount", "")
 
-	zipData, _, err := GenerateBackupZip(false)
+	zipData, _, err := GenerateBackupZip(config.DefaultStore(), false)
 	require.NoError(t, err)
 
 	entries := readBackupEntries(t, zipData)
@@ -199,7 +199,7 @@ func TestGenerateBackupZipRedactsAliasedSecrets(t *testing.T) {
 	)
 	writeBackupTestConfigRaw(t, content)
 
-	zipData, _, err := GenerateBackupZip(false)
+	zipData, _, err := GenerateBackupZip(config.DefaultStore(), false)
 	require.NoError(t, err)
 
 	entries := readBackupEntries(t, zipData)
@@ -223,7 +223,7 @@ func TestGenerateBackupZipExcludesNonSheetFiles(t *testing.T) {
 
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", "")
 
-	zipData, _, err := GenerateBackupZip(false)
+	zipData, _, err := GenerateBackupZip(config.DefaultStore(), false)
 	require.NoError(t, err)
 
 	entries := readBackupEntries(t, zipData)
@@ -244,7 +244,7 @@ func TestGenerateBackupZipFailsOnMissingJournalFile(t *testing.T) {
 	writeBackupTestConfig(t, journalPath, filepath.Join(journalDir, "paisa.db"), "ledger", "")
 
 	missingJournal := filepath.Join(journalDir, "missing.ledger")
-	_, _, err := generateBackupZip(false, func(string) ([]string, error) {
+	_, _, err := generateBackupZip(config.DefaultStore(), false, func(string) ([]string, error) {
 		return []string{journalPath, missingJournal}, nil
 	})
 

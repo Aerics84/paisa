@@ -13,19 +13,23 @@ import (
 
 type fileAPI struct {
 	name, extension string
-	get, delete     func(string) string
+	get, delete     func(string, *config.Store) string
 }
 
 var fileAPIs = []fileAPI{
 	{"ledger", ".ledger",
-		func(name string) string { return GetFile(LedgerFile{Name: name}).Message },
-		func(name string) string { return DeleteBackups(LedgerFile{Name: name}).Message }},
+		func(name string, store *config.Store) string { return GetFile(LedgerFile{Name: name}, store).Message },
+		func(name string, store *config.Store) string {
+			return DeleteBackups(LedgerFile{Name: name}, store).Message
+		}},
 	{"sheet", ".paisa",
-		func(name string) string { return GetSheet(SheetFile{Name: name}).Message },
-		func(name string) string { return DeleteSheetBackups(SheetFile{Name: name}).Message }},
+		func(name string, store *config.Store) string { return GetSheet(SheetFile{Name: name}, store).Message },
+		func(name string, store *config.Store) string {
+			return DeleteSheetBackups(SheetFile{Name: name}, store).Message
+		}},
 }
 
-func configureEditor(t *testing.T, root string, readonly bool) {
+func configureEditor(t *testing.T, root string, readonly bool) *config.Store {
 	t.Helper()
 	content, err := json.Marshal(map[string]any{
 		"journal_path":     filepath.Join(root, "main.ledger"),
@@ -34,7 +38,10 @@ func configureEditor(t *testing.T, root string, readonly bool) {
 		"readonly":         readonly,
 	})
 	require.NoError(t, err)
-	require.NoError(t, config.LoadConfig(content, ""))
+
+	store := config.NewStore()
+	require.NoError(t, store.Load(content, ""))
+	return store
 }
 
 func writeEditorFile(t *testing.T, path, content string) {
@@ -53,10 +60,10 @@ func TestEditorRejectsTraversal(t *testing.T) {
 			writeEditorFile(t, outside, "secret")
 			writeEditorFile(t, outside+".backup.1", "backup")
 			for _, readonly := range []bool{false, true} {
-				configureEditor(t, base, readonly)
+				store := configureEditor(t, base, readonly)
 				for _, name := range []string{"../secret" + api.extension, "nested/../../secret" + api.extension} {
-					for _, handler := range []func(string) string{api.get, api.delete} {
-						require.Equal(t, "Invalid file name", handler(filepath.FromSlash(name)))
+					for _, handler := range []func(string, *config.Store) string{api.get, api.delete} {
+						require.Equal(t, "Invalid file name", handler(filepath.FromSlash(name), store))
 					}
 				}
 			}
@@ -70,10 +77,10 @@ func TestEditorRejectsTraversal(t *testing.T) {
 
 func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 
 	for _, name := range []string{"expenses", "expenses.txt"} {
-		result := SaveFile(nil, LedgerFile{Name: name, Content: ""})
+		result := SaveFile(Deps{Config: store}, LedgerFile{Name: name, Content: ""})
 		require.Equal(t, false, result.Saved)
 		require.Equal(t, "File name must end with .ledger", result.Message)
 	}
@@ -81,9 +88,9 @@ func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
 
 func TestValidateFileRejectsNestedTraversal(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 
-	errors, _, err := validateFile(LedgerFile{Name: "../outside.ledger", Content: ""})
+	errors, _, err := validateFile(LedgerFile{Name: "../outside.ledger", Content: ""}, store)
 	require.Error(t, err)
 	require.Len(t, errors, 1)
 	require.Equal(t, "Invalid file name", errors[0].Message)
@@ -93,7 +100,7 @@ func TestDeleteBackupsDoesNotExpandFilename(t *testing.T) {
 	for _, api := range fileAPIs {
 		t.Run(api.name, func(t *testing.T) {
 			base := t.TempDir()
-			configureEditor(t, base, false)
+			store := configureEditor(t, base, false)
 			name := "main[1]" + api.extension
 			path := filepath.Join(base, name)
 			writeEditorFile(t, path, "current")
@@ -101,7 +108,7 @@ func TestDeleteBackupsDoesNotExpandFilename(t *testing.T) {
 			unrelated := filepath.Join(base, "main1"+api.extension+".backup.1")
 			writeEditorFile(t, unrelated, "unrelated")
 
-			api.delete(name)
+			api.delete(name, store)
 
 			require.NoFileExists(t, path+".backup.1")
 			require.FileExists(t, unrelated)

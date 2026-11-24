@@ -283,12 +283,7 @@ var defaultTaxDeductionAccounts = []TaxDeductionAccount{
 }
 
 func TaxDeductionAccounts() []TaxDeductionAccount {
-	cfg := defaultStore.Get()
-	rules := defaultTaxDeductionAccounts
-	if cfg.TaxDeductions != nil && cfg.TaxDeductions.Accounts != nil {
-		rules = *cfg.TaxDeductions.Accounts
-	}
-	return append([]TaxDeductionAccount(nil), rules...)
+	return defaultStore.TaxDeductionAccounts()
 }
 
 // DefaultPriceUpdateConfig returns the default schedule for automatic price updates.
@@ -491,40 +486,15 @@ func GetConfig() Config {
 }
 
 func GetJournalPath() string {
-	cfg := defaultStore.Get()
-	if !filepath.IsAbs(cfg.JournalPath) {
-		return filepath.Join(GetConfigDir(), cfg.JournalPath)
-	}
-
-	return cfg.JournalPath
+	return defaultStore.JournalPath()
 }
 
 func GetSheetDir() string {
-	cfg := defaultStore.Get()
-	if cfg.SheetsDirectory == "" {
-		return filepath.Dir(GetJournalPath())
-	}
-
-	dir := cfg.SheetsDirectory
-	if !filepath.IsAbs(cfg.SheetsDirectory) {
-		dir = filepath.Join(GetConfigDir(), cfg.SheetsDirectory)
-	}
-
-	err := os.MkdirAll(dir, 0750)
-	if err != nil {
-		log.Fatal("Failed to create sheets directory", err)
-	}
-
-	return dir
+	return defaultStore.SheetDir()
 }
 
 func GetDBPath() string {
-	cfg := defaultStore.Get()
-	if !filepath.IsAbs(cfg.DBPath) {
-		return filepath.Join(GetConfigDir(), cfg.DBPath)
-	}
-
-	return cfg.DBPath
+	return defaultStore.DBPath()
 }
 
 func GetConfigDir() string {
@@ -583,18 +553,17 @@ func TimeZone() *time.Location {
 }
 
 func SupportsTaxFeatures() bool {
-	regime := defaultStore.Get().TaxRegime
-	return regime == TaxRegimeIndia || regime == TaxRegimeGermany
+	return defaultStore.SupportsTaxFeatures()
 }
 
 func SupportsIndiaTaxFeatures() bool {
-	return defaultStore.Get().TaxRegime == TaxRegimeIndia
+	return defaultStore.SupportsIndiaTaxFeatures()
 }
 
 func SupportsScheduleAL() bool {
-	return defaultStore.Get().TaxRegime == TaxRegimeIndia
+	return defaultStore.SupportsScheduleAL()
 }
 
 func SupportsGermanyTaxFeatures() bool {
-	return defaultStore.Get().TaxRegime == TaxRegimeGermany
+	return defaultStore.SupportsGermanyTaxFeatures()
 }

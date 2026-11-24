@@ -28,21 +28,21 @@ var passwordLinePattern = regexp.MustCompile(`(?im)^(\s*(?:-\s*)?password\s*:\s*
 // outside the configuration or journal directory are skipped. A journal file
 // that cannot be read makes the export fail instead of producing an incomplete
 // backup.
-func GenerateBackupZip(includeSecrets bool) ([]byte, string, error) {
-	return generateBackupZip(includeSecrets, ledger.Cli().Files)
+func GenerateBackupZip(store *config.Store, includeSecrets bool) ([]byte, string, error) {
+	return generateBackupZip(store, includeSecrets, ledger.Cli().Files)
 }
 
-func generateBackupZip(includeSecrets bool, listJournalFiles func(string) ([]string, error)) ([]byte, string, error) {
+func generateBackupZip(store *config.Store, includeSecrets bool, listJournalFiles func(string) ([]string, error)) ([]byte, string, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 
-	configDir := config.GetConfigDir()
-	journalPath := config.GetJournalPath()
+	configDir := store.ConfigDir()
+	journalPath := store.JournalPath()
 	journalDir := filepath.Dir(journalPath)
 
 	configRoot := resolveBackupPath(configDir)
 	journalRoot := resolveBackupPath(journalDir)
-	dbPath := resolveBackupPath(config.GetDBPath())
+	dbPath := resolveBackupPath(store.DBPath())
 
 	isPathSafe := func(target string) bool {
 		if target == "" {
@@ -149,7 +149,7 @@ func generateBackupZip(includeSecrets bool, listJournalFiles func(string) ([]str
 	}
 
 	// 2. Add the configuration file.
-	configPath := config.GetConfigPath()
+	configPath := store.Path()
 	if configPath != "" && isPathSafe(configPath) && !isDatabaseFile(configPath) {
 		if content, err := os.ReadFile(configPath); err == nil {
 			modTime := time.Now()
@@ -168,7 +168,7 @@ func generateBackupZip(includeSecrets bool, listJournalFiles func(string) ([]str
 	}
 
 	// 3. Add sheet files.
-	sheetDir := config.GetSheetDir()
+	sheetDir := store.SheetDir()
 	if sheetDir != "" && isPathSafe(sheetDir) {
 		_ = filepath.WalkDir(sheetDir, func(path string, entry os.DirEntry, walkErr error) error {
 			if walkErr != nil {
@@ -220,25 +220,27 @@ func generateBackupZip(includeSecrets bool, listJournalFiles func(string) ([]str
 }
 
 // HandleExportBackup handles GET /api/backup/export.
-func HandleExportBackup(c *gin.Context) {
-	includeSecrets := c.Query("include_secrets") == "true"
+func HandleExportBackup(deps Deps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		includeSecrets := c.Query("include_secrets") == "true"
 
-	log.WithFields(log.Fields{
-		"event":           "backup_export",
-		"include_secrets": includeSecrets,
-		"ip":              c.ClientIP(),
-	}).Info("Exporting backup archive")
+		log.WithFields(log.Fields{
+			"event":           "backup_export",
+			"include_secrets": includeSecrets,
+			"ip":              c.ClientIP(),
+		}).Info("Exporting backup archive")
 
-	zipData, filename, err := GenerateBackupZip(includeSecrets)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		zipData, filename, err := GenerateBackupZip(deps.Config, includeSecrets)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.Header("Content-Type", "application/zip")
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Data(http.StatusOK, "application/zip", zipData)
 	}
-
-	c.Header("Content-Type", "application/zip")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-	c.Header("X-Content-Type-Options", "nosniff")
-	c.Data(http.StatusOK, "application/zip", zipData)
 }
 
 func fileExists(path string) bool {

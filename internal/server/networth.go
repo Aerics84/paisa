@@ -22,7 +22,8 @@ type Networth struct {
 	NetInvestmentAmount decimal.Decimal `json:"netInvestmentAmount"`
 }
 
-func GetNetworth(db *gorm.DB) NetworthResponse {
+func GetNetworth(deps Deps) NetworthResponse {
+	db := deps.DB
 	postings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%", "Liabilities:%").UntilToday().All()
 
 	postings = service.PopulateMarketPrice(db, postings)
@@ -30,7 +31,7 @@ func GetNetworth(db *gorm.DB) NetworthResponse {
 	if networthTimeline == nil {
 		networthTimeline = []Networth{}
 	}
-	currencyNetworths := computeCurrencyNetworths(db, networthTimeline)
+	currencyNetworths := computeCurrencyNetworths(db, networthTimeline, deps.Config)
 	if currencyNetworths == nil {
 		currencyNetworths = []CurrencyNetworth{}
 	}
@@ -190,8 +191,8 @@ type CurrencyNetworth struct {
 	NetworthTimeline []Networth `json:"networthTimeline"`
 }
 
-func computeCurrencyNetworths(db *gorm.DB, timeline []Networth) []CurrencyNetworth {
-	currencies := config.GetConfig().NetworthCurrencies
+func computeCurrencyNetworths(db *gorm.DB, timeline []Networth, store *config.Store) []CurrencyNetworth {
+	currencies := store.Get().NetworthCurrencies
 	result := make([]CurrencyNetworth, 0, len(currencies))
 	for _, nc := range currencies {
 		symbol := nc.Symbol

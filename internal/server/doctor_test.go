@@ -83,7 +83,7 @@ func TestDoctorToleratesExecutionPriceNearDailyClose(t *testing.T) {
 	addDoctorPrice(t, db, "IE00B4L5Y983", "2026-10-01", "130")
 	addDoctorPosting(t, db, "buy-1", "Assets:Equity:IE00B4L5Y983", "IE00B4L5Y983", "2026-10-01", "2", "262")
 
-	assert.Empty(t, ruleJournalPriceMismatch(db))
+	assert.Empty(t, ruleJournalPriceMismatch(testDeps(db)))
 }
 
 func TestDoctorFlagsPriceFarFromDailyClose(t *testing.T) {
@@ -92,7 +92,7 @@ func TestDoctorFlagsPriceFarFromDailyClose(t *testing.T) {
 	addDoctorPrice(t, db, "GB00B3MBS747", "2026-10-01", "3.88")
 	addDoctorPosting(t, db, "buy-1", "Assets:Equity:GB00B3MBS747", "GB00B3MBS747", "2026-10-01", "1", "392")
 
-	issues := ruleJournalPriceMismatch(db)
+	issues := ruleJournalPriceMismatch(testDeps(db))
 	require.Len(t, issues, 1)
 	assert.Contains(t, issues[0].Error(), "GB00B3MBS747")
 }
@@ -108,7 +108,7 @@ func TestDoctorSkipsCorporateActionAdjustedPriceSeries(t *testing.T) {
 		addDoctorPosting(t, db, fmt.Sprintf("buy-%d", i), "Assets:Equity:US0231351067", "US0231351067", date, "0.01", "26")
 	}
 
-	assert.Empty(t, ruleJournalPriceMismatch(db))
+	assert.Empty(t, ruleJournalPriceMismatch(testDeps(db)))
 }
 
 func TestDoctorStillFlagsSingleTypoInAdjustedSeries(t *testing.T) {
@@ -118,7 +118,7 @@ func TestDoctorStillFlagsSingleTypoInAdjustedSeries(t *testing.T) {
 	addDoctorPosting(t, db, "buy-1", "Assets:Equity:DE0008232125", "DE0008232125", "2026-10-01", "10", "75")
 	addDoctorPosting(t, db, "buy-2", "Assets:Equity:DE0008232125", "DE0008232125", "2026-10-01", "10", "90")
 
-	issues := ruleJournalPriceMismatch(db)
+	issues := ruleJournalPriceMismatch(testDeps(db))
 	require.Len(t, issues, 1)
 	assert.Contains(t, issues[0].Error(), "10.0000 DE0008232125 @ 9.0000")
 }
@@ -131,7 +131,7 @@ func TestDoctorReportsNegativeExpenseEntriesAsSingleHint(t *testing.T) {
 	addDoctorPosting(t, db, "refund-3", "Expenses:Shopping:Clothing", "EUR", "2026-07-14", "-125", "-125")
 	addDoctorPosting(t, db, "expense-1", "Expenses:Shopping:Clothing", "EUR", "2026-07-15", "40", "40")
 
-	issues := ruleNonDebitAccount(db)
+	issues := ruleNonDebitAccount(testDeps(db))
 	require.Len(t, issues, 1)
 	assert.Contains(t, issues[0].Error(), "3 postings with a debit entry, -405.00 EUR in total")
 	assert.Contains(t, issues[0].Error(), "Expenses:Health</b>: 2 entries")

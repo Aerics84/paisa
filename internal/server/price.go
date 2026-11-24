@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ananthakumaran/paisa/internal/cache"
-	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/price"
@@ -20,9 +19,10 @@ import (
 
 var errUnknownProvider = errors.New("unknown price provider")
 
-func GetPrices(db *gorm.DB) gin.H {
+func GetPrices(deps Deps) gin.H {
+	db := deps.DB
 	var commodities []string
-	result := db.Model(&posting.Posting{}).Where("commodity != ?", config.DefaultCurrency()).Distinct().Pluck("commodity", &commodities)
+	result := db.Model(&posting.Posting{}).Where("commodity != ?", deps.Config.Get().DefaultCurrency).Distinct().Pluck("commodity", &commodities)
 	if result.Error != nil {
 		log.Fatal(result.Error)
 	}

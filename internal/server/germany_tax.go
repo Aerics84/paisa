@@ -10,7 +10,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type GermanyTaxPostingPair struct {
@@ -50,11 +49,12 @@ type GermanyTaxYear struct {
 	Diagnostics []GermanyTaxDiagnostic       `json:"diagnostics"`
 }
 
-func GetGermanyTax(db *gorm.DB) GermanyTaxResponse {
-	if !config.SupportsGermanyTaxFeatures() {
+func GetGermanyTax(deps Deps) GermanyTaxResponse {
+	if !deps.Config.SupportsGermanyTaxFeatures() {
 		return GermanyTaxResponse{TaxYears: map[string]GermanyTaxYear{}}
 	}
 
+	db := deps.DB
 	postings, incomePostings, withholdingTaxPostings := collectGermanyTaxPostings(db)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string { return p.Account })
 	years := map[string]*GermanyTaxYear{}
@@ -65,7 +65,7 @@ func GetGermanyTax(db *gorm.DB) GermanyTaxResponse {
 			if reportYear == nil {
 				reportYear = &GermanyTaxYear{
 					TaxYear:     year,
-					Settings:    config.GetConfig().GermanyTax,
+					Settings:    deps.Config.Get().GermanyTax,
 					Summary:     taxation.GermanyTaxBreakdown{},
 					Accounts:    []GermanyTaxAccount{},
 					Diagnostics: []GermanyTaxDiagnostic{},

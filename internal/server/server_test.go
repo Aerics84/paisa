@@ -48,6 +48,14 @@ func TestBuildUsesInjectedConfig(t *testing.T) {
 	require.Equal(t, "INR", configFromRouter(t, routerB))
 }
 
+// testDeps builds handler dependencies around a database. The configuration is
+// the process-wide store because the helpers in these tests load their fixture
+// through config.LoadConfig; the injected-config behaviour is covered by
+// TestNetworthHandlerUsesInjectedConfig.
+func testDeps(db *gorm.DB) Deps {
+	return Deps{DB: db, Config: config.DefaultStore()}
+}
+
 func openTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 

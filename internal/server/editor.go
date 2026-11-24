@@ -15,7 +15,6 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 type LedgerFile struct {
@@ -25,7 +24,8 @@ type LedgerFile struct {
 	Operation string   `json:"operation"`
 }
 
-func GetFiles(db *gorm.DB) EditorFilesResponse {
+func GetFiles(deps Deps) EditorFilesResponse {
+	db := deps.DB
 	var accounts []string
 	var payees []string
 	var commodities []string
@@ -33,7 +33,7 @@ func GetFiles(db *gorm.DB) EditorFilesResponse {
 	db.Model(&posting.Posting{}).Distinct().Order("payee").Pluck("Payee", &payees)
 	db.Model(&posting.Posting{}).Distinct().Order("commodity").Pluck("Commodity", &commodities)
 
-	path := config.GetJournalPath()
+	path := deps.Config.JournalPath()
 
 	files := []LedgerFile{}
 	dir := filepath.Dir(path)
@@ -51,8 +51,8 @@ func GetFiles(db *gorm.DB) EditorFilesResponse {
 	}
 }
 
-func GetFile(file LedgerFile) EditorFileResponse {
-	path := config.GetJournalPath()
+func GetFile(file LedgerFile, store *config.Store) EditorFileResponse {
+	path := store.JournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
@@ -124,15 +124,15 @@ func calendarDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-func DeleteBackups(file LedgerFile) EditorFileResponse {
-	path := config.GetJournalPath()
+func DeleteBackups(file LedgerFile, store *config.Store) EditorFileResponse {
+	path := store.JournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
 		return EditorFileResponse{Message: "Invalid file name"}
 	}
 
-	if !config.GetConfig().Readonly {
+	if !store.Get().Readonly {
 		versions := utils.Glob(filePath, ".backup.*")
 		for _, version := range versions {
 			err := os.Remove(version)
@@ -145,13 +145,13 @@ func DeleteBackups(file LedgerFile) EditorFileResponse {
 	return EditorFileResponse{File: readLedgerFileWithVersions(dir, filePath)}
 }
 
-func SaveFile(db *gorm.DB, file LedgerFile) EditorSaveResponse {
-	path := config.GetJournalPath()
+func SaveFile(deps Deps, file LedgerFile) EditorSaveResponse {
+	path := deps.Config.JournalPath()
 	if extension := filepath.Ext(path); extension != "" && filepath.Ext(file.Name) != extension {
 		return EditorSaveResponse{Errors: []FileError{}, Saved: false, Message: "File name must end with " + extension}
 	}
 
-	errors, _, err := validateFile(file)
+	errors, _, err := validateFile(file, deps.Config)
 	if err != nil {
 		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Validation failed"}
 	}
@@ -207,18 +207,18 @@ func SaveFile(db *gorm.DB, file LedgerFile) EditorSaveResponse {
 
 	pruneOldBackups(filePath, now)
 
-	Sync(db, SyncRequest{Journal: true})
+	Sync(deps, SyncRequest{Journal: true})
 
 	return EditorSaveResponse{Errors: fileErrors(errors), Saved: true, File: readLedgerFileWithVersions(dir, filePath)}
 }
 
-func ValidateFile(file LedgerFile) EditorValidateResponse {
-	errors, output, _ := validateFile(file)
+func ValidateFile(file LedgerFile, store *config.Store) EditorValidateResponse {
+	errors, output, _ := validateFile(file, store)
 	return EditorValidateResponse{Errors: fileErrors(errors), Output: output}
 }
 
-func validateFile(file LedgerFile) ([]ledger.LedgerFileError, string, error) {
-	path := config.GetJournalPath()
+func validateFile(file LedgerFile, store *config.Store) ([]ledger.LedgerFileError, string, error) {
+	path := store.JournalPath()
 	if file.Name != "" {
 		filePath, err := utils.BuildSubPath(filepath.Dir(path), file.Name)
 		if err != nil || filePath == filepath.Clean(filepath.Dir(path)) {

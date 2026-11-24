@@ -46,7 +46,7 @@ type Deps struct {
 }
 
 func Build(deps Deps, enableCompression bool) *gin.Engine {
-	return BuildWithManager(deps, enableCompression, NewPriceManager(deps.DB, pricesync.NewMemoryStateStore()))
+	return BuildWithManager(deps, enableCompression, NewPriceManager(deps, pricesync.NewMemoryStateStore()))
 }
 
 func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Manager) *gin.Engine {
@@ -126,7 +126,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.POST("/api/config", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": true})
 			return
 		}
@@ -137,7 +137,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		err = config.SaveConfig(body)
+		err = deps.Config.Save(body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
 			return
@@ -149,7 +149,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.POST("/api/init", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": true})
 			return
 		}
@@ -158,7 +158,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			RegionalProfile config.RegionalProfileType `json:"regional_profile"`
 		}
 
-		profile := config.NormalizeRegionalProfile(config.GetConfig().RegionalProfile)
+		profile := config.NormalizeRegionalProfile(deps.Config.Get().RegionalProfile)
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
@@ -179,14 +179,17 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			}
 		}
 
-		generator.DemoForProfile(config.GetConfigDir(), profile)
-		config.LoadConfigFile(config.GetConfigPath())
-		Sync(db, SyncRequest{Journal: true, Prices: true, Portfolios: true})
+		generator.DemoForProfile(deps.Config.ConfigDir(), profile)
+		if err := deps.Config.LoadFile(deps.Config.Path()); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+			return
+		}
+		Sync(deps, SyncRequest{Journal: true, Prices: true, Portfolios: true})
 		c.JSON(200, gin.H{"success": true})
 	})
 
 	router.POST("/api/sync", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": true})
 			return
 		}
@@ -207,22 +210,22 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, Sync(db, syncRequest))
+		c.JSON(200, Sync(deps, syncRequest))
 	})
 
 	router.GET("/api/sync/status", func(c *gin.Context) {
 		c.JSON(200, manager.Status(time.Now()))
 	})
 
-	router.POST("/api/import/statement", HandleParseStatement(db))
-	router.POST("/api/import/commit", HandleCommitImport(db))
-	router.GET("/api/import/reconciliation", HandleGetReconciliation())
+	router.POST("/api/import/statement", HandleParseStatement(deps))
+	router.POST("/api/import/commit", HandleCommitImport(deps))
+	router.GET("/api/import/reconciliation", HandleGetReconciliation(deps))
 	router.GET("/api/rules", HandleGetRules(db))
-	router.POST("/api/rules", HandleSaveRule(db))
-	router.DELETE("/api/rules/:id", HandleDeleteRule(db))
+	router.POST("/api/rules", HandleSaveRule(deps))
+	router.DELETE("/api/rules/:id", HandleDeleteRule(deps))
 
 	router.GET("/api/dashboard", func(c *gin.Context) {
-		c.JSON(200, GetDashboard(db))
+		c.JSON(200, GetDashboard(deps))
 	})
 
 	router.GET("/api/dashboard/monthly", func(c *gin.Context) {
@@ -232,17 +235,17 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		month, err := time.ParseInLocation("2006-01", monthText, config.TimeZone())
+		month, err := time.ParseInLocation("2006-01", monthText, deps.Config.TimeZone())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "month must use YYYY-MM"})
 			return
 		}
 
-		c.JSON(200, GetMonthlyReview(db, month))
+		c.JSON(200, GetMonthlyReview(deps, month))
 	})
 
 	router.GET("/api/networth", func(c *gin.Context) {
-		c.JSON(200, GetNetworth(db))
+		c.JSON(200, GetNetworth(deps))
 	})
 
 	router.GET("/api/assets/balance", func(c *gin.Context) {
@@ -250,14 +253,14 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/investment", func(c *gin.Context) {
-		c.JSON(200, GetInvestment(db))
+		c.JSON(200, GetInvestment(deps))
 	})
 	router.GET("/api/gain", func(c *gin.Context) {
-		c.JSON(200, GetGain(db))
+		c.JSON(200, GetGain(deps))
 	})
 	router.GET("/api/gain/:account", func(c *gin.Context) {
 		account := c.Param("account")
-		c.JSON(200, GetAccountGain(db, account))
+		c.JSON(200, GetAccountGain(deps, account))
 	})
 	router.GET("/api/income", func(c *gin.Context) {
 		c.JSON(200, GetIncome(db))
@@ -267,7 +270,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/budget", func(c *gin.Context) {
-		c.JSON(200, GetBudget(db))
+		c.JSON(200, GetBudget(deps))
 	})
 
 	router.GET("/api/cash_flow", func(c *gin.Context) {
@@ -280,10 +283,10 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, GetRecurringTransactions(db))
 	})
 	router.GET("/api/allocation", func(c *gin.Context) {
-		c.JSON(200, GetAllocation(db))
+		c.JSON(200, GetAllocation(deps))
 	})
-	router.POST("/api/allocation/rebalance", RebalanceHandler(db))
-	router.POST("/api/allocation/targets", SaveAllocationTargetsHandler())
+	router.POST("/api/allocation/rebalance", RebalanceHandler(deps))
+	router.POST("/api/allocation/targets", SaveAllocationTargetsHandler(deps))
 	router.GET("/api/portfolio_allocation", func(c *gin.Context) {
 		c.JSON(200, GetPortfolioAllocation(db))
 	})
@@ -291,7 +294,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, GetLedger(db))
 	})
 	router.POST("/api/price/delete", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": true})
 			return
 		}
@@ -305,14 +308,14 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, result)
 	})
 	router.GET("/api/price", func(c *gin.Context) {
-		c.JSON(200, GetPrices(db))
+		c.JSON(200, GetPrices(deps))
 	})
 	router.GET("/api/price/providers", func(c *gin.Context) {
 		c.JSON(200, GetPriceProviders(db))
 	})
 
 	router.POST("/api/price/providers/delete/:provider", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": true})
 			return
 		}
@@ -348,19 +351,19 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, GetTransactions(db))
 	})
 	router.GET("/api/harvest", func(c *gin.Context) {
-		c.JSON(200, GetHarvest(db))
+		c.JSON(200, GetHarvest(deps))
 	})
 
 	router.GET("/api/capital_gains", func(c *gin.Context) {
-		c.JSON(200, GetCapitalGains(db))
+		c.JSON(200, GetCapitalGains(deps))
 	})
 
 	router.GET("/api/capital_income_tax", func(c *gin.Context) {
-		c.JSON(200, GetGermanyTax(db))
+		c.JSON(200, GetGermanyTax(deps))
 	})
 
 	router.GET("/api/tax_overview", func(c *gin.Context) {
-		overview, err := GetTaxOverview(db, c.Query("year"))
+		overview, err := GetTaxOverview(deps, c.Query("year"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -369,10 +372,10 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/schedule_al", func(c *gin.Context) {
-		c.JSON(200, GetScheduleAL(db))
+		c.JSON(200, GetScheduleAL(deps))
 	})
 	router.GET("/api/diagnosis", func(c *gin.Context) {
-		c.JSON(200, GetDiagnosis(db))
+		c.JSON(200, GetDiagnosis(deps))
 	})
 
 	router.GET("/api/liabilities/interest", func(c *gin.Context) {
@@ -391,10 +394,10 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, GetLogs())
 	})
 
-	router.GET("/api/backup/export", HandleExportBackup)
+	router.GET("/api/backup/export", HandleExportBackup(deps))
 
 	router.GET("/api/editor/files", func(c *gin.Context) {
-		c.JSON(200, GetFiles(db))
+		c.JSON(200, GetFiles(deps))
 	})
 
 	router.POST("/api/editor/file", func(c *gin.Context) {
@@ -404,7 +407,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, GetFile(ledgerFile))
+		c.JSON(200, GetFile(ledgerFile, deps.Config))
 	})
 
 	router.POST("/api/editor/file/delete_backups", func(c *gin.Context) {
@@ -414,7 +417,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, DeleteBackups(ledgerFile))
+		c.JSON(200, DeleteBackups(ledgerFile, deps.Config))
 	})
 
 	router.POST("/api/editor/validate", func(c *gin.Context) {
@@ -424,11 +427,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, ValidateFile(ledgerFile))
+		c.JSON(200, ValidateFile(ledgerFile, deps.Config))
 	})
 
 	router.POST("/api/editor/save", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, EditorSaveResponse{Errors: []FileError{}, Saved: false, Message: "Readonly mode"})
 			return
 		}
@@ -439,11 +442,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, SaveFile(db, ledgerFile))
+		c.JSON(200, SaveFile(deps, ledgerFile))
 	})
 
 	router.GET("/api/sheets/files", func(c *gin.Context) {
-		c.JSON(200, GetSheets(db))
+		c.JSON(200, GetSheets(deps))
 	})
 
 	router.POST("/api/sheets/file", func(c *gin.Context) {
@@ -453,7 +456,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, GetSheet(sheetFile))
+		c.JSON(200, GetSheet(sheetFile, deps.Config))
 	})
 
 	router.POST("/api/sheets/file/delete_backups", func(c *gin.Context) {
@@ -463,11 +466,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, DeleteSheetBackups(sheetFile))
+		c.JSON(200, DeleteSheetBackups(sheetFile, deps.Config))
 	})
 
 	router.POST("/api/sheets/save", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, SheetSaveResponse{Saved: false, Message: "Readonly mode"})
 			return
 		}
@@ -478,7 +481,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		c.JSON(200, SaveSheetFile(db, sheetFile))
+		c.JSON(200, SaveSheetFile(deps, sheetFile))
 	})
 
 	router.GET("/api/account/tf_idf", func(c *gin.Context) {
@@ -490,7 +493,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.POST("/api/templates/upsert", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"saved": false, "message": "Readonly mode"})
 			return
 		}
@@ -511,7 +514,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.POST("/api/templates/delete", func(c *gin.Context) {
-		if config.GetConfig().Readonly {
+		if deps.Config.Get().Readonly {
 			c.JSON(200, gin.H{"success": false, "message": "Readonly mode"})
 			return
 		}
@@ -531,19 +534,19 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/goals", func(c *gin.Context) {
-		c.JSON(200, GoalsResponse{Goals: goal.GetGoalSummaries(db)})
+		c.JSON(200, GoalsResponse{Goals: goal.GetGoalSummaries(db, deps.Config)})
 	})
 
 	router.GET("/api/goals/:type/:name", func(c *gin.Context) {
-		c.JSON(200, goal.GetGoalDetails(db, c.Param("type"), c.Param("name")))
+		c.JSON(200, goal.GetGoalDetails(db, c.Param("type"), c.Param("name"), deps.Config))
 	})
 
 	router.GET("/api/credit_cards", func(c *gin.Context) {
-		c.JSON(200, GetCreditCards(db))
+		c.JSON(200, GetCreditCards(deps))
 	})
 
 	router.GET("/api/credit_cards/:account", func(c *gin.Context) {
-		c.JSON(200, GetCreditCard(db, c.Param("account")))
+		c.JSON(200, GetCreditCard(deps, c.Param("account")))
 	})
 
 	router.NoRoute(func(c *gin.Context) {
@@ -554,7 +557,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 }
 
 func Listen(deps Deps, host string, port int) {
-	manager := NewPriceManager(deps.DB, pricesync.NewFileStateStore(pricesync.StatePathForDB(config.GetDBPath())))
+	manager := NewPriceManager(deps, pricesync.NewFileStateStore(pricesync.StatePathForDB(deps.Config.DBPath())))
 	router := BuildWithManager(deps, true, manager)
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 

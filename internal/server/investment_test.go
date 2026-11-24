@@ -64,6 +64,7 @@ func TestComputeInvestmentYearlyCardSubtractsTaxesOnce(t *testing.T) {
 		[]posting.Posting{
 			investmentPosting(0, 1, "Income:Salary", -1000),
 		},
+		config.DefaultStore(),
 	)
 
 	require.Len(t, cards, 1)
@@ -84,6 +85,7 @@ func TestComputeInvestmentYearlyCardKeepsInvestmentRateSeparate(t *testing.T) {
 		[]posting.Posting{investmentPosting(0, 4, "Assets:Stocks", 200)},
 		[]posting.Posting{investmentPosting(0, 3, "Expenses:Tax", 100)},
 		[]posting.Posting{investmentPosting(0, 1, "Income:Salary", -1000)},
+		config.DefaultStore(),
 	)
 
 	require.Len(t, cards, 1)
@@ -106,6 +108,7 @@ func TestComputeInvestmentYearlyCardMarksCurrentFinancialYearIncomplete(t *testi
 			investmentPosting(-1, 1, "Income:Salary", -1000),
 			investmentPosting(0, 1, "Income:Salary", -1000),
 		},
+		config.DefaultStore(),
 	)
 
 	require.Len(t, cards, 2)
@@ -121,6 +124,7 @@ func TestComputeInvestmentYearlyCardWorksWithoutInvestmentPostings(t *testing.T)
 		nil,
 		[]posting.Posting{investmentPosting(0, 2, "Expenses:Food", 600)},
 		[]posting.Posting{investmentPosting(0, 1, "Income:Salary", -1000)},
+		config.DefaultStore(),
 	)
 
 	require.Len(t, cards, 1, "income and expense postings alone must produce a yearly card")
@@ -141,6 +145,7 @@ func TestComputeInvestmentYearlyCardMarksEmptyPeriodAsNoActivity(t *testing.T) {
 			investmentPosting(-2, 1, "Income:Salary", -1000),
 			investmentPosting(0, 1, "Income:Salary", -1000),
 		},
+		config.DefaultStore(),
 	)
 
 	require.Len(t, cards, 3)
@@ -163,7 +168,7 @@ func openInvestmentTestDB(t *testing.T) *gorm.DB {
 func TestGetInvestmentReturnsNothingForEmptyJournal(t *testing.T) {
 	configureInvestmentTest(t)
 
-	response := GetInvestment(openInvestmentTestDB(t))
+	response := GetInvestment(testDeps(openInvestmentTestDB(t)))
 
 	cards := response.YearlyCards
 	require.Empty(t, cards, "a completely empty journal should not produce yearly cards")
@@ -180,7 +185,7 @@ func TestGetInvestmentCreatesNoActivityCardForUnrelatedPostings(t *testing.T) {
 		Quantity:  decimal.NewFromInt(500),
 	}).Error)
 
-	response := GetInvestment(db)
+	response := GetInvestment(testDeps(db))
 
 	cards := response.YearlyCards
 	require.Len(t, cards, 1, "a non-empty journal should produce a card even without relevant postings")
@@ -231,7 +236,7 @@ func TestComputeInvestmentYearlyCardMarksRecordedIncomeAndExpenseSides(t *testin
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cards := computeInvestmentYearlyCard(investmentYearStart(0), nil, tc.expenses, tc.incomes)
+			cards := computeInvestmentYearlyCard(investmentYearStart(0), nil, tc.expenses, tc.incomes, config.DefaultStore())
 
 			require.Len(t, cards, 1)
 			require.Equal(t, tc.hasIncome, cards[0].HasIncomePostings, "unexpected income availability for %s", tc.unavailableOn)
@@ -252,7 +257,7 @@ func TestIsSalaryIncomeMatchesWholeSegments(t *testing.T) {
 		"Income:PayrollOther":    false,
 		"Income:Bank:Interest":   false,
 	} {
-		assert.Equal(t, want, isSalaryIncome(account), account)
+		assert.Equal(t, want, isSalaryIncome(account, config.DefaultStore()), account)
 	}
 }
 
@@ -267,7 +272,7 @@ func TestInvestmentYearlyCardUsesConfiguredSalaryAccounts(t *testing.T) {
 		{Date: date, Account: "Income:Employment:Wages", Amount: decimal.NewFromInt(-1000)},
 		{Date: date, Account: "Income:Other", Amount: decimal.NewFromInt(-50)},
 	}
-	cards := computeInvestmentYearlyCard(date, assets, nil, incomes)
+	cards := computeInvestmentYearlyCard(date, assets, nil, incomes, config.DefaultStore())
 	require.NotEmpty(t, cards)
 	assert.True(t, cards[0].GrossSalaryIncome.Equal(decimal.NewFromInt(1000)))
 	assert.True(t, cards[0].GrossOtherIncome.Equal(decimal.NewFromInt(50)))
@@ -287,7 +292,7 @@ func TestGetInvestmentExcludesInternalTransfers(t *testing.T) {
 	}
 	require.NoError(t, db.Create(&rows).Error)
 
-	result := GetInvestment(db)
+	result := GetInvestment(testDeps(db))
 	assets := result.Assets
 	require.Len(t, assets, 1)
 	assert.Equal(t, "buy", assets[0].TransactionID)

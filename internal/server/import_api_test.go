@@ -49,11 +49,11 @@ func loadImportTestConfig(t *testing.T, content string) {
 func buildImportTestRouter(db *gorm.DB) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.POST("/api/import/statement", HandleParseStatement(db))
-	r.POST("/api/import/commit", HandleCommitImport(db))
+	r.POST("/api/import/statement", HandleParseStatement(testDeps(db)))
+	r.POST("/api/import/commit", HandleCommitImport(testDeps(db)))
 	r.GET("/api/rules", HandleGetRules(db))
-	r.POST("/api/rules", HandleSaveRule(db))
-	r.DELETE("/api/rules/:id", HandleDeleteRule(db))
+	r.POST("/api/rules", HandleSaveRule(testDeps(db)))
+	r.DELETE("/api/rules/:id", HandleDeleteRule(testDeps(db)))
 	return r
 }
 
@@ -233,7 +233,7 @@ func TestHandleCommitImportValidatesCombinedBeancountJournal(t *testing.T) {
 	t.Cleanup(func() { validateImportContent = originalValidate })
 
 	var validated string
-	validateImportContent = func(content string) ([]ledger.LedgerFileError, string, error) {
+	validateImportContent = func(_ *config.Store, content string) ([]ledger.LedgerFileError, string, error) {
 		validated = content
 		return nil, "", nil
 	}
@@ -334,7 +334,7 @@ func TestHandleCommitImportMarksManifestCommitted(t *testing.T) {
 
 	root := t.TempDir()
 	originalRoot := importManifestRoot
-	importManifestRoot = func() string { return root }
+	importManifestRoot = func(*config.Store) string { return root }
 	t.Cleanup(func() { importManifestRoot = originalRoot })
 
 	importID := strings.Repeat("a", 64)
@@ -380,7 +380,7 @@ func stubImportValidation(t *testing.T, validationErr error) {
 	t.Helper()
 	original := validateImportContent
 	t.Cleanup(func() { validateImportContent = original })
-	validateImportContent = func(string) ([]ledger.LedgerFileError, string, error) {
+	validateImportContent = func(*config.Store, string) ([]ledger.LedgerFileError, string, error) {
 		return nil, "", validationErr
 	}
 }
@@ -389,7 +389,7 @@ func stubImportSyncSuccess(t *testing.T) {
 	t.Helper()
 	original := importSync
 	t.Cleanup(func() { importSync = original })
-	importSync = func(*gorm.DB) gin.H {
+	importSync = func(Deps) gin.H {
 		return gin.H{"success": true}
 	}
 }
@@ -582,9 +582,9 @@ func TestHandleCommitImportSyncsDatabase(t *testing.T) {
 	t.Cleanup(func() { importSync = originalSync })
 
 	called := false
-	importSync = func(syncDB *gorm.DB) gin.H {
+	importSync = func(deps Deps) gin.H {
 		called = true
-		assert.Same(t, db, syncDB)
+		assert.Same(t, db, deps.DB)
 		return gin.H{"success": true}
 	}
 
@@ -625,7 +625,7 @@ func TestHandleCommitImportRollsBackWhenSyncFails(t *testing.T) {
 
 	originalSync := importSync
 	t.Cleanup(func() { importSync = originalSync })
-	importSync = func(*gorm.DB) gin.H {
+	importSync = func(Deps) gin.H {
 		return gin.H{"success": false, "message": "sync failed"}
 	}
 
@@ -684,19 +684,19 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 	}
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n")
-	ledgerOut := formatTransactionsForCommit(db, req, "INR")
+	ledgerOut := formatTransactionsForCommit(db, req, "INR", config.DefaultStore())
 	assert.Contains(t, ledgerOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, ledgerOut, "-45.20 INR")
 	assert.NotContains(t, ledgerOut, "2026/10/11")
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: hledger\n")
-	hledgerOut := formatTransactionsForCommit(db, req, "INR")
+	hledgerOut := formatTransactionsForCommit(db, req, "INR", config.DefaultStore())
 	assert.Contains(t, hledgerOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, hledgerOut, "-45.20 INR")
 	assert.NotContains(t, hledgerOut, "2026/10/11")
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: beancount\n")
-	beancountOut := formatTransactionsForCommit(db, req, "INR")
+	beancountOut := formatTransactionsForCommit(db, req, "INR", config.DefaultStore())
 	assert.Contains(t, beancountOut, "2026-10-11 * \"Coffee Shop\"")
 	assert.Contains(t, beancountOut, "-45.20 INR")
 	assert.NotContains(t, beancountOut, "2026/10/11")
@@ -719,7 +719,7 @@ func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
 			},
 			{
 				Date:            "2026/10/11",
-				Payee:           "Bakery & Café",
+				Payee:           "Bakery & CafÃ©",
 				Amount:          12.50,
 				Currency:        "INR",
 				IsDebit:         true,
@@ -729,10 +729,10 @@ func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
 	}
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n")
-	out := formatTransactionsForCommit(db, req, "INR")
+	out := formatTransactionsForCommit(db, req, "INR", config.DefaultStore())
 
 	assert.Contains(t, out, `2026-10-11 * "Consolidated Debits (2 items)"`)
 	assert.NotContains(t, out, "2026/10/11")
 	assert.Contains(t, out, "Coffee Shop")
-	assert.Contains(t, out, "Bakery Café")
+	assert.Contains(t, out, "Bakery CafÃ©")
 }

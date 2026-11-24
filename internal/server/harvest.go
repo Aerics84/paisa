@@ -37,11 +37,12 @@ type Harvestable struct {
 	CurrentUnitDate       time.Time          `json:"current_unit_date"`
 }
 
-func GetHarvest(db *gorm.DB) HarvestResponse {
-	if !config.SupportsIndiaTaxFeatures() {
+func GetHarvest(deps Deps) HarvestResponse {
+	if !deps.Config.SupportsIndiaTaxFeatures() {
 		return HarvestResponse{Harvestables: map[string]Harvestable{}}
 	}
 
+	db := deps.DB
 	commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
 		return c.Harvest > 0
 	})

@@ -36,7 +36,8 @@ type InvestmentYearlyCard struct {
 	HasExpensePostings          bool            `json:"has_expense_postings"`
 }
 
-func GetInvestment(db *gorm.DB) InvestmentResponse {
+func GetInvestment(deps Deps) InvestmentResponse {
+	db := deps.DB
 	assets := query.Init(db).Like("Assets:%").NotAccountPrefix("Assets:Checking").
 		Where("transaction_id not in (select transaction_id from postings p where p.account like ? and p.transaction_id = transaction_id)", "Liabilities:%").
 		All()
@@ -49,11 +50,11 @@ func GetInvestment(db *gorm.DB) InvestmentResponse {
 	}
 
 	assets = lo.Filter(assets, func(p posting.Posting, _ int) bool { return !service.IsStockSplit(db, p) })
-	assets = filterOutInternalTransfers(db, assets)
+	assets = filterOutInternalTransfers(db, assets, deps.Config)
 	if assets == nil {
 		assets = []posting.Posting{}
 	}
-	yearlyCards := computeInvestmentYearlyCard(p.Date, assets, expenses, incomes)
+	yearlyCards := computeInvestmentYearlyCard(p.Date, assets, expenses, incomes, deps.Config)
 	if yearlyCards == nil {
 		yearlyCards = []InvestmentYearlyCard{}
 	}
@@ -63,8 +64,8 @@ func GetInvestment(db *gorm.DB) InvestmentResponse {
 // filterOutInternalTransfers drops asset postings that belong to internal
 // transfers. It reloads every leg of the candidate transactions so that a
 // transfer with a non-asset leg is not misclassified.
-func filterOutInternalTransfers(db *gorm.DB, assets []posting.Posting) []posting.Posting {
-	globs := config.GetConfig().TransferAccounts
+func filterOutInternalTransfers(db *gorm.DB, assets []posting.Posting, store *config.Store) []posting.Posting {
+	globs := store.Get().TransferAccounts
 	if len(globs) == 0 || len(assets) == 0 {
 		return assets
 	}
@@ -93,9 +94,9 @@ func filterOutInternalTransfers(db *gorm.DB, assets []posting.Posting) []posting
 	})
 }
 
-func isSalaryIncome(account string) bool {
+func isSalaryIncome(account string, store *config.Store) bool {
 	accounts := []string{"Income:Salary", "Income:Payroll"}
-	if configured := config.GetConfig().SalaryIncomeAccounts; configured != nil {
+	if configured := store.Get().SalaryIncomeAccounts; configured != nil {
 		accounts = *configured
 	}
 	for _, parent := range accounts {
@@ -106,7 +107,7 @@ func isSalaryIncome(account string) bool {
 	return false
 }
 
-func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expenses []posting.Posting, incomes []posting.Posting) []InvestmentYearlyCard {
+func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expenses []posting.Posting, incomes []posting.Posting, store *config.Store) []InvestmentYearlyCard {
 	var yearlyCards []InvestmentYearlyCard = make([]InvestmentYearlyCard, 0)
 
 	var p posting.Posting
@@ -141,14 +142,14 @@ func computeInvestmentYearlyCard(start time.Time, assets []posting.Posting, expe
 		}
 
 		grossSalaryIncome := utils.SumBy(currentYearIncomes, func(p posting.Posting) decimal.Decimal {
-			if isSalaryIncome(p.Account) {
+			if isSalaryIncome(p.Account, store) {
 				return p.Amount.Neg()
 			} else {
 				return decimal.Zero
 			}
 		})
 		grossOtherIncome := utils.SumBy(currentYearIncomes, func(p posting.Posting) decimal.Decimal {
-			if !isSalaryIncome(p.Account) {
+			if !isSalaryIncome(p.Account, store) {
 				return p.Amount.Neg()
 			} else {
 				return decimal.Zero

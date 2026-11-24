@@ -117,7 +117,7 @@ func TestGetMonthlyReviewUsesSelectedCalendarMonth(t *testing.T) {
 	addMonthlyReviewSalary(t, db, "feb-salary", "2022-02-15", "2000")
 	addMonthlyReviewExpense(t, db, "feb-expense", "2022-02-20", "500")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "2022-02", review.Month)
 	require.Equal(t, "ready", review.ActivityState)
@@ -149,7 +149,7 @@ func TestGetMonthlyReviewSubtractsTaxExactlyOnce(t *testing.T) {
 	addMonthlyReviewCurrencyPosting(t, db, "tax", "2022-02-05", "Assets:Checking:Bank", "-100")
 	addMonthlyReviewExpense(t, db, "expense", "2022-02-06", "200")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	requireDecimalEqual(t, "100", review.NetTax)
 	requireDecimalEqual(t, "900", review.NetIncomeAfterTax)
@@ -170,7 +170,7 @@ func TestGetMonthlyReviewKeepsSurplusSeparateFromInvestmentAndCheckingMovements(
 	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2022-02-12", "Assets:Checking:Savings", "-100")
 	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2022-02-12", "Assets:Checking:Bank", "100")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	requireDecimalEqual(t, "1000", review.NetIncomeAfterTax)
 	requireDecimalEqual(t, "200", review.NetExpense)
@@ -186,7 +186,7 @@ func TestGetMonthlyReviewMarksCurrentMonthInProgress(t *testing.T) {
 	addMonthlyReviewExpense(t, db, "expense", "2022-02-10", "100")
 	addMonthlyReviewSalary(t, db, "future-salary", "2022-02-20", "999")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.False(t, review.PeriodComplete, "the current month is calendar-incomplete")
 	require.Equal(t, "ready", review.ActivityState)
@@ -196,7 +196,7 @@ func TestGetMonthlyReviewMarksCurrentMonthInProgress(t *testing.T) {
 	require.True(t, review.NetIncomeTrend[2].IsMonthToDate)
 	requireDecimalEqual(t, "500", review.NetIncomeTrend[2].Value)
 
-	january := GetMonthlyReview(db, monthlyReviewTestDate("2022-01-01"))
+	january := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-01-01"))
 	require.True(t, january.PeriodComplete)
 }
 
@@ -206,7 +206,7 @@ func TestGetMonthlyReviewShowsNoRecordedActivityWithoutClaimingCompleteness(t *t
 
 	addMonthlyReviewSalary(t, db, "jan-salary", "2022-01-15", "1000")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-03-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-03-01"))
 
 	require.Equal(t, "no_recorded_activity", review.ActivityState)
 	require.True(t, review.PeriodComplete)
@@ -232,7 +232,7 @@ func TestGetMonthlyReviewReturnsFlowGraphFromActualPostings(t *testing.T) {
 	addMonthlyReviewSalary(t, db, "salary", "2022-02-01", "1000")
 	addMonthlyReviewExpense(t, db, "expense", "2022-02-06", "200")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	income, ok := findGraphLinkValue(review.FlowGraph, "Income", "Assets:Checking:Bank")
 	require.True(t, ok)
@@ -254,7 +254,7 @@ func TestGetMonthlyReviewCurrentMonthIncludesFlowGraph(t *testing.T) {
 	addMonthlyReviewSalary(t, db, "salary", "2022-02-01", "1000")
 	addMonthlyReviewExpense(t, db, "expense", "2022-02-06", "200")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.False(t, review.PeriodComplete, "the running month is calendar-incomplete")
 	income, ok := findGraphLinkValue(review.FlowGraph, "Income", "Assets:Checking:Bank")
@@ -273,7 +273,7 @@ func TestGetMonthlyReviewDoesNotRankPositionsWithoutPriceCoverage(t *testing.T) 
 	addMonthlyReviewPosting(t, db, "buy", "2022-01-10", "Assets:Equity:VWCE", "VWCE", "10", "1000")
 	addMonthlyReviewCurrencyPosting(t, db, "buy", "2022-01-10", "Assets:Checking:Bank", "-1000")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "not_available", review.PerformanceState)
 	require.Empty(t, review.BestPerformers)
@@ -290,7 +290,7 @@ func TestGetMonthlyReviewRequiresTwoRankablePositions(t *testing.T) {
 	addWeeklyMonthlyReviewPrices(t, db, "VWCE", []string{"2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28"}, "110")
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "not_available", review.PerformanceState, "a single position must not be presented as a best/weakest ranking")
 	require.Empty(t, review.BestPerformers)
@@ -314,7 +314,7 @@ func TestGetMonthlyReviewRanksFlowAdjustedPositions(t *testing.T) {
 	}
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	t.Logf("performance state=%s best=%+v weakest=%+v asof=%s", review.PerformanceState, review.BestPerformers, review.WeakestPerformers, review.PerformanceAsOf)
 	require.Equal(t, "ready", review.PerformanceState)
@@ -348,7 +348,7 @@ func TestGetMonthlyReviewAttributesDividendsOnlyWhenIdentifiable(t *testing.T) {
 	addMonthlyReviewCurrencyPosting(t, db, "dividend-unknown", "2022-02-15", "Assets:Checking:Bank", "7")
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	requireDecimalEqual(t, "12", review.DividendIncome)
 	require.Equal(t, "ready", review.PerformanceState)
@@ -386,7 +386,7 @@ func TestGetMonthlyReviewIncludesFirstCalendarDayReturn(t *testing.T) {
 	}
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "ready", review.PerformanceState)
 	require.NotEmpty(t, review.BestPerformers)
@@ -417,7 +417,7 @@ func TestGetMonthlyReviewKeepsCoverageUnavailableWhenAPositionHasNoPrice(t *test
 	}
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "not_available", review.PerformanceState, "an unpriced position must not be silently dropped from coverage")
 	require.Empty(t, review.BestPerformers)
@@ -443,7 +443,7 @@ func TestGetMonthlyReviewKeepsCoverageUnavailableForMixedCommodityAccount(t *tes
 	}
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "not_available", review.PerformanceState, "a mixed-commodity account cannot be silently excluded from coverage")
 	require.Empty(t, review.BestPerformers)
@@ -472,7 +472,7 @@ func TestGetMonthlyReviewExcludesQuantityOnlyStockSplitFromRanking(t *testing.T)
 	}
 	service.ClearPriceCache()
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	require.Equal(t, "ready", review.PerformanceState)
 	require.Len(t, review.BestPerformers, 2)
@@ -493,7 +493,7 @@ func TestGetMonthlyReviewUsesSignedNetContributions(t *testing.T) {
 	addMonthlyReviewPosting(t, db, "transfer", "2022-02-15", "Assets:Equity:VWCE", "VWCE", "-10", "-100")
 	addMonthlyReviewCurrencyPosting(t, db, "transfer", "2022-02-15", "Assets:Savings:Tagesgeld", "100")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2022-02-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2022-02-01"))
 
 	requireDecimalEqual(t, "200", review.InvestmentContributions, "sales and reallocations must net against purchases")
 }
@@ -520,7 +520,7 @@ func TestGetMonthlyReviewIncludesPostingsAcrossTimezoneOffsets(t *testing.T) {
 		Amount:        decimal.NewFromInt(1000),
 	}).Error)
 
-	review := GetMonthlyReview(db, time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC))
+	review := GetMonthlyReview(testDeps(db), time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC))
 
 	require.Equal(t, "ready", review.ActivityState)
 	requireDecimalEqual(t, "1000", review.NetIncomeAfterTax, "a UTC-stored first-of-month posting must be included")
@@ -557,6 +557,6 @@ func TestMonthlyReviewExcludesInternalTransfersFromContributions(t *testing.T) {
 	addMonthlyReviewCurrencyPosting(t, db, "buy", "2026-06-02", "Assets:Checking:Bank", "-50")
 	addMonthlyReviewCurrencyPosting(t, db, "buy", "2026-06-02", "Assets:Broker", "50")
 
-	review := GetMonthlyReview(db, monthlyReviewTestDate("2026-06-01"))
+	review := GetMonthlyReview(testDeps(db), monthlyReviewTestDate("2026-06-01"))
 	requireDecimalEqual(t, "50", review.InvestmentContributions)
 }

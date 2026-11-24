@@ -24,7 +24,7 @@ func TestGainExcludesFuturePostings(t *testing.T) {
 	addFuturePostingTestPosting(t, db, "today", today, "Assets:Broker", 100)
 	addFuturePostingTestPosting(t, db, "future", future, "Assets:Broker", 50)
 
-	result := GetGain(db)
+	result := GetGain(testDeps(db))
 	gains := result.GainBreakdown
 	require.Len(t, gains, 1)
 
@@ -70,7 +70,7 @@ commodities:
 	}
 	require.NoError(t, db.Create(&rows).Error)
 
-	result := GetAccountGain(db, "Assets:Broker")
+	result := GetAccountGain(testDeps(db), "Assets:Broker")
 
 	breakdown := result.AssetBreakdown
 	require.True(t, breakdown.MarketAmount.Equal(decimal.NewFromInt(100)), "future postings must not inflate the asset breakdown, got %s", breakdown.MarketAmount)
@@ -137,7 +137,7 @@ commodities:
 		Value:         decimal.NewFromInt(150),
 	}).Error)
 
-	result := GetAccountGain(db, "Assets:Broker")
+	result := GetAccountGain(testDeps(db), "Assets:Broker")
 
 	gain := result.GainTimelineBreakdown
 	require.Len(t, gain.PostingReturns, 1, "only the open lot should produce a return")

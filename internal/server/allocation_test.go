@@ -73,7 +73,7 @@ func TestAllocationExcludesFuturePostings(t *testing.T) {
 	addFuturePostingTestPosting(t, db, "today", today, "Assets:Broker", 1000)
 	addFuturePostingTestPosting(t, db, "future", future, "Assets:Broker", 500)
 
-	result := GetAllocation(db)
+	result := GetAllocation(testDeps(db))
 	aggregates := result.Aggregates
 	require.NotNil(t, aggregates)
 
@@ -324,7 +324,7 @@ func TestRebalanceHandlerRejectsUnknownMode(t *testing.T) {
 	db := openFuturePostingsTestDB(t)
 
 	router := gin.New()
-	router.POST("/api/allocation/rebalance", RebalanceHandler(db))
+	router.POST("/api/allocation/rebalance", RebalanceHandler(testDeps(db)))
 
 	payload, err := json.Marshal(RebalanceRequest{Cash: decimal.NewFromInt(1000), Mode: "sideways"})
 	require.NoError(t, err)

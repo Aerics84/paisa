@@ -13,7 +13,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/taxcategory"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type TaxOverview struct {
@@ -505,8 +504,8 @@ func taxOverviewYear(requested string, now time.Time) (string, error) {
 	return requested, nil
 }
 
-func GetTaxOverview(db *gorm.DB, requestedYear string) (TaxOverview, error) {
-	if !config.SupportsGermanyTaxFeatures() {
+func GetTaxOverview(deps Deps, requestedYear string) (TaxOverview, error) {
+	if !deps.Config.SupportsGermanyTaxFeatures() {
 		return TaxOverview{
 			Years:         []string{},
 			Sections:      []TaxOverviewSection{},
@@ -519,6 +518,7 @@ func GetTaxOverview(db *gorm.DB, requestedYear string) (TaxOverview, error) {
 		}, nil
 	}
 
+	db := deps.DB
 	postings := query.Init(db).All()
 	now := utils.Now()
 	years := TaxOverviewYears(postings, now)
@@ -527,7 +527,7 @@ func GetTaxOverview(db *gorm.DB, requestedYear string) (TaxOverview, error) {
 		return TaxOverview{}, err
 	}
 
-	overview := BuildTaxOverview(postings, year, config.TaxDeductionAccounts())
+	overview := BuildTaxOverview(postings, year, deps.Config.TaxDeductionAccounts())
 	overview.Years = years
 	overview.SelectedYear = year
 

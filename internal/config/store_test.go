@@ -160,6 +160,63 @@ func TestStorePathAndConfigDir(t *testing.T) {
 	assert.Equal(t, filepath.Dir(path), store.ConfigDir())
 }
 
+func TestStorePathAccessorsResolveRelativeToConfigDir(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(`
+journal_path: journal/main.ledger
+db_path: data/paisa.db
+sheets_directory: sheets
+`), path))
+
+	assert.Equal(t, filepath.Join(dir, "journal", "main.ledger"), store.JournalPath())
+	assert.Equal(t, filepath.Join(dir, "data", "paisa.db"), store.DBPath())
+	assert.Equal(t, filepath.Join(dir, "sheets"), store.SheetDir())
+}
+
+func TestStorePathAccessorsKeepAbsolutePaths(t *testing.T) {
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "absolute.ledger")
+	db := filepath.Join(dir, "absolute.db")
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(
+		"journal_path: "+filepath.ToSlash(journal)+"\ndb_path: "+filepath.ToSlash(db)+"\n",
+	), filepath.Join(dir, "paisa.yaml")))
+
+	assert.Equal(t, filepath.Clean(journal), filepath.Clean(store.JournalPath()))
+	assert.Equal(t, filepath.Clean(db), filepath.Clean(store.DBPath()))
+}
+
+func TestStoreSaveWritesSnapshot(t *testing.T) {
+	store, path := newStoreWithFile(t)
+
+	require.NoError(t, store.Save([]byte("journal_path: saved.ledger\ndb_path: paisa.db\n")))
+
+	assert.Equal(t, "saved.ledger", store.Get().JournalPath)
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "journal_path: saved.ledger")
+}
+
+func TestStoreTaxHelpersUseOwnSnapshot(t *testing.T) {
+	indian := NewStore()
+	require.NoError(t, indian.Load([]byte("journal_path: main.ledger\ndb_path: paisa.db\ntax_regime: india\ntax_deductions:\n  accounts:\n    - account: Expenses:Health\n      category: health\n"), ""))
+	german := NewStore()
+	require.NoError(t, german.Load([]byte("journal_path: main.ledger\ndb_path: paisa.db\ntax_regime: germany\n"), ""))
+
+	assert.True(t, indian.SupportsIndiaTaxFeatures())
+	assert.True(t, indian.SupportsScheduleAL())
+	assert.False(t, indian.SupportsGermanyTaxFeatures())
+	assert.Len(t, indian.TaxDeductionAccounts(), 1)
+	assert.Equal(t, "Expenses:Health", indian.TaxDeductionAccounts()[0].Account)
+
+	assert.True(t, german.SupportsGermanyTaxFeatures())
+	assert.False(t, german.SupportsIndiaTaxFeatures())
+	assert.False(t, german.SupportsScheduleAL())
+	assert.Equal(t, defaultTaxDeductionAccounts, german.TaxDeductionAccounts())
+}
+
 func TestLoadFailureKeepsPreviousSnapshot(t *testing.T) {
 	store, path := newStoreWithFile(t)
 

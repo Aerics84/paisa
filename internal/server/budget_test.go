@@ -80,7 +80,7 @@ func TestComputeBudgetDoesNotSubtractRolloverTwice(t *testing.T) {
 		budgetTestPosting(t, "2022-02-01", "Expenses:Food", 100),
 	}
 
-	result := computeBudet(db, forecasts, nil)
+	result := computeBudet(testDeps(db), forecasts, nil)
 	budgetsByMonth := result.BudgetsByMonth
 	require.NotNil(t, budgetsByMonth)
 

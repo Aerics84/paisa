@@ -1,6 +1,9 @@
 package server
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -10,6 +13,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/price"
 	"github.com/ananthakumaran/paisa/internal/service"
+	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -45,6 +49,37 @@ networth_currencies:
 
 func currencyTestDate(day int) time.Time {
 	return time.Date(2024, time.January, day, 0, 0, 0, 0, time.UTC)
+}
+
+func TestNetworthHandlerUsesInjectedConfig(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	// The auth middleware reads the process-wide store. Keep the global
+	// configuration userless so the request without credentials is allowed.
+	require.NoError(t, config.LoadConfig([]byte("journal_path: global.ledger\ndb_path: global.db\ndefault_currency: INR\n"), ""))
+
+	store := config.NewStore()
+	require.NoError(t, store.Load([]byte(`
+journal_path: local.ledger
+db_path: local.db
+default_currency: INR
+networth_currencies:
+  - name: USD
+    symbol: $
+    commodity: USD
+`), ""))
+
+	router := Build(Deps{DB: openTestDB(t), Config: store}, false)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/networth", nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	require.Equal(t, http.StatusOK, response.Code)
+
+	var body NetworthResponse
+	require.NoError(t, json.Unmarshal(response.Body.Bytes(), &body))
+	require.Len(t, body.CurrencyNetworths, 1)
+	require.Equal(t, "USD", body.CurrencyNetworths[0].Commodity)
 }
 
 func TestComputeConvertedNetworthTimeline(t *testing.T) {

@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ import (
 // versions array cannot silently break the generated TypeScript types.
 func TestEditorFilesJSONContract(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 	writeEditorFile(t, filepath.Join(base, "main.ledger"), "2026-11-01 Fixture\n")
 	writeEditorFile(t, filepath.Join(base, "main.ledger.backup.2026-11-20-10-00-00.000"), "2026-10-01 Old\n")
 
@@ -40,7 +39,7 @@ func TestEditorFilesJSONContract(t *testing.T) {
 		TransactionEndLine:   2,
 		FileName:             "main.ledger",
 	}).Error)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/editor/files", nil)
 	rec := httptest.NewRecorder()
@@ -61,11 +60,11 @@ func TestEditorFilesJSONContract(t *testing.T) {
 // normalization that keeps the array non-null on an empty database.
 func TestSheetFilesJSONContract(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 	writeEditorFile(t, filepath.Join(base, "budget.paisa"), "value = 1\n")
 
 	db := openTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sheets/files", nil)
 	rec := httptest.NewRecorder()
@@ -87,10 +86,10 @@ func TestSheetFilesJSONContract(t *testing.T) {
 // {errors, saved, message} envelope.
 func TestEditorSaveJSONContract(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 
 	db := openTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	payload := `{"name": "expenses.txt", "content": ""}`
 	req := httptest.NewRequest(http.MethodPost, "/api/editor/save", bytes.NewBufferString(payload))
@@ -117,10 +116,10 @@ func TestEditorSaveJSONContract(t *testing.T) {
 // and the error/message keys.
 func TestEditorSaveValidationErrorJSONContract(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 
 	db := openTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	payload := `{"name": "../outside.ledger", "content": ""}`
 	req := httptest.NewRequest(http.MethodPost, "/api/editor/save", bytes.NewBufferString(payload))
@@ -162,12 +161,12 @@ func TestEditorSaveValidationErrorJSONContract(t *testing.T) {
 // list responses and file responses use empty arrays/objects instead of null.
 func TestEditorAndSheetResponsesHaveNoNullOnEmptyDB(t *testing.T) {
 	base := t.TempDir()
-	configureEditor(t, base, false)
+	store := configureEditor(t, base, false)
 	writeEditorFile(t, filepath.Join(base, "main.ledger"), "2026-11-01 Fixture\n")
 	writeEditorFile(t, filepath.Join(base, "budget.paisa"), "value = 1\n")
 
 	db := openTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	requests := []struct {
 		method string

@@ -19,7 +19,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 )
 
 type Level string
@@ -38,7 +37,7 @@ type Issue struct {
 
 type Rule struct {
 	Issue     Issue
-	Predicate func(db *gorm.DB) []error
+	Predicate func(deps Deps) []error
 }
 
 const DATE_FORMAT string = "02 Jan 2006"
@@ -85,10 +84,10 @@ func init() {
 			Predicate: ruleAllocationTargetMissingAssetAccounts}}
 }
 
-func GetDiagnosis(db *gorm.DB) gin.H {
+func GetDiagnosis(deps Deps) gin.H {
 	issues := make([]Issue, 0)
 	for _, rule := range rules {
-		for _, error := range rule.Predicate(db) {
+		for _, error := range rule.Predicate(deps) {
 			issue := rule.Issue
 			issue.Details = error.Error()
 			issues = append(issues, issue)
@@ -97,7 +96,8 @@ func GetDiagnosis(db *gorm.DB) gin.H {
 	return gin.H{"issues": issues}
 }
 
-func ruleAssetRegisterNonNegative(db *gorm.DB) []error {
+func ruleAssetRegisterNonNegative(deps Deps) []error {
+	db := deps.DB
 	errs := make([]error, 0)
 	assets := query.Init(db).Like("Assets:%").All()
 	for account, ps := range lo.GroupBy(assets, func(posting posting.Posting) string { return posting.Account }) {
@@ -111,7 +111,8 @@ func ruleAssetRegisterNonNegative(db *gorm.DB) []error {
 	return errs
 }
 
-func ruleNonCreditAccount(db *gorm.DB) []error {
+func ruleNonCreditAccount(deps Deps) []error {
+	db := deps.DB
 	errs := make([]error, 0)
 	incomes := query.Init(db).Like("Income:%").NotLike("Income:CapitalGains:%").All()
 	for _, p := range incomes {
@@ -122,8 +123,10 @@ func ruleNonCreditAccount(db *gorm.DB) []error {
 	return errs
 }
 
-func ruleNonDebitAccount(db *gorm.DB) []error {
+func ruleNonDebitAccount(deps Deps) []error {
+	db := deps.DB
 	postings := query.Init(db).Like("Expenses:%").All()
+	currency := deps.Config.Get().DefaultCurrency
 
 	refunds := lo.Filter(postings, func(p posting.Posting, _ int) bool {
 		return p.Amount.LessThan(decimal.NewFromFloat(0.01).Neg())
@@ -145,12 +148,12 @@ func ruleNonDebitAccount(db *gorm.DB) []error {
 			sum = sum.Add(p.Amount)
 		}
 		total = total.Add(sum)
-		lines = append(lines, fmt.Sprintf("<b>%s</b>: %d %s, %.2f %s", account, len(grouped[account]), pluralize("entry", "entries", len(grouped[account])), sum.InexactFloat64(), config.DefaultCurrency()))
+		lines = append(lines, fmt.Sprintf("<b>%s</b>: %d %s, %.2f %s", account, len(grouped[account]), pluralize("entry", "entries", len(grouped[account])), sum.InexactFloat64(), currency))
 	}
 
 	// One aggregated hint instead of one entry per posting: refunds are a
 	// legitimate pattern and should not drown the actual problems.
-	return []error{errors.New(fmt.Sprintf("%d %s with a debit entry, %.2f %s in total.<br/>%s", len(refunds), pluralize("posting", "postings", len(refunds)), total.InexactFloat64(), config.DefaultCurrency(), strings.Join(lines, "<br/>")))}
+	return []error{errors.New(fmt.Sprintf("%d %s with a debit entry, %.2f %s in total.<br/>%s", len(refunds), pluralize("posting", "postings", len(refunds)), total.InexactFloat64(), currency, strings.Join(lines, "<br/>")))}
 }
 
 func pluralize(singular string, plural string, count int) string {
@@ -160,7 +163,9 @@ func pluralize(singular string, plural string, count int) string {
 	return plural
 }
 
-func ruleExchangePriceMissing(db *gorm.DB) []error {
+func ruleExchangePriceMissing(deps Deps) []error {
+	db := deps.DB
+	currency := deps.Config.Get().DefaultCurrency
 	errs := make([]error, 0)
 	postings := query.Init(db).Desc().All()
 
@@ -168,7 +173,7 @@ func ruleExchangePriceMissing(db *gorm.DB) []error {
 		if !utils.IsCurrency(p.Commodity) {
 			externalPrice := service.GetUnitPrice(db, p.Commodity, p.Date)
 			if externalPrice.CommodityName != "" && externalPrice.CommodityName != p.Commodity {
-				errs = append(errs, errors.New(fmt.Sprintf("Exchange price from <b>%s</b> to your default currency <b>%s</b> is not specified for posting %s", p.Commodity, config.DefaultCurrency(), formatPosting(p))))
+				errs = append(errs, errors.New(fmt.Sprintf("Exchange price from <b>%s</b> to your default currency <b>%s</b> is not specified for posting %s", p.Commodity, currency, formatPosting(p, currency))))
 			}
 		}
 	}
@@ -181,7 +186,8 @@ func ruleExchangePriceMissing(db *gorm.DB) []error {
 // differ from the daily close, so an exact match can never be expected.
 const priceMismatchTolerance = 0.05
 
-func ruleJournalPriceMismatch(db *gorm.DB) []error {
+func ruleJournalPriceMismatch(deps Deps) []error {
+	db := deps.DB
 	errs := make([]error, 0)
 
 	type candidate struct {
@@ -226,7 +232,7 @@ func ruleJournalPriceMismatch(db *gorm.DB) []error {
 
 		diff := c.quote.Value.Sub(c.posting.Price()).Abs()
 		if diff.Div(c.quote.Value).GreaterThan(decimal.NewFromFloat(priceMismatchTolerance)) {
-			errs = append(errs, errors.New(fmt.Sprintf("The price specified in your posting %s doesn't match the price <b>%.4f</b> (%s) fetched from external system", formatPosting(c.posting), c.quote.Value.InexactFloat64(), c.quote.Date.Format(DATE_FORMAT))))
+			errs = append(errs, errors.New(fmt.Sprintf("The price specified in your posting %s doesn't match the price <b>%.4f</b> (%s) fetched from external system", formatPosting(c.posting, deps.Config.Get().DefaultCurrency), c.quote.Value.InexactFloat64(), c.quote.Date.Format(DATE_FORMAT))))
 		}
 	}
 
@@ -246,22 +252,24 @@ func median(values []float64) float64 {
 	return (sorted[middle-1] + sorted[middle]) / 2
 }
 
-func formatPosting(p posting.Posting) string {
+func formatPosting(p posting.Posting, currency string) string {
 	var price string
 	if p.Quantity.Equal(p.Amount) {
 		price = fmt.Sprintf("%.4f %s", p.Quantity.InexactFloat64(), p.Commodity)
 	} else {
-		price = fmt.Sprintf("%.4f %s @ %.4f %s", p.Quantity.InexactFloat64(), p.Commodity, p.Price().InexactFloat64(), config.DefaultCurrency())
+		price = fmt.Sprintf("%.4f %s @ %.4f %s", p.Quantity.InexactFloat64(), p.Commodity, p.Price().InexactFloat64(), currency)
 	}
 
 	postingUrl := fmt.Sprintf("/ledger/editor/%s#%d", url.PathEscape(p.FileName), p.TransactionBeginLine)
 	return fmt.Sprintf("<a href=\"%s\"> %s\t%s\t%s</a>", postingUrl, p.Date.Format(DATE_FORMAT), p.Account, price)
 }
 
-func ruleAllocationTargetMissingAssetAccounts(db *gorm.DB) []error {
+func ruleAllocationTargetMissingAssetAccounts(deps Deps) []error {
+	db := deps.DB
 	errs := make([]error, 0)
+	targets := deps.Config.Get().AllocationTargets
 
-	if len(config.GetConfig().AllocationTargets) == 0 {
+	if len(targets) == 0 {
 		return errs
 	}
 
@@ -271,7 +279,7 @@ func ruleAllocationTargetMissingAssetAccounts(db *gorm.DB) []error {
 	ignoredAccounts := make([]string, 0)
 	for _, account := range accounts {
 		found := false
-		for _, target := range config.GetConfig().AllocationTargets {
+		for _, target := range targets {
 			for _, targetAccount := range target.Accounts {
 				match, _ := path.Match(targetAccount, account)
 				if match {
