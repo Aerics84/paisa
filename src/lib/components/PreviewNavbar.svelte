@@ -39,19 +39,19 @@
 
   const prefix = "/preview";
   const readonly = USER_CONFIG.readonly;
-  let sidebarIdentity = "";
-  let sidebarInitials = "";
+  let sidebarIdentity = $state("");
+  let sidebarInitials = $state("");
 
-  $: years = forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear);
+  let years = $derived(forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear));
 
   // The shared year starts empty and the range changes once a page has
   // loaded its data, so keep the selection within it (latest by default).
-  $: {
+  $effect(() => {
     const next = resolveFinancialYear($year, years);
     if (next !== $year) {
       year.set(next);
     }
-  }
+  });
 
   onMount(async () => {
     if (get(year) == "") {
@@ -261,48 +261,48 @@
 
   _.last(links).children.push({ label: "About", href: "/about" });
 
-  let selectedLink: Link = null;
-  let selectedSubLink: Link = null;
-  let selectedSubSubLink: Link = null;
-  let normalizedPath = "";
-
-  let currentPath = normalizeNavigationPath(page.url.pathname || "");
+  let currentPath = $state(normalizeNavigationPath(page.url.pathname || ""));
   afterNavigate((navigation) => {
     currentPath = normalizeNavigationPath(navigation.to?.url.pathname || currentPath);
   });
 
-  $: trail = resolveBreadcrumbTrail(currentPath, links, prefix);
-  $: normalizedPath = trail.normalizedPath;
-  $: selectedLink = trail.selectedLink;
-  $: selectedSubLink = trail.selectedSubLink;
-  $: selectedSubSubLink = trail.selectedSubSubLink;
-  $: isOverview = normalizedPath === "/";
+  let trail = $derived(resolveBreadcrumbTrail(currentPath, links, prefix));
+  let normalizedPath = $derived(trail.normalizedPath);
+  let selectedLink: Link = $derived(trail.selectedLink);
+  let selectedSubLink: Link = $derived(trail.selectedSubLink);
+  let selectedSubSubLink: Link = $derived(trail.selectedSubSubLink);
+  let isOverview = $derived(normalizedPath === "/");
 
-  $: contextTitle =
-    selectedSubSubLink?.label || selectedSubLink?.label || selectedLink?.label || "Overview";
-  $: currentHour = now().hour();
-  $: greeting =
-    currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
-  $: contextSubtitle = isOverview
-    ? sidebarIdentity
-      ? `${greeting}, ${sidebarIdentity}`
-      : "Live preview dashboard"
-    : selectedLink && selectedSubLink
-      ? `${selectedLink.label} - ${selectedSubLink.label}`
-      : "Track your finances with a calmer workspace.";
-  $: showHelp = selectedSubLink?.help || selectedLink?.help;
-  $: showOverviewMonth = isOverview;
-  $: showFilters =
+  let contextTitle = $derived(
+    selectedSubSubLink?.label || selectedSubLink?.label || selectedLink?.label || "Overview"
+  );
+  let currentHour = $derived(now().hour());
+  let greeting = $derived(
+    currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening"
+  );
+  let contextSubtitle = $derived(
+    isOverview
+      ? sidebarIdentity
+        ? `${greeting}, ${sidebarIdentity}`
+        : "Live preview dashboard"
+      : selectedLink && selectedSubLink
+        ? `${selectedLink.label} - ${selectedSubLink.label}`
+        : "Track your finances with a calmer workspace."
+  );
+  let showHelp = $derived(selectedSubLink?.help || selectedLink?.help);
+  let showOverviewMonth = $derived(isOverview);
+  let showFilters = $derived(
     !!selectedSubLink?.recurringIcons ||
-    !!selectedSubLink?.dateRangeSelector ||
-    !!selectedLink?.dateRangeSelector ||
-    !!selectedSubLink?.monthPicker ||
-    !!selectedLink?.monthPicker ||
-    !!selectedSubSubLink?.financialYearPicker ||
-    !!selectedSubLink?.financialYearPicker ||
-    !!selectedLink?.financialYearPicker ||
-    (!!selectedSubLink?.maxDepthSelector &&
-      ($cashflowExpenseDepthAllowed.max > 1 || $cashflowIncomeDepthAllowed.max > 1));
+      !!selectedSubLink?.dateRangeSelector ||
+      !!selectedLink?.dateRangeSelector ||
+      !!selectedSubLink?.monthPicker ||
+      !!selectedLink?.monthPicker ||
+      !!selectedSubSubLink?.financialYearPicker ||
+      !!selectedSubLink?.financialYearPicker ||
+      !!selectedLink?.financialYearPicker ||
+      (!!selectedSubLink?.maxDepthSelector &&
+        ($cashflowExpenseDepthAllowed.max > 1 || $cashflowIncomeDepthAllowed.max > 1))
+  );
 </script>
 
 <aside class="paisa-shell-sidebar">

@@ -2,8 +2,11 @@
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
   import { confirmRequest, resolveConfirm } from "$lib/confirm";
 
-  let open = false;
-  $: open = $confirmRequest !== null;
+  let open = $state(false);
+
+  $effect(() => {
+    open = $confirmRequest !== null;
+  });
 </script>
 
 {#if $confirmRequest}

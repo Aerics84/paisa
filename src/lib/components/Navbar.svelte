@@ -38,20 +38,24 @@
   } from "$lib/navigation";
   import { resolveFinancialYear } from "$lib/financial_year";
 
-  export let isBurger: boolean = null;
+  interface Props {
+    isBurger?: boolean | null;
+  }
+
+  let { isBurger = $bindable(null) }: Props = $props();
 
   const readonly = USER_CONFIG.readonly;
 
-  $: years = forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear);
+  let years = $derived(forEachFinancialYear($dateMin, $dateMax).reverse().map(financialYear));
 
   // The shared year starts empty and the range changes once a page has
   // loaded its data, so keep the selection within it (latest by default).
-  $: {
+  $effect(() => {
     const next = resolveFinancialYear($year, years);
     if (next !== $year) {
       year.set(next);
     }
-  }
+  });
 
   onMount(async () => {
     if (get(year) == "") {
@@ -197,28 +201,26 @@
   const about = { label: "About", href: "/about" };
   _.last(links).children.push(about);
 
-  let selectedLink: Link = null;
-  let selectedSubLink: Link = null;
-  let selectedSubSubLink: Link = null;
-  let normalizedPath = "";
-  let openMobileDropdown: string = null;
+  let openMobileDropdown: string | null = $state(null);
 
-  let currentPath = normalizeNavigationPath(page.url.pathname || "");
+  let currentPath = $state(normalizeNavigationPath(page.url.pathname || ""));
   afterNavigate((navigation) => {
     currentPath = normalizeNavigationPath(navigation.to?.url.pathname || currentPath);
   });
 
-  $: trail = resolveBreadcrumbTrail(currentPath, links);
-  $: normalizedPath = trail.normalizedPath;
-  $: selectedLink = trail.selectedLink;
-  $: selectedSubLink = trail.selectedSubLink;
-  $: selectedSubSubLink = trail.selectedSubSubLink;
-  $: breadcrumb = breadcrumbItems(trail);
+  let trail = $derived(resolveBreadcrumbTrail(currentPath, links));
+  let normalizedPath = $derived(trail.normalizedPath);
+  let selectedLink: Link = $derived(trail.selectedLink);
+  let selectedSubLink: Link = $derived(trail.selectedSubLink);
+  let selectedSubSubLink: Link = $derived(trail.selectedSubSubLink);
+  let breadcrumb = $derived(breadcrumbItems(trail));
 
   // On mobile, expand the section that contains the current route so a
   // reload or deep link shows the active navigation immediately.
-  $: openMobileDropdown =
-    typeof window !== "undefined" && isMobile() ? (selectedLink?.href ?? null) : null;
+  $effect(() => {
+    openMobileDropdown =
+      typeof window !== "undefined" && isMobile() ? (selectedLink?.href ?? null) : null;
+  });
 </script>
 
 <nav class="navbar px-2 is-transparent" aria-label="main navigation">
@@ -240,7 +242,10 @@
       type="button"
       class="navbar-burger"
       class:is-active={isBurger === true}
-      on:click|preventDefault={(_e) => (isBurger = !isBurger)}
+      onclick={(event) => {
+        event.preventDefault();
+        isBurger = !isBurger;
+      }}
       aria-label="menu"
       aria-expanded={isBurger === true}
       data-target="navbarBasicExample"
@@ -286,7 +291,8 @@
               class:is-active={normalizedPath.startsWith(link.href)}
               aria-haspopup="true"
               aria-expanded={openMobileDropdown === link.href}
-              on:click|preventDefault={() => {
+              onclick={(event) => {
+                event.preventDefault();
                 if (isMobile()) {
                   openMobileDropdown = openMobileDropdown === link.href ? null : link.href;
                 }

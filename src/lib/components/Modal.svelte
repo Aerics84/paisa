@@ -1,18 +1,35 @@
 <script lang="ts">
-  export let active = false;
-  export let width = "min(640px, 100vw)";
-  export let bodyClass = "";
-  export let headerClass = "";
-  export let footerClass = "";
-  export let role: string | undefined = undefined;
-  export let ariaModal: "true" | "false" | undefined = undefined;
-  export let ariaLabelledby: string | undefined = undefined;
-  export let ariaLabel: string | undefined = undefined;
-  export let ariaDescribedby: string | undefined = undefined;
-  export let dialogElement: HTMLElement | null = null;
-  let close = function (_e: any) {
+  interface Props {
+    active?: boolean;
+    width?: string;
+    bodyClass?: string;
+    headerClass?: string;
+    footerClass?: string;
+    role?: string;
+    ariaModal?: "true" | "false";
+    ariaLabelledby?: string;
+    ariaLabel?: string;
+    ariaDescribedby?: string;
+    dialogElement?: HTMLElement | null;
+  }
+
+  let {
+    active = $bindable(false),
+    width = "min(640px, 100vw)",
+    bodyClass = "",
+    headerClass = "",
+    footerClass = "",
+    role = undefined,
+    ariaModal = undefined,
+    ariaLabelledby = undefined,
+    ariaLabel = undefined,
+    ariaDescribedby = undefined,
+    dialogElement = $bindable(null)
+  }: Props = $props();
+
+  function close(_e: unknown) {
     active = !active;
-  };
+  }
 </script>
 
 <div class="modal" class:is-active={active}>
@@ -21,8 +38,8 @@
     role="button"
     tabindex="0"
     aria-label="Close modal"
-    on:click={(e) => close(e)}
-    on:keydown={(e) => (e.key === "Enter" || e.key === " ") && close(e)}
+    onclick={(e) => close(e)}
+    onkeydown={(e) => (e.key === "Enter" || e.key === " ") && close(e)}
   ></div>
   <div
     class="modal-card"
@@ -36,12 +53,15 @@
     bind:this={dialogElement}
   >
     <header class="modal-card-head {headerClass}">
+      <!-- svelte-ignore slot_element_deprecated -->
       <slot name="head" {close} />
     </header>
     <section class="modal-card-body {bodyClass}">
+      <!-- svelte-ignore slot_element_deprecated -->
       <slot name="body" />
     </section>
     <footer class="modal-card-foot {footerClass}">
+      <!-- svelte-ignore slot_element_deprecated -->
       <slot name="foot" {close} />
     </footer>
   </div>

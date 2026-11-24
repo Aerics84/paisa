@@ -28,7 +28,7 @@
     goto("/login");
   }
 
-  let showLogout = false;
+  let showLogout = $state(false);
 
   onMount(async () => {
     const status = await authStatus();
@@ -47,7 +47,7 @@
   <div class="dropdown-menu" id="dropdown-menu4" role="menu">
     <div class="dropdown-content">
       <button
-        on:click={(_e) => syncWithLoader({ journal: true })}
+        onclick={() => syncWithLoader({ journal: true })}
         class="dropdown-item icon-text button-reset w-full has-text-left"
         type="button"
       >
@@ -57,7 +57,7 @@
         <span>Sync Journal</span>
       </button>
       <button
-        on:click={(_e) => startPriceUpdate(true)}
+        onclick={() => startPriceUpdate(true)}
         class="dropdown-item icon-text button-reset w-full has-text-left"
         type="button"
       >
@@ -68,7 +68,7 @@
       </button>
       {#if supportsPortfolioAnalysis(USER_CONFIG)}
         <button
-          on:click={(_e) => syncWithLoader({ portfolios: true })}
+          onclick={() => syncWithLoader({ portfolios: true })}
           class="dropdown-item icon-text button-reset w-full has-text-left"
           type="button"
         >
@@ -91,7 +91,7 @@
       {#if showLogout}
         <hr class="dropdown-divider" />
         <button
-          on:click={(_e) => doLogout()}
+          onclick={() => doLogout()}
           class="dropdown-item icon-text button-reset w-full has-text-left"
           type="button"
         >
