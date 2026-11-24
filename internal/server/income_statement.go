@@ -9,7 +9,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -33,10 +32,10 @@ type RunningBalance struct {
 	quantity map[string]decimal.Decimal
 }
 
-func GetIncomeStatement(db *gorm.DB) gin.H {
+func GetIncomeStatement(db *gorm.DB) IncomeStatementResponse {
 	postings := query.Init(db).All()
 	statements := computeStatement(db, postings)
-	return gin.H{"yearly": statements}
+	return IncomeStatementResponse{Yearly: statements}
 }
 
 func computeStatement(db *gorm.DB, postings []posting.Posting) map[string]IncomeStatement {

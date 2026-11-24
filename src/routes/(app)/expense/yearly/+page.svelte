@@ -2,7 +2,8 @@
   import * as d3 from "d3";
   import { onMount } from "svelte";
   import _ from "lodash";
-  import { ajax, formatCurrency, formatPercentage, type Legend, type Posting } from "$lib/utils";
+  import { getExpense } from "$lib/api/cashflow";
+  import { formatCurrency, formatPercentage, type Legend, type Posting } from "$lib/utils";
   import {
     renderYearlyExpensesTimeline,
     renderCurrentExpensesBreakdown,
@@ -79,7 +80,7 @@
         investments: grouped_investments,
         taxes: grouped_taxes
       }
-    } = await ajax("/api/expense"));
+    } = await getExpense());
 
     const [start, end] = d3.extent(_.map(expenses, (e) => e.date));
     if (start) {

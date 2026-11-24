@@ -8,7 +8,8 @@
     renderYearlyIncomeTimeline,
     renderYearlyTimelineOf
   } from "$lib/income";
-  import { ajax, formatCurrency, type Legend } from "$lib/utils";
+  import { getIncome } from "$lib/api/cashflow";
+  import { formatCurrency, type Legend } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -25,7 +26,7 @@
       income_timeline: incomes,
       tax_timeline: taxes,
       yearly_cards: yearlyCards
-    } = await ajax("/api/income");
+    } = await getIncome();
     monthlyInvestmentTimelineLegends = renderMonthlyInvestmentTimeline(incomes);
     yearlyIncomeTimelineLegends = renderYearlyIncomeTimeline(yearlyCards);
     yearlyNetIncomeTimelineLegends = renderYearlyTimelineOf(

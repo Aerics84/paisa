@@ -6,7 +6,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -31,16 +30,20 @@ type Tax struct {
 	Postings  []posting.Posting `json:"postings"`
 }
 
-func GetIncome(db *gorm.DB) gin.H {
+func GetIncome(db *gorm.DB) IncomeResponse {
 	incomePostings := query.Init(db).Like("Income:%").All()
 	taxPostings := query.Init(db).AccountPrefix("Expenses:Tax").All()
 	p := query.Init(db).First()
 
 	if p == nil {
-		return gin.H{"income_timeline": []Income{}, "tax_timeline": []Tax{}, "yearly_cards": []IncomeYearlyCard{}}
+		return IncomeResponse{IncomeTimeline: []Income{}, TaxTimeline: []Tax{}, YearlyCards: []IncomeYearlyCard{}}
 	}
 
-	return gin.H{"income_timeline": computeIncomeTimeline(incomePostings), "tax_timeline": computeTaxTimeline(taxPostings), "yearly_cards": computeIncomeYearlyCard(p.Date, taxPostings, incomePostings)}
+	return IncomeResponse{
+		IncomeTimeline: computeIncomeTimeline(incomePostings),
+		TaxTimeline:    computeTaxTimeline(taxPostings),
+		YearlyCards:    computeIncomeYearlyCard(p.Date, taxPostings, incomePostings),
+	}
 }
 
 func computeIncomeTimeline(postings []posting.Posting) []Income {

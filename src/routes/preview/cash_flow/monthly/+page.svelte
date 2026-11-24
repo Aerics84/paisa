@@ -1,7 +1,8 @@
 <script lang="ts">
   import _ from "lodash";
   import { renderMonthlyFlow } from "$lib/cash_flow";
-  import { ajax, type CashFlow, type Legend } from "$lib/utils";
+  import { getCashFlow } from "$lib/api/cashflow";
+  import { type CashFlow, type Legend } from "$lib/utils";
   import { onMount } from "svelte";
   import { dateRange, setAllowedDateRange } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
@@ -21,7 +22,7 @@
   }
 
   onMount(async () => {
-    ({ cash_flows: cashFlows } = await ajax("/api/cash_flow"));
+    ({ cash_flows: cashFlows } = await getCashFlow());
     setAllowedDateRange(_.map(cashFlows, (c) => c.date));
     ({ renderer, legends } = renderMonthlyFlow("#d3-monthly-cash-flow", {
       rotate: true,

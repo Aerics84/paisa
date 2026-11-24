@@ -4,8 +4,8 @@
     nextUnpaidSchedule,
     sortTrantionSequence
   } from "$lib/transaction_sequence";
+  import { getRecurring } from "$lib/api/cashflow";
   import {
-    ajax,
     helpUrl,
     monthDays,
     type TransactionSchedule,
@@ -36,7 +36,7 @@
   }
 
   onMount(async () => {
-    const { transaction_sequences: rawTransactionSequences } = await ajax("/api/recurring");
+    const { transaction_sequences: rawTransactionSequences } = await getRecurring();
     transactionSequences = sortTrantionSequence(enrichTrantionSequence(rawTransactionSequences));
 
     if (_.isEmpty(transactionSequences)) {

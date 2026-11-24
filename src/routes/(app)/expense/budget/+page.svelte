@@ -1,7 +1,7 @@
 <script lang="ts">
   import BudgetCard from "$lib/components/BudgetCard.svelte";
+  import { getBudget } from "$lib/api/cashflow";
   import {
-    ajax,
     formatCurrency,
     type AccountBudget,
     type Budget,
@@ -29,7 +29,7 @@
   }
 
   onMount(async () => {
-    ({ budgetsByMonth, checkingBalance, availableForBudgeting } = await ajax("/api/budget"));
+    ({ budgetsByMonth, checkingBalance, availableForBudgeting } = await getBudget());
     setAllowedDateRange(
       _.chain(budgetsByMonth)
         .values()

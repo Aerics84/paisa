@@ -8,7 +8,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/transaction"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -40,7 +39,7 @@ func GetCurrentExpense(db *gorm.DB) map[string][]posting.Posting {
 	return utils.GroupByMonth(expenses)
 }
 
-func GetExpense(db *gorm.DB) gin.H {
+func GetExpense(db *gorm.DB) ExpenseResponse {
 	expenses := query.Init(db).Like("Expenses:%").NotAccountPrefix("Expenses:Tax").All()
 	incomes := query.Init(db).Like("Income:%").All()
 	investments := query.Init(db).Like("Assets:%").NotAccountPrefix("Assets:Checking").All()
@@ -52,19 +51,22 @@ func GetExpense(db *gorm.DB) gin.H {
 		graph[fy] = sortGraph(computeHierarchyGraph(ps))
 	}
 
-	return gin.H{
-		"expenses": expenses,
-		"month_wise": gin.H{
-			"expenses":    utils.GroupByMonth(expenses),
-			"incomes":     utils.GroupByMonth(incomes),
-			"investments": utils.GroupByMonth(investments),
-			"taxes":       utils.GroupByMonth(taxes)},
-		"year_wise": gin.H{
-			"expenses":    utils.GroupByFY(expenses),
-			"incomes":     utils.GroupByFY(incomes),
-			"investments": utils.GroupByFY(investments),
-			"taxes":       utils.GroupByFY(taxes)},
-		"graph": graph}
+	return ExpenseResponse{
+		Expenses: emptyPostings(expenses),
+		MonthWise: ExpenseBreakdown{
+			Expenses:    utils.GroupByMonth(expenses),
+			Incomes:     utils.GroupByMonth(incomes),
+			Investments: utils.GroupByMonth(investments),
+			Taxes:       utils.GroupByMonth(taxes),
+		},
+		YearWise: ExpenseBreakdown{
+			Expenses:    utils.GroupByFY(expenses),
+			Incomes:     utils.GroupByFY(incomes),
+			Investments: utils.GroupByFY(investments),
+			Taxes:       utils.GroupByFY(taxes),
+		},
+		Graph: graph,
+	}
 }
 
 func sortGraph(graph Graph) Graph {

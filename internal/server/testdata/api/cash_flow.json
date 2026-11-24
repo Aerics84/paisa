@@ -1,0 +1,14 @@
+{
+  "cash_flows": [
+    {
+      "date": "2026-11-01T00:00:00Z",
+      "income": 1000,
+      "expenses": 200,
+      "liabilities": 50,
+      "investment": 300,
+      "tax": 100,
+      "checking": 450,
+      "balance": 450
+    }
+  ]
+}

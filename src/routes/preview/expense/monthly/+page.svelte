@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import _ from "lodash";
-  import { ajax, type Posting, formatCurrency, formatPercentage, type Legend } from "$lib/utils";
+  import { getExpense } from "$lib/api/cashflow";
+  import { type Posting, formatCurrency, formatPercentage, type Legend } from "$lib/utils";
   import {
     renderMonthlyExpensesTimeline,
     renderCurrentExpensesBreakdown,
@@ -109,7 +110,7 @@
         investments: grouped_investments,
         taxes: grouped_taxes
       }
-    } = await ajax("/api/expense"));
+    } = await getExpense());
 
     setAllowedDateRange(_.map(expenses, (e) => e.date));
     ({ z, destroy, legends } = renderMonthlyExpensesTimeline(

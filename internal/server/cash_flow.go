@@ -7,7 +7,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -27,8 +26,8 @@ func (c CashFlow) GroupDate() time.Time {
 	return c.Date
 }
 
-func GetCashFlow(db *gorm.DB) gin.H {
-	return gin.H{"cash_flows": computeCashFlow(db, query.Init(db), decimal.Zero)}
+func GetCashFlow(db *gorm.DB) CashFlowResponse {
+	return CashFlowResponse{CashFlows: computeCashFlow(db, query.Init(db), decimal.Zero)}
 }
 
 func GetCurrentCashFlow(db *gorm.DB) []CashFlow {

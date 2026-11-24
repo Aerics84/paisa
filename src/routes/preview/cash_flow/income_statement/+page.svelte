@@ -2,8 +2,8 @@
   import { onMount } from "svelte";
   import _ from "lodash";
   import { renderIncomeStatement } from "$lib/income_statement";
+  import { getIncomeStatement } from "$lib/api/cashflow";
   import {
-    ajax,
     formatCurrency,
     formatPercentage,
     restName,
@@ -80,7 +80,7 @@
   }
 
   onMount(async () => {
-    ({ yearly } = await ajax("/api/income_statement"));
+    ({ yearly } = await getIncomeStatement());
     renderer = renderIncomeStatement(svg);
     setAllowedDateRange(_.map(_.values(yearly), (statement) => statement.date));
 

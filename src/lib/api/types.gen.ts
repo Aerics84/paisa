@@ -243,6 +243,56 @@ export interface CashFlow {
 }
 
 //////////
+// source: cashflow_types.go
+
+/**
+ * IncomeResponse is the JSON body returned by GET /api/income.
+ */
+export interface IncomeResponse {
+  income_timeline: Income[];
+  tax_timeline: Tax[];
+  yearly_cards: IncomeYearlyCard[];
+}
+/**
+ * ExpenseBreakdown groups postings by month or financial year for
+ * GET /api/expense.
+ */
+export interface ExpenseBreakdown {
+  expenses: { [key: string]: Posting[] };
+  incomes: { [key: string]: Posting[] };
+  investments: { [key: string]: Posting[] };
+  taxes: { [key: string]: Posting[] };
+}
+/**
+ * ExpenseResponse is the JSON body returned by GET /api/expense.
+ */
+export interface ExpenseResponse {
+  expenses: Posting[];
+  month_wise: ExpenseBreakdown;
+  year_wise: ExpenseBreakdown;
+  graph: { [key: string]: Graph };
+}
+/**
+ * CashFlowResponse is the JSON body returned by GET /api/cash_flow.
+ */
+export interface CashFlowResponse {
+  cash_flows: CashFlow[];
+}
+/**
+ * IncomeStatementResponse is the JSON body returned by GET
+ * /api/income_statement.
+ */
+export interface IncomeStatementResponse {
+  yearly: { [key: string]: IncomeStatement };
+}
+/**
+ * RecurringResponse is the JSON body returned by GET /api/recurring.
+ */
+export interface RecurringResponse {
+  transaction_sequences: TransactionSequence[];
+}
+
+//////////
 // source: credit_card.go
 
 export interface CreditCardSummary {

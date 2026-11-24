@@ -2,7 +2,8 @@
   import { onMount } from "svelte";
   import _ from "lodash";
   import { renderFlow } from "$lib/cash_flow";
-  import { ajax, depth, firstName, rem, type Graph, type Legend, type Posting } from "$lib/utils";
+  import { getExpense } from "$lib/api/cashflow";
+  import { depth, firstName, rem, type Graph, type Legend, type Posting } from "$lib/utils";
   import { setAllowedDateRange, year } from "../../../../store";
   import {
     setCashflowDepthAllowed,
@@ -59,7 +60,7 @@
   }
 
   onMount(async () => {
-    ({ expenses, graph } = await ajax("/api/expense"));
+    ({ expenses, graph } = await getExpense());
     setAllowedDateRange(_.map(expenses, (e) => e.date));
 
     setCashflowDepthAllowed(maxDepth("Expenses"), maxDepth("Income"));

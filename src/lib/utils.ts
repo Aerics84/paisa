@@ -25,8 +25,34 @@ import type {
   RebalanceItem,
   RebalancePlan
 } from "./api/assets";
+import type {
+  AccountBudget,
+  Budget,
+  CashFlow,
+  Graph,
+  Income,
+  IncomeStatement,
+  IncomeTax,
+  IncomeYearlyCard,
+  Link,
+  Node,
+  TransactionSequenceInput
+} from "./api/cashflow";
 
 export type { BalancedPosting, Posting, Transaction };
+export type {
+  AccountBudget,
+  Budget,
+  CashFlow,
+  Graph,
+  Income,
+  IncomeStatement,
+  IncomeTax,
+  IncomeYearlyCard,
+  Link,
+  Node,
+  TransactionSequenceInput
+};
 export type {
   AccountGain,
   Aggregate,
@@ -96,30 +122,6 @@ export interface PriceProvider {
   description: string;
 }
 
-export interface IncomeStatement {
-  startingBalance: number;
-  endingBalance: number;
-  date: dayjs.Dayjs;
-  income: Record<string, number>;
-  interest: Record<string, number>;
-  equity: Record<string, number>;
-  pnl: Record<string, number>;
-  liabilities: Record<string, number>;
-  tax: Record<string, number>;
-  expenses: Record<string, number>;
-}
-
-export interface CashFlow {
-  date: dayjs.Dayjs;
-  income: number;
-  liabilities: number;
-  expenses: number;
-  investment: number;
-  tax: number;
-  checking: number;
-  balance: number;
-}
-
 export interface TransactionSchedule {
   actual: dayjs.Dayjs;
   scheduled: dayjs.Dayjs;
@@ -128,18 +130,13 @@ export interface TransactionSchedule {
   amount: number;
 }
 
-export interface TransactionSequence {
-  transactions: Transaction[];
-  period: string;
-  key: string;
-  interval: number;
-
+export type TransactionSequence = TransactionSequenceInput & {
   // computed
   schedules: TransactionSchedule[];
   pastSchedules: TransactionSchedule[];
   futureSchedules: TransactionSchedule[];
   schedulesByMonth: Record<string, TransactionSchedule[]>;
-}
+};
 
 export interface Price {
   id: string;
@@ -178,26 +175,6 @@ export interface LiabilityBreakdown {
   interest_amount: number;
   balance_amount: number;
   apr: number;
-}
-
-export interface Income {
-  date: dayjs.Dayjs;
-  postings: Posting[];
-}
-
-export interface Tax {
-  start_date: string;
-  end_date: string;
-  postings: Posting[];
-}
-
-export interface IncomeYearlyCard {
-  start_date: dayjs.Dayjs;
-  end_date: dayjs.Dayjs;
-  postings: Posting[];
-  net_tax: number;
-  gross_income: number;
-  net_income: number;
 }
 
 export interface Tax {
@@ -441,29 +418,6 @@ export interface ExpensePace {
   overBudget?: number | null;
 }
 
-export interface Budget {
-  date: dayjs.Dayjs;
-  accounts: AccountBudget[];
-  endOfMonthBalance: number;
-  availableThisMonth: number;
-  forecast: number;
-}
-
-export interface AccountBudget {
-  account: string;
-  date: dayjs.Dayjs;
-  actual: number;
-  /**
-   * Not part of the wire budget payload; kept for legacy callers. The backend
-   * sends `forecast` as the budgeted amount.
-   */
-  budgeted?: number;
-  forecast: number;
-  available: number;
-  rollover: number;
-  expenses: Posting[];
-}
-
 export interface RetirementGoalProgress {
   savingsTotal: number;
   investmentTotal: number;
@@ -571,22 +525,6 @@ export interface SheetFileError {
   line_to: number;
   error: string;
   message: string;
-}
-
-export interface Node {
-  id: number;
-  name: string;
-}
-
-export interface Link {
-  source: number;
-  target: number;
-  value: number;
-}
-
-export interface Graph {
-  nodes: Node[];
-  links: Link[];
 }
 
 export interface Log {
@@ -727,42 +665,6 @@ export function ajax(
   route: "/api/liabilities/balance"
 ): Promise<{ liability_breakdowns: LiabilityBreakdown[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
-export function ajax(route: "/api/income"): Promise<{
-  income_timeline: Income[];
-  tax_timeline: Tax[];
-  yearly_cards: IncomeYearlyCard[];
-}>;
-export function ajax(route: "/api/expense"): Promise<{
-  expenses: Posting[];
-  month_wise: {
-    expenses: { [key: string]: Posting[] };
-    incomes: { [key: string]: Posting[] };
-    investments: { [key: string]: Posting[] };
-    taxes: { [key: string]: Posting[] };
-  };
-  year_wise: {
-    expenses: { [key: string]: Posting[] };
-    incomes: { [key: string]: Posting[] };
-    investments: { [key: string]: Posting[] };
-    taxes: { [key: string]: Posting[] };
-  };
-  graph: { [key: string]: Graph };
-}>;
-
-export function ajax(route: "/api/budget"): Promise<{
-  budgetsByMonth: { [key: string]: Budget };
-  checkingBalance: number;
-  availableForBudgeting: number;
-}>;
-
-export function ajax(route: "/api/cash_flow"): Promise<{ cash_flows: CashFlow[] }>;
-export function ajax(
-  route: "/api/income_statement"
-): Promise<{ yearly: Record<string, IncomeStatement> }>;
-
-export function ajax(
-  route: "/api/recurring"
-): Promise<{ transaction_sequences: TransactionSequence[] }>;
 
 export function ajax(route: "/api/liabilities/interest"): Promise<{
   interest_timeline_breakdown: Interest[];

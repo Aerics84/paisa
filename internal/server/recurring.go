@@ -7,13 +7,12 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/transaction"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
 
-func GetRecurringTransactions(db *gorm.DB) gin.H {
-	return gin.H{"transaction_sequences": ComputeRecurringTransactions(query.Init(db).All())}
+func GetRecurringTransactions(db *gorm.DB) RecurringResponse {
+	return RecurringResponse{TransactionSequences: ComputeRecurringTransactions(query.Init(db).All())}
 }
 
 type TransactionSequence struct {
