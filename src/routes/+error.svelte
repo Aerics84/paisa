@@ -27,8 +27,8 @@
                 <pre class="mt-2">{page.error.stack}</pre>
               {/if}
               <p class="mt-5">
-                Please report this issue at <a href="https://github.com/ananthakumaran/paisa/issues"
-                  >https://github.com/ananthakumaran/paisa/issues</a
+                Please report this issue at <a href="https://github.com/Aerics84/paisa/issues"
+                  >https://github.com/Aerics84/paisa/issues</a
                 >. Closing and reopening the app may help.
               </p>
             </div>
