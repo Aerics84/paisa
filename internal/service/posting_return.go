@@ -19,7 +19,7 @@ type PostingReturn struct {
 	// AnnualizedReturn is a compound annual rate in percent (the same scale as
 	// XIRR). It is nil for lots held for less than a year: such a period is
 	// reported as an absolute gain, never extrapolated.
-	AnnualizedReturn *decimal.Decimal `json:"annualized_return"`
+	AnnualizedReturn *decimal.Decimal `json:"annualized_return" tstype:"number | null"`
 }
 
 // ComputePostingReturn returns the return of a lot as of today. It reports false

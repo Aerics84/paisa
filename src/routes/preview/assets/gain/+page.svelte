@@ -2,14 +2,15 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { buildLegends, renderOverview } from "$lib/gain";
-  import { ajax, type Legend } from "$lib/utils";
+  import { type Legend } from "$lib/utils";
+  import { getGain } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
 
   let legends: Legend[] = [];
 
   onMount(async () => {
-    const { gain_breakdown: gains } = await ajax("/api/gain");
+    const { gain_breakdown: gains } = await getGain();
 
     legends = buildLegends();
     renderOverview(gains);

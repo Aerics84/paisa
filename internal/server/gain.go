@@ -10,7 +10,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -41,7 +40,7 @@ type AccountGain struct {
 	Currencies       []CurrencyAccountGain   `json:"currencies"`
 }
 
-func GetGain(db *gorm.DB) gin.H {
+func GetGain(db *gorm.DB) GainResponse {
 	postings := query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").NotAccountPrefix("Assets:Checking").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string {
@@ -50,20 +49,23 @@ func GetGain(db *gorm.DB) gin.H {
 		}
 		return p.Account
 	})
-	var gains []Gain
+	gains := make([]Gain, 0, len(byAccount))
 	for _, account := range utils.SortedKeys(byAccount) {
 		ps := byAccount[account]
 		gains = append(gains, Gain{Account: account, XIRR: service.XIRR(db, ps), Networth: computeNetworth(db, ps), Postings: ps})
 	}
 
-	return gin.H{"gain_breakdown": gains}
+	return GainResponse{GainBreakdown: gains}
 }
 
-func GetAccountGain(db *gorm.DB, account string) gin.H {
+func GetAccountGain(db *gorm.DB, account string) AccountGainResponse {
 	capitalGainsAccount := strings.Replace(account, "Assets", "Income:CapitalGains", 1)
 	postings := query.Init(db).UntilToday().AccountPrefix(account, capitalGainsAccount).All()
 	postings = service.PopulateMarketPrice(db, postings)
 	timeline := computeNetworthTimeline(db, postings, accounting.IsLeafAccount(db, account))
+	if timeline == nil {
+		timeline = []Networth{}
+	}
 	today := utils.Now()
 	postingReturns := lo.FilterMap(postings, func(p posting.Posting, _ int) (service.PostingReturn, bool) {
 		result, ok := service.ComputePostingReturn(p, today)
@@ -73,7 +75,17 @@ func GetAccountGain(db *gorm.DB, account string) gin.H {
 		result.PostingID = p.ID
 		return result, true
 	})
-	gain := AccountGain{Account: account, XIRR: service.XIRR(db, postings), NetworthTimeline: timeline, Postings: postings, PostingReturns: postingReturns, Currencies: computeCurrencyAccountGains(db, postings, timeline)}
+	if postingReturns == nil {
+		postingReturns = []service.PostingReturn{}
+	}
+	if postings == nil {
+		postings = []posting.Posting{}
+	}
+	currencies := computeCurrencyAccountGains(db, postings, timeline)
+	if currencies == nil {
+		currencies = []CurrencyAccountGain{}
+	}
+	gain := AccountGain{Account: account, XIRR: service.XIRR(db, postings), NetworthTimeline: timeline, Postings: postings, PostingReturns: postingReturns, Currencies: currencies}
 
 	commodities := lo.Uniq(lo.Map(postings, func(p posting.Posting, _ int) string { return p.Commodity }))
 	var portfolio_groups PortfolioAllocationGroups
@@ -84,7 +96,7 @@ func GetAccountGain(db *gorm.DB, account string) gin.H {
 
 	assetBreakdown := assets.ComputeBreakdown(db, postings, false, account)
 
-	return gin.H{"gain_timeline_breakdown": gain, "portfolio_allocation": portfolio_groups, "asset_breakdown": assetBreakdown}
+	return AccountGainResponse{GainTimelineBreakdown: gain, PortfolioAllocation: portfolio_groups, AssetBreakdown: assetBreakdown}
 }
 
 func computeCurrencyAccountGains(db *gorm.DB, postings []posting.Posting, timeline []Networth) []CurrencyAccountGain {

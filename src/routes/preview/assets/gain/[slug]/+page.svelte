@@ -3,7 +3,6 @@
   import { renderAccountOverview, buildLegends } from "$lib/gain";
   import { filterCommodityBreakdowns, renderPortfolioBreakdown } from "$lib/portfolio";
   import {
-    ajax,
     type Posting,
     formatCurrency,
     formatFloat,
@@ -14,6 +13,7 @@
     formatPercentage,
     formatFloatUptoPrecision
   } from "$lib/utils";
+  import { getAccountGain } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount, onDestroy } from "svelte";
   import type { PageData } from "./$types";
@@ -59,7 +59,7 @@
       gain_timeline_breakdown: gain,
       asset_breakdown: assetBreakdown,
       portfolio_allocation: { name_and_security_type, security_type, rating, industry, commodities }
-    } = await ajax("/api/gain/:name", null, data));
+    } = await getAccountGain(data.name));
 
     overview = _.last(gain.networthTimeline);
     postings = _.chain(gain.postings)

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Modal from "$lib/components/Modal.svelte";
-  import { ajax, type AllocationTarget } from "$lib/utils";
+  import { type AllocationTarget } from "$lib/utils";
+  import { saveAllocationTargets } from "$lib/api/assets";
   import {
     allocationTargetsToEntries,
     validateAllocationTargetEntries,
@@ -94,10 +95,7 @@
 
     saving = true;
     try {
-      await ajax("/api/allocation/targets", {
-        method: "POST",
-        body: JSON.stringify(localTargets)
-      });
+      await saveAllocationTargets(localTargets);
       toast.toast({ message: "Asset allocation targets saved successfully!", type: "is-success" });
       active = false;
       onSave();

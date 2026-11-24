@@ -3,7 +3,8 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { filterCommodityBreakdowns, renderPortfolioBreakdown } from "$lib/portfolio";
-  import { ajax, type PortfolioAggregate } from "$lib/utils";
+  import { type PortfolioAggregate } from "$lib/utils";
+  import { getPortfolioAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -22,9 +23,8 @@
     ratingR: any = null;
 
   onMount(async () => {
-    ({ name_and_security_type, security_type, rating, industry, commodities } = await ajax(
-      "/api/portfolio_allocation"
-    ));
+    ({ name_and_security_type, security_type, rating, industry, commodities } =
+      await getPortfolioAllocation());
 
     if (_.isEmpty(commodities)) {
       isEmpty = true;

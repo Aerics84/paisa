@@ -1,0 +1,90 @@
+{
+  "aggregates": {
+    "Assets": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets",
+      "market_amount": 0
+    },
+    "Assets:Equity": {
+      "date": "0001-01-01T00:00:00Z",
+      "account": "Assets:Equity",
+      "market_amount": 0
+    },
+    "Assets:Equity:Stock": {
+      "date": "2026-11-22T23:59:59.999999999Z",
+      "account": "Assets:Equity:Stock",
+      "market_amount": 1000
+    }
+  },
+  "aggregates_timeline": [
+    {
+      "Assets:Equity:Stock": {
+        "date": "2026-11-20T00:00:00Z",
+        "account": "Assets:Equity:Stock",
+        "market_amount": 1000
+      }
+    },
+    {
+      "Assets:Equity:Stock": {
+        "date": "2026-11-21T00:00:00Z",
+        "account": "Assets:Equity:Stock",
+        "market_amount": 1000
+      }
+    },
+    {
+      "Assets:Equity:Stock": {
+        "date": "2026-11-22T00:00:00Z",
+        "account": "Assets:Equity:Stock",
+        "market_amount": 1000
+      }
+    }
+  ],
+  "allocation_targets": [
+    {
+      "name": "Equity",
+      "target": 100,
+      "current": 100,
+      "aggregates": {
+        "Assets": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets",
+          "market_amount": 0
+        },
+        "Assets:Equity": {
+          "date": "0001-01-01T00:00:00Z",
+          "account": "Assets:Equity",
+          "market_amount": 0
+        },
+        "Assets:Equity:Stock": {
+          "date": "2026-11-22T23:59:59.999999999Z",
+          "account": "Assets:Equity:Stock",
+          "market_amount": 1000
+        }
+      },
+      "market_amount": 1000,
+      "drift": 0,
+      "drift_tolerance": 5,
+      "status": "in_band",
+      "accounts": ["Assets:Equity:*"],
+      "commodities": []
+    }
+  ],
+  "rebalance": {
+    "mode": "full_rebalance",
+    "cash_amount": 0,
+    "total_before": 1000,
+    "total_after": 1000,
+    "items": [
+      {
+        "name": "Equity",
+        "target": 100,
+        "current": 100,
+        "market_amount": 1000,
+        "target_amount": 1000,
+        "action": "HOLD",
+        "amount": 0,
+        "new_percent": 100
+      }
+    ]
+  }
+}

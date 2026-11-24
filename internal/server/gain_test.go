@@ -9,7 +9,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/portfolio"
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/price"
-	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/shopspring/decimal"
@@ -26,8 +25,7 @@ func TestGainExcludesFuturePostings(t *testing.T) {
 	addFuturePostingTestPosting(t, db, "future", future, "Assets:Broker", 50)
 
 	result := GetGain(db)
-	gains, ok := result["gain_breakdown"].([]Gain)
-	require.True(t, ok)
+	gains := result.GainBreakdown
 	require.Len(t, gains, 1)
 
 	require.True(t, gains[0].Networth.BalanceAmount.Equal(decimal.NewFromInt(100)), "future postings must not inflate the gain balance, got %s", gains[0].Networth.BalanceAmount)
@@ -74,12 +72,10 @@ commodities:
 
 	result := GetAccountGain(db, "Assets:Broker")
 
-	breakdown, ok := result["asset_breakdown"].(assets.AssetBreakdown)
-	require.True(t, ok)
+	breakdown := result.AssetBreakdown
 	require.True(t, breakdown.MarketAmount.Equal(decimal.NewFromInt(100)), "future postings must not inflate the asset breakdown, got %s", breakdown.MarketAmount)
 
-	allocation, ok := result["portfolio_allocation"].(PortfolioAllocationGroups)
-	require.True(t, ok)
+	allocation := result.PortfolioAllocation
 	require.Contains(t, allocation.Commomdities, "STOCKX", "the allocation panel must not be blanked")
 	require.NotEmpty(t, allocation.NameAndSecurityType, "the allocation panel must not be blanked")
 
@@ -143,8 +139,7 @@ commodities:
 
 	result := GetAccountGain(db, "Assets:Broker")
 
-	gain, ok := result["gain_timeline_breakdown"].(AccountGain)
-	require.True(t, ok)
+	gain := result.GainTimelineBreakdown
 	require.Len(t, gain.PostingReturns, 1, "only the open lot should produce a return")
 
 	postingIDs := make(map[uint]bool, len(gain.Postings))

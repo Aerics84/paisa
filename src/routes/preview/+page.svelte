@@ -20,6 +20,7 @@
   } from "$lib/monthly_review";
   import { createFlowRenderController, flowSignature, flowState } from "$lib/preview_flow";
   import { getDashboard } from "$lib/api/dashboard";
+  import { getNetworth } from "$lib/api/assets";
   import {
     enrichTrantionSequence,
     nextUnpaidSchedule,
@@ -196,7 +197,7 @@
     try {
       const [dashboard, networthResponse, liabilitiesResponse] = await Promise.all([
         getDashboard(),
-        ajax("/api/networth"),
+        getNetworth(),
         ajax("/api/liabilities/balance")
       ]);
 

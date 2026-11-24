@@ -74,8 +74,8 @@ func TestAllocationExcludesFuturePostings(t *testing.T) {
 	addFuturePostingTestPosting(t, db, "future", future, "Assets:Broker", 500)
 
 	result := GetAllocation(db)
-	aggregates, ok := result["aggregates"].(map[string]Aggregate)
-	require.True(t, ok)
+	aggregates := result.Aggregates
+	require.NotNil(t, aggregates)
 
 	total := decimal.Zero
 	for _, aggregate := range aggregates {

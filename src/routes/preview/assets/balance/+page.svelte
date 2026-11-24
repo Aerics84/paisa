@@ -1,13 +1,14 @@
 <script lang="ts">
   import AssetsBalance from "$lib/components/AssetsBalance.svelte";
-  import { ajax, type AssetBreakdown } from "$lib/utils";
+  import { type AssetBreakdown } from "$lib/utils";
+  import { getAssetBalance } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
 
   let breakdowns: Record<string, AssetBreakdown> = {};
 
   onMount(async () => {
-    ({ asset_breakdowns: breakdowns } = await ajax("/api/assets/balance"));
+    ({ asset_breakdowns: breakdowns } = await getAssetBalance());
   });
 </script>
 

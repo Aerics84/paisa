@@ -21,6 +21,7 @@
     type Legend,
     type RebalancePlan
   } from "$lib/utils";
+  import { getAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount, tick } from "svelte";
   import type { ColumnDefinition, ProgressBarParams } from "tabulator-tables";
@@ -65,7 +66,7 @@
 
   async function loadData() {
     const [allocationResult, configResult] = await Promise.all([
-      ajax("/api/allocation"),
+      getAllocation(),
       ajax("/api/config")
     ]);
     const {

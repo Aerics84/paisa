@@ -6,7 +6,8 @@
     renderYearlyCards,
     renderYearlyInvestmentTimeline
   } from "$lib/investment";
-  import { ajax, type Legend } from "$lib/utils";
+  import { type Legend } from "$lib/utils";
+  import { getInvestment } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -14,7 +15,7 @@
   let yearlyInvestmentTimelineLegends: Legend[] = [];
 
   onMount(async () => {
-    const { assets: assets, yearly_cards: yearlyCards } = await ajax("/api/investment");
+    const { assets: assets, yearly_cards: yearlyCards } = await getInvestment();
     monthlyInvestmentTimelineLegends = renderMonthlyInvestmentTimeline(assets);
     yearlyInvestmentTimelineLegends = renderYearlyInvestmentTimeline(yearlyCards);
     renderYearlyCards(yearlyCards);

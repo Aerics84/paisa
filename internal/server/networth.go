@@ -8,7 +8,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -23,14 +22,20 @@ type Networth struct {
 	NetInvestmentAmount decimal.Decimal `json:"netInvestmentAmount"`
 }
 
-func GetNetworth(db *gorm.DB) gin.H {
+func GetNetworth(db *gorm.DB) NetworthResponse {
 	postings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%", "Liabilities:%").UntilToday().All()
 
 	postings = service.PopulateMarketPrice(db, postings)
 	networthTimeline := computeNetworthTimeline(db, postings, false)
+	if networthTimeline == nil {
+		networthTimeline = []Networth{}
+	}
 	currencyNetworths := computeCurrencyNetworths(db, networthTimeline)
+	if currencyNetworths == nil {
+		currencyNetworths = []CurrencyNetworth{}
+	}
 	xirr := service.XIRR(db, postings)
-	return gin.H{"networthTimeline": networthTimeline, "currencyNetworths": currencyNetworths, "xirr": xirr}
+	return NetworthResponse{NetworthTimeline: networthTimeline, CurrencyNetworths: currencyNetworths, XIRR: xirr}
 }
 
 func GetCurrentNetworth(db *gorm.DB) CurrentNetworth {

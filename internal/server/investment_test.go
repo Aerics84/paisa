@@ -165,8 +165,7 @@ func TestGetInvestmentReturnsNothingForEmptyJournal(t *testing.T) {
 
 	response := GetInvestment(openInvestmentTestDB(t))
 
-	cards, ok := response["yearly_cards"].([]InvestmentYearlyCard)
-	require.True(t, ok)
+	cards := response.YearlyCards
 	require.Empty(t, cards, "a completely empty journal should not produce yearly cards")
 }
 
@@ -183,8 +182,7 @@ func TestGetInvestmentCreatesNoActivityCardForUnrelatedPostings(t *testing.T) {
 
 	response := GetInvestment(db)
 
-	cards, ok := response["yearly_cards"].([]InvestmentYearlyCard)
-	require.True(t, ok)
+	cards := response.YearlyCards
 	require.Len(t, cards, 1, "a non-empty journal should produce a card even without relevant postings")
 	require.False(t, cards[0].HasActivity, "unrelated postings do not count as activity")
 }
@@ -290,7 +288,7 @@ func TestGetInvestmentExcludesInternalTransfers(t *testing.T) {
 	require.NoError(t, db.Create(&rows).Error)
 
 	result := GetInvestment(db)
-	assets := result["assets"].([]posting.Posting)
+	assets := result.Assets
 	require.Len(t, assets, 1)
 	assert.Equal(t, "buy", assets[0].TransactionID)
 }

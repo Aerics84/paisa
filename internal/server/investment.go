@@ -9,7 +9,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +36,7 @@ type InvestmentYearlyCard struct {
 	HasExpensePostings          bool            `json:"has_expense_postings"`
 }
 
-func GetInvestment(db *gorm.DB) gin.H {
+func GetInvestment(db *gorm.DB) InvestmentResponse {
 	assets := query.Init(db).Like("Assets:%").NotAccountPrefix("Assets:Checking").
 		Where("transaction_id not in (select transaction_id from postings p where p.account like ? and p.transaction_id = transaction_id)", "Liabilities:%").
 		All()
@@ -46,12 +45,19 @@ func GetInvestment(db *gorm.DB) gin.H {
 	p := query.Init(db).First()
 
 	if p == nil {
-		return gin.H{"assets": []posting.Posting{}, "yearly_cards": []InvestmentYearlyCard{}}
+		return InvestmentResponse{Assets: []posting.Posting{}, YearlyCards: []InvestmentYearlyCard{}}
 	}
 
 	assets = lo.Filter(assets, func(p posting.Posting, _ int) bool { return !service.IsStockSplit(db, p) })
 	assets = filterOutInternalTransfers(db, assets)
-	return gin.H{"assets": assets, "yearly_cards": computeInvestmentYearlyCard(p.Date, assets, expenses, incomes)}
+	if assets == nil {
+		assets = []posting.Posting{}
+	}
+	yearlyCards := computeInvestmentYearlyCard(p.Date, assets, expenses, incomes)
+	if yearlyCards == nil {
+		yearlyCards = []InvestmentYearlyCard{}
+	}
+	return InvestmentResponse{Assets: assets, YearlyCards: yearlyCards}
 }
 
 // filterOutInternalTransfers drops asset postings that belong to internal

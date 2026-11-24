@@ -1,0 +1,33 @@
+{
+  "networthTimeline": [
+    {
+      "date": "2026-11-20T00:00:00Z",
+      "investmentAmount": 100,
+      "withdrawalAmount": 0,
+      "gainAmount": 0,
+      "balanceAmount": 100,
+      "balanceUnits": 0,
+      "netInvestmentAmount": 100
+    },
+    {
+      "date": "2026-11-21T00:00:00Z",
+      "investmentAmount": 100,
+      "withdrawalAmount": 0,
+      "gainAmount": 0,
+      "balanceAmount": 100,
+      "balanceUnits": 0,
+      "netInvestmentAmount": 100
+    },
+    {
+      "date": "2026-11-22T00:00:00Z",
+      "investmentAmount": 100,
+      "withdrawalAmount": 0,
+      "gainAmount": 0,
+      "balanceAmount": 100,
+      "balanceUnits": 0,
+      "netInvestmentAmount": 100
+    }
+  ],
+  "currencyNetworths": [],
+  "xirr": 0
+}

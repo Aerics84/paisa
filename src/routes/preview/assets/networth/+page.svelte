@@ -1,12 +1,6 @@
 <script lang="ts">
-  import {
-    ajax,
-    formatCurrency,
-    formatFloat,
-    isMobile,
-    type Legend,
-    type Networth
-  } from "$lib/utils";
+  import { formatCurrency, formatFloat, isMobile, type Legend, type Networth } from "$lib/utils";
+  import { getNetworth } from "$lib/api/assets";
   import COLORS from "$lib/colors";
   import { renderNetworth } from "$lib/networth";
   import _ from "lodash";
@@ -47,7 +41,7 @@
   });
 
   onMount(async () => {
-    const result = await ajax("/api/networth");
+    const result = await getNetworth();
     points = result.networthTimeline;
     setAllowedDateRange(_.map(points, (p) => p.date));
 

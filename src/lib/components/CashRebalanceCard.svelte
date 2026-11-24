@@ -1,11 +1,11 @@
 <script lang="ts">
   import {
-    ajax,
     formatCurrency,
     formatPercentage,
     type AllocationTarget,
     type RebalancePlan
   } from "$lib/utils";
+  import { rebalance } from "$lib/api/assets";
 
   let {
     targets = [],
@@ -31,12 +31,9 @@
   async function updatePlan() {
     loading = true;
     try {
-      const res = await ajax("/api/allocation/rebalance", {
-        method: "POST",
-        body: JSON.stringify({
-          cash: Number(cashAmount) || 0,
-          mode
-        })
+      const res = await rebalance({
+        cash: Number(cashAmount) || 0,
+        mode
       });
       plan = res;
     } catch (e) {

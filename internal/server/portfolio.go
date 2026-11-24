@@ -16,17 +16,8 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
-
-type PortfolioDimension struct {
-	Group      string
-	GroupFn    func(CommodityBreakdown) string
-	SubGroup   string
-	SubGroupFn func(CommodityBreakdown) string
-	FilterFn   func(CommodityBreakdown, int) bool
-}
 
 type CommodityBreakdown struct {
 	ParentCommodityID string          `json:"parent_commodity_id"`
@@ -57,15 +48,8 @@ type PortfolioAllocationGroups struct {
 	Industry            []PortfolioAggregate `json:"industry"`
 }
 
-func GetPortfolioAllocation(db *gorm.DB) gin.H {
-	groups := GetAccountPortfolioAllocation(db, "Assets")
-	return gin.H{
-		"commodities":            groups.Commomdities,
-		"name_and_security_type": groups.NameAndSecurityType,
-		"security_type":          groups.SecurityType,
-		"rating":                 groups.Rating,
-		"industry":               groups.Industry,
-	}
+func GetPortfolioAllocation(db *gorm.DB) PortfolioAllocationGroups {
+	return GetAccountPortfolioAllocation(db, "Assets")
 }
 
 func GetAccountPortfolioAllocation(db *gorm.DB, account string) PortfolioAllocationGroups {
@@ -87,7 +71,7 @@ func GetAccountPortfolioAllocation(db *gorm.DB, account string) PortfolioAllocat
 		return computePortfolioAggregate(db, commodity, balance)
 	})
 
-	return PortfolioAllocationGroups{
+	groups := PortfolioAllocationGroups{
 		Commomdities: supportedCommodities,
 		NameAndSecurityType: rollupPortfolioAggregate(PortfolioDimension{
 			FilterFn: func(c CommodityBreakdown, _ int) bool {
@@ -138,6 +122,25 @@ func GetAccountPortfolioAllocation(db *gorm.DB, account string) PortfolioAllocat
 				return orUnknown(c.SecurityIndustry)
 			}}, cbs),
 	}
+
+	// Keep the JSON arrays non-null so the generated TypeScript types hold.
+	if groups.Commomdities == nil {
+		groups.Commomdities = []string{}
+	}
+	if groups.NameAndSecurityType == nil {
+		groups.NameAndSecurityType = []PortfolioAggregate{}
+	}
+	if groups.SecurityType == nil {
+		groups.SecurityType = []PortfolioAggregate{}
+	}
+	if groups.Rating == nil {
+		groups.Rating = []PortfolioAggregate{}
+	}
+	if groups.Industry == nil {
+		groups.Industry = []PortfolioAggregate{}
+	}
+
+	return groups
 }
 
 func computePortfolioAggregate(db *gorm.DB, commodityName string, total decimal.Decimal) []CommodityBreakdown {

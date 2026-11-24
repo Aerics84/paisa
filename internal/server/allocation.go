@@ -68,7 +68,7 @@ type RebalanceRequest struct {
 	Mode string          `json:"mode"`
 }
 
-func GetAllocation(db *gorm.DB) gin.H {
+func GetAllocation(db *gorm.DB) AllocationResponse {
 	postings := query.Init(db).UntilToday().Like("Assets:%").All()
 
 	now := utils.EndOfToday()
@@ -77,11 +77,21 @@ func GetAllocation(db *gorm.DB) gin.H {
 		return p
 	})
 	aggregates := computeAggregate(db, postings, now)
+	if aggregates == nil {
+		aggregates = map[string]Aggregate{}
+	}
 	aggregates_timeline := computeAggregateTimeline(db, postings)
+	if aggregates_timeline == nil {
+		aggregates_timeline = []map[string]Aggregate{}
+	}
 	allocation_targets := computeAllocationTargets(db, postings)
-	res := gin.H{"aggregates": aggregates, "aggregates_timeline": aggregates_timeline, "allocation_targets": allocation_targets}
+	if allocation_targets == nil {
+		allocation_targets = []AllocationTarget{}
+	}
+	res := AllocationResponse{Aggregates: aggregates, AggregatesTimeline: aggregates_timeline, AllocationTargets: allocation_targets}
 	if len(allocation_targets) > 0 {
-		res["rebalance"] = ComputeRebalancePlan(allocation_targets, decimal.Zero, "full_rebalance")
+		rebalance := ComputeRebalancePlan(allocation_targets, decimal.Zero, "full_rebalance")
+		res.Rebalance = &rebalance
 	}
 	return res
 }
@@ -187,6 +197,11 @@ func computeAllocationTarget(db *gorm.DB, postings []posting.Posting, allocation
 		status = "underweight"
 	}
 
+	accounts := allocationTargetConfig.Accounts
+	if accounts == nil {
+		accounts = []string{}
+	}
+
 	return AllocationTarget{
 		Name:           allocationTargetConfig.Name,
 		Target:         target,
@@ -196,7 +211,7 @@ func computeAllocationTarget(db *gorm.DB, postings []posting.Posting, allocation
 		Drift:          drift,
 		DriftTolerance: driftTolerance,
 		Status:         status,
-		Accounts:       allocationTargetConfig.Accounts,
+		Accounts:       accounts,
 		Commodities:    []string{},
 	}
 }
@@ -441,7 +456,7 @@ func validateAllocationTargets(targets []config.AllocationTarget) error {
 func SaveAllocationTargetsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if config.GetConfig().Readonly {
-			c.JSON(http.StatusOK, gin.H{"success": true})
+			c.JSON(http.StatusOK, SaveAllocationTargetsResponse{Success: true})
 			return
 		}
 
@@ -463,6 +478,6 @@ func SaveAllocationTargetsHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"success": true})
+		c.JSON(http.StatusOK, SaveAllocationTargetsResponse{Success: true})
 	}
 }

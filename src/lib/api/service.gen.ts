@@ -106,5 +106,5 @@ export interface PostingReturn {
    * XIRR). It is nil for lots held for less than a year: such a period is
    * reported as an absolute gain, never extrapolated.
    */
-  annualized_return?: number;
+  annualized_return?: number | null;
 }

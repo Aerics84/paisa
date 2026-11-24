@@ -9,7 +9,8 @@
   import LegendCard from "$lib/components/LegendCard.svelte";
   import Table from "$lib/components/Table.svelte";
   import { accountName, nonZeroCurrency } from "$lib/table_formatters";
-  import { ajax, formatPercentage, rem, type Aggregate, type Legend } from "$lib/utils";
+  import { formatPercentage, rem, type Aggregate, type Legend } from "$lib/utils";
+  import { getAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount, tick } from "svelte";
   import type { ColumnDefinition, ProgressBarParams } from "tabulator-tables";
@@ -53,7 +54,7 @@
       aggregates: aggregates,
       aggregates_timeline: aggregatesTimeline,
       allocation_targets: allocationTargets
-    } = await ajax("/api/allocation");
+    } = await getAllocation();
     const accounts = _.keys(aggregates);
     aggregateLeafNodes = _.filter(_.values(aggregates), (a) => a.market_amount > 0);
     total = _.sumBy(aggregateLeafNodes, (a) => a.market_amount);

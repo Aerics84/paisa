@@ -8,8 +8,42 @@ import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
 import type { BalancedPosting, Posting, Transaction } from "./api/ledger";
+import type {
+  AccountGain,
+  Aggregate,
+  AllocationTarget,
+  AssetBreakdown,
+  CommodityBreakdown,
+  CurrencyAccountGain,
+  CurrencyNetworth,
+  Gain,
+  InvestmentYearlyCard,
+  Networth,
+  PortfolioAggregate,
+  PortfolioAllocation,
+  PostingReturn,
+  RebalanceItem,
+  RebalancePlan
+} from "./api/assets";
 
 export type { BalancedPosting, Posting, Transaction };
+export type {
+  AccountGain,
+  Aggregate,
+  AllocationTarget,
+  AssetBreakdown,
+  CommodityBreakdown,
+  CurrencyAccountGain,
+  CurrencyNetworth,
+  Gain,
+  InvestmentYearlyCard,
+  Networth,
+  PortfolioAggregate,
+  PortfolioAllocation,
+  PostingReturn,
+  RebalanceItem,
+  RebalancePlan
+};
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -116,55 +150,6 @@ export interface Price {
   value: number;
 }
 
-export interface Networth {
-  date: dayjs.Dayjs;
-  investmentAmount: number;
-  withdrawalAmount: number;
-  gainAmount: number;
-  balanceAmount: number;
-  balanceUnits: number;
-  netInvestmentAmount: number;
-}
-
-export interface Gain {
-  account: string;
-  networth: Networth;
-  xirr: number;
-  postings: Posting[];
-}
-
-export interface CurrencyNetworth {
-  name: string;
-  symbol: string;
-  commodity: string;
-  networthTimeline: Networth[];
-}
-
-export interface CurrencyAccountGain {
-  name: string;
-  symbol: string;
-  commodity: string;
-  networthTimeline: Networth[];
-  xirr: number;
-  postings: Posting[];
-}
-
-export interface PostingReturn {
-  posting_id: number;
-  unrealized_gain: number;
-  holding_days: number;
-  annualized_return: number | null;
-}
-
-export interface AccountGain {
-  account: string;
-  networthTimeline: Networth[];
-  xirr: number;
-  postings: Posting[];
-  posting_returns: PostingReturn[];
-  currencies: CurrencyAccountGain[];
-}
-
 export interface InterestOverview {
   date: dayjs.Dayjs;
   drawn_amount: number;
@@ -186,20 +171,6 @@ export interface AccountTfIdf {
   };
 }
 
-export interface AssetBreakdown {
-  group: string;
-  investmentAmount: number;
-  withdrawalAmount: number;
-  balanceUnits: number;
-  marketAmount: number;
-  xirr: number;
-  gainAmount: number;
-  absoluteReturn: number;
-  commodity?: string;
-  commodity_name?: string;
-  commodity_code?: string;
-}
-
 export interface LiabilityBreakdown {
   group: string;
   drawn_amount: number;
@@ -207,73 +178,6 @@ export interface LiabilityBreakdown {
   interest_amount: number;
   balance_amount: number;
   apr: number;
-}
-
-export interface Aggregate {
-  date: dayjs.Dayjs;
-  account: string;
-  market_amount: number;
-
-  // computed
-  percent: number;
-}
-
-export interface CommodityBreakdown {
-  commodity_name: string;
-  security_name: string;
-  security_id: string;
-  security_type: string;
-  amount: number;
-  percentage: number;
-}
-
-export interface PortfolioAllocation {
-  name_and_security_type: PortfolioAggregate[];
-  security_type: PortfolioAggregate[];
-  rating: PortfolioAggregate[];
-  industry: PortfolioAggregate[];
-  commodities: string[];
-}
-
-export interface PortfolioAggregate {
-  id: string;
-  group: string;
-  sub_group: string;
-  amount: number;
-  percentage: number;
-  breakdowns: CommodityBreakdown[];
-}
-
-export interface AllocationTarget {
-  name: string;
-  target: number;
-  current: number;
-  aggregates: { [key: string]: Aggregate };
-  market_amount: number;
-  drift: number;
-  drift_tolerance: number;
-  status: "in_band" | "overweight" | "underweight";
-  accounts: string[];
-  commodities: string[];
-}
-
-export interface RebalanceItem {
-  name: string;
-  target: number;
-  current: number;
-  market_amount: number;
-  target_amount: number;
-  action: "BUY" | "SELL" | "HOLD";
-  amount: number;
-  new_percent: number;
-}
-
-export interface RebalancePlan {
-  mode: "cash_injection" | "full_rebalance";
-  cash_amount: number;
-  total_before: number;
-  total_after: number;
-  items: RebalanceItem[];
 }
 
 export interface Income {
@@ -285,26 +189,6 @@ export interface Tax {
   start_date: string;
   end_date: string;
   postings: Posting[];
-}
-
-export interface InvestmentYearlyCard {
-  start_date: dayjs.Dayjs;
-  end_date: dayjs.Dayjs;
-  postings: Posting[];
-  net_tax: number;
-  gross_salary_income: number;
-  gross_other_income: number;
-  net_income: number;
-  net_investment: number;
-  net_expense: number;
-  savings_rate: number;
-  overall_surplus: number;
-  overall_savings_rate: number;
-  overall_savings_rate_available: boolean;
-  period_complete: boolean;
-  has_activity: boolean;
-  has_income_postings: boolean;
-  has_expense_postings: boolean;
 }
 
 export interface IncomeYearlyCard {
@@ -838,51 +722,11 @@ export function ajax(route: "/api/schedule_al"): Promise<{
 }>;
 export function ajax(route: "/api/diagnosis"): Promise<{ issues: Issue[] }>;
 export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
-export function ajax(
-  route: "/api/investment"
-): Promise<{ assets: Posting[]; yearly_cards: InvestmentYearlyCard[] }>;
-export function ajax(
-  route: "/api/assets/balance"
-): Promise<{ asset_breakdowns: Record<string, AssetBreakdown> }>;
 export function ajax(route: "/api/liabilities/repayment"): Promise<{ repayments: Posting[] }>;
 export function ajax(
   route: "/api/liabilities/balance"
 ): Promise<{ liability_breakdowns: LiabilityBreakdown[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
-export function ajax(route: "/api/networth"): Promise<{
-  networthTimeline: Networth[];
-  currencyNetworths: CurrencyNetworth[];
-  xirr: number;
-}>;
-export function ajax(route: "/api/gain"): Promise<{
-  gain_breakdown: Gain[];
-}>;
-
-export function ajax(
-  route: "/api/gain/:name",
-  options?: RequestOptions,
-  params?: Record<string, string>
-): Promise<{
-  gain_timeline_breakdown: AccountGain;
-  portfolio_allocation: PortfolioAllocation;
-  asset_breakdown: AssetBreakdown;
-}>;
-
-export function ajax(route: "/api/allocation"): Promise<{
-  aggregates: { [key: string]: Aggregate };
-  aggregates_timeline: { [key: string]: Aggregate }[];
-  allocation_targets: AllocationTarget[];
-  rebalance?: RebalancePlan;
-}>;
-export function ajax(
-  route: "/api/allocation/rebalance",
-  options?: RequestOptions
-): Promise<RebalancePlan>;
-export function ajax(
-  route: "/api/allocation/targets",
-  options?: RequestOptions
-): Promise<{ success: boolean; error?: string }>;
-export function ajax(route: "/api/portfolio_allocation"): Promise<PortfolioAllocation>;
 export function ajax(route: "/api/income"): Promise<{
   income_timeline: Income[];
   tax_timeline: Tax[];
@@ -1015,11 +859,7 @@ export function ajax(
   route: "/api/price/providers/delete/:provider",
   options?: RequestOptions,
   params?: Record<string, string>
-): Promise<{
-  gain_timeline_breakdown: AccountGain;
-  portfolio_allocation: PortfolioAllocation;
-  asset_breakdown: AssetBreakdown;
-}>;
+): Promise<{ success?: boolean; message?: string; error?: string }>;
 
 export function ajax(
   route: "/api/price/autocomplete",
