@@ -2,9 +2,13 @@
   import { formatCurrency } from "$lib/utils";
   import type { TaxOverviewCapitalIncome } from "$lib/utils";
 
-  export let capitalIncome: TaxOverviewCapitalIncome;
+  interface Props {
+    capitalIncome: TaxOverviewCapitalIncome;
+  }
 
-  let accountsExpanded = false;
+  let { capitalIncome }: Props = $props();
+
+  let accountsExpanded = $state(false);
 </script>
 
 <div class="box mb-3">
@@ -46,7 +50,7 @@
     <button
       type="button"
       class="button is-small is-light mt-4"
-      on:click={() => (accountsExpanded = !accountsExpanded)}
+      onclick={() => (accountsExpanded = !accountsExpanded)}
     >
       {accountsExpanded ? "Konten ausblenden" : "Konten anzeigen"}
     </button>

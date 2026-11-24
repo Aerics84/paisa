@@ -74,7 +74,7 @@
             <select
               bind:value={selectedYear}
               aria-label="Steuerjahr"
-              on:change={(e) => load(e.currentTarget.value)}
+              onchange={(e) => load(e.currentTarget.value)}
             >
               {#each overview.years.slice().reverse() as year}
                 <option value={year}>Steuerjahr {year}</option>
@@ -84,7 +84,7 @@
           <button
             type="button"
             class="button is-small is-link"
-            on:click={() => downloadTaxOverview(overview)}
+            onclick={() => downloadTaxOverview(overview)}
           >
             CSV exportieren
           </button>
@@ -163,7 +163,7 @@
           class="is-flex is-justify-content-space-between is-align-items-center"
           style="width: 100%; border: 0; background: transparent; padding: 0; cursor: pointer; color: inherit;"
           aria-expanded={coverageExpanded}
-          on:click={() => (coverageExpanded = !coverageExpanded)}
+          onclick={() => (coverageExpanded = !coverageExpanded)}
         >
           <span>{coverageSummary(overview.coverage)}</span>
           <span class="icon is-small" aria-hidden="true">

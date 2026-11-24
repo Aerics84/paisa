@@ -262,7 +262,7 @@
   </svelte:fragment>
 </Modal>
 
-<FileModal bind:open={modalOpen} on:save={(e) => saveToFile(e.detail)} />
+<FileModal bind:open={modalOpen} onsave={(detail) => saveToFile(detail)} />
 
 <section class="section tab-import" style="padding-bottom: 0 !important">
   <div class="container is-fluid">

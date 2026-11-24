@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   let nextDialogId = 0;
 </script>
 
@@ -6,14 +6,27 @@
   import { onDestroy, tick } from "svelte";
   import Modal from "$lib/components/Modal.svelte";
 
-  export let open = false;
-  export let title: string;
-  export let description: string | undefined = undefined;
-  export let confirmLabel = "Confirm";
-  export let cancelLabel = "Cancel";
-  export let variant: "default" | "danger" = "default";
-  export let onconfirm: () => void = () => {};
-  export let oncancel: (() => void) | undefined = undefined;
+  interface Props {
+    open?: boolean;
+    title: string;
+    description?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "default" | "danger";
+    onconfirm?: () => void;
+    oncancel?: (() => void) | undefined;
+  }
+
+  let {
+    open = $bindable(false),
+    title,
+    description = undefined,
+    confirmLabel = "Confirm",
+    cancelLabel = "Cancel",
+    variant = "default",
+    onconfirm = () => {},
+    oncancel = undefined
+  }: Props = $props();
 
   const dialogId = ++nextDialogId;
   const titleId = `confirm-dialog-title-${dialogId}`;
@@ -21,12 +34,12 @@
   const focusableSelector =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-  let dialogElement: HTMLElement | null = null;
-  let confirmButton: HTMLButtonElement | undefined = undefined;
-  let cancelButton: HTMLButtonElement | undefined = undefined;
+  let dialogElement = $state<HTMLElement | null>(null);
+  let confirmButton = $state<HTMLButtonElement | undefined>(undefined);
+  let cancelButton = $state<HTMLButtonElement | undefined>(undefined);
   let previousFocus: HTMLElement | null = null;
-  let confirming = false;
-  let wasOpen = false;
+  let confirming = $state(false);
+  let wasOpen = $state(false);
   let destroyed = false;
 
   function focusableElements(): HTMLElement[] {
@@ -69,7 +82,7 @@
 
   // Modal closes itself when the background or the close button is used.
   // Treat every close that did not come from the confirm button as a cancel.
-  $: {
+  $effect(() => {
     if (open && !wasOpen) {
       confirming = false;
       void focusDialog();
@@ -78,7 +91,7 @@
       void restoreFocus();
     }
     wasOpen = open;
-  }
+  });
 
   function confirm(close: (event: unknown) => void) {
     confirming = true;
@@ -124,7 +137,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <Modal
   bind:active={open}
@@ -137,7 +150,7 @@
 >
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title" id={titleId}>{title}</p>
-    <button class="delete" aria-label="close" type="button" on:click={close}></button>
+    <button class="delete" aria-label="close" type="button" onclick={close}></button>
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#if description}
@@ -145,14 +158,14 @@
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="foot" let:close>
-    <button class="button" type="button" bind:this={cancelButton} on:click={close}
+    <button class="button" type="button" bind:this={cancelButton} onclick={close}
       >{cancelLabel}</button
     >
     <button
       class="button {variant === 'danger' ? 'is-danger' : 'is-primary'}"
       type="button"
       bind:this={confirmButton}
-      on:click={() => confirm(close)}>{confirmLabel}</button
+      onclick={() => confirm(close)}>{confirmLabel}</button
     >
   </svelte:fragment>
 </Modal>

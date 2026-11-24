@@ -265,7 +265,7 @@
   }
 </script>
 
-<FileModal bind:open={modalOpen} on:save={(e) => createFile(e.detail)} label="Create" help="" />
+<FileModal bind:open={modalOpen} onsave={(detail) => createFile(detail)} label="Create" help="" />
 
 <section class="section tab-editor max-h-screen" style="padding-bottom: 0 !important">
   <div class="container is-fluid">

@@ -9,9 +9,13 @@
   import dayjs from "dayjs";
   import type { Action } from "svelte/action";
 
-  export let goal: GoalSummary;
-  export let small = false;
-  export let action: Action = null;
+  interface Props {
+    goal: GoalSummary;
+    small?: boolean;
+    action?: Action | null;
+  }
+
+  let { goal, small = false, action = null }: Props = $props();
 
   function formatDate(date: string) {
     const d = dayjs(date, "YYYY-MM-DD", true);
@@ -21,15 +25,16 @@
     return "";
   }
 
-  $: analysis = analyzeGoal(goal);
-  $: completed = analysis.progressRatio * 100;
-  $: status = goalStatusShortLabel(goal, analysis);
-  $: required =
+  let analysis = $derived(analyzeGoal(goal));
+  let completed = $derived(analysis.progressRatio * 100);
+  let status = $derived(goalStatusShortLabel(goal, analysis));
+  let required = $derived(
     analysis.state === "active" && (analysis.requiredMonthlyContribution ?? 0) > 0
       ? analysis.requiredMonthlyContribution
-      : undefined;
-  $: projection = analysis.projectedCompletionDate;
-  $: delay = goalDelayLabel(analysis);
+      : undefined
+  );
+  let projection = $derived(analysis.projectedCompletionDate);
+  let delay = $derived(goalDelayLabel(analysis));
 </script>
 
 <div class="box p-3 goal-summary-card" class:mb-3={small}>

@@ -1,6 +1,13 @@
 <script lang="ts">
-  export let title = "";
-  export let subtle: string | null = null;
+  import type { Snippet } from "svelte";
+
+  interface Props {
+    title?: string;
+    subtle?: string | null;
+    right?: Snippet;
+  }
+
+  let { title = "", subtle = null, right }: Props = $props();
 </script>
 
 <div class="paisa-zone__header">
@@ -8,8 +15,8 @@
     <div class="paisa-zone__title">{title}</div>
   </div>
 
-  {#if $$slots.right}
-    <slot name="right" />
+  {#if right}
+    {@render right()}
   {:else if subtle}
     <div class="paisa-zone__subtle">
       {subtle}

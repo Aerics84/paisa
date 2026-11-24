@@ -982,11 +982,11 @@
         <div class="paisa-dashboard__band paisa-dashboard__band--review">
           <div class="paisa-zone paisa-zone--insights">
             <DashboardSectionHeader title="Insights" subtle={selectedMonthLabel}>
-              <svelte:fragment slot="right">
+              {#snippet right()}
                 <a href="/expense/monthly" class="secondary-link paisa-link-with-arrow"
                   >View all insights <i class="fas fa-arrow-right"></i></a
                 >
-              </svelte:fragment>
+              {/snippet}
             </DashboardSectionHeader>
 
             {#if reviewLoading}
@@ -1024,11 +1024,11 @@
 
           <div class="paisa-zone paisa-zone--goals">
             <DashboardSectionHeader title="Goal Progress" subtle="Current status">
-              <svelte:fragment slot="right">
+              {#snippet right()}
                 <a href="/more/goals" class="secondary-link paisa-link-with-arrow"
                   >View all goals <i class="fas fa-arrow-right"></i></a
                 >
-              </svelte:fragment>
+              {/snippet}
             </DashboardSectionHeader>
             {#if goalState === "ready"}
               <div class="paisa-mini-list">

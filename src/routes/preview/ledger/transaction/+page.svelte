@@ -108,7 +108,7 @@
 </script>
 
 <DiffViewModal
-  on:save={(e) => saveAll(e.detail)}
+  onsave={(files) => saveAll(files)}
   bind:open={openPreviewModal}
   oldFiles={files}
   {newFiles}
@@ -175,7 +175,7 @@
       {#if buldEditOpen}
         <div class="columns">
           <div class="column is-12" transition:slide>
-            <BulkEditForm {accounts} on:preview={(e) => showPreview(e.detail)} />
+            <BulkEditForm {accounts} onpreview={(detail) => showPreview(detail)} />
           </div>
         </div>
       {/if}

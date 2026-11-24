@@ -3,8 +3,12 @@
   import dayjs from "dayjs";
   import type { TaxOverviewIncomeTaxPayments } from "$lib/utils";
 
-  export let payments: TaxOverviewIncomeTaxPayments;
-  let expanded = false;
+  interface Props {
+    payments: TaxOverviewIncomeTaxPayments;
+  }
+
+  let { payments }: Props = $props();
+  let expanded = $state(false);
 </script>
 
 <div class="box mb-3">
@@ -12,7 +16,7 @@
     type="button"
     class="tax-overview-section-header"
     aria-expanded={expanded}
-    on:click={() => (expanded = !expanded)}
+    onclick={() => (expanded = !expanded)}
   >
     <span class="is-flex is-align-items-baseline" style="gap: 0.75rem; flex-wrap: wrap;">
       <strong>Einkommensteuerzahlungen</strong>

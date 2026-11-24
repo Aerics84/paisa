@@ -1,22 +1,29 @@
 <script lang="ts">
   import _ from "lodash";
-  import { createEventDispatcher } from "svelte";
   import Select from "svelte-select";
 
-  export let accounts: string[];
+  interface Props {
+    accounts: string[];
+    onpreview?: (change: {
+      operation: string;
+      args: { oldAccountName: string; newAccountName: string };
+    }) => void;
+  }
 
-  $: selectItems = _.map(accounts, (account) => {
-    return { id: account, name: account };
-  });
+  let { accounts, onpreview }: Props = $props();
 
-  let selectedItem: { id: string; name: string };
+  let selectItems = $derived(
+    _.map(accounts, (account) => {
+      return { id: account, name: account };
+    })
+  );
+
+  let selectedItem = $state<{ id: string; name: string }>();
 
   const OPERATIONS = [{ id: "rename_account", label: "Rename Account" }];
-  let selectedOperation = OPERATIONS[0].id;
+  let selectedOperation = $state(OPERATIONS[0].id);
 
-  let args = { oldAccountName: "", newAccountName: "" };
-
-  const dispatch = createEventDispatcher();
+  let args = $state({ oldAccountName: "", newAccountName: "" });
 </script>
 
 <div class="field is-grouped">
@@ -41,6 +48,7 @@
         searchable={true}
         clearable={false}
         onchange={() => {
+          if (!selectedItem) return;
           args.oldAccountName = selectedItem.name;
         }}
       ></Select>
@@ -58,7 +66,7 @@
     <button
       class="button is-link"
       type="button"
-      on:click={(_e) => dispatch("preview", { operation: selectedOperation, args: args })}
+      onclick={() => onpreview?.({ operation: selectedOperation, args: args })}
     >
       Preview
     </button>

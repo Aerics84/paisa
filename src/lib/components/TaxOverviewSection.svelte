@@ -3,9 +3,13 @@
   import dayjs from "dayjs";
   import type { TaxOverviewSection } from "$lib/utils";
 
-  export let section: TaxOverviewSection;
-  export let expanded: boolean;
-  export let onToggle: () => void;
+  interface Props {
+    section: TaxOverviewSection;
+    expanded: boolean;
+    onToggle: () => void;
+  }
+
+  let { section, expanded, onToggle }: Props = $props();
 
   const sourceLabel: Record<string, string> = {
     tag: "Tag",
@@ -19,7 +23,7 @@
     type="button"
     class="tax-overview-section-header"
     aria-expanded={expanded}
-    on:click={onToggle}
+    onclick={onToggle}
   >
     <span class="is-flex is-align-items-baseline" style="gap: 0.75rem; flex-wrap: wrap;">
       <strong>{section.label}</strong>
