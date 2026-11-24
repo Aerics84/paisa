@@ -30,17 +30,17 @@
   import FileModal from "$lib/components/FileModal.svelte";
   import { page } from "$app/state";
 
-  export let data: PageData;
-  let editorDom: Element;
-  let editor: EditorView;
-  let editorFileName = "";
-  let filesMap: Record<string, LedgerFile> = {};
-  let selectedFile: LedgerFile = null;
-  let accounts: string[] = [];
-  let commodities: string[] = [];
-  let payees: string[] = [];
-  let selectedVersion: string = null;
-  let lineNumber = 0;
+  let { data }: { data: PageData } = $props();
+  let editorDom = $state<Element>();
+  let editor = $state<EditorView>();
+  let editorFileName = $state("");
+  let filesMap = $state<Record<string, LedgerFile>>({});
+  let selectedFile = $state<LedgerFile>(null);
+  let accounts = $state<string[]>([]);
+  let commodities = $state<string[]>([]);
+  let payees = $state<string[]>([]);
+  let selectedVersion = $state<string>(null);
+  let lineNumber = $state(0);
 
   function command(fn: Function) {
     return () => {
@@ -201,37 +201,39 @@
     }
   }
 
-  $: if (selectedFile) {
-    if (
-      !editor ||
-      editorFileName !== selectedFile.name ||
-      editor.state.doc.toString() != selectedFile.content
-    ) {
-      if (editor) {
-        editor.destroy();
-      }
-
-      editor = createEditor(selectedFile.content, editorDom, {
-        name: selectedFile.name,
-        keybindings,
-        autocompletions: {
-          string: accounts,
-          strong: payees,
-          unit: commodities
+  $effect(() => {
+    if (selectedFile) {
+      if (
+        !editor ||
+        editorFileName !== selectedFile.name ||
+        editor.state.doc.toString() != selectedFile.content
+      ) {
+        if (editor) {
+          editor.destroy();
         }
-      });
-      editorFileName = selectedFile.name;
-      if (lineNumber > 0) {
-        moveToLine(editor, lineNumber, true);
-        focus(editor);
-        lineNumber = 0;
-      } else {
-        moveToEnd(editor);
+
+        editor = createEditor(selectedFile.content, editorDom, {
+          name: selectedFile.name,
+          keybindings,
+          autocompletions: {
+            string: accounts,
+            strong: payees,
+            unit: commodities
+          }
+        });
+        editorFileName = selectedFile.name;
+        if (lineNumber > 0) {
+          moveToLine(editor, lineNumber, true);
+          focus(editor);
+          lineNumber = 0;
+        } else {
+          moveToEnd(editor);
+        }
       }
     }
-  }
+  });
 
-  let modalOpen = false;
+  let modalOpen = $state(false);
   function openCreateModal() {
     modalOpen = true;
   }
@@ -277,7 +279,7 @@
               <button
                 class="button is-small is-link invertable is-light"
                 disabled={$editorState.hasUnsavedChanges}
-                on:click={(_e) => openCreateModal()}
+                onclick={(_e) => openCreateModal()}
               >
                 <span class="icon is-small">
                   <i class="fas fa-file-circle-plus"></i>
@@ -292,7 +294,7 @@
               <button
                 class="button is-small"
                 disabled={$editorState.hasUnsavedChanges == false}
-                on:click={(_e) => save()}
+                onclick={(_e) => save()}
               >
                 <span class="icon is-small">
                   <i class="fas fa-floppy-disk"></i>
@@ -304,7 +306,7 @@
               <button
                 class="button is-small"
                 disabled={$editorState.undoDepth == 0}
-                on:click={(_e) => undo(editor)}
+                onclick={(_e) => undo(editor)}
               >
                 <span class="icon is-small">
                   <i class="fas fa-arrow-left"></i>
@@ -316,7 +318,7 @@
               <button
                 class="button is-small"
                 disabled={$editorState.redoDepth == 0}
-                on:click={(_e) => redo(editor)}
+                onclick={(_e) => redo(editor)}
               >
                 <span>Redo</span>
                 <span class="icon is-small">
@@ -325,7 +327,7 @@
               </button>
             </p>
             <p class="control">
-              <button class="button is-small" on:click={(_e) => pretty()} type="button">
+              <button class="button is-small" onclick={(_e) => pretty()} type="button">
                 <span class="icon is-small">
                   <i class="fas fa-code"></i>
                 </span>
@@ -340,7 +342,7 @@
                 <button
                   class="button is-small"
                   disabled={!selectedVersion}
-                  on:click={(_e) => revert(selectedVersion)}
+                  onclick={(_e) => revert(selectedVersion)}
                 >
                   <span class="icon is-small">
                     <i class="fas fa-clock-rotate-left"></i>
@@ -362,7 +364,7 @@
               <p class="control">
                 <button
                   class="button is-small"
-                  on:click={(_e) => deleteBackups()}
+                  onclick={(_e) => deleteBackups()}
                   type="button"
                   aria-label="Delete backups"
                 >
@@ -378,7 +380,7 @@
             <div class="control ml-5">
               <button
                 class="button-reset"
-                on:click={(_e) => moveToLine(editor, $editorState.errors[0].line_from)}
+                onclick={(_e) => moveToLine(editor, $editorState.errors[0].line_from)}
                 type="button"
               >
                 <span class="ml-1 tag invertable is-danger is-light"

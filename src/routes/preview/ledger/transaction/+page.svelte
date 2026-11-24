@@ -16,15 +16,15 @@
   import { get } from "svelte/store";
   import { download } from "$lib/export";
 
-  let buldEditOpen = false;
-  let transactions: T[] = null;
-  let filtered: T[] = [];
-  let files: LedgerFile[] = [];
-  let newFiles: LedgerFile[] = [];
-  let updatedTransactionsCount = 0;
-  let openPreviewModal = false;
-  let accounts: string[] = [];
-  let commodities: string[] = [];
+  let buldEditOpen = $state(false);
+  let transactions = $state<T[]>(null);
+  let filtered = $state<T[]>([]);
+  let files = $state<LedgerFile[]>([]);
+  let newFiles = $state<LedgerFile[]>([]);
+  let updatedTransactionsCount = $state(0);
+  let openPreviewModal = $state(false);
+  let accounts = $state<string[]>([]);
+  let commodities = $state<string[]>([]);
 
   const debits = (t: T) => {
     return _.filter(t.postings, (p) => p.amount < 0);
@@ -140,7 +140,7 @@
                   <div class="control">
                     <button
                       class="button is-link is-light invertable"
-                      on:click={(_e) => (buldEditOpen = !buldEditOpen)}
+                      onclick={(_e) => (buldEditOpen = !buldEditOpen)}
                     >
                       <span>Bulk Edit</span>
                       <span class="icon is-small">
@@ -159,7 +159,7 @@
                 <button
                   class="button is-text p-0"
                   type="button"
-                  on:click={(_e) => downloadTransactions()}
+                  onclick={(_e) => downloadTransactions()}
                 >
                   <span class="icon is-small">
                     <i class="fa-solid fa-file-arrow-down"></i>

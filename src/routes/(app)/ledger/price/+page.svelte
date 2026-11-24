@@ -9,7 +9,7 @@
   import { onMount } from "svelte";
   import VirtualList from "svelte-tiny-virtual-list";
 
-  let prices: Record<string, Price[]> = {};
+  let prices = $state<Record<string, Price[]>>({});
 
   const ITEM_SIZE = 18;
 
@@ -64,7 +64,7 @@
             <p class="control">
               <button
                 class="button is-small is-link invertable is-light is-danger"
-                on:click={(_e) => clearPriceCache()}
+                onclick={(_e) => clearPriceCache()}
               >
                 <span class="icon is-small">
                   <i class="fas fa-trash-can"></i>
@@ -105,7 +105,7 @@
                     slot="toggle"
                     let:active
                     let:onclick
-                    on:click={(e) => onclick(e)}
+                    onclick={(e) => onclick(e)}
                   >
                     <td>
                       <span class="icon has-text-link">

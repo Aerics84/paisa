@@ -20,13 +20,13 @@
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
-  export let data: PageData;
-  let svg: SVGElement;
+  let { data }: { data: PageData } = $props();
+  let svg = $state<SVGElement>();
 
-  let creditCard: CreditCardSummary;
-  let currentBill: CreditCardBill;
+  let creditCard = $state<CreditCardSummary>();
+  let currentBill = $state<CreditCardBill>();
   let small = true;
-  let rendered = false;
+  let rendered = $state(false);
 
   function lastBill(creditCard: CreditCardSummary): CreditCardBill {
     return _.find(_.reverse(_.clone(creditCard.bills)), (b) => {
@@ -34,10 +34,12 @@
     });
   }
 
-  $: if (creditCard && svg && !rendered) {
-    renderYearlySpends(svg, creditCard.yearlySpends);
-    rendered = true;
-  }
+  $effect(() => {
+    if (creditCard && svg && !rendered) {
+      renderYearlySpends(svg, creditCard.yearlySpends);
+      rendered = true;
+    }
+  });
 
   onMount(async () => {
     const response = await getCreditCard(data.account);

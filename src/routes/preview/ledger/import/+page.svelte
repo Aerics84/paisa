@@ -28,27 +28,27 @@
   import StatementImport from "$lib/components/StatementImport.svelte";
 
   // The template/preset flow is the default; statement staging is additive.
-  let importMode: "template" | "staging" = "template";
+  let importMode = $state<"template" | "staging">("template");
 
-  let templates: ImportTemplate[] = [];
-  let selectedTemplate: ImportTemplate;
-  let saveAsName: string;
+  let templates = $state<ImportTemplate[]>([]);
+  let selectedTemplate = $state<ImportTemplate>();
+  let saveAsName = $state<string>();
   let lastTemplate: any;
   let lastData: any;
-  let preview = "";
-  let parseErrorMessage: string = null;
-  let columnCount: number;
-  let data: any[][] = [];
-  let rows: Array<Record<string, any>> = [];
+  let preview = $state("");
+  let parseErrorMessage = $state<string>(null);
+  let columnCount = $state<number>();
+  let data = $state<any[][]>([]);
+  let rows = $state<Array<Record<string, any>>>([]);
   let lastOptions: any;
-  let options: { reverse: boolean; trim: boolean } = { reverse: false, trim: true };
+  let options = $state<{ reverse: boolean; trim: boolean }>({ reverse: false, trim: true });
 
-  let templateEditorDom: Element;
-  let templateEditor: EditorView;
+  let templateEditorDom = $state<Element>();
+  let templateEditor = $state<EditorView>();
 
-  let previewEditorDom: Element;
-  let previewEditor: EditorView;
-  let spreadsheetModule: typeof import("$lib/spreadsheet") | null = null;
+  let previewEditorDom = $state<Element>();
+  let previewEditor = $state<EditorView>();
+  let spreadsheetModule = $state<typeof import("$lib/spreadsheet") | null>(null);
 
   async function getSpreadsheetModule() {
     spreadsheetModule ||= await import("$lib/spreadsheet");
@@ -65,7 +65,9 @@
     void getSpreadsheetModule();
   });
 
-  $: saveAsNameDuplicate = !!_.find(templates, { name: saveAsName, template_type: "custom" });
+  let saveAsNameDuplicate = $derived(
+    !!_.find(templates, { name: saveAsName, template_type: "custom" })
+  );
 
   async function save() {
     const { template, saved, message } = await upsertTemplate(
@@ -134,33 +136,38 @@
 
   let input: any;
 
-  $: if (!_.isEmpty(data) && $templateEditorState.template && spreadsheetModule) {
-    if (
-      lastTemplate != $templateEditorState.template ||
-      lastData != data ||
-      lastOptions != options
-    ) {
-      try {
-        preview = spreadsheetModule.render(rows, $templateEditorState.template, {
-          reverse: options.reverse,
-          trim: options.trim
-        });
-        updatePreviewContent(previewEditor, preview);
-        lastTemplate = $templateEditorState.template;
-        lastData = data;
-        lastOptions = _.clone(options);
-      } catch (e) {
-        console.log(e);
+  $effect(() => {
+    if (!_.isEmpty(data) && $templateEditorState.template && spreadsheetModule) {
+      if (
+        lastTemplate != $templateEditorState.template ||
+        lastData != data ||
+        lastOptions != options
+      ) {
+        try {
+          const nextPreview = spreadsheetModule.render(rows, $templateEditorState.template, {
+            reverse: options.reverse,
+            trim: options.trim
+          });
+          preview = nextPreview;
+          updatePreviewContent(previewEditor, nextPreview);
+          lastTemplate = $templateEditorState.template;
+          lastData = data;
+          lastOptions = _.clone(options);
+        } catch (e) {
+          console.log(e);
+        }
       }
     }
-  }
+  });
 
-  $: if (selectedTemplate && templateEditor) {
-    if (templateEditor.state.doc.toString() != selectedTemplate.content) {
-      templateEditor.destroy();
-      templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
+  $effect(() => {
+    if (selectedTemplate && templateEditor) {
+      if (templateEditor.state.doc.toString() != selectedTemplate.content) {
+        templateEditor.destroy();
+        templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
+      }
     }
-  }
+  });
 
   async function handleFilesSelect(e: { detail: { acceptedFiles: File[] } }) {
     const { acceptedFiles } = e.detail;
@@ -197,7 +204,7 @@
     }
   }
 
-  let modalOpen = false;
+  let modalOpen = $state(false);
   function openSaveModal() {
     modalOpen = true;
   }
@@ -232,7 +239,7 @@
     return action;
   }
 
-  let templateCreateModalOpen = false;
+  let templateCreateModalOpen = $state(false);
   function openTemplateCreateModal() {
     templateCreateModalOpen = true;
   }
@@ -241,7 +248,7 @@
 <Modal bind:active={templateCreateModalOpen}>
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">Create Template</p>
-    <button class="delete" aria-label="close" on:click={(e) => close(e)}></button>
+    <button class="delete" aria-label="close" onclick={(e) => close(e)}></button>
   </svelte:fragment>
   <div class="field" slot="body">
     <label class="label" for="save-filename">Template Name</label>
@@ -256,9 +263,9 @@
     <button
       class="button is-success"
       disabled={_.isEmpty(saveAsName) || saveAsNameDuplicate}
-      on:click={(e) => save() && close(e)}>Create</button
+      onclick={(e) => save() && close(e)}>Create</button
     >
-    <button class="button" on:click={(e) => close(e)}>Cancel</button>
+    <button class="button" onclick={(e) => close(e)}>Cancel</button>
   </svelte:fragment>
 </Modal>
 
@@ -269,13 +276,25 @@
     <div class="tabs is-toggle is-toggle-rounded is-small mb-4">
       <ul>
         <li class:is-active={importMode === "template"}>
-          <a href="#template-import" on:click|preventDefault={() => (importMode = "template")}>
+          <a
+            href="#template-import"
+            onclick={(event) => {
+              event.preventDefault();
+              importMode = "template";
+            }}
+          >
             <span class="icon is-small"><i class="fas fa-code"></i></span>
             <span>Template / Preset Import</span>
           </a>
         </li>
         <li class:is-active={importMode === "staging"}>
-          <a href="#statement-staging" on:click|preventDefault={() => (importMode = "staging")}>
+          <a
+            href="#statement-staging"
+            onclick={(event) => {
+              event.preventDefault();
+              importMode = "staging";
+            }}
+          >
             <span class="icon is-small"><i class="fas fa-wand-magic-sparkles"></i></span>
             <span>Statement Staging</span>
           </a>
@@ -294,7 +313,7 @@
               <span data-tippy-content="Create" data-tippy-followCursor="false">
                 <button
                   class="button"
-                  on:click={(_e) => openTemplateCreateModal()}
+                  onclick={(_e) => openTemplateCreateModal()}
                   aria-label="Create template"
                 >
                   <span class="icon">
@@ -312,7 +331,7 @@
               >
                 <button
                   class="button"
-                  on:click={(_e) => save()}
+                  onclick={(_e) => save()}
                   aria-label="Save template"
                   disabled={$templateEditorState.hasUnsavedChanges == false ||
                     selectedTemplate?.template_type == "builtin"}
@@ -329,7 +348,7 @@
               >
                 <button
                   class="button"
-                  on:click={(_e) => remove()}
+                  onclick={(_e) => remove()}
                   aria-label="Delete template"
                   disabled={selectedTemplate?.template_type == "builtin"}
                 >
@@ -390,7 +409,7 @@
                 class="button clipboard"
                 aria-label="Copy preview to clipboard"
                 disabled={_.isEmpty(preview)}
-                on:click={copyToClipboard}
+                onclick={copyToClipboard}
               >
                 <span class="icon">
                   <i class="fas fa-copy"></i>
@@ -402,7 +421,7 @@
                 class="button save"
                 aria-label="Save preview"
                 disabled={_.isEmpty(preview)}
-                on:click={openSaveModal}
+                onclick={openSaveModal}
               >
                 <span class="icon">
                   <i class="fas fa-floppy-disk"></i>
