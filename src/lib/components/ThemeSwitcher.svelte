@@ -4,7 +4,8 @@
   import * as store from "../../store";
   import { refresh } from "../../store";
 
-  let theme = getColorPreference();
+  let theme = $state(getColorPreference());
+  // svelte-ignore state_referenced_locally
   store.theme.set(theme);
 
   function setTheme(value: string) {

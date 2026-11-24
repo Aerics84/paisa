@@ -8,11 +8,11 @@
   import TaxOverviewIncomeTaxPayments from "./TaxOverviewIncomeTaxPayments.svelte";
   import TaxOverviewCapitalIncome from "./TaxOverviewCapitalIncome.svelte";
 
-  let overview: TaxOverview | null = null;
-  let selectedYear = "";
-  let expandedSections: Record<string, boolean> = {};
-  let coverageExpanded = false;
-  let error = "";
+  let overview = $state<TaxOverview | null>(null);
+  let selectedYear = $state("");
+  let expandedSections = $state<Record<string, boolean>>({});
+  let coverageExpanded = $state(false);
+  let error = $state("");
   let loadSequence = 0;
 
   function apply(data: TaxOverview) {

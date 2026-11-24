@@ -3,7 +3,7 @@
 
   interface Props {
     options: { label: string; value: any }[];
-    value?: any;
+    value: any;
   }
 
   let { options, value = $bindable() }: Props = $props();

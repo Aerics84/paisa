@@ -6,7 +6,7 @@
   interface Props {
     min: dayjs.Dayjs;
     max: dayjs.Dayjs;
-    value?: string;
+    value: string;
     compact?: boolean;
   }
 

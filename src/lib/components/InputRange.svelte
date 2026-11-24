@@ -3,11 +3,11 @@
 
   interface Props {
     label: string;
-    value?: number;
+    value: number;
     allowed: { min: number; max: number };
   }
 
-  let { label, value = $bindable(0), allowed }: Props = $props();
+  let { label, value = $bindable(), allowed }: Props = $props();
 </script>
 
 {#if allowed.max > 1}

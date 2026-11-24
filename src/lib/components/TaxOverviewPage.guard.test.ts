@@ -30,6 +30,23 @@ describe("TaxOverviewPage year changes", () => {
   });
 });
 
+describe("TaxOverviewPage runes state", () => {
+  test("keeps markup-visible state reactive under runes", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
+    expect(source).toContain("let overview = $state<TaxOverview | null>(null)");
+    expect(source).toContain('let selectedYear = $state("")');
+    expect(source).toContain("let expandedSections = $state<Record<string, boolean>>({})");
+    expect(source).toContain("let coverageExpanded = $state(false)");
+    expect(source).toContain('let error = $state("")');
+  });
+
+  test("keeps the request sequence non-reactive", () => {
+    const source = readFileSync(join(__dirname, "TaxOverviewPage.svelte"), "utf-8");
+    expect(source).toContain("let loadSequence = 0;");
+    expect(source).not.toContain("let loadSequence = $state");
+  });
+});
+
 describe("TaxOverviewSection rendering", () => {
   test("skips categories without postings", () => {
     const source = readFileSync(join(__dirname, "TaxOverviewSection.svelte"), "utf-8");

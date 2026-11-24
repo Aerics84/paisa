@@ -4,7 +4,7 @@
   import { isMobile } from "$lib/utils";
 
   interface Props {
-    value?: number;
+    value: number;
     dateMin: dayjs.Dayjs;
     dateMax: dayjs.Dayjs;
   }

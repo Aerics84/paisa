@@ -20,7 +20,7 @@
   interface Props {
     key: string;
     path?: string;
-    value?: any;
+    value: any;
     rawValue?: string;
     schema: Schema;
     depth?: number;
