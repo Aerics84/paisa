@@ -21,7 +21,7 @@ dayjs.extend(isSameOrAfter);
 
 function posting(date: string, account: string, amount: number): Posting {
   return {
-    id: `${date}-${account}-${amount}`,
+    id: 1,
     transaction_id: `${date}-${account}-${amount}`,
     date: dayjs(date),
     payee: account,
@@ -31,9 +31,13 @@ function posting(date: string, account: string, amount: number): Posting {
     amount,
     status: "",
     tag_recurring: "",
+    tag_period: "",
+    tax_category: "",
+    tax_category_legacy: "",
     transaction_begin_line: 1,
     transaction_end_line: 1,
     file_name: "main.ledger",
+    forecast: false,
     note: "",
     transaction_note: "",
     market_amount: amount,

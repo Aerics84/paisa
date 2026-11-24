@@ -82,15 +82,21 @@ function zip(schedules: dayjs.Dayjs[], transactions: Transaction[], key: string,
   return transactionSchedules;
 }
 
-function enrich(ts: TransactionSequence) {
-  const transactions = ts.transactions.slice().reverse();
-  const amount = totalRecurring(ts);
+export type TransactionSequenceInput = Omit<
+  TransactionSequence,
+  "schedules" | "pastSchedules" | "futureSchedules" | "schedulesByMonth"
+>;
+
+function enrich(ts: TransactionSequenceInput): TransactionSequence {
+  const sequence = ts as TransactionSequence;
+  const transactions = sequence.transactions.slice().reverse();
+  const amount = totalRecurring(sequence);
   const start = transactions[0].date;
   let periodAvailable = false;
   let cron: CronExprs;
   try {
-    if (ts.period != "") {
-      cron = parse(prefixMinutesSeconds(ts.period), { hasSeconds: false });
+    if (sequence.period != "") {
+      cron = parse(prefixMinutesSeconds(sequence.period), { hasSeconds: false });
       const schedules = getFutureMatches(cron, {
         startAt: start.toISOString(),
         endAt: end.toISOString(),
@@ -115,28 +121,31 @@ function enrich(ts: TransactionSequence) {
       timezone: dayjs.tz.guess()
     });
 
-    ts.schedules = zip(
+    sequence.schedules = zip(
       _.map(schedules, (s) => dayjs(s)),
       transactions,
-      ts.key,
+      sequence.key,
       amount
     );
   } else {
     const schedules: dayjs.Dayjs[] = _.map(transactions, (t) => t.date);
     let next = _.last(schedules);
     do {
-      next = nextDate(ts, next);
+      next = nextDate(sequence, next);
       schedules.push(next);
     } while (schedules.length < 1000 && end.isAfter(next));
-    ts.schedules = zip(schedules, transactions, ts.key, amount);
+    sequence.schedules = zip(schedules, transactions, sequence.key, amount);
   }
 
-  const [past, future] = _.partition(ts.schedules, (s) => s.scheduled?.isBefore(now()));
-  ts.pastSchedules = past;
-  ts.futureSchedules = future;
-  ts.schedulesByMonth = _.groupBy(ts.schedules, (s) => s.scheduled?.format("YYYY-MM") || "NA");
-  ts.interval = _.first(future).scheduled.diff(_.last(past).scheduled, "day");
-  return ts;
+  const [past, future] = _.partition(sequence.schedules, (s) => s.scheduled?.isBefore(now()));
+  sequence.pastSchedules = past;
+  sequence.futureSchedules = future;
+  sequence.schedulesByMonth = _.groupBy(
+    sequence.schedules,
+    (s) => s.scheduled?.format("YYYY-MM") || "NA"
+  );
+  sequence.interval = _.first(future).scheduled.diff(_.last(past).scheduled, "day");
+  return sequence;
 }
 
 export function nextUnpaidSchedule(ts: TransactionSequence) {
@@ -196,7 +205,7 @@ export function totalRecurring(ts: TransactionSequence) {
   return transactionTotal(lastTransaction);
 }
 
-export function enrichTrantionSequence(transactionSequences: TransactionSequence[]) {
+export function enrichTrantionSequence(transactionSequences: TransactionSequenceInput[]) {
   return _.map(transactionSequences, (ts) => enrich(ts));
 }
 

@@ -7,6 +7,9 @@ import { obscure } from "../persisted_store";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
+import type { BalancedPosting, Posting, Transaction } from "./api/ledger";
+
+export type { BalancedPosting, Posting, Transaction };
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -59,27 +62,6 @@ export interface PriceProvider {
   description: string;
 }
 
-export interface Posting {
-  id: string;
-  transaction_id: string;
-  date: dayjs.Dayjs;
-  payee: string;
-  account: string;
-  commodity: string;
-  quantity: number;
-  amount: number;
-  status: string;
-  tag_recurring: string;
-  transaction_begin_line: number;
-  transaction_end_line: number;
-  file_name: string;
-  note: string;
-  transaction_note: string;
-
-  market_amount: number;
-  balance: number;
-}
-
 export interface IncomeStatement {
   startingBalance: number;
   endingBalance: number;
@@ -123,22 +105,6 @@ export interface TransactionSequence {
   pastSchedules: TransactionSchedule[];
   futureSchedules: TransactionSchedule[];
   schedulesByMonth: Record<string, TransactionSchedule[]>;
-}
-
-export interface Transaction {
-  id: string;
-  date: dayjs.Dayjs;
-  payee: string;
-  beginLine: number;
-  endLine: number;
-  fileName: string;
-  note: string;
-  postings: Posting[];
-}
-
-export interface BalancedPosting {
-  from: Posting;
-  to: Posting;
 }
 
 export interface Price {
@@ -603,7 +569,11 @@ export interface AccountBudget {
   account: string;
   date: dayjs.Dayjs;
   actual: number;
-  budgeted: number;
+  /**
+   * Not part of the wire budget payload; kept for legacy callers. The backend
+   * sends `forecast` as the budgeted amount.
+   */
+  budgeted?: number;
   forecast: number;
   available: number;
   rollover: number;
@@ -1002,7 +972,6 @@ export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
 export function ajax(
   route: "/api/investment"
 ): Promise<{ assets: Posting[]; yearly_cards: InvestmentYearlyCard[] }>;
-export function ajax(route: "/api/ledger"): Promise<{ postings: Posting[] }>;
 export function ajax(
   route: "/api/assets/balance"
 ): Promise<{ asset_breakdowns: Record<string, AssetBreakdown> }>;
@@ -1011,10 +980,6 @@ export function ajax(
   route: "/api/liabilities/balance"
 ): Promise<{ liability_breakdowns: LiabilityBreakdown[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
-export function ajax(route: "/api/transaction"): Promise<{ transactions: Transaction[] }>;
-export function ajax(
-  route: "/api/transaction/balanced"
-): Promise<{ balancedPostings: BalancedPosting[] }>;
 export function ajax(route: "/api/networth"): Promise<{
   networthTimeline: Networth[];
   currencyNetworths: CurrencyNetworth[];
@@ -1022,21 +987,6 @@ export function ajax(route: "/api/networth"): Promise<{
 }>;
 export function ajax(route: "/api/gain"): Promise<{
   gain_breakdown: Gain[];
-}>;
-export function ajax(route: "/api/dashboard"): Promise<{
-  checkingBalances: { asset_breakdowns: Record<string, AssetBreakdown> };
-  checkingBalanceTimeline: { month: string; account: string; balance: number }[];
-  availableMonthRange: { from: string; to: string };
-  expenses: { [key: string]: Posting[] };
-  expense_pace?: ExpensePace | null;
-  cashFlows: CashFlow[];
-  transactionSequences: TransactionSequence[];
-  networth: { networth: Networth; xirr: number };
-  transactions: Transaction[];
-  budget: {
-    budgetsByMonth: { [key: string]: Budget };
-  };
-  goalSummaries: GoalSummary[];
 }>;
 
 export function ajax(
@@ -1756,13 +1706,15 @@ export function groupSumBy(postings: Posting[], groupBy: _.ValueIteratee<Posting
 
 export function asTransaction(p: Posting): Transaction {
   return {
-    id: p.id,
+    id: p.transaction_id,
     date: p.date,
     payee: p.payee,
     beginLine: p.transaction_begin_line,
     endLine: p.transaction_end_line,
     fileName: p.file_name,
     note: p.transaction_note,
+    tag_recurring: p.tag_recurring,
+    tag_period: p.tag_period,
     postings: [p]
   };
 }

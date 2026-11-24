@@ -9,7 +9,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -33,19 +32,19 @@ type Budget struct {
 	Forecast           decimal.Decimal `json:"forecast"`
 }
 
-func GetBudget(db *gorm.DB) gin.H {
+func GetBudget(db *gorm.DB) BudgetResponse {
 	forecastPostings := query.Init(db).Like("Expenses:%").Forecast().All()
 	expenses := query.Init(db).Like("Expenses:%").All()
 	return computeBudet(db, forecastPostings, expenses)
 }
 
-func GetCurrentBudget(db *gorm.DB) gin.H {
+func GetCurrentBudget(db *gorm.DB) BudgetResponse {
 	forecastPostings := query.Init(db).Like("Expenses:%").Forecast().UntilThisMonthEnd().All()
 	expenses := query.Init(db).Like("Expenses:%").UntilThisMonthEnd().All()
 	return computeBudet(db, forecastPostings, expenses)
 }
 
-func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Posting) gin.H {
+func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Posting) BudgetResponse {
 	checkingBalance := accounting.CostSum(query.Init(db).AccountPrefix("Assets:Checking").All())
 	availableForBudgeting := checkingBalance
 
@@ -132,10 +131,10 @@ func computeBudet(db *gorm.DB, forecastPostings, expensesPostings []posting.Post
 		}
 	}
 
-	return gin.H{
-		"budgetsByMonth":        budgetsByMonth,
-		"checkingBalance":       checkingBalance,
-		"availableForBudgeting": availableForBudgeting,
+	return BudgetResponse{
+		BudgetsByMonth:        budgetsByMonth,
+		CheckingBalance:       checkingBalance,
+		AvailableForBudgeting: availableForBudgeting,
 	}
 }
 

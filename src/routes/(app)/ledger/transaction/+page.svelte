@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ajax, isMobile, type LedgerFile, type Transaction as T } from "$lib/utils";
+  import { getBalancedPostings, getTransactions } from "$lib/api/ledger";
   import _ from "lodash";
   import { onDestroy, onMount } from "svelte";
   import VirtualList from "svelte-tiny-virtual-list";
@@ -56,14 +57,14 @@
 
   async function loadTransactions() {
     ({ files, accounts, commodities } = await ajax("/api/editor/files"));
-    ({ transactions } = await ajax("/api/transaction"));
+    ({ transactions } = await getTransactions());
     handleInputRaw(get(editorState).predicate);
 
     newFiles = files;
   }
 
   async function downloadTransactions() {
-    const { balancedPostings } = await ajax("/api/transaction/balanced");
+    const { balancedPostings } = await getBalancedPostings();
     download(balancedPostings);
   }
 

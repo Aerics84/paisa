@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as cashFlow from "$lib/cash_flow";
   import COLORS from "$lib/colors";
+  import { getDashboard } from "$lib/api/dashboard";
   import LastNMonths from "$lib/components/LastNMonths.svelte";
   import TransactionCard from "$lib/components/TransactionCard.svelte";
   import * as expense from "$lib/expense/monthly";
@@ -81,7 +82,7 @@
   }
 
   onMount(async () => {
-    const dashboard = await ajax("/api/dashboard");
+    const dashboard = await getDashboard();
     if (destroyed) {
       return;
     }

@@ -14,7 +14,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -47,6 +46,12 @@ type CheckingBalancePoint struct {
 type AvailableMonthRange struct {
 	From time.Time `json:"from"`
 	To   time.Time `json:"to"`
+}
+
+// BalanceSummary is the asset balance response used by the dashboard and the
+// assets balance endpoint.
+type BalanceSummary struct {
+	AssetBreakdowns map[string]AssetBreakdown `json:"asset_breakdowns"`
 }
 
 // GetCheckingBalanceTimeline returns the end-of-month balance of every
@@ -136,19 +141,19 @@ func GetAvailableMonthRange(db *gorm.DB) AvailableMonthRange {
 	}
 }
 
-func GetCheckingBalance(db *gorm.DB) gin.H {
+func GetCheckingBalance(db *gorm.DB) BalanceSummary {
 	return doGetBalance(db, "Assets:Checking:%", false)
 }
 
-func GetBalance(db *gorm.DB) gin.H {
+func GetBalance(db *gorm.DB) BalanceSummary {
 	return doGetBalance(db, "Assets:%", true)
 }
 
-func doGetBalance(db *gorm.DB, pattern string, rollup bool) gin.H {
+func doGetBalance(db *gorm.DB, pattern string, rollup bool) BalanceSummary {
 	postings := query.Init(db).UntilToday().Like(pattern, "Income:CapitalGains:%").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	breakdowns := ComputeBreakdowns(db, postings, rollup)
-	return gin.H{"asset_breakdowns": breakdowns}
+	return BalanceSummary{AssetBreakdowns: breakdowns}
 }
 
 func ComputeBreakdowns(db *gorm.DB, postings []posting.Posting, rollup bool) map[string]AssetBreakdown {

@@ -81,8 +81,8 @@ func TestComputeBudgetDoesNotSubtractRolloverTwice(t *testing.T) {
 	}
 
 	result := computeBudet(db, forecasts, nil)
-	budgetsByMonth, ok := result["budgetsByMonth"].(map[string]Budget)
-	require.True(t, ok)
+	budgetsByMonth := result.BudgetsByMonth
+	require.NotNil(t, budgetsByMonth)
 
 	january := budgetsByMonth["2022-01"]
 	require.True(t, january.EndOfMonthBalance.Equal(decimal.NewFromInt(900)), "january end of month balance should reserve the first budget, got %s", january.EndOfMonthBalance)

@@ -6,6 +6,17 @@ type_mappings:
   time.Month: "number"
   time.Weekday: "number"
   decimal.Decimal: "number"
+  # Types that response DTOs embed from other packages. Each package is
+  # generated into its own file so the wire shape stays the single source of
+  # truth instead of degrading to `any /* pkg.Type */`.
+  posting.Posting: "Posting"
+  transaction.Transaction: "Transaction"
+  accounting.BalancedPosting: "BalancedPosting"
+  assets.BalanceSummary: "BalanceSummary"
+  assets.CheckingBalancePoint: "CheckingBalancePoint"
+  assets.AvailableMonthRange: "AvailableMonthRange"
+  goal.GoalSummary: "GoalSummary"
+  service.GoalIntelligence: "GoalIntelligence"
 
 packages:
   # Only the configuration structs are part of the config wire contract; keep
@@ -14,6 +25,25 @@ packages:
     output_path: "src/lib/api/config.gen.ts"
     exclude_files:
       - "store.go"
+  # Model types that are embedded in API responses.
+  - path: "github.com/ananthakumaran/paisa/internal/model/posting"
+    output_path: "src/lib/api/posting.gen.ts"
+  - path: "github.com/ananthakumaran/paisa/internal/model/transaction"
+    output_path: "src/lib/api/transaction.gen.ts"
+    frontmatter: |
+      import type { Posting } from "./posting.gen";
+  - path: "github.com/ananthakumaran/paisa/internal/accounting"
+    output_path: "src/lib/api/accounting.gen.ts"
+    frontmatter: |
+      import type { Posting } from "./posting.gen";
+  - path: "github.com/ananthakumaran/paisa/internal/server/assets"
+    output_path: "src/lib/api/assets.gen.ts"
+  - path: "github.com/ananthakumaran/paisa/internal/server/goal"
+    output_path: "src/lib/api/goal.gen.ts"
+    frontmatter: |
+      import type { GoalIntelligence } from "./service.gen";
+  - path: "github.com/ananthakumaran/paisa/internal/service"
+    output_path: "src/lib/api/service.gen.ts"
   # Response DTOs live in api_types.go. server.go defines the non-wire Deps
   # struct, so it is excluded.
   - path: "github.com/ananthakumaran/paisa/internal/server"
@@ -23,4 +53,13 @@ packages:
     type_mappings:
       config.Config: "Config"
     frontmatter: |
+      import type { BalancedPosting } from "./accounting.gen";
+      import type {
+        AvailableMonthRange,
+        BalanceSummary,
+        CheckingBalancePoint
+      } from "./assets.gen";
       import type { Config } from "./config.gen";
+      import type { GoalSummary } from "./goal.gen";
+      import type { Posting } from "./posting.gen";
+      import type { Transaction } from "./transaction.gen";

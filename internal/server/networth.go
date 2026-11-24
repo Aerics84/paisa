@@ -33,12 +33,12 @@ func GetNetworth(db *gorm.DB) gin.H {
 	return gin.H{"networthTimeline": networthTimeline, "currencyNetworths": currencyNetworths, "xirr": xirr}
 }
 
-func GetCurrentNetworth(db *gorm.DB) gin.H {
+func GetCurrentNetworth(db *gorm.DB) CurrentNetworth {
 	postings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%", "Liabilities:%").UntilToday().All()
 	postings = service.PopulateMarketPrice(db, postings)
 	networth := computeNetworth(db, postings)
 	xirr := service.XIRR(db, postings)
-	return gin.H{"networth": networth, "xirr": xirr}
+	return CurrentNetworth{Networth: networth, XIRR: xirr}
 }
 
 func computeNetworth(db *gorm.DB, postings []posting.Posting) Networth {

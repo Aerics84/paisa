@@ -8,7 +8,7 @@ import type { Posting } from "./utils";
 
 function posting(account: string, amount = 10): Posting {
   return {
-    id: account,
+    id: 1,
     transaction_id: account,
     date: dayjs("2026-01-05"),
     payee: account,
@@ -18,9 +18,13 @@ function posting(account: string, amount = 10): Posting {
     amount,
     status: "",
     tag_recurring: "",
+    tag_period: "",
+    tax_category: "",
+    tax_category_legacy: "",
     transaction_begin_line: 1,
     transaction_end_line: 1,
     file_name: "main.ledger",
+    forecast: false,
     note: "",
     transaction_note: "",
     market_amount: amount,

@@ -7,7 +7,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/server/goal"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -21,17 +20,15 @@ type ExpensePaceSummary struct {
 }
 
 // expensePaceSummary compares this month's spending with the month's budget.
-func expensePaceSummary(expenses map[string][]posting.Posting, budget gin.H) *ExpensePaceSummary {
+func expensePaceSummary(expenses map[string][]posting.Posting, budget BudgetResponse) *ExpensePaceSummary {
 	asOf := utils.Now()
 	period := asOf.Format("2006-01")
 	spent := utils.SumBy(expenses[period], func(p posting.Posting) decimal.Decimal { return p.Amount })
 
 	var planned *decimal.Decimal
-	if budgetsByMonth, ok := budget["budgetsByMonth"].(map[string]Budget); ok {
-		if current, ok := budgetsByMonth[period]; ok && len(current.Accounts) > 0 {
-			total := utils.SumBy(current.Accounts, func(a AccountBudget) decimal.Decimal { return a.Forecast })
-			planned = &total
-		}
+	if current, ok := budget.BudgetsByMonth[period]; ok && len(current.Accounts) > 0 {
+		total := utils.SumBy(current.Accounts, func(a AccountBudget) decimal.Decimal { return a.Forecast })
+		planned = &total
 	}
 
 	pace := service.ProjectExpensePace(spent, planned, asOf)
@@ -45,20 +42,20 @@ func expensePaceSummary(expenses map[string][]posting.Posting, budget gin.H) *Ex
 	}
 }
 
-func GetDashboard(db *gorm.DB) gin.H {
+func GetDashboard(db *gorm.DB) DashboardResponse {
 	expenses := GetCurrentExpense(db)
 	budget := GetCurrentBudget(db)
-	return gin.H{
-		"checkingBalances":        assets.GetCheckingBalance(db),
-		"checkingBalanceTimeline": assets.GetCheckingBalanceTimeline(db),
-		"availableMonthRange":     assets.GetAvailableMonthRange(db),
-		"networth":                GetCurrentNetworth(db),
-		"expenses":                expenses,
-		"expense_pace":            expensePaceSummary(expenses, budget),
-		"cashFlows":               GetCurrentCashFlow(db),
-		"transactionSequences":    ComputeRecurringTransactions(query.Init(db).All()),
-		"transactions":            GetLatestTransactions(db),
-		"budget":                  budget,
-		"goalSummaries":           goal.GetGoalSummaries(db),
+	return DashboardResponse{
+		CheckingBalances:        assets.GetCheckingBalance(db),
+		CheckingBalanceTimeline: assets.GetCheckingBalanceTimeline(db),
+		AvailableMonthRange:     assets.GetAvailableMonthRange(db),
+		Networth:                GetCurrentNetworth(db),
+		Expenses:                expenses,
+		ExpensePace:             expensePaceSummary(expenses, budget),
+		CashFlows:               GetCurrentCashFlow(db),
+		TransactionSequences:    ComputeRecurringTransactions(query.Init(db).All()),
+		Transactions:            GetLatestTransactions(db),
+		Budget:                  budget,
+		GoalSummaries:           goal.GetGoalSummaries(db),
 	}
 }

@@ -6,6 +6,7 @@
   import SearchQuery from "$lib/components/SearchQuery.svelte";
   import { iconText } from "$lib/icon";
   import { change } from "$lib/posting";
+  import { getLedger } from "$lib/api/ledger";
   import { editorState } from "$lib/search_query_editor";
   import {
     ajax,
@@ -45,7 +46,7 @@
 
   onMount(async () => {
     ({ files, accounts, commodities } = await ajax("/api/editor/files"));
-    const { postings: postings } = await ajax("/api/ledger");
+    const postings = (await getLedger()).postings;
     filteredPostings = postings;
     rows = _.map(postings, (p) => ({
       posting: p,

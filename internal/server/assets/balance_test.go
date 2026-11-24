@@ -225,8 +225,8 @@ func TestBalanceExcludesFuturePostings(t *testing.T) {
 	addCheckingPosting(t, db, "future", today.AddDate(0, 1, 0).Format("2006-01-02"), "Assets:Checking:Bank", "500")
 
 	result := GetBalance(db)
-	breakdowns, ok := result["asset_breakdowns"].(map[string]AssetBreakdown)
-	require.True(t, ok)
+	breakdowns := result.AssetBreakdowns
+	require.NotNil(t, breakdowns)
 
 	leaf, found := breakdowns["Assets:Checking:Bank"]
 	require.True(t, found)

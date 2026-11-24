@@ -19,6 +19,7 @@
     type MonthlyReviewResponse
   } from "$lib/monthly_review";
   import { createFlowRenderController, flowSignature, flowState } from "$lib/preview_flow";
+  import { getDashboard } from "$lib/api/dashboard";
   import {
     enrichTrantionSequence,
     nextUnpaidSchedule,
@@ -65,7 +66,7 @@
   let cashFlows: CashFlow[] = [];
   let checkingBalances: Record<string, AssetBreakdown> = {};
   let checkingBalanceTimeline: CheckingBalancePoint[] = [];
-  let availableMonthRange: { from: string; to: string } | null = null;
+  let availableMonthRange: { from: dayjs.Dayjs; to: dayjs.Dayjs } | null = null;
   let goalSummaries: GoalSummary[] = [];
   let transactionSequences: TransactionSequence[] = [];
   let budgetsByMonth: Record<string, Budget> = {};
@@ -128,7 +129,7 @@
     }
   }
 
-  function applyAvailableMonthRange(range: { from: string; to: string } | null) {
+  function applyAvailableMonthRange(range: { from: dayjs.Dayjs; to: dayjs.Dayjs } | null) {
     if (!range?.from || !range?.to) {
       return;
     }
@@ -194,7 +195,7 @@
   onMount(async () => {
     try {
       const [dashboard, networthResponse, liabilitiesResponse] = await Promise.all([
-        ajax("/api/dashboard"),
+        getDashboard(),
         ajax("/api/networth"),
         ajax("/api/liabilities/balance")
       ]);
