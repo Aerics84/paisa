@@ -5,7 +5,7 @@ import type { JSONSchema7 } from "json-schema";
 import { get } from "svelte/store";
 import { obscure } from "../persisted_store";
 import chroma from "chroma-js";
-import { iconGlyph } from "./icon";
+import { iconGlyph, preloadConfiguredIconFonts } from "./icon";
 import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
 import type { BalancedPosting, Posting, Transaction } from "./api/ledger";
 import type {
@@ -451,6 +451,9 @@ export function configUpdated() {
   dayjs.updateLocale("en", {
     weekStart: config.week_starting_day
   });
+  // A config change can introduce a lazy icon font; load it so the existing
+  // refresh/remount path renders the glyph instead of the replacement glyph.
+  void preloadConfiguredIconFonts(config);
 }
 
 export function supportsTaxFeatures(config: UserConfig = getUserConfig()) {

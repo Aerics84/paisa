@@ -32,6 +32,7 @@
   let open = depth < 1;
   let passwordError = "";
   let iconsLoading = false;
+  let iconsError = "";
   let icons: string[] | null = null;
   let iconsPromise: Promise<string[]> | null = null;
   let iconItems: { value: string; label: string }[] = [];
@@ -103,10 +104,18 @@
   function loadIconList(): Promise<string[]> {
     if (!iconsPromise) {
       iconsLoading = true;
+      iconsError = "";
       iconsPromise = loadIcons()
         .then((result) => {
           icons = result;
           return result;
+        })
+        .catch((error) => {
+          icons = null;
+          iconsPromise = null;
+          iconsError = "Could not load the icon list.";
+          console.warn("Could not load icon list", error);
+          throw error;
         })
         .finally(() => {
           iconsLoading = false;
@@ -126,15 +135,39 @@
   }
 
   async function prepareIcons() {
-    const all = await loadIconList();
-    iconItems = filterIcons(all, iconQuery).map((icon) => ({ value: icon, label: icon }));
+    try {
+      const all = await loadIconList();
+      iconItems = filterIcons(all, iconQuery).map((icon) => ({ value: icon, label: icon }));
+    } catch {
+      // `loadIconList` records the error; keep the retry affordance visible.
+    }
   }
 
-  function openIconPicker() {
+  const ICON_OPEN_KEYS = new Set(["ArrowDown", "ArrowUp", "Enter"]);
+
+  function openIconPicker(event?: Event) {
+    if (event instanceof KeyboardEvent && !ICON_OPEN_KEYS.has(event.key)) {
+      return;
+    }
     if (icons || iconsPromise) {
       return;
     }
     void prepareIcons();
+  }
+
+  // Only real open interactions (click or the keys that open the dropdown)
+  // may trigger the metadata download; focus/tab alone must stay cheap.
+  function iconPickerTrigger(node: HTMLElement) {
+    const handleClick = () => openIconPicker();
+    const handleKeydown = (event: KeyboardEvent) => openIconPicker(event);
+    node.addEventListener("click", handleClick);
+    node.addEventListener("keydown", handleKeydown);
+    return {
+      destroy() {
+        node.removeEventListener("click", handleClick);
+        node.removeEventListener("keydown", handleKeydown);
+      }
+    };
   }
 
   async function searchIcons(text: string) {
@@ -215,7 +248,7 @@
     </div>
     <div class="field-body">
       <div class="field">
-        <div class="control" style="max-width: 350px" on:focusin={openIconPicker}>
+        <div class="control" style="max-width: 350px" use:iconPickerTrigger>
           <Select
             bind:value
             items={iconItems}
@@ -239,6 +272,12 @@
             {/snippet}
           </Select>
         </div>
+        {#if iconsError}
+          <p class="help is-danger">
+            {iconsError}
+            <button type="button" class="is-link" on:click={() => openIconPicker()}>Retry</button>
+          </p>
+        {/if}
       </div>
     </div>
   </div>

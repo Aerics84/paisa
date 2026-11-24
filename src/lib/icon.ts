@@ -33,19 +33,70 @@ const ICON_FONTS: IconFont[] = [
   "mdi"
 ];
 
+const LAZY_ICON_FONTS: IconFont[] = ["arcticons", "mdi", "fluent-emoji-high-contrast"];
+
 function unwrapMetadata(module: unknown): IconMetadata {
   const namespace = module as { default?: IconMetadata } & Partial<IconMetadata>;
   return namespace.default ?? (namespace as IconMetadata);
 }
 
-const fontLoaders: Partial<Record<IconFont, () => Promise<IconMetadata>>> = {
+const DEFAULT_FONT_LOADERS: Partial<Record<IconFont, () => Promise<IconMetadata>>> = {
   arcticons: async () => unwrapMetadata(await import("../../fonts/arcticons-info.json")),
   "fluent-emoji-high-contrast": async () =>
     unwrapMetadata(await import("../../fonts/fluent-emoji-high-contrast-info.json")),
   mdi: async () => unwrapMetadata(await import("../../fonts/mdi-info.json"))
 };
 
+let fontLoaders: Partial<Record<IconFont, () => Promise<IconMetadata>>> = {
+  ...DEFAULT_FONT_LOADERS
+};
+
 const pendingLoads = new Map<IconFont, Promise<void>>();
+
+function iconOf(entry: { icon?: string } | null | undefined): string | undefined {
+  if (!entry || typeof entry !== "object") {
+    return undefined;
+  }
+  return typeof entry.icon === "string" ? entry.icon : undefined;
+}
+
+/**
+ * Returns the lazy icon fonts referenced by account and goal icons in the
+ * given configuration. Built-in Font Awesome fonts are ignored because they
+ * ship with the bundle, and unknown/empty icon symbols are skipped.
+ */
+export function configuredIconFonts(config: UserConfig | null | undefined): IconFont[] {
+  if (!config) {
+    return [];
+  }
+
+  const symbols = [
+    ...(config.accounts || []).map((account) => iconOf(account)),
+    ...Object.values(config.goals || {}).flatMap((goals) =>
+      (goals || []).map((goal) => iconOf(goal))
+    )
+  ];
+  const fonts = symbols
+    .filter((symbol): symbol is string => typeof symbol === "string" && symbol.includes(":"))
+    .map((symbol) => symbol.split(":")[0] as IconFont)
+    .filter((font) => LAZY_ICON_FONTS.includes(font));
+
+  return [...new Set(fonts)];
+}
+
+/**
+ * Loads every icon font referenced by the configuration. This never throws:
+ * a failed chunk load keeps the replacement glyph and the app stays usable.
+ */
+export async function preloadConfiguredIconFonts(
+  config: UserConfig | null | undefined
+): Promise<void> {
+  try {
+    await Promise.all(configuredIconFonts(config).map((font) => loadIconFont(font)));
+  } catch (error) {
+    console.warn("Could not preload configured icon fonts", error);
+  }
+}
 
 /**
  * Loads the metadata of an icon font on demand. Resolves immediately for the
@@ -83,10 +134,16 @@ let icons: string[] | null = null;
 
 /**
  * Loads every icon font and returns the flat `font:name` list used by the icon
- * picker. The result is cached after the first call.
+ * picker. The list is only cached once every font is present; a partial load
+ * rejects so callers can retry.
  */
 export async function loadIcons(): Promise<string[]> {
   await Promise.all(ICON_FONTS.map((font) => loadIconFont(font)));
+
+  const missing = ICON_FONTS.filter((font) => !codepoints[font]);
+  if (missing.length > 0) {
+    throw new Error(`Could not load icon metadata for: ${missing.join(", ")}`);
+  }
 
   if (!icons) {
     icons = _.flatMap(ICON_FONTS, (font) => {
@@ -95,6 +152,24 @@ export async function loadIcons(): Promise<string[]> {
   }
 
   return icons;
+}
+
+// Test-only hooks: replace a font loader or clear the cache so the failure and
+// retry paths can be exercised without a network request.
+export function setIconFontLoaderForTests(
+  font: IconFont,
+  loader: (() => Promise<IconMetadata>) | null
+): void {
+  fontLoaders[font] = loader ?? DEFAULT_FONT_LOADERS[font];
+}
+
+export function resetIconStateForTests(): void {
+  fontLoaders = { ...DEFAULT_FONT_LOADERS };
+  for (const font of LAZY_ICON_FONTS) {
+    delete codepoints[font];
+  }
+  pendingLoads.clear();
+  icons = null;
 }
 
 export function iconGlyph(symbol: string): string {
