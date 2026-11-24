@@ -50,12 +50,13 @@ func TestVerifyPasswordRejectsUnknownEncoding(t *testing.T) {
 	}
 }
 
-func TestVerifyPasswordLegacyRejectsWrongPassword(t *testing.T) {
+func TestVerifyPasswordWrongLegacyPasswordDoesNotRequestRehash(t *testing.T) {
 	legacy := "sha256:" + Sha256(Sha256("secret"))
 
-	ok, _, err := VerifyPassword(legacy, "wrong")
+	ok, needsRehash, err := VerifyPassword(legacy, "wrong")
 	require.NoError(t, err)
 	require.False(t, ok)
+	require.False(t, needsRehash)
 }
 
 func TestHashPasswordUsesFreshSalt(t *testing.T) {

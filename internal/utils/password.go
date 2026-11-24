@@ -54,7 +54,9 @@ func HashPassword(password string) (string, error) {
 
 // VerifyPassword checks password against encoded. It reports whether the
 // password matches (ok) and whether the stored encoding should be upgraded
-// (needsRehash). Callers must only rehash when ok is true.
+// (needsRehash). needsRehash is only true when ok is true, so callers can
+// rehash whenever needsRehash is set without risking a hash of the wrong
+// password.
 //
 // Two encodings are understood: Argon2id as produced by HashPassword, and the
 // legacy "sha256:" + Sha256(Sha256(password)) format. Unknown or malformed
@@ -62,7 +64,8 @@ func HashPassword(password string) (string, error) {
 func VerifyPassword(encoded, password string) (ok bool, needsRehash bool, err error) {
 	if strings.HasPrefix(encoded, legacySHA256Prefix) {
 		expected := legacySHA256Prefix + Sha256(Sha256(password))
-		return subtle.ConstantTimeCompare([]byte(encoded), []byte(expected)) == 1, true, nil
+		matched := subtle.ConstantTimeCompare([]byte(encoded), []byte(expected)) == 1
+		return matched, matched, nil
 	}
 
 	memory, iterations, threads, salt, key, err := parseArgon2ID(encoded)
