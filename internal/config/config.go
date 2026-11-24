@@ -220,7 +220,7 @@ type Config struct {
 
 	ImportTemplates []ImportTemplate `json:"import_templates" yaml:"import_templates"`
 
-	SalaryIncomeAccounts *[]string `json:"salary_income_accounts" yaml:"salary_income_accounts,omitempty"`
+	SalaryIncomeAccounts *[]string `json:"salary_income_accounts,omitempty" yaml:"salary_income_accounts,omitempty"`
 
 	TransferAccounts []string `json:"transfer_accounts" yaml:"transfer_accounts"`
 

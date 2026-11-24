@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ananthakumaran/paisa/internal/accounting"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,11 @@ import (
 
 func TestConfigResponseShape(t *testing.T) {
 	utils.ResetNow()
-	t.Cleanup(utils.ResetNow)
+	accounting.ClearCache()
+	t.Cleanup(func() {
+		utils.ResetNow()
+		accounting.ClearCache()
+	})
 
 	router := newConfigTestRouter(t)
 	payload := requestConfig(t, router)
@@ -33,6 +38,21 @@ func TestConfigResponseShape(t *testing.T) {
 	require.NoError(t, json.Unmarshal(payload, &raw))
 	require.NotContains(t, raw, "now")
 	require.ElementsMatch(t, []string{"config", "accounts", "schema"}, mapKeys(raw))
+
+	// accounts is typed `string[]` in TypeScript, so an empty database must
+	// produce an empty JSON array instead of null.
+	accounts, ok := raw["accounts"].([]any)
+	require.True(t, ok, "accounts must be a JSON array, got %T", raw["accounts"])
+	require.Empty(t, accounts)
+
+	// Config fields that Tygo types as non-null must not be serialized as
+	// null. salary_income_accounts is nullable in Go and therefore omitted.
+	configValues, ok := raw["config"].(map[string]any)
+	require.True(t, ok)
+	require.NotContains(t, configValues, "salary_income_accounts")
+	for key, value := range configValues {
+		require.NotNil(t, value, "config.%s must not be null", key)
+	}
 }
 
 func TestConfigResponseNowUsesRFC3339(t *testing.T) {

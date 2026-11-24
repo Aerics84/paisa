@@ -114,9 +114,13 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			n := utils.Now().UTC()
 			now = &n
 		}
+		accounts := accounting.AllAccounts(deps.DB)
+		if accounts == nil {
+			accounts = []string{}
+		}
 		c.JSON(200, ConfigResponse{
 			Config:   deps.Config.Get(),
-			Accounts: accounting.AllAccounts(deps.DB),
+			Accounts: accounts,
 			Now:      now,
 			Schema:   config.GetSchema(),
 		})
