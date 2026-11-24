@@ -130,6 +130,12 @@ func SetNow(date string) {
 	now = t
 }
 
+// ResetNow restores the real clock after a test installed a fixed date with
+// SetNow.
+func ResetNow() {
+	now = time.Time{}
+}
+
 func Now() time.Time {
 	if !now.Equal(time.Time{}) {
 		return now

@@ -10,6 +10,6 @@ import (
 type ConfigResponse struct {
 	Config   config.Config `json:"config"`
 	Accounts []string      `json:"accounts"`
-	Now      *time.Time    `json:"now"`
+	Now      *time.Time    `json:"now,omitempty"`
 	Schema   any           `json:"schema"`
 }
