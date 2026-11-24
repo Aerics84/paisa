@@ -1,10 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 import { get } from "svelte/store";
-import {
-  beginPasswordHash,
-  endPasswordHash,
-  pendingPasswordHashes
-} from "./password_hash";
+import { beginPasswordHash, endPasswordHash, pendingPasswordHashes } from "./password_hash";
 
 afterEach(() => {
   pendingPasswordHashes.set(0);

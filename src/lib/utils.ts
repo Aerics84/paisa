@@ -1269,11 +1269,7 @@ export async function ajax(
     const response = await fetch(route, options);
     const body = await response.text();
 
-    if (
-      response.status == 401 &&
-      route != "/api/ping" &&
-      !route.startsWith("/api/auth/")
-    ) {
+    if (response.status == 401 && route != "/api/ping" && !route.startsWith("/api/auth/")) {
       await logout();
       await redirectToLogin();
       error(401, "Unauthorized");

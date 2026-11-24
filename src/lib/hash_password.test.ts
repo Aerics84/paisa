@@ -20,25 +20,19 @@ function mockResponse(status: number, body: unknown) {
 test("hashPassword rejects with the server message on HTTP 400", async () => {
   mockResponse(400, { error: "password must be at least 8 characters" });
 
-  await expect(hashPassword("short")).rejects.toThrow(
-    "password must be at least 8 characters"
-  );
+  await expect(hashPassword("short")).rejects.toThrow("password must be at least 8 characters");
 });
 
 test("hashPassword rejects with the server message on HTTP 500", async () => {
   mockResponse(500, { error: "could not hash password" });
 
-  await expect(hashPassword("longenough")).rejects.toThrow(
-    "could not hash password"
-  );
+  await expect(hashPassword("longenough")).rejects.toThrow("could not hash password");
 });
 
 test("hashPassword rejects a successful response without a valid hash", async () => {
   mockResponse(200, {});
 
-  await expect(hashPassword("longenough")).rejects.toThrow(
-    "Could not hash password"
-  );
+  await expect(hashPassword("longenough")).rejects.toThrow("Could not hash password");
 });
 
 test("hashPassword returns a valid argon2id hash", async () => {
