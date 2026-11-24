@@ -3,7 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/ananthakumaran/paisa/internal/model"
+	"github.com/ananthakumaran/paisa/internal/config"
+	"github.com/ananthakumaran/paisa/internal/model/migrations"
 	"github.com/ananthakumaran/paisa/internal/server"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	log "github.com/sirupsen/logrus"
@@ -18,15 +19,18 @@ var serveCmd = &cobra.Command{
 	Short: "serve the WEB UI",
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := utils.OpenDB()
-		model.AutoMigrate(db)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := migrations.Migrate(db, config.GetDBPath()); err != nil {
+			log.Fatalf("Failed to migrate database: %v", err)
+		}
 
 		if os.Getenv("PAISA_DEBUG") == "true" {
 			db = db.Debug()
 		}
 
-		if err != nil {
-			log.Fatal(err)
-		}
 		server.Listen(db, host, port)
 	},
 }

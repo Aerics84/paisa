@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/ananthakumaran/paisa/cmd"
-	"github.com/ananthakumaran/paisa/internal/model"
+	"github.com/ananthakumaran/paisa/internal/config"
+	"github.com/ananthakumaran/paisa/internal/model/migrations"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/ananthakumaran/paisa/internal/version"
 	log "github.com/sirupsen/logrus"
@@ -35,7 +36,9 @@ func (a *App) startup(ctx context.Context) {
 		log.Fatal(err)
 	}
 
-	model.AutoMigrate(db)
+	if err := migrations.Migrate(db, config.GetDBPath()); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	a.db = *db
 }
