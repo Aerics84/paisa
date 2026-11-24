@@ -109,12 +109,14 @@ export type AllocationTarget = Omit<WireAllocationTarget, "aggregates" | "status
 
 export type RebalanceAction = "BUY" | "SELL" | "HOLD";
 
+export type RebalanceMode = "cash_injection" | "full_rebalance";
+
 export type RebalanceItem = Omit<WireRebalanceItem, "action"> & {
   action: RebalanceAction;
 };
 
 export type RebalancePlan = Omit<WireRebalancePlan, "mode" | "items"> & {
-  mode: "cash_injection" | "full_rebalance";
+  mode: RebalanceMode;
   items: RebalanceItem[];
 };
 
@@ -221,8 +223,9 @@ function rebalanceItemFromWire(wire: WireRebalanceItem): RebalanceItem {
 function rebalancePlanFromWire(wire: WireRebalancePlan): RebalancePlan {
   return {
     ...wire,
-    // ComputeRebalancePlan always fills an empty mode with a concrete mode.
-    mode: wire.mode as RebalancePlan["mode"],
+    // The handler accepts an empty mode and echoes it back. The request side
+    // treats an empty mode as cash_injection, so mirror that default here.
+    mode: wire.mode === "" ? "cash_injection" : (wire.mode as RebalanceMode),
     items: (wire.items ?? []).map(rebalanceItemFromWire)
   };
 }
