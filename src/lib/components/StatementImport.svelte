@@ -4,13 +4,14 @@
   import * as toast from "bulma-toast";
   import RuleStudioModal from "./RuleStudioModal.svelte";
   import TransactionStagingTable from "./TransactionStagingTable.svelte";
+  import { ajax } from "$lib/utils";
   import {
-    ajax,
-    type ImportRule,
+    commitImport as commitImportRequest,
+    parseStatement,
     type IngestionFormat,
-    type IngestionResult,
     type StagedTransaction
-  } from "$lib/utils";
+  } from "$lib/api/import";
+  import { saveRule, type ImportRule } from "$lib/api/rules";
   import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
   import { buildStatementRequest, type IngestionColumnMapping } from "$lib/import_provenance";
   import Papa from "papaparse";
@@ -361,25 +362,9 @@
         columnMapping: mappingEnabled ? columnMapping : undefined
       });
 
-      const response = await ajax<IngestionResult & { error?: string }>("/api/import/statement", {
-        method: "POST",
-        body: JSON.stringify(request),
+      const response = await parseStatement(request, {
         background: true
       });
-
-      if (response.error) {
-        parseErrorMessage = response.error;
-        if (
-          /column mapping|could not detect valid transaction table header/i.test(response.error)
-        ) {
-          mappingEnabled = true;
-        }
-        stagedTransactions = [];
-        includedStaged = [];
-        currentImportID = null;
-        currentSourceType = "";
-        return;
-      }
 
       currentImportID = response.import_id || null;
       currentSourceType = request.source_type;
@@ -419,6 +404,11 @@
       });
     } catch (e) {
       parseErrorMessage = errorMessage(e);
+      if (
+        /column mapping|could not detect valid transaction table header/i.test(parseErrorMessage)
+      ) {
+        mappingEnabled = true;
+      }
       stagedTransactions = [];
       includedStaged = [];
       currentImportID = null;
@@ -450,9 +440,8 @@
     const note = shortNote(tx.payee, tx.memo) || tx.payee;
 
     try {
-      const res = await ajax<{ saved?: boolean; rule?: ImportRule; error?: string }>("/api/rules", {
-        method: "POST",
-        body: JSON.stringify({
+      const res = await saveRule(
+        {
           name: `Rule: ${note}`,
           payee_pattern: note,
           payee_match_type: "contains",
@@ -460,9 +449,9 @@
           target_account: tx.selected_account,
           priority: 100,
           enabled: true
-        }),
-        background: true
-      });
+        },
+        { background: true }
+      );
 
       if (res?.saved) {
         toast.toast({
@@ -511,24 +500,27 @@
 
     importSaving = true;
     try {
-      const res = await ajax<{
-        success?: boolean;
-        committed_count?: number;
-        message?: string;
-        error?: string;
-      }>("/api/import/commit", {
-        method: "POST",
-        body: JSON.stringify({
+      const res = await commitImportRequest(
+        {
           base_account: selectedAccount,
           commodity: defaultCurrency,
           group_by_date: groupByDate,
           raw_content: "",
           import_id: currentImportID || undefined,
           source_type: currentSourceType || undefined,
-          transactions: selected
-        }),
-        background: true
-      });
+          transactions: selected.map((tx) => ({
+            date: tx.date,
+            payee: tx.payee,
+            memo: tx.memo,
+            amount: tx.amount,
+            currency: tx.currency,
+            is_debit: tx.is_debit,
+            selected_account: tx.selected_account,
+            tags: tx.tags ?? []
+          }))
+        },
+        { background: true }
+      );
 
       if (res.success && typeof res.committed_count === "number") {
         toast.toast({

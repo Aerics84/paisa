@@ -1,7 +1,12 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import Modal from "./Modal.svelte";
-  import { ajax, type ImportRule } from "$lib/utils";
+  import {
+    deleteRule as deleteRuleRequest,
+    getRules,
+    saveRule as saveRuleRequest,
+    type ImportRule
+  } from "$lib/api/rules";
   import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
   import _ from "lodash";
@@ -65,13 +70,8 @@
   async function loadRules() {
     loading = true;
     try {
-      const res = await ajax<{ rules: ImportRule[]; error?: string }>("/api/rules", {
-        background: true
-      });
-      if (res.error) {
-        throw new Error(res.error);
-      }
-      rules = res.rules || [];
+      const res = await getRules({ background: true });
+      rules = res.rules;
     } catch {
       rules = [];
       toast.toast({
@@ -133,16 +133,7 @@
     }
 
     try {
-      const res = await ajax<{
-        saved: boolean;
-        rule?: ImportRule;
-        message?: string;
-        error?: string;
-      }>("/api/rules", {
-        method: "POST",
-        body: JSON.stringify(editingRule),
-        background: true
-      });
+      const res = await saveRuleRequest(editingRule, { background: true });
       if (res.saved) {
         toast.toast({ message: `Rule "${editingRule.name}" saved`, type: "is-success" });
         await loadRules();
@@ -150,7 +141,7 @@
         onruleschanged();
       } else {
         toast.toast({
-          message: res.error || res.message || "Failed to save rule",
+          message: res.message || "Failed to save rule",
           type: "is-danger"
         });
       }
@@ -174,7 +165,7 @@
     if (!confirmed) return;
 
     try {
-      await ajax("/api/rules/" + id, { method: "DELETE", background: true });
+      await deleteRuleRequest(id, { background: true });
       toast.toast({ message: "Rule deleted", type: "is-success" });
       await loadRules();
       onruleschanged();
@@ -189,11 +180,7 @@
   async function toggleRule(r: ImportRule) {
     r.enabled = !r.enabled;
     try {
-      await ajax("/api/rules", {
-        method: "POST",
-        body: JSON.stringify(r),
-        background: true
-      });
+      await saveRuleRequest(r, { background: true });
       onruleschanged();
     } catch (e) {
       r.enabled = !r.enabled;

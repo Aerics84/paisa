@@ -1,0 +1,20 @@
+{
+  "generated_at": "GENERATED_AT",
+  "status": "ok",
+  "bank_balances": [
+    {
+      "source": "fixtures/bank.csv",
+      "currency": "INR",
+      "transaction_count": 3,
+      "direction": "ascending",
+      "opening_balance": "1000.00",
+      "closing_balance": "1075.50",
+      "mismatch_count": 0,
+      "status": "ok"
+    }
+  ],
+  "duplicate_holdings": [],
+  "portfolio_totals": [],
+  "tax_year_completeness": [],
+  "issues": []
+}

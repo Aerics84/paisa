@@ -124,6 +124,42 @@ export async function request<T>(
   return JSON.parse(body) as T;
 }
 
+/**
+ * Strict request that rewrites a failed JSON response body into a readable
+ * message. Validation endpoints answer with {"error": "..."} and that message
+ * should reach the user instead of the raw JSON body.
+ */
+export async function requestApi<T>(
+  route: string,
+  options?: RequestOptions,
+  params?: Record<string, string>
+): Promise<T> {
+  try {
+    return await request<T>(route, options, params);
+  } catch (error) {
+    throw new Error(apiErrorMessage(error));
+  }
+}
+
+/** Extracts a human readable message from a failed request. */
+export function apiErrorMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+
+  try {
+    const parsed = JSON.parse(raw) as { error?: unknown; message?: unknown };
+    if (typeof parsed?.error === "string" && parsed.error) {
+      return parsed.error;
+    }
+    if (typeof parsed?.message === "string" && parsed.message) {
+      return parsed.message;
+    }
+  } catch {
+    // The body was not JSON; keep the original text.
+  }
+
+  return raw;
+}
+
 function substituteParams(route: string, params?: Record<string, string>) {
   if (!params) {
     return route;

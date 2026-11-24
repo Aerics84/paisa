@@ -3,7 +3,11 @@ import type { BalancedPosting } from "./accounting.gen";
 import type { AvailableMonthRange, BalanceSummary, CheckingBalancePoint } from "./assets.gen";
 import type { Config } from "./config.gen";
 import type { GoalSummary } from "./goal.gen";
+import type { IngestionResult } from "./importer.gen";
+import type { Rule as ImportRule } from "./import_rule.gen";
 import type { Posting } from "./posting.gen";
+import type { ReconciliationReport } from "./reconciliation.gen";
+import type { Template } from "./template.gen";
 import type { Transaction } from "./transaction.gen";
 
 //////////
@@ -384,6 +388,86 @@ export interface CommitCandidateTransaction {
   is_debit: boolean;
   selected_account: string;
   tags: string[];
+}
+
+//////////
+// source: import_types.go
+
+/**
+ * ParseStatementResponse is the JSON body returned by
+ * POST /api/import/statement. The embedded ingestion result keeps every staged
+ * transaction field on the wire while the generated TypeScript type extends
+ * IngestionResult.
+ */
+export interface ParseStatementResponse extends IngestionResult {}
+/**
+ * ImportValidationError is a ledger validation error reported alongside a
+ * successful import commit. It mirrors ledger.LedgerFileError without pulling
+ * the whole ledger package into the generated wire types.
+ */
+export interface ImportValidationError {
+  file_name?: string;
+  line_from: number /* uint64 */;
+  line_to: number /* uint64 */;
+  error: string;
+  message: string;
+}
+/**
+ * CommitImportResponse is the JSON body returned by POST /api/import/commit on
+ * success. Error responses keep their existing {"error": ...} shape.
+ */
+export interface CommitImportResponse {
+  success: boolean;
+  committed_count: number /* int */;
+  target_file: string;
+  manifest_committed: boolean;
+  errors: ImportValidationError[];
+}
+/**
+ * ReconciliationResponse is the JSON body returned by
+ * GET /api/import/reconciliation.
+ */
+export interface ReconciliationResponse extends ReconciliationReport {}
+/**
+ * RulesResponse is the JSON body returned by GET /api/rules.
+ */
+export interface RulesResponse {
+  rules: ImportRule[];
+}
+/**
+ * SaveRuleResponse is the JSON body returned by POST /api/rules on success.
+ */
+export interface SaveRuleResponse {
+  rule: ImportRule;
+  saved: boolean;
+}
+/**
+ * DeleteRuleResponse is the JSON body returned by DELETE /api/rules/:id on
+ * success.
+ */
+export interface DeleteRuleResponse {
+  success: boolean;
+}
+/**
+ * TemplatesResponse is the JSON body returned by GET /api/templates.
+ */
+export interface TemplatesResponse {
+  templates: Template[];
+}
+/**
+ * UpsertTemplateResponse is the JSON body returned by
+ * POST /api/templates/upsert on success.
+ */
+export interface UpsertTemplateResponse {
+  template: Template;
+  saved: boolean;
+}
+/**
+ * DeleteTemplateResponse is the JSON body returned by
+ * POST /api/templates/delete on success.
+ */
+export interface DeleteTemplateResponse {
+  success: boolean;
 }
 
 //////////

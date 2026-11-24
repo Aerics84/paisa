@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StagedTransaction } from "$lib/utils";
+  import type { StagedTransaction } from "$lib/api/import";
 
   let {
     transactions = $bindable([]),

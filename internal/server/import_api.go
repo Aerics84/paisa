@@ -118,7 +118,7 @@ func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 			}).Info("statement already imported")
 		}
 
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusOK, ParseStatementResponse{IngestionResult: *result})
 	}
 }
 
@@ -127,7 +127,7 @@ func HandleParseStatement(db *gorm.DB) gin.HandlerFunc {
 func HandleGetReconciliation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		report := reconciliation.BuildReconciliationFromManifests(config.GetConfigDir())
-		c.JSON(http.StatusOK, report)
+		c.JSON(http.StatusOK, ReconciliationResponse{ReconciliationReport: report})
 	}
 }
 
@@ -139,7 +139,7 @@ func HandleGetRules(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"rules": rules})
+		c.JSON(http.StatusOK, RulesResponse{Rules: rules})
 	}
 }
 
@@ -162,7 +162,7 @@ func HandleSaveRule(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"rule": r, "saved": true})
+		c.JSON(http.StatusOK, SaveRuleResponse{Rule: r, Saved: true})
 	}
 }
 
@@ -186,7 +186,7 @@ func HandleDeleteRule(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"success": true})
+		c.JSON(http.StatusOK, DeleteRuleResponse{Success: true})
 	}
 }
 
@@ -348,14 +348,34 @@ func HandleCommitImport(db *gorm.DB) gin.HandlerFunc {
 
 		manifestCommitted := markImportManifestCommitted(req)
 
-		c.JSON(http.StatusOK, gin.H{
-			"success":            true,
-			"committed_count":    committedCount,
-			"target_file":        targetFile,
-			"manifest_committed": manifestCommitted,
-			"errors":             validationErrors,
+		c.JSON(http.StatusOK, CommitImportResponse{
+			Success:           true,
+			CommittedCount:    committedCount,
+			TargetFile:        targetFile,
+			ManifestCommitted: manifestCommitted,
+			Errors:            convertImportValidationErrors(validationErrors),
 		})
 	}
+}
+
+// convertImportValidationErrors keeps a nil error slice nil so a successful
+// commit still serializes "errors": null exactly as before the typed response.
+func convertImportValidationErrors(errors []ledger.LedgerFileError) []ImportValidationError {
+	if errors == nil {
+		return nil
+	}
+
+	converted := make([]ImportValidationError, 0, len(errors))
+	for _, validationError := range errors {
+		converted = append(converted, ImportValidationError{
+			FileName: validationError.FileName,
+			LineFrom: validationError.LineFrom,
+			LineTo:   validationError.LineTo,
+			Error:    validationError.Error,
+			Message:  validationError.Message,
+		})
+	}
+	return converted
 }
 
 // markImportManifestCommitted promotes the staged manifest belonging to a

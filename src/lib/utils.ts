@@ -705,137 +705,6 @@ export interface Graph {
   links: Link[];
 }
 
-export interface ImportTemplate {
-  id: string;
-  name: string;
-  content: string;
-  template_type: string;
-  [key: string]: unknown;
-}
-
-/** Mirrors internal/importer.IngestionFormat. */
-export type IngestionFormat = "csv" | "ofx" | "qfx" | "excel" | "pdf" | "cas";
-
-/** Mirrors internal/importer.StagedTransaction. */
-export interface StagedTransaction {
-  index: number;
-  date: string;
-  payee: string;
-  memo: string;
-  amount: number;
-  currency?: string;
-  is_debit: boolean;
-  selected_account: string;
-  suggested_account?: string;
-  confidence?: string;
-  matched_rule_name?: string;
-  matched_rule_id?: number;
-  tags?: string[];
-  flag_for_review?: boolean;
-  balance?: number;
-  is_duplicate?: boolean;
-  duplicate_score?: number;
-  duplicate_match_id?: number;
-  duplicate_reason?: string;
-}
-
-/** Mirrors internal/importer.IngestionResult. */
-export interface IngestionResult {
-  total_parsed: number;
-  auto_categorized: number;
-  possible_duplicates: number;
-  already_imported: boolean;
-  import_id?: string;
-  transactions: StagedTransaction[];
-}
-
-/** Mirrors internal/model/import_rule.Rule. */
-export interface ImportRule {
-  id?: number;
-  name: string;
-  priority: number;
-  enabled: boolean;
-  payee_pattern?: string;
-  payee_match_type?: "contains" | "exact" | "regex";
-  memo_pattern?: string;
-  memo_match_type?: "contains" | "exact" | "regex";
-  tx_type?: "any" | "debit" | "credit";
-  min_amount?: number;
-  max_amount?: number;
-  target_account: string;
-  tags?: string[];
-  flag_for_review?: boolean;
-}
-
-/** Mirrors internal/model/import_rule.RuleMatchResult. */
-export interface RuleMatchResult {
-  matched: boolean;
-  rule_id?: number;
-  rule_name?: string;
-  target_account?: string;
-  tags?: string[];
-  flag_for_review: boolean;
-}
-
-/** Mirrors internal/server.CommitImportRequest. */
-export interface CommitImportRequest {
-  base_account: string;
-  commodity: string;
-  group_by_date: boolean;
-  raw_content: string;
-  import_id?: string;
-  source_type?: string;
-  transactions: StagedTransaction[];
-}
-
-/** Mirrors internal/importer/reconciliation.BankBalanceCheck. */
-export interface BankBalanceCheck {
-  source: string;
-  currency: string;
-  transaction_count: number;
-  direction: "ascending" | "descending" | "unknown" | "unavailable";
-  opening_balance: string | null;
-  closing_balance: string | null;
-  mismatch_count: number;
-  status: "ok" | "warning" | "error" | "skipped";
-}
-
-/** Mirrors internal/importer/reconciliation.DuplicateHolding. */
-export interface DuplicateHolding {
-  key: string;
-  occurrences: number;
-  sources: string[];
-}
-
-/** Mirrors internal/importer/reconciliation.CurrencyTotal. */
-export interface CurrencyTotal {
-  currency: string;
-  holdings: string;
-  assets: string;
-  liabilities: string;
-  net: string;
-  invalid_records: number;
-}
-
-/** Mirrors internal/importer/reconciliation.TaxYearCheck. */
-export interface TaxYearCheck {
-  financial_year: string;
-  sources_present: string[];
-  missing_required: string[];
-  status: "complete" | "incomplete";
-}
-
-/** Mirrors internal/importer/reconciliation.ReconciliationReport. */
-export interface ReconciliationReport {
-  generated_at: string;
-  status: "ok" | "warning" | "error" | "incomplete";
-  bank_balances: BankBalanceCheck[];
-  duplicate_holdings: DuplicateHolding[];
-  portfolio_totals: CurrencyTotal[];
-  tax_year_completeness: TaxYearCheck[];
-  issues: string[];
-}
-
 export interface Log {
   time: dayjs.Dayjs;
   level: string;
@@ -1076,18 +945,6 @@ export function ajax(
 ): Promise<SavingsGoalProgress>;
 
 export function ajax(route: "/api/account/tf_idf"): Promise<AccountTfIdf>;
-export function ajax(
-  route: "/api/templates",
-  options?: RequestOptions
-): Promise<{ templates: ImportTemplate[] }>;
-export function ajax(
-  route: "/api/templates/upsert",
-  options?: RequestOptions
-): Promise<{ saved: boolean; message?: string; template: ImportTemplate }>;
-export function ajax(
-  route: "/api/templates/delete",
-  options?: RequestOptions
-): Promise<{ success: boolean; message?: string }>;
 
 export function ajax(
   route: "/api/editor/files",
@@ -1176,8 +1033,6 @@ export function ajax(
 ): Promise<{ success: boolean; error?: string }>;
 
 export function ajax(route: "/api/version"): Promise<{ version: string }>;
-
-export function ajax(route: "/api/import/reconciliation"): Promise<ReconciliationReport>;
 
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 

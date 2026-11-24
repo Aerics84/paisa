@@ -1,16 +1,6 @@
-import type { IngestionFormat } from "./utils";
+import type { IngestionColumnMapping, IngestionFormat, IngestionRequest } from "./api/import";
 
-export interface IngestionColumnMapping {
-  header_row: number;
-  date: number;
-  description: number;
-  debit: number;
-  credit: number;
-  amount: number;
-  balance: number;
-  currency: number;
-  dr_cr: number;
-}
+export type { IngestionColumnMapping };
 
 export interface StatementRequestOptions {
   format: IngestionFormat;
@@ -23,16 +13,7 @@ export interface StatementRequestOptions {
   columnMapping?: IngestionColumnMapping;
 }
 
-export interface StatementRequest {
-  format: IngestionFormat;
-  content: string;
-  delimiter: string;
-  base_account: string;
-  source_type: string;
-  original_path: string;
-  locale: string;
-  column_mapping?: IngestionColumnMapping;
-}
+export type StatementRequest = IngestionRequest;
 
 function basename(path: string): string {
   const parts = path.split(/[\\/]/).filter((part) => part.length > 0);

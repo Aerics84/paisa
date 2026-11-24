@@ -17,6 +17,10 @@ type_mappings:
   assets.AvailableMonthRange: "AvailableMonthRange"
   goal.GoalSummary: "GoalSummary"
   service.GoalIntelligence: "GoalIntelligence"
+  importer.IngestionResult: "IngestionResult"
+  reconciliation.ReconciliationReport: "ReconciliationReport"
+  import_rule.Rule: "ImportRule"
+  template.Template: "Template"
 
 packages:
   # Only the configuration structs are part of the config wire contract; keep
@@ -44,6 +48,27 @@ packages:
       import type { GoalIntelligence } from "./service.gen";
   - path: "github.com/ananthakumaran/paisa/internal/service"
     output_path: "src/lib/api/service.gen.ts"
+  # Import-domain wire types. Only the files that define HTTP payloads are
+  # generated; parser and reconciliation helpers stay server-side.
+  - path: "github.com/ananthakumaran/paisa/internal/importer"
+    output_path: "src/lib/api/importer.gen.ts"
+    include_files:
+      - "importer.go"
+  - path: "github.com/ananthakumaran/paisa/internal/importer/reconciliation"
+    output_path: "src/lib/api/reconciliation.gen.ts"
+    include_files:
+      - "reconciliation.go"
+    # opening_balance/closing_balance are pointers without omitempty, so the
+    # wire value is null (not an absent key) for statements without balances.
+    optional_type: "null"
+  - path: "github.com/ananthakumaran/paisa/internal/model/import_rule"
+    output_path: "src/lib/api/import_rule.gen.ts"
+    include_files:
+      - "import_rule.go"
+  - path: "github.com/ananthakumaran/paisa/internal/model/template"
+    output_path: "src/lib/api/template.gen.ts"
+    include_files:
+      - "template.go"
   # Response DTOs live in api_types.go. server.go defines the non-wire Deps
   # struct, so it is excluded.
   - path: "github.com/ananthakumaran/paisa/internal/server"
@@ -61,5 +86,9 @@ packages:
       } from "./assets.gen";
       import type { Config } from "./config.gen";
       import type { GoalSummary } from "./goal.gen";
+      import type { IngestionResult } from "./importer.gen";
+      import type { Rule as ImportRule } from "./import_rule.gen";
       import type { Posting } from "./posting.gen";
+      import type { ReconciliationReport } from "./reconciliation.gen";
+      import type { Template } from "./template.gen";
       import type { Transaction } from "./transaction.gen";

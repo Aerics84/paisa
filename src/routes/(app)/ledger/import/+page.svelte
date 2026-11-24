@@ -12,7 +12,14 @@
   import _ from "lodash";
   import type { EditorView } from "codemirror";
   import { onMount } from "svelte";
-  import { ajax, type ImportTemplate, type ReconciliationReport } from "$lib/utils";
+  import { ajax } from "$lib/utils";
+  import {
+    deleteTemplate,
+    getTemplates,
+    upsertTemplate,
+    type ImportTemplate
+  } from "$lib/api/templates";
+  import { getReconciliation, type ReconciliationReport } from "$lib/api/import";
   import { accountTfIdf } from "../../../../store";
   import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
@@ -50,7 +57,7 @@
 
   onMount(async () => {
     accountTfIdf.set(await ajax("/api/account/tf_idf"));
-    ({ templates } = await ajax("/api/templates"));
+    ({ templates } = await getTemplates());
     templates = templates || [];
     if (templates.length > 0) {
       selectedTemplate = templates[0];
@@ -68,14 +75,13 @@
   $: saveAsNameDuplicate = !!_.find(templates, { name: saveAsName, template_type: "custom" });
 
   async function save() {
-    const { template, saved, message } = await ajax("/api/templates/upsert", {
-      method: "POST",
-      body: JSON.stringify({
+    const { template, saved, message } = await upsertTemplate(
+      {
         name: saveAsName,
         content: templateEditor.state.doc.toString()
-      }),
-      background: true
-    });
+      },
+      { background: true }
+    );
 
     if (!saved) {
       toast.toast({
@@ -86,7 +92,7 @@
       return;
     }
 
-    ({ templates } = await ajax("/api/templates", { background: true }));
+    ({ templates } = await getTemplates({ background: true }));
     templates = templates || [];
     selectedTemplate = _.find(templates, { id: template.id });
     if (selectedTemplate) {
@@ -112,11 +118,7 @@
     if (!confirmed) {
       return;
     }
-    const { success, message } = await ajax("/api/templates/delete", {
-      method: "POST",
-      body: JSON.stringify({
-        name: selectedTemplate.name
-      }),
+    const { success, message } = await deleteTemplate(selectedTemplate.name, {
       background: true
     });
 
@@ -129,7 +131,7 @@
       return;
     }
 
-    ({ templates } = await ajax("/api/templates", { background: true }));
+    ({ templates } = await getTemplates({ background: true }));
     templates = templates || [];
     selectedTemplate = templates[0];
     saveAsName = selectedTemplate ? selectedTemplate.name : "";
@@ -263,7 +265,7 @@
     reconciliationLoading = true;
     reconciliationError = null;
     try {
-      reconciliation = await ajax("/api/import/reconciliation");
+      reconciliation = await getReconciliation();
     } catch (e) {
       reconciliationError = e instanceof Error ? e.message : String(e);
     } finally {
@@ -559,7 +561,7 @@
                   {reconciliation.status}
                 </span>
                 <span class="is-size-7 has-text-grey">
-                  Generated {new Date(reconciliation.generated_at).toLocaleString()}
+                  Generated {reconciliation.generated_at.toDate().toLocaleString()}
                 </span>
               </div>
 

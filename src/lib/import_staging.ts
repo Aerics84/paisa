@@ -1,4 +1,4 @@
-import type { StagedTransaction } from "./utils";
+import type { StagedTransaction } from "./api/import";
 
 /**
  * The default inclusion policy for a freshly ingested statement: only rows that

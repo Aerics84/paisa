@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "id": 1,
+      "name": "Fixture Groceries",
+      "priority": 10,
+      "enabled": true,
+      "payee_pattern": "Whole Foods",
+      "payee_match_type": "contains",
+      "memo_pattern": "",
+      "memo_match_type": "contains",
+      "tx_type": "any",
+      "min_amount": 10,
+      "max_amount": 500,
+      "target_account": "Expenses:Groceries",
+      "tags": ["food"],
+      "flag_for_review": false
+    }
+  ]
+}

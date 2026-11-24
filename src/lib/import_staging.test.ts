@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { defaultIncludedTransactions, mergeIngestedTransactions } from "./import_staging";
-import type { StagedTransaction } from "./utils";
+import type { StagedTransaction } from "./api/import";
 
 function staged(overrides: Partial<StagedTransaction> = {}): StagedTransaction {
   return {
@@ -9,8 +9,12 @@ function staged(overrides: Partial<StagedTransaction> = {}): StagedTransaction {
     payee: "Coffee Shop",
     memo: "",
     amount: 4.5,
+    currency: "INR",
     is_debit: true,
     selected_account: "",
+    flag_for_review: false,
+    is_duplicate: false,
+    duplicate_score: 0,
     ...overrides
   };
 }

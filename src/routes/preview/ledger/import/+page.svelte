@@ -12,7 +12,13 @@
   import _ from "lodash";
   import type { EditorView } from "codemirror";
   import { onMount } from "svelte";
-  import { ajax, type ImportTemplate } from "$lib/utils";
+  import { ajax } from "$lib/utils";
+  import {
+    deleteTemplate,
+    getTemplates,
+    upsertTemplate,
+    type ImportTemplate
+  } from "$lib/api/templates";
   import { accountTfIdf } from "../../../../store";
   import { askConfirm } from "$lib/confirm";
   import * as toast from "bulma-toast";
@@ -50,7 +56,7 @@
 
   onMount(async () => {
     accountTfIdf.set(await ajax("/api/account/tf_idf"));
-    ({ templates } = await ajax("/api/templates"));
+    ({ templates } = await getTemplates());
     selectedTemplate = templates[0];
     saveAsName = selectedTemplate.name;
     templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
@@ -61,14 +67,13 @@
   $: saveAsNameDuplicate = !!_.find(templates, { name: saveAsName, template_type: "custom" });
 
   async function save() {
-    const { template, saved, message } = await ajax("/api/templates/upsert", {
-      method: "POST",
-      body: JSON.stringify({
+    const { template, saved, message } = await upsertTemplate(
+      {
         name: saveAsName,
         content: templateEditor.state.doc.toString()
-      }),
-      background: true
-    });
+      },
+      { background: true }
+    );
 
     if (!saved) {
       toast.toast({
@@ -79,7 +84,7 @@
       return;
     }
 
-    ({ templates } = await ajax("/api/templates", { background: true }));
+    ({ templates } = await getTemplates({ background: true }));
     selectedTemplate = _.find(templates, { id: template.id });
     saveAsName = selectedTemplate.name;
     toast.toast({
@@ -102,11 +107,7 @@
     if (!confirmed) {
       return;
     }
-    const { success, message } = await ajax("/api/templates/delete", {
-      method: "POST",
-      body: JSON.stringify({
-        name: selectedTemplate.name
-      }),
+    const { success, message } = await deleteTemplate(selectedTemplate.name, {
       background: true
     });
 
@@ -119,7 +120,7 @@
       return;
     }
 
-    ({ templates } = await ajax("/api/templates", { background: true }));
+    ({ templates } = await getTemplates({ background: true }));
     selectedTemplate = templates[0];
     saveAsName = selectedTemplate.name;
     toast.toast({
