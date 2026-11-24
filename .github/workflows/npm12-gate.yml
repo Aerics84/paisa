@@ -103,6 +103,10 @@ jobs:
           npm run test:investment
           npm run test:monthly
 
+      - run: npm run test:unit
+
+      - run: npm run test:coverage
+
       - name: P-PDF
         shell: bash
         run: bun test src/lib/pdf.test.ts
