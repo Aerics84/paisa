@@ -3,13 +3,13 @@
   import Logo from "$lib/components/Logo.svelte";
   import { login } from "$lib/utils";
   import _ from "lodash";
-  let username = "";
-  let password = "";
+  let username = $state("");
+  let password = $state("");
 
-  let invalid = false;
-  let invalidErrorMessage = "";
+  let invalid = $state(false);
+  let invalidErrorMessage = $state("");
 
-  $: loginDisabled = _.isEmpty(username) || _.isEmpty(password);
+  let loginDisabled = $derived(_.isEmpty(username) || _.isEmpty(password));
 
   async function tryLogin() {
     if (loginDisabled) return;
@@ -36,7 +36,12 @@
                 <a href="https://paisa.fyi" class="is-primary-color">Paisa</a>
               </div>
             </div>
-            <form on:submit|preventDefault={tryLogin}>
+            <form
+              onsubmit={(event) => {
+                event.preventDefault();
+                tryLogin();
+              }}
+            >
               <div class="field">
                 <label for="login-username" class="label">Username</label>
                 <div class="control">

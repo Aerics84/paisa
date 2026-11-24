@@ -2,7 +2,7 @@
   import * as d3 from "d3";
   import dayjs from "dayjs";
   import _ from "lodash";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { categoryColor, categoryVisual } from "$lib/colors";
   import { renderFlow } from "$lib/cash_flow";
   import DashboardSectionHeader from "$lib/components/dashboard/DashboardSectionHeader.svelte";
@@ -65,22 +65,22 @@
 
   const heroChartHeight = 112;
 
-  let cashFlows: CashFlow[] = [];
-  let checkingBalances: Record<string, AssetBreakdown> = {};
-  let checkingBalanceTimeline: CheckingBalancePoint[] = [];
-  let availableMonthRange: { from: dayjs.Dayjs; to: dayjs.Dayjs } | null = null;
-  let goalSummaries: GoalSummary[] = [];
-  let transactionSequences: TransactionSequence[] = [];
-  let budgetsByMonth: Record<string, Budget> = {};
-  let liabilityBreakdowns: Record<string, LiabilityBreakdown> = {};
-  let networthOverview: Networth;
-  let networthTimeline: Networth[] = [];
-  let monthlyReview: MonthlyReviewResponse | null = null;
-  let monthlyReviewLoading = false;
-  let monthlyReviewError = false;
+  let cashFlows = $state<CashFlow[]>([]);
+  let checkingBalances = $state<Record<string, AssetBreakdown>>({});
+  let checkingBalanceTimeline = $state<CheckingBalancePoint[]>([]);
+  let availableMonthRange = $state<{ from: dayjs.Dayjs; to: dayjs.Dayjs } | null>(null);
+  let goalSummaries = $state<GoalSummary[]>([]);
+  let transactionSequences = $state<TransactionSequence[]>([]);
+  let budgetsByMonth = $state<Record<string, Budget>>({});
+  let liabilityBreakdowns = $state<Record<string, LiabilityBreakdown>>({});
+  let networthOverview = $state<Networth>();
+  let networthTimeline = $state<Networth[]>([]);
+  let monthlyReview = $state<MonthlyReviewResponse | null>(null);
+  let monthlyReviewLoading = $state(false);
+  let monthlyReviewError = $state(false);
   let monthlyReviewRequest = 0;
-  let sankeyEmpty = true;
-  let loadError = false;
+  let sankeyEmpty = $state(true);
+  let loadError = $state(false);
 
   const flowRenderer = createFlowRenderController({
     render: (graph) => {
@@ -91,12 +91,6 @@
     },
     clear: () => d3.select("#d3-expense-flow").selectAll("*").remove()
   });
-  let checkingState: WidgetState = "insufficient-data";
-  let networthTrendState: WidgetState = "insufficient-data";
-  let reserveState: WidgetState = "insufficient-data";
-  let budgetState: WidgetState = "insufficient-data";
-  let recurringState: WidgetState = "insufficient-data";
-  let goalState: WidgetState = "insufficient-data";
 
   async function initDemo() {
     await ajax("/api/init", {
@@ -315,45 +309,54 @@
     return _.maxBy(groups, (group) => group.value) ?? null;
   }
 
-  $: monthKey = $month || now().format("YYYY-MM");
-  $: selectedMonthLabel = dayjs(monthKey + "-01").format("MMM YYYY");
-  $: if (monthKey) {
-    void loadMonthlyReview(monthKey);
-  }
-  $: activeMonthlyReview = isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null;
-  $: if (!activeMonthlyReview) {
-    flowRenderer.reset();
-  }
-  $: reviewTrend = trendSeries(activeMonthlyReview);
-  $: reviewSurplusState = surplusState(activeMonthlyReview);
-  $: reviewPerformance = performanceRows(activeMonthlyReview);
-  $: reviewHasActivity = hasRecordedActivity(activeMonthlyReview);
-  $: reviewLoading = monthlyReviewLoading && !activeMonthlyReview;
-  $: topExpense = topExpenseGroup(activeMonthlyReview);
-  $: currentBudget = budgetsByMonth[monthKey];
-  $: flowTerminalCount = (activeMonthlyReview?.flow_graph?.nodes || []).filter(
-    (node) =>
-      !(activeMonthlyReview?.flow_graph?.links || []).some((link) => link.source === node.id)
-  ).length;
-  $: flowChartHeight = Math.max(440, Math.min(1100, flowTerminalCount * 30 + 120));
+  let monthKey = $derived($month || now().format("YYYY-MM"));
+  let selectedMonthLabel = $derived(dayjs(monthKey + "-01").format("MMM YYYY"));
+  let activeMonthlyReview = $derived(
+    isCurrentMonthlyReview(monthlyReview, monthKey) ? monthlyReview : null
+  );
+  let reviewTrend = $derived(trendSeries(activeMonthlyReview));
+  let reviewSurplusState = $derived(surplusState(activeMonthlyReview));
+  let reviewPerformance = $derived(performanceRows(activeMonthlyReview));
+  let reviewHasActivity = $derived(hasRecordedActivity(activeMonthlyReview));
+  let reviewLoading = $derived(monthlyReviewLoading && !activeMonthlyReview);
+  let topExpense = $derived(topExpenseGroup(activeMonthlyReview));
+  let currentBudget = $derived(budgetsByMonth[monthKey]);
+  let flowTerminalCount = $derived(
+    (activeMonthlyReview?.flow_graph?.nodes || []).filter(
+      (node) =>
+        !(activeMonthlyReview?.flow_graph?.links || []).some((link) => link.source === node.id)
+    ).length
+  );
+  let flowChartHeight = $derived(Math.max(440, Math.min(1100, flowTerminalCount * 30 + 120)));
 
-  $: if (activeMonthlyReview) {
-    sankeyEmpty = flowState(activeMonthlyReview.flow_graph) === "empty";
-  }
+  $effect(() => {
+    const selectedMonth = monthKey;
+    untrack(() => loadMonthlyReview(selectedMonth));
+  });
 
-  $: if (activeMonthlyReview && sankeyEmpty) {
-    flowRenderer.update(
-      activeMonthlyReview.flow_graph,
-      flowSignature(activeMonthlyReview),
-      "empty"
-    );
-  }
+  $effect(() => {
+    if (!activeMonthlyReview) {
+      flowRenderer.reset();
+    }
+  });
 
-  let surplusInsightItem: InsightItem;
-  let expenseInsightItem: InsightItem;
-  let investmentInsightItem: InsightItem;
+  $effect(() => {
+    if (activeMonthlyReview) {
+      sankeyEmpty = flowState(activeMonthlyReview.flow_graph) === "empty";
+    }
+  });
 
-  $: surplusInsightItem =
+  $effect(() => {
+    if (activeMonthlyReview && sankeyEmpty) {
+      flowRenderer.update(
+        activeMonthlyReview.flow_graph,
+        flowSignature(activeMonthlyReview),
+        "empty"
+      );
+    }
+  });
+
+  let surplusInsightItem: InsightItem = $derived(
     !reviewHasActivity || !activeMonthlyReview
       ? {
           title: "No recorded activity",
@@ -381,9 +384,10 @@
             tone: "neutral",
             deltaLabel: "Surplus not calculated",
             state: "insufficient-data"
-          };
+          }
+  );
 
-  $: expenseInsightItem =
+  let expenseInsightItem: InsightItem = $derived(
     reviewHasActivity && topExpense
       ? {
           title: `${topExpense.label} was the largest expense group`,
@@ -400,9 +404,10 @@
           tone: "neutral",
           deltaLabel: "No expenses posted",
           state: "insufficient-data"
-        };
+        }
+  );
 
-  $: investmentInsightItem =
+  let investmentInsightItem: InsightItem = $derived(
     activeMonthlyReview?.performance_state === "ready" && reviewPerformance.best.length
       ? {
           title: `${positionLabel(reviewPerformance.best[0].account)} led the month`,
@@ -430,135 +435,165 @@
           tone: "neutral",
           deltaLabel: "Not available",
           state: "insufficient-data"
-        };
-
-  $: insights = [surplusInsightItem, expenseInsightItem, investmentInsightItem];
-
-  $: checkingHistory = _.sortBy(checkingBalanceTimeline, ["month", "account"]);
-  $: checkingMonths = _.uniq(checkingHistory.map((point) => point.month));
-  $: checkingAccounts = _.uniq(checkingHistory.map((point) => point.account));
-  $: checkingAccountSeries = checkingAccounts.map((account, index) => ({
-    account,
-    label: account.split(":").at(-1) || account,
-    color: categoryColor(account, index),
-    values: checkingMonths.map(
-      (historyMonth) =>
-        checkingHistory.find((point) => point.month === historyMonth && point.account === account)
-          ?.balance ?? null
-    )
-  }));
-  $: checkingAllValues = _.flatMap(checkingAccountSeries, (series) => series.values).filter(
-    (value): value is number => value != null
+        }
   );
-  $: checkingMin = _.min(checkingAllValues) ?? 0;
-  $: checkingMax = _.max(checkingAllValues) ?? 0;
-  $: checkingHasHistory = checkingMonths.length >= 2 && checkingAllValues.length >= 2;
-  $: checkingState = checkingHasHistory ? "ready" : "insufficient-data";
-  $: checkingValueTicks = checkingHasHistory ? valueTicks(checkingMin, checkingMax) : [];
-  $: checkingDateTicks = checkingHasHistory ? monthLabels(checkingMonths, 5) : [];
-  $: checkingTotal = _.sumBy(_.values(checkingBalances), (breakdown) => breakdown.marketAmount);
 
-  $: monthlyNetworth = _.chain(networthTimeline)
-    .groupBy((point) => dayjs(point.date).format("YYYY-MM"))
-    .values()
-    .map((points) => _.last(points))
-    .sortBy((point) => dayjs(point.date).valueOf())
-    .takeRight(12)
-    .value();
-  $: networthSeries = monthlyNetworth.map((point) => networthValue(point));
-  $: latestNetworthPoint = _.last(networthTimeline) || networthOverview;
-  $: currentNetworthValue = latestNetworthPoint ? networthValue(latestNetworthPoint) : 0;
-  $: networthHistoryMonths = monthlyNetworth.length;
-  $: networthHasHistory = networthSeries.length >= 2;
-  $: networthTrendState = networthHasHistory ? "ready" : "insufficient-data";
-  $: networthMin = _.min(networthSeries) ?? 0;
-  $: networthMax = _.max(networthSeries) ?? 0;
-  $: networthValueTicks = networthHasHistory ? valueTicks(networthMin, networthMax) : [];
-  $: networthDateTicks = networthHasHistory
-    ? monthLabels(
-        monthlyNetworth.map((point) => dayjs(point.date).format("YYYY-MM")),
-        5
+  let insights = $derived([surplusInsightItem, expenseInsightItem, investmentInsightItem]);
+
+  let checkingHistory = $derived(_.sortBy(checkingBalanceTimeline, ["month", "account"]));
+  let checkingMonths = $derived(_.uniq(checkingHistory.map((point) => point.month)));
+  let checkingAccounts = $derived(_.uniq(checkingHistory.map((point) => point.account)));
+  let checkingAccountSeries = $derived(
+    checkingAccounts.map((account, index) => ({
+      account,
+      label: account.split(":").at(-1) || account,
+      color: categoryColor(account, index),
+      values: checkingMonths.map(
+        (historyMonth) =>
+          checkingHistory.find((point) => point.month === historyMonth && point.account === account)
+            ?.balance ?? null
       )
-    : [];
+    }))
+  );
+  let checkingAllValues = $derived(
+    _.flatMap(checkingAccountSeries, (series) => series.values).filter(
+      (value): value is number => value != null
+    )
+  );
+  let checkingMin = $derived(_.min(checkingAllValues) ?? 0);
+  let checkingMax = $derived(_.max(checkingAllValues) ?? 0);
+  let checkingHasHistory = $derived(checkingMonths.length >= 2 && checkingAllValues.length >= 2);
+  let checkingState: WidgetState = $derived(checkingHasHistory ? "ready" : "insufficient-data");
+  let checkingValueTicks = $derived(checkingHasHistory ? valueTicks(checkingMin, checkingMax) : []);
+  let checkingDateTicks = $derived(checkingHasHistory ? monthLabels(checkingMonths, 5) : []);
+  let checkingTotal = $derived(
+    _.sumBy(_.values(checkingBalances), (breakdown) => breakdown.marketAmount)
+  );
 
-  $: recentExpenseTotals = _.chain(cashFlows)
-    .takeRight(3)
-    .map((cashFlow) => cashFlow.expenses)
-    .filter((value) => value > 0)
-    .value();
-  $: averageMonthlyExpense = recentExpenseTotals.length ? _.mean(recentExpenseTotals) : 0;
-  $: reserveState = averageMonthlyExpense > 0 ? "ready" : "insufficient-data";
-  $: reserveMonths = reserveState === "ready" ? checkingTotal / averageMonthlyExpense : 0;
+  let monthlyNetworth = $derived(
+    _.chain(networthTimeline)
+      .groupBy((point) => dayjs(point.date).format("YYYY-MM"))
+      .values()
+      .map((points) => _.last(points))
+      .sortBy((point) => dayjs(point.date).valueOf())
+      .takeRight(12)
+      .value()
+  );
+  let networthSeries = $derived(monthlyNetworth.map((point) => networthValue(point)));
+  let latestNetworthPoint = $derived(_.last(networthTimeline) || networthOverview);
+  let currentNetworthValue = $derived(latestNetworthPoint ? networthValue(latestNetworthPoint) : 0);
+  let networthHistoryMonths = $derived(monthlyNetworth.length);
+  let networthHasHistory = $derived(networthSeries.length >= 2);
+  let networthTrendState: WidgetState = $derived(
+    networthHasHistory ? "ready" : "insufficient-data"
+  );
+  let networthMin = $derived(_.min(networthSeries) ?? 0);
+  let networthMax = $derived(_.max(networthSeries) ?? 0);
+  let networthValueTicks = $derived(networthHasHistory ? valueTicks(networthMin, networthMax) : []);
+  let networthDateTicks = $derived(
+    networthHasHistory
+      ? monthLabels(
+          monthlyNetworth.map((point) => dayjs(point.date).format("YYYY-MM")),
+          5
+        )
+      : []
+  );
 
-  $: budgetPressure = _.chain(currentBudget?.accounts || [])
-    .filter((account) => account.budgeted > 0)
-    .map((account, index) => {
-      const label = account.account.split(":").at(-1);
-      const percent = Math.max(0, Math.round((account.actual / account.budgeted) * 100));
+  let recentExpenseTotals = $derived(
+    _.chain(cashFlows)
+      .takeRight(3)
+      .map((cashFlow) => cashFlow.expenses)
+      .filter((value) => value > 0)
+      .value()
+  );
+  let averageMonthlyExpense = $derived(
+    recentExpenseTotals.length ? _.mean(recentExpenseTotals) : 0
+  );
+  let reserveState: WidgetState = $derived(
+    averageMonthlyExpense > 0 ? "ready" : "insufficient-data"
+  );
+  let reserveMonths = $derived(
+    reserveState === "ready" ? checkingTotal / averageMonthlyExpense : 0
+  );
 
-      return {
-        label,
-        percent,
-        warning: percent >= 70,
-        ...categoryVisual(label, index),
-        tone:
-          account.actual / account.budgeted > 0.9
-            ? "negative"
-            : account.actual / account.budgeted > 0.7
-              ? "warning"
-              : "positive"
-      };
-    })
-    .orderBy(["percent"], ["desc"])
-    .take(3)
-    .value();
-  $: budgetState = !currentBudget
-    ? "insufficient-data"
-    : !currentBudget.accounts?.some((account) => account.budgeted > 0)
-      ? "not-configured"
-      : budgetPressure.length
-        ? "ready"
-        : "insufficient-data";
+  let budgetPressure = $derived(
+    _.chain(currentBudget?.accounts || [])
+      .filter((account) => account.budgeted > 0)
+      .map((account, index) => {
+        const label = account.account.split(":").at(-1);
+        const percent = Math.max(0, Math.round((account.actual / account.budgeted) * 100));
 
-  $: recurringOutlook = transactionSequences
-    .map((sequence) => {
-      const schedule = nextUnpaidSchedule(sequence);
-      if (!schedule) {
-        return null;
-      }
+        return {
+          label,
+          percent,
+          warning: percent >= 70,
+          ...categoryVisual(label, index),
+          tone:
+            account.actual / account.budgeted > 0.9
+              ? "negative"
+              : account.actual / account.budgeted > 0.7
+                ? "warning"
+                : "positive"
+        };
+      })
+      .orderBy(["percent"], ["desc"])
+      .take(3)
+      .value()
+  );
+  let budgetState: WidgetState = $derived(
+    !currentBudget
+      ? "insufficient-data"
+      : !currentBudget.accounts?.some((account) => account.budgeted > 0)
+        ? "not-configured"
+        : budgetPressure.length
+          ? "ready"
+          : "insufficient-data"
+  );
 
-      return {
-        label: sequence.key,
-        amount: schedule.amount,
-        date: schedule.scheduled,
-        icon: scheduleIcon(schedule)
-      };
-    })
-    .filter((item) => item != null)
-    .slice(0, 3);
-  $: recurringState = recurringOutlook.length ? "ready" : "insufficient-data";
+  let recurringOutlook = $derived(
+    transactionSequences
+      .map((sequence) => {
+        const schedule = nextUnpaidSchedule(sequence);
+        if (!schedule) {
+          return null;
+        }
 
-  $: goalProgress = goalSummaries.slice(0, 3).map((goal) => ({
-    name: goal.name,
-    percent: goal.target === 0 ? 0 : Math.round((goal.current / goal.target) * 100)
-  }));
-  $: goalState = goalSummaries.length
-    ? goalProgress.length
-      ? "ready"
-      : "insufficient-data"
-    : "not-configured";
+        return {
+          label: sequence.key,
+          amount: schedule.amount,
+          date: schedule.scheduled,
+          icon: scheduleIcon(schedule)
+        };
+      })
+      .filter((item) => item != null)
+      .slice(0, 3)
+  );
+  let recurringState: WidgetState = $derived(
+    recurringOutlook.length ? "ready" : "insufficient-data"
+  );
 
-  $: hasDashboardData =
+  let goalProgress = $derived(
+    goalSummaries.slice(0, 3).map((goal) => ({
+      name: goal.name,
+      percent: goal.target === 0 ? 0 : Math.round((goal.current / goal.target) * 100)
+    }))
+  );
+  let goalState: WidgetState = $derived(
+    goalSummaries.length ? (goalProgress.length ? "ready" : "insufficient-data") : "not-configured"
+  );
+
+  let hasDashboardData = $derived(
     cashFlows.length > 0 ||
-    !_.isEmpty(checkingBalances) ||
-    checkingBalanceTimeline.length > 0 ||
-    goalSummaries.length > 0 ||
-    transactionSequences.length > 0 ||
-    !_.isEmpty(budgetsByMonth) ||
-    !_.isEmpty(liabilityBreakdowns) ||
-    networthTimeline.length > 0 ||
-    currentNetworthValue !== 0;
-  $: isEmpty = loadError || !hasDashboardData;
+      !_.isEmpty(checkingBalances) ||
+      checkingBalanceTimeline.length > 0 ||
+      goalSummaries.length > 0 ||
+      transactionSequences.length > 0 ||
+      !_.isEmpty(budgetsByMonth) ||
+      !_.isEmpty(liabilityBreakdowns) ||
+      networthTimeline.length > 0 ||
+      currentNetworthValue !== 0
+  );
+  let isEmpty = $derived(loadError || !hasDashboardData);
 </script>
 
 {#if isEmpty}
@@ -595,7 +630,7 @@
           <a href="/more/config" class="button is-light">Open Configuration</a>
           <a href="/ledger/editor" class="button is-light">Open Ledger Editor</a>
           {#if !loadError}
-            <button on:click={(_event) => initDemo()} class="button is-link" type="button">
+            <button onclick={(_event) => initDemo()} class="button is-link" type="button">
               Load Demo
             </button>
           {/if}

@@ -40,36 +40,39 @@
   import LegendCard from "$lib/components/LegendCard.svelte";
   import BalanceCard from "$lib/components/BalanceCard.svelte";
 
-  let cashflowLegends: Legend[] = [];
-  let month = now().format("YYYY-MM");
-  let goalSummaries: GoalSummary[] = [];
-  let transactionSequences: TransactionSequence[] = [];
-  let cashFlows: CashFlow[] = [];
-  let expenses: { [key: string]: Posting[] } = {};
-  let xirr = 0;
-  let networth: Networth;
-  let renderer: (data: Posting[]) => void;
-  let totalExpense = 0;
-  let transactions: Transaction[] = [];
-  let budgetsByMonth: Record<string, Budget> = {};
-  let currentBudget: Budget;
-  let expensePace: ExpensePace | null = null;
-  let currentExpensePace: ExpensePace | null = null;
-  let selectedExpenses: Posting[] = [];
-  let isEmpty = false;
-  let checkingBalances: Record<string, AssetBreakdown> = {};
+  let cashflowLegends = $state<Legend[]>([]);
+  let month = $state(now().format("YYYY-MM"));
+  let goalSummaries = $state<GoalSummary[]>([]);
+  let transactionSequences = $state<TransactionSequence[]>([]);
+  let cashFlows = $state<CashFlow[]>([]);
+  let expenses = $state<{ [key: string]: Posting[] }>({});
+  let xirr = $state(0);
+  let networth = $state<Networth>();
+  let renderer = $state<((data: Posting[]) => void) | undefined>();
+  let totalExpense = $state(0);
+  let transactions = $state<Transaction[]>([]);
+  let budgetsByMonth = $state<Record<string, Budget>>({});
+  let currentBudget = $state<Budget>();
+  let expensePace = $state<ExpensePace | null>(null);
+  let currentExpensePace = $derived(
+    expensePace && expensePace.period === month ? expensePace : null
+  );
+  let selectedExpenses = $state<Posting[]>([]);
+  let isEmpty = $state(false);
+  let checkingBalances = $state<Record<string, AssetBreakdown>>({});
   let destroyed = false;
 
   onDestroy(() => {
     destroyed = true;
   });
 
-  $: currentExpensePace = expensePace && expensePace.period === month ? expensePace : null;
-  $: if (renderer) {
-    selectedExpenses = expenses[month] || [];
-    renderer(selectedExpenses);
-    totalExpense = _.sumBy(selectedExpenses, (p) => p.amount);
-  }
+  $effect(() => {
+    if (renderer) {
+      selectedExpenses = expenses[month] || [];
+      renderer(selectedExpenses);
+      totalExpense = _.sumBy(selectedExpenses, (p) => p.amount);
+    }
+  });
 
   async function initDemo() {
     await ajax("/api/init", {
@@ -169,7 +172,7 @@
                   </li>
                 </ol>
 
-                <button type="button" on:click={(_e) => initDemo()} class="button is-link">
+                <button type="button" onclick={(_e) => initDemo()} class="button is-link">
                   Setup Demo
                 </button>
               </div>
