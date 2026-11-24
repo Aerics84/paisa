@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/model/cache"
@@ -84,7 +85,7 @@ func Migrate(db *gorm.DB, dbPath string) error {
 		}
 
 		if migration.Destructive {
-			if err := backup(dbPath, migration.Version); err != nil {
+			if err := backup(db, dbPath, migration.Version); err != nil {
 				return fmt.Errorf("backup database before migration %d (%s): %w", migration.Version, migration.Name, err)
 			}
 		}
@@ -130,11 +131,48 @@ func apply(db *gorm.DB, migration Migration) error {
 	})
 }
 
-// backup copies the database file before a destructive migration runs. The
-// copy is synced to disk and closed before the migration starts.
-func backup(dbPath string, version int) error {
+// backup copies the database file before a destructive migration runs. In WAL
+// mode the committed pages may still live in the -wal file, so the WAL is
+// checkpointed into the main database first. The copy is synced to disk and
+// closed before the migration starts.
+func backup(db *gorm.DB, dbPath string, version int) error {
+	if dbPath == "" {
+		return errors.New("database path is required to back up the database")
+	}
+
+	if err := checkpoint(db); err != nil {
+		return err
+	}
+
 	timestamp := time.Now().UTC().Format("20060102T150405.000000000")
 	return copyFile(dbPath, fmt.Sprintf("%s.backup-v%d-%s", dbPath, version, timestamp))
+}
+
+// checkpoint folds every committed WAL frame into the main database file so
+// that copying that file alone yields a complete backup. It refuses to
+// continue when the database is busy, because then the WAL cannot be fully
+// checkpointed and the copy would be incomplete. Databases in rollback-journal
+// mode are already consistent and need no checkpoint.
+func checkpoint(db *gorm.DB) error {
+	var mode string
+	if err := db.Raw("PRAGMA journal_mode").Scan(&mode).Error; err != nil {
+		return fmt.Errorf("read journal mode before backup: %w", err)
+	}
+
+	if !strings.EqualFold(mode, "wal") {
+		return nil
+	}
+
+	var busy, logFrames, checkpointed int
+	if err := db.Raw("PRAGMA wal_checkpoint(TRUNCATE)").Row().Scan(&busy, &logFrames, &checkpointed); err != nil {
+		return fmt.Errorf("checkpoint WAL before backup: %w", err)
+	}
+
+	if busy != 0 {
+		return fmt.Errorf("checkpoint WAL before backup: database is busy, %d of %d frames checkpointed", checkpointed, logFrames)
+	}
+
+	return nil
 }
 
 func copyFile(source string, target string) error {

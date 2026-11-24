@@ -5,7 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/ananthakumaran/paisa/internal/model/posting"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -85,6 +88,69 @@ func TestMigrateRefusesNewerDatabase(t *testing.T) {
 	require.ErrorIs(t, Migrate(db, path), ErrDatabaseNewer)
 	require.Equal(t, 99, userVersion(t, db))
 	require.False(t, db.Migrator().HasTable("postings"))
+}
+
+func TestDestructiveMigrationRequiresDBPath(t *testing.T) {
+	db, path := openTestDB(t)
+	require.NoError(t, Migrate(db, path))
+
+	withExtraMigration(t, Migration{
+		Version:     2,
+		Name:        "destructive-test",
+		Destructive: true,
+		Up:          func(*gorm.DB) error { return nil },
+	})
+
+	require.ErrorContains(t, Migrate(db, ""), "database path")
+	require.Equal(t, 1, userVersion(t, db))
+}
+
+func TestDestructiveMigrationBackupIncludesWALData(t *testing.T) {
+	db, path := openTestDB(t)
+	require.NoError(t, db.Exec("PRAGMA journal_mode = WAL").Error)
+	require.NoError(t, Migrate(db, path))
+
+	require.NoError(t, db.Create(&posting.Posting{
+		TransactionID: "wal-backup-test",
+		Date:          time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC),
+		Payee:         "WAL backup test",
+		Account:       "assets:cash",
+		Commodity:     "EUR",
+		Quantity:      decimal.NewFromInt(1),
+		Amount:        decimal.NewFromInt(42),
+	}).Error)
+
+	// The row must still live in the WAL for this test to be meaningful.
+	walInfo, err := os.Stat(path + "-wal")
+	require.NoError(t, err)
+	require.Greater(t, walInfo.Size(), int64(0))
+
+	withExtraMigration(t, Migration{
+		Version:     2,
+		Name:        "destructive-test",
+		Destructive: true,
+		Up:          func(*gorm.DB) error { return nil },
+	})
+
+	require.NoError(t, Migrate(db, path))
+	require.Equal(t, 2, userVersion(t, db))
+
+	matches, err := filepath.Glob(path + ".backup-v2-*")
+	require.NoError(t, err)
+	require.Len(t, matches, 1)
+
+	backupDB, err := gorm.Open(sqlite.Open(matches[0]), &gorm.Config{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		sqlDB, err := backupDB.DB()
+		if err == nil {
+			_ = sqlDB.Close()
+		}
+	})
+
+	var count int64
+	require.NoError(t, backupDB.Table("postings").Where("transaction_id = ?", "wal-backup-test").Count(&count).Error)
+	require.Equal(t, int64(1), count)
 }
 
 func TestDestructiveMigrationCreatesBackup(t *testing.T) {
