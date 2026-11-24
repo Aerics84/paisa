@@ -449,6 +449,16 @@ export interface GermanyTaxYear {
 }
 
 //////////
+// source: goals_types.go
+
+/**
+ * GoalsResponse is the JSON body returned by GET /api/goals.
+ */
+export interface GoalsResponse {
+  goals: GoalSummary[];
+}
+
+//////////
 // source: harvest.go
 
 export interface HarvestBreakdown {

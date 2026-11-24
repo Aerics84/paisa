@@ -101,6 +101,13 @@ export type {
   TaxOverviewSection,
   TaxOverviewSummary
 } from "./api/tax";
+export type {
+  GoalContributionMonth,
+  GoalIntelligenceData,
+  GoalSummary,
+  RetirementGoalProgress,
+  SavingsGoalProgress
+} from "./api/goals";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -208,44 +215,6 @@ export interface ExpensePace {
   period: string;
   projectedExpenses: number;
   overBudget?: number | null;
-}
-
-export interface RetirementGoalProgress {
-  savingsTotal: number;
-  investmentTotal: number;
-  gainTotal: number;
-  savingsTimeline: Point[];
-  targetSavings: number;
-  monthlyContribution: number;
-  forecastRate: number;
-  swr: number;
-  yearlyExpense: number;
-  xirr: number;
-  name: string;
-  type: string;
-  icon: string;
-  postings: Posting[];
-  balances: Record<string, AssetBreakdown>;
-  intelligence?: GoalIntelligenceData;
-}
-
-export interface SavingsGoalProgress {
-  investmentTotal: number;
-  gainTotal: number;
-  savingsTotal: number;
-  savingsTimeline: Point[];
-  target: number;
-  targetDate: string;
-  rate: number;
-  xirr: number;
-  postings: Posting[];
-  name: string;
-  type: string;
-  icon: string;
-  paymentPerPeriod: number;
-  balances: Record<string, AssetBreakdown>;
-  contributionHistory?: GoalContributionMonth[];
-  intelligence?: GoalIntelligenceData;
 }
 
 export interface Legend {
@@ -356,47 +325,6 @@ export interface SyncResponse {
   warning?: string;
 }
 
-export interface GoalSummary {
-  type: string;
-  name: string;
-  id: string;
-  icon: string;
-  current: number;
-  target: number;
-  targetDate: string;
-  priority: number;
-  intelligence?: GoalIntelligenceData;
-}
-
-export interface GoalContributionMonth {
-  month: string;
-  amount: number;
-}
-
-// Analysis of a goal computed by the backend. Dates are YYYY-MM-DD strings.
-export interface GoalIntelligenceData {
-  progressRatio: number;
-  remainingAmount: number;
-  validTarget: boolean;
-  requiredMonthlyContribution?: number;
-  actualMonthlyContribution?: number;
-  contributionMonthsObserved: number;
-  activeContributionMonths: number;
-  paceCoverage?: number;
-  paceGap?: number;
-  projectedCompletionDate?: string;
-  configuredCompletionDate?: string;
-  projectionSource?: "recent-pace" | "configured-payment" | "assumed-growth";
-  delayMonths?: number;
-  state: "active" | "completed" | "overdue";
-  scheduleStatus: "on-track" | "behind" | "at-risk" | "insufficient-data" | "no-deadline";
-  attention: "none" | "warning" | "critical";
-  deadlineSource: "configured" | "derived-from-payment" | "none";
-  targetDate?: string;
-  annualReturn?: number;
-  reasons: string[];
-}
-
 export interface SheetLineResult {
   line: number;
   result: string;
@@ -416,18 +344,6 @@ export function ajax(
 export function ajax(route: "/api/diagnosis"): Promise<{ issues: Issue[] }>;
 export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
-
-export function ajax(route: "/api/goals"): Promise<{ goals: GoalSummary[] }>;
-export function ajax(
-  route: "/api/goals/retirement/:name",
-  options?: RequestOptions,
-  params?: Record<string, string>
-): Promise<RetirementGoalProgress>;
-export function ajax(
-  route: "/api/goals/savings/:name",
-  options?: RequestOptions,
-  params?: Record<string, string>
-): Promise<SavingsGoalProgress>;
 
 export function ajax(route: "/api/account/tf_idf"): Promise<AccountTfIdf>;
 

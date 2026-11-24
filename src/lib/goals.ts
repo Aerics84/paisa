@@ -4,7 +4,8 @@ import { Delaunay } from "d3";
 import _, { first, isEmpty, last, takeRight } from "lodash";
 import tippy from "tippy.js";
 import COLORS from "./colors";
-import type { Forecast, GoalIntelligenceData, GoalSummary, Point, Posting } from "./utils";
+import type { GoalIntelligenceData, GoalSummary } from "./api/goals";
+import type { Forecast, Point, Posting } from "./utils";
 import {
   formatCurrency,
   formatCurrencyCrude,

@@ -49,8 +49,7 @@ time_zone: UTC
 		SWR:            4,
 	})
 
-	savingsTotal, ok := detail["savingsTotal"].(decimal.Decimal)
-	require.True(t, ok)
+	savingsTotal := detail.SavingsTotal
 	assert.True(t, savingsTotal.Equal(decimal.NewFromInt(100)), "future postings must not inflate savings, got %s", savingsTotal)
 }
 
@@ -84,8 +83,7 @@ time_zone: UTC
 		SWR:            4,
 	})
 
-	intelligence, ok := detail["intelligence"].(service.GoalIntelligence)
-	require.True(t, ok)
+	intelligence := detail.Intelligence
 	assert.True(t, intelligence.ValidTarget)
 	assert.Equal(t, "active", intelligence.State)
 	assert.Equal(t, "no-deadline", intelligence.ScheduleStatus)
@@ -127,10 +125,8 @@ time_zone: UTC
 		SWR:            4,
 	})
 
-	investmentTotal, ok := detail["investmentTotal"].(decimal.Decimal)
-	require.True(t, ok)
-	gainTotal, ok := detail["gainTotal"].(decimal.Decimal)
-	require.True(t, ok)
+	investmentTotal := detail.InvestmentTotal
+	gainTotal := detail.GainTotal
 
 	assert.True(t, investmentTotal.Equal(decimal.NewFromInt(100)), "interest must not inflate the investment basis, got %s", investmentTotal)
 	assert.True(t, gainTotal.Equal(decimal.NewFromInt(2)), "interest must show up as gain, got %s", gainTotal)

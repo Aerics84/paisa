@@ -12,6 +12,7 @@ type_mappings:
   posting.Posting: "Posting"
   transaction.Transaction: "Transaction"
   accounting.BalancedPosting: "BalancedPosting"
+  accounting.Point: "Point"
   assets.BalanceSummary: "BalanceSummary"
   assets.CheckingBalancePoint: "CheckingBalancePoint"
   assets.AvailableMonthRange: "AvailableMonthRange"
@@ -26,6 +27,7 @@ type_mappings:
   service.PostingReturn: "PostingReturn"
   goal.GoalSummary: "GoalSummary"
   service.GoalIntelligence: "GoalIntelligence"
+  service.GoalContribution: "GoalContribution"
   importer.IngestionResult: "IngestionResult"
   reconciliation.ReconciliationReport: "ReconciliationReport"
   import_rule.Rule: "ImportRule"
@@ -58,7 +60,10 @@ packages:
   - path: "github.com/ananthakumaran/paisa/internal/server/goal"
     output_path: "src/lib/api/goal.gen.ts"
     frontmatter: |
-      import type { GoalIntelligence } from "./service.gen";
+      import type { Point } from "./accounting.gen";
+      import type { AssetBreakdown } from "./assets.gen";
+      import type { Posting } from "./posting.gen";
+      import type { GoalContribution, GoalIntelligence } from "./service.gen";
   - path: "github.com/ananthakumaran/paisa/internal/service"
     output_path: "src/lib/api/service.gen.ts"
   # Import-domain wire types. Only the files that define HTTP payloads are

@@ -8,7 +8,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -29,7 +28,7 @@ func getSavingsSummary(db *gorm.DB, ps []posting.Posting, conf config.SavingsGoa
 	}
 }
 
-func getSavingsDetail(db *gorm.DB, conf config.SavingsGoal) gin.H {
+func getSavingsDetail(db *gorm.DB, conf config.SavingsGoal) SavingsGoalDetail {
 	savings := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%").All(), conf.Accounts)
 	savings = service.PopulateMarketPrice(db, savings)
 	savingsTotal := accounting.CurrentBalance(savings)
@@ -44,22 +43,22 @@ func getSavingsDetail(db *gorm.DB, conf config.SavingsGoal) gin.H {
 	balances := assets.ComputeBreakdowns(db, savingsWithCapitalGains, false)
 	history := contributionHistory(db, contributionPostings, conf.Accounts, utils.Now())
 
-	return gin.H{
-		"type":                "savings",
-		"name":                conf.Name,
-		"icon":                conf.Icon,
-		"investmentTotal":     investmentTotal,
-		"savingsTotal":        savingsTotal,
-		"gainTotal":           savingsTotal.Sub(investmentTotal),
-		"savingsTimeline":     accounting.RunningBalance(db, savings),
-		"target":              decimal.NewFromFloat(conf.Target),
-		"targetDate":          conf.TargetDate,
-		"rate":                conf.Rate,
-		"paymentPerPeriod":    conf.PaymentPerPeriod,
-		"xirr":                service.XIRR(db, savingsWithCapitalGains),
-		"postings":            savingsWithCapitalGains,
-		"balances":            balances,
-		"contributionHistory": history,
-		"intelligence":        analyze("savings", savingsTotal, decimal.NewFromFloat(conf.Target), conf.TargetDate, conf.Rate, conf.PaymentPerPeriod, history),
+	return SavingsGoalDetail{
+		Type:                "savings",
+		Name:                conf.Name,
+		Icon:                conf.Icon,
+		InvestmentTotal:     investmentTotal,
+		SavingsTotal:        savingsTotal,
+		GainTotal:           savingsTotal.Sub(investmentTotal),
+		SavingsTimeline:     nonNilPoints(accounting.RunningBalance(db, savings)),
+		Target:              decimal.NewFromFloat(conf.Target),
+		TargetDate:          conf.TargetDate,
+		Rate:                conf.Rate,
+		PaymentPerPeriod:    conf.PaymentPerPeriod,
+		XIRR:                service.XIRR(db, savingsWithCapitalGains),
+		Postings:            nonNilPostings(savingsWithCapitalGains),
+		Balances:            balances,
+		ContributionHistory: history,
+		Intelligence:        analyze("savings", savingsTotal, decimal.NewFromFloat(conf.Target), conf.TargetDate, conf.Rate, conf.PaymentPerPeriod, history),
 	}
 }

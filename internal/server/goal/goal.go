@@ -6,7 +6,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -59,7 +58,13 @@ func GetGoalSummaries(db *gorm.DB) []GoalSummary {
 	return summaries
 }
 
-func GetGoalDetails(db *gorm.DB, goalType string, name string) gin.H {
+// GetGoalDetails returns the detail payload for a configured goal. The return
+// type is intentionally dynamic because retirement and savings have different
+// response shapes; an unknown type keeps the historical empty-object response.
+//
+// TODO(api): replace this with an explicit discriminated result if a caller
+// ever needs exhaustive goal-kind handling.
+func GetGoalDetails(db *gorm.DB, goalType string, name string) any {
 	switch goalType {
 	case "retirement":
 		conf, _ := lo.Find(config.GetConfig().Goals.Retirement, func(conf config.RetirementGoal) bool { return conf.Name == name })
@@ -68,5 +73,5 @@ func GetGoalDetails(db *gorm.DB, goalType string, name string) gin.H {
 		conf, _ := lo.Find(config.GetConfig().Goals.Savings, func(conf config.SavingsGoal) bool { return conf.Name == name })
 		return getSavingsDetail(db, conf)
 	}
-	return gin.H{}
+	return struct{}{}
 }

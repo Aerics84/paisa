@@ -532,7 +532,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/goals", func(c *gin.Context) {
-		c.JSON(200, gin.H{"goals": goal.GetGoalSummaries(db)})
+		c.JSON(200, GoalsResponse{Goals: goal.GetGoalSummaries(db)})
 	})
 
 	router.GET("/api/goals/:type/:name", func(c *gin.Context) {

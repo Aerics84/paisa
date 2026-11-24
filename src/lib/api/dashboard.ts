@@ -5,13 +5,14 @@ import type { Posting, Transaction } from "./ledger";
 import { postingsFromWire, transactionsFromWire } from "./ledger";
 import { budgetFromWire, cashFlowFromWire, transactionSequenceFromWire } from "./cashflow";
 import type { TransactionSequenceInput } from "./cashflow";
+import { goalSummaryFromWire, type GoalSummary } from "./goals";
 import type {
   BudgetResponse as WireBudgetResponse,
   DashboardResponse as WireDashboardResponse,
   ExpensePaceSummary as WireExpensePace,
   Networth as WireNetworth
 } from "./types.gen";
-import type { Budget, CashFlow, ExpensePace, GoalSummary, Networth } from "../utils";
+import type { Budget, CashFlow, ExpensePace, Networth } from "../utils";
 
 export interface Dashboard {
   checkingBalances: { asset_breakdowns: Record<string, AssetBreakdown> };
@@ -81,8 +82,6 @@ export async function getDashboard(): Promise<Dashboard> {
     transactionSequences: (wire.transactionSequences ?? []).map(transactionSequenceFromWire),
     transactions: transactionsFromWire(wire.transactions ?? []),
     budget: budgetResponseFromWire(wire.budget),
-    // The generated goal types use plain strings where the domain type narrows
-    // them to the documented literal unions.
-    goalSummaries: (wire.goalSummaries ?? []) as unknown as GoalSummary[]
+    goalSummaries: (wire.goalSummaries ?? []).map(goalSummaryFromWire)
   };
 }

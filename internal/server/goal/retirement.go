@@ -10,7 +10,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/server/assets"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -65,7 +64,7 @@ func calculateMonthlyContribution(postings []posting.Posting, current time.Time)
 	return total.Div(decimal.NewFromInt(retirementContributionWindowMonths))
 }
 
-func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
+func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) RetirementGoalDetail {
 	savings := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%").All(), conf.Savings)
 	savings = service.PopulateMarketPrice(db, savings)
 	savingsWithCapitalGains := accounting.FilterByGlob(query.Init(db).UntilToday().Like("Assets:%", "Income:CapitalGains:%").All(), conf.Savings)
@@ -90,22 +89,22 @@ func getRetirementDetail(db *gorm.DB, conf config.RetirementGoal) gin.H {
 	forecastRate := 0.0
 	balances := assets.ComputeBreakdowns(db, savingsWithCapitalGains, false)
 
-	return gin.H{
-		"type":                "retirement",
-		"name":                conf.Name,
-		"icon":                conf.Icon,
-		"savingsTimeline":     accounting.RunningBalance(db, savings),
-		"savingsTotal":        savingsTotal,
-		"investmentTotal":     investmentTotal,
-		"gainTotal":           gainsTotal,
-		"targetSavings":       targetSavings,
-		"monthlyContribution": monthlyContribution,
-		"forecastRate":        forecastRate,
-		"swr":                 conf.SWR,
-		"yearlyExpense":       yearlyExpenses,
-		"xirr":                service.XIRR(db, savingsWithCapitalGains),
-		"postings":            savingsWithCapitalGains,
-		"balances":            balances,
-		"intelligence":        analyze("retirement", savingsTotal, targetSavings, "", 0, 0, nil),
+	return RetirementGoalDetail{
+		Type:                "retirement",
+		Name:                conf.Name,
+		Icon:                conf.Icon,
+		SavingsTimeline:     nonNilPoints(accounting.RunningBalance(db, savings)),
+		SavingsTotal:        savingsTotal,
+		InvestmentTotal:     investmentTotal,
+		GainTotal:           gainsTotal,
+		TargetSavings:       targetSavings,
+		MonthlyContribution: monthlyContribution,
+		ForecastRate:        forecastRate,
+		SWR:                 conf.SWR,
+		YearlyExpense:       yearlyExpenses,
+		XIRR:                service.XIRR(db, savingsWithCapitalGains),
+		Postings:            nonNilPostings(savingsWithCapitalGains),
+		Balances:            balances,
+		Intelligence:        analyze("retirement", savingsTotal, targetSavings, "", 0, 0, nil),
 	}
 }

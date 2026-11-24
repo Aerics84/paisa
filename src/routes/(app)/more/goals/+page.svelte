@@ -3,7 +3,8 @@
   import { flip } from "svelte/animate";
   import GoalSummaryCard from "$lib/components/GoalSummaryCard.svelte";
   import ZeroState from "$lib/components/ZeroState.svelte";
-  import { ajax, helpUrl, type GoalSummary } from "$lib/utils";
+  import { ajax, helpUrl } from "$lib/utils";
+  import { getGoals, type GoalSummary } from "$lib/api/goals";
   import _ from "lodash";
   import { onMount } from "svelte";
   import * as toast from "bulma-toast";
@@ -58,7 +59,7 @@
 
   onMount(async () => {
     ({ config } = await ajax("/api/config"));
-    ({ goals } = await ajax("/api/goals"));
+    ({ goals } = await getGoals());
     goals = _.sortBy(goals, (g) => -g.priority);
     if (_.isEmpty(goals)) {
       isEmpty = true;

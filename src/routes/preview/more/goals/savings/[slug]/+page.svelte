@@ -1,7 +1,6 @@
 <script lang="ts">
   import COLORS from "$lib/colors";
   import {
-    ajax,
     formatCurrency,
     formatFloat,
     isMobile,
@@ -10,6 +9,7 @@
     type Posting,
     type AssetBreakdown
   } from "$lib/utils";
+  import { getSavingsGoal } from "$lib/api/goals";
   import { onMount, tick, onDestroy } from "svelte";
   import ARIMAPromise from "arima/async";
   import {
@@ -74,7 +74,7 @@
       xirr,
       paymentPerPeriod,
       balances
-    } = await ajax("/api/goals/savings/:name", null, data));
+    } = await getSavingsGoal(data.name));
 
     latestPostings = _.chain(postings)
       .sortBy((p) => p.date)
