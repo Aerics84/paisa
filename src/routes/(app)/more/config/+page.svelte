@@ -10,13 +10,12 @@
   import { sync } from "$lib/sync";
   import { pendingPasswordHashes } from "$lib/password_hash";
 
-  let lastConfig: UserConfig;
-  let config: UserConfig;
-  let schema: JSONSchema7;
-  let hasChanges = true;
-  let isLoading = false;
-  let error: string = null;
-  let accounts: string[] = [];
+  let lastConfig = $state<UserConfig>();
+  let config = $state<UserConfig>();
+  let schema = $state<JSONSchema7>();
+  let isLoading = $state(false);
+  let error = $state<string>(null);
+  let accounts = $state<string[]>([]);
   let lastAppliedRegionalProfile: string = null;
 
   const regionalProfileDefaults: Record<string, Partial<UserConfig>> = {
@@ -96,15 +95,17 @@
     }
   }
 
-  $: hasChanges = !_.isEqual(config, lastConfig);
+  let hasChanges = $derived(!_.isEqual(config, lastConfig));
 
-  $: if (config?.regional_profile && config.regional_profile !== lastAppliedRegionalProfile) {
-    const defaults = regionalProfileDefaults[config.regional_profile];
-    if (defaults) {
-      config = { ...config, ...defaults };
+  $effect(() => {
+    if (config?.regional_profile && config.regional_profile !== lastAppliedRegionalProfile) {
+      const defaults = regionalProfileDefaults[config.regional_profile];
+      if (defaults) {
+        config = { ...config, ...defaults };
+      }
+      lastAppliedRegionalProfile = config.regional_profile;
     }
-    lastAppliedRegionalProfile = config.regional_profile;
-  }
+  });
 </script>
 
 <div class="section" data-testid="config-page">
@@ -131,7 +132,7 @@
             <div class="field is-grouped is-grouped-right">
               <div class="control">
                 <button
-                  on:click={(_e) => save(config)}
+                  onclick={(_e) => save(config)}
                   class="button is-success {isLoading && 'is-loading'}"
                   disabled={!hasChanges || $pendingPasswordHashes > 0}>Save</button
                 >
@@ -140,13 +141,12 @@
                 {/if}
               </div>
               <div class="control">
-                <button
-                  on:click={(_e) => (config = _.cloneDeep(lastConfig))}
-                  class="button is-light">Cancel</button
+                <button onclick={(_e) => (config = _.cloneDeep(lastConfig))} class="button is-light"
+                  >Cancel</button
                 >
               </div>
               <div class="control">
-                <button on:click={(_e) => resetToDefault()} class="button is-danger"
+                <button onclick={(_e) => resetToDefault()} class="button is-danger"
                   >Reset to Defaults</button
                 >
               </div>

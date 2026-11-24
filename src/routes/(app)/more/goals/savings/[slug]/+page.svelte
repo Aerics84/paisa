@@ -36,34 +36,34 @@
   import AssetsBalance from "$lib/components/AssetsBalance.svelte";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  let svg: Element;
-  let investmentTimelineSvg: Element;
-  let targetDateObject: dayjs.Dayjs;
-  let savingsTotal = 0,
-    investmentTotal = 0,
-    gainTotal = 0,
-    targetSavings = 0,
-    pmt = 0,
-    xirr = 0,
-    rate = 0,
-    paymentPerPeriod = 0,
-    targetDate = "",
-    name = "",
-    icon = "",
-    progressPercent = 0,
-    breakPoints: Point[] = [],
-    savingsTimeline: Point[] = [],
-    postings: Posting[] = [],
-    latestPostings: Posting[] = [],
-    balances: Record<string, AssetBreakdown> = {},
-    intelligence: GoalIntelligence | undefined,
-    intelligenceData: GoalIntelligenceData | undefined,
-    statusLabel = "",
-    projectionDate = "",
-    delayLabel = "",
-    destroyCallback = () => {};
+  let svg = $state<Element>();
+  let investmentTimelineSvg = $state<Element>();
+  let targetDateObject = $state<dayjs.Dayjs>();
+  let savingsTotal = $state(0);
+  let investmentTotal = $state(0);
+  let gainTotal = $state(0);
+  let targetSavings = $state(0);
+  let pmt = $state(0);
+  let xirr = $state(0);
+  let rate = $state(0);
+  let paymentPerPeriod = $state(0);
+  let targetDate = $state("");
+  let name = $state("");
+  let icon = $state("");
+  let progressPercent = $state(0);
+  let breakPoints = $state<Point[]>([]);
+  let savingsTimeline = $state<Point[]>([]);
+  let postings = $state<Posting[]>([]);
+  let latestPostings = $state<Posting[]>([]);
+  let balances = $state<Record<string, AssetBreakdown>>({});
+  let intelligence = $state<GoalIntelligence | undefined>();
+  let intelligenceData = $state<GoalIntelligenceData | undefined>();
+  let statusLabel = $state("");
+  let projectionDate = $state("");
+  let delayLabel = $state("");
+  let destroyCallback = () => {};
 
   onDestroy(async () => {
     destroyCallback();

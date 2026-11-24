@@ -34,7 +34,7 @@
     }
   ];
 
-  let version = "";
+  let version = $state("");
 
   function externalLink(url: string) {
     if (window.runtime) {
@@ -62,13 +62,17 @@
           <div class="is-size-7 mt-2">
             Fork of <a
               href="https://github.com/ananthakumaran/paisa"
-              on:click|preventDefault={(_e) =>
-                externalLink("https://github.com/ananthakumaran/paisa")}>ananthakumaran/paisa</a
+              onclick={(event) => {
+                event.preventDefault();
+                externalLink("https://github.com/ananthakumaran/paisa");
+              }}>ananthakumaran/paisa</a
             >, maintained by
             <a
               href="https://github.com/Aerics84/paisa"
-              on:click|preventDefault={(_e) => externalLink("https://github.com/Aerics84/paisa")}
-              >Aerics84</a
+              onclick={(event) => {
+                event.preventDefault();
+                externalLink("https://github.com/Aerics84/paisa");
+              }}>Aerics84</a
             >
           </div>
         </div>
@@ -78,7 +82,13 @@
           <ul>
             {#each links as link}
               <li>
-                <a href={link.href} on:click|preventDefault={(_e) => externalLink(link.href)}>
+                <a
+                  href={link.href}
+                  onclick={(event) => {
+                    event.preventDefault();
+                    externalLink(link.href);
+                  }}
+                >
                   <span class="icon is-small">
                     <i class={link.icon}></i>
                   </span>

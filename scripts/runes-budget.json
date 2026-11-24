@@ -1,9 +1,9 @@
 {
   "description": "Ratchet budgets for legacy Svelte 4 syntax in src/**/*.svelte. Never raise these values.",
   "budgets": {
-    "export let": 6,
-    "$:": 6,
-    "on:click": 28,
+    "export let": 0,
+    "$:": 0,
+    "on:click": 0,
     "createEventDispatcher": 0
   }
 }

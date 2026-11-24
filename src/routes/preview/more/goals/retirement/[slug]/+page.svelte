@@ -28,33 +28,33 @@
   import AssetsBalance from "$lib/components/AssetsBalance.svelte";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
 
-  export let data: PageData;
+  let { data }: { data: PageData } = $props();
 
-  let svg: Element;
-  let investmentTimelineSvg: Element;
-  let savingsTotal = 0,
-    investmentTotal = 0,
-    gainTotal = 0,
-    icon = "",
-    name = "",
-    targetSavings = 0,
-    monthlyContribution = 0,
-    forecastRate = 0,
-    swr = 0,
-    xirr = 0,
-    yearlyExpense = 0,
-    progressPercent = 0,
-    savingsX = 0,
-    targetX = 0,
-    forecastUnavailable = false,
-    forecastMode: ForecastMode = "none",
-    predictedTargetDate = "",
-    breakPoints: Point[] = [],
-    savingsTimeline: Point[] = [],
-    postings: Posting[] = [],
-    latestPostings: Posting[] = [],
-    balances: Record<string, AssetBreakdown> = {},
-    destroyCallback = () => {};
+  let svg = $state<Element>();
+  let investmentTimelineSvg = $state<Element>();
+  let savingsTotal = $state(0);
+  let investmentTotal = $state(0);
+  let gainTotal = $state(0);
+  let icon = $state("");
+  let name = $state("");
+  let targetSavings = $state(0);
+  let monthlyContribution = $state(0);
+  let forecastRate = $state(0);
+  let swr = $state(0);
+  let xirr = $state(0);
+  let yearlyExpense = $state(0);
+  let progressPercent = $state(0);
+  let savingsX = $state(0);
+  let targetX = $state(0);
+  let forecastUnavailable = $state(false);
+  let forecastMode = $state<ForecastMode>("none");
+  let predictedTargetDate = $state("");
+  let breakPoints = $state<Point[]>([]);
+  let savingsTimeline = $state<Point[]>([]);
+  let postings = $state<Posting[]>([]);
+  let latestPostings = $state<Posting[]>([]);
+  let balances = $state<Record<string, AssetBreakdown>>({});
+  let destroyCallback = () => {};
 
   onDestroy(async () => {
     destroyCallback();
