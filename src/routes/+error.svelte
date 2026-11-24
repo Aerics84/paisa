@@ -2,7 +2,7 @@
   import { page } from "$app/state";
 </script>
 
-<section class="section">
+<section class="section" data-testid="error-page">
   <div class="container is-fluid">
     <div class="columns">
       <div class="column is-4 is-offset-4 mt-5">

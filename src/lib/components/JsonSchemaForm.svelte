@@ -16,6 +16,7 @@
   const ICON_MAX_RESULTS = 200;
 
   export let key: string;
+  export let path: string = "";
   export let value: any;
   export let rawValue: string = "";
   export let schema: Schema;
@@ -29,6 +30,8 @@
 
   let open = depth < 1;
   $: title = _.startCase(key);
+  $: fieldPath = path || key;
+  $: fieldId = `config-field-${fieldPath.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
   function newItem(schema: any) {
     if (Array.isArray(schema.default) && schema.default.length > 0) {
@@ -120,7 +123,7 @@
 {:else if schema["ui:widget"] == "password"}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label data-tippy-content={documentation(schema)} for="" class="label">{title}</label>
+      <label for={fieldId} data-tippy-content={documentation(schema)} class="label">{title}</label>
     </div>
     <div class="field-body">
       <div class="field">
@@ -131,6 +134,7 @@
             class="input is-small"
             style="max-width: 350px;"
             type="password"
+            id={fieldId}
             aria-label={title}
             bind:value={rawValue}
             on:change={() => {
@@ -146,7 +150,7 @@
 {:else if schema["ui:widget"] == "icon"}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label for="" data-tippy-content={documentation(schema)} class="label">{title}</label>
+      <span data-tippy-content={documentation(schema)} class="label">{title}</span>
     </div>
     <div class="field-body">
       <div class="field">
@@ -158,6 +162,7 @@
             loadOptions={searchIcons}
             searchable={true}
             clearable={!required}
+            inputAttributes={{ "aria-label": title }}
           >
             {#snippet selection({ selection })}
               <div class="custom-icon">
@@ -177,7 +182,7 @@
 {:else if schema["ui:widget"] == "boolean"}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label for="" data-tippy-content={documentation(schema)} class="label">{title}</label>
+      <span data-tippy-content={documentation(schema)} class="label">{title}</span>
     </div>
     <div class="field-body">
       <div class="field">
@@ -197,14 +202,14 @@
 {:else if schema.type === "string" || _.isEqual(schema.type, ["string", "integer"])}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label data-tippy-content={documentation(schema)} for="" class="label">{title}</label>
+      <label for={fieldId} data-tippy-content={documentation(schema)} class="label">{title}</label>
     </div>
     <div class="field-body">
       <div class="field">
         <div class="control">
           {#if schema.enum}
             <div class="select is-small">
-              <select {disabled} bind:value {required} aria-label={title}>
+              <select {disabled} bind:value {required} id={fieldId} aria-label={title}>
                 {#each schema.enum as option}
                   <option value={option}>{option}</option>
                 {/each}
@@ -217,6 +222,7 @@
               class="textarea is-small"
               style="min-width: 350px;max-width: 350px; width: 350px;"
               rows="5"
+              id={fieldId}
               aria-label={title}
               bind:value
               spellcheck="false"
@@ -229,6 +235,7 @@
               class="input is-small"
               style="max-width: 350px;"
               type="text"
+              id={fieldId}
               aria-label={title}
               bind:value
             />
@@ -240,7 +247,7 @@
 {:else if schema.type === "integer" || schema.type === "number"}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label for="" data-tippy-content={documentation(schema)} class="label">{title}</label>
+      <label for={fieldId} data-tippy-content={documentation(schema)} class="label">{title}</label>
     </div>
     <div class="field-body">
       <div class="field">
@@ -253,6 +260,7 @@
             min={schema.minimum}
             max={schema.maximum}
             step={schema.type == "integer" ? 1 : 0.01}
+            id={fieldId}
             aria-label={title}
             bind:value
           />
@@ -263,7 +271,7 @@
 {:else if schema["ui:widget"] == "accounts"}
   <div class="field is-horizontal">
     <div class="field-label is-small">
-      <label for="" data-tippy-content={documentation(schema)} class="label">{title}</label>
+      <span data-tippy-content={documentation(schema)} class="label">{title}</span>
     </div>
     <div class="field-body">
       <div class="field">
@@ -306,6 +314,7 @@
         required={_.includes(schema.required || [], key)}
         depth={depth + 1}
         {key}
+        path={`${fieldPath}.${key}`}
         bind:value={value[key]}
         schema={subSchema}
         disabled={true}
@@ -335,6 +344,7 @@
           required={_.includes(schema.required || [], key)}
           depth={depth + 1}
           {key}
+          path={`${fieldPath}.${key}`}
           bind:value={value[key]}
           schema={subSchema}
         />
@@ -379,6 +389,7 @@
           }}
           depth={depth + 1}
           key=""
+          path={`${fieldPath}[${i}]`}
           bind:value={value[i]}
           schema={schema.items}
         />

@@ -43,16 +43,27 @@ for (const path of A11Y_ROUTES) {
       await document.fonts.ready;
     });
 
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      // CodeMirror's internal scroll container is a third-party wrapper around
-      // the focusable `.cm-content` textbox; flagging the wrapper is a false
-      // positive and it cannot be configured from application code.
-      .exclude(".cm-scroller")
-      .analyze();
-    const serious = results.violations.filter((violation) =>
-      ["serious", "critical"].includes(violation.impact ?? "")
-    );
+    // Under SPA fallback every URL returns 200, so only the rendered error page
+    // proves the route still exists.
+    await expect(page.getByTestId("error-page")).toHaveCount(0);
+
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    const serious = results.violations
+      .filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
+      .map((violation) => ({
+        ...violation,
+        // CodeMirror's third-party scroll wrapper is a known false positive:
+        // the focusable `.cm-content` textbox lives inside it. Drop only this
+        // rule's reports that target the wrapper; every other rule still
+        // audits the whole editor subtree.
+        nodes:
+          violation.id === "scrollable-region-focusable"
+            ? violation.nodes.filter(
+                (node) => !node.target.some((target) => String(target).includes(".cm-scroller"))
+              )
+            : violation.nodes
+      }))
+      .filter((violation) => violation.nodes.length > 0);
 
     expect(
       serious,
