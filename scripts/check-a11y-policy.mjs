@@ -3,23 +3,15 @@ import { readFileSync } from "node:fs";
 const svelteConfig = readFileSync("svelte.config.shared.js", "utf8");
 const packageJson = readFileSync("package.json", "utf8");
 
-// Comments and string literals may legitimately mention `onwarn` without
-// overriding it, so strip them before looking for a real property or
-// assignment. This keeps the check precise.
-function stripCommentsAndStrings(source) {
-  return source
-    .replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g, '""')
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n\r]*/g, "");
-}
-
-const configCode = stripCommentsAndStrings(svelteConfig);
-
 const failures = [];
-// Any `onwarn` override drops compiler warnings — including a11y warnings —
-// before svelte-check can see them, so the config must not define one at all.
-if (/\bonwarn\s*[:=]/.test(configCode) || /(["'])onwarn\1\s*:/.test(svelteConfig)) {
-  failures.push("svelte.config.shared.js overrides onwarn (suppresses compiler warnings)");
+// Any textual occurrence of `onwarn` counts, including comments and strings.
+// There is no legitimate `onwarn` hook in this config, and a bare mention is
+// not worth the bypass risk (shorthand, computed keys, other warning APIs).
+// Warnings are gated with `svelte-check --fail-on-warnings` instead.
+if (svelteConfig.includes("onwarn")) {
+  failures.push(
+    "svelte.config.shared.js must not define or mention onwarn; use --fail-on-warnings instead"
+  );
 }
 if (/a11y[-_][a-z_-]+:ignore/.test(packageJson)) {
   failures.push("package.json suppresses a11y compiler warnings");
