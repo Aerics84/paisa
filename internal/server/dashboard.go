@@ -44,18 +44,31 @@ func expensePaceSummary(expenses map[string][]posting.Posting, budget BudgetResp
 
 func GetDashboard(db *gorm.DB) DashboardResponse {
 	expenses := GetCurrentExpense(db)
+	if expenses == nil {
+		expenses = map[string][]posting.Posting{}
+	}
 	budget := GetCurrentBudget(db)
 	return DashboardResponse{
 		CheckingBalances:        assets.GetCheckingBalance(db),
-		CheckingBalanceTimeline: assets.GetCheckingBalanceTimeline(db),
+		CheckingBalanceTimeline: nonNilSlice(assets.GetCheckingBalanceTimeline(db)),
 		AvailableMonthRange:     assets.GetAvailableMonthRange(db),
 		Networth:                GetCurrentNetworth(db),
 		Expenses:                expenses,
 		ExpensePace:             expensePaceSummary(expenses, budget),
-		CashFlows:               GetCurrentCashFlow(db),
-		TransactionSequences:    ComputeRecurringTransactions(query.Init(db).All()),
-		Transactions:            GetLatestTransactions(db),
+		CashFlows:               nonNilSlice(GetCurrentCashFlow(db)),
+		TransactionSequences:    nonNilSlice(ComputeRecurringTransactions(query.Init(db).All())),
+		Transactions:            nonNilSlice(GetLatestTransactions(db)),
 		Budget:                  budget,
-		GoalSummaries:           goal.GetGoalSummaries(db),
+		GoalSummaries:           nonNilSlice(goal.GetGoalSummaries(db)),
 	}
+}
+
+// nonNilSlice keeps the JSON shape in sync with the generated TypeScript
+// types: a nil Go slice would serialize as null, but the wire contract uses an
+// array.
+func nonNilSlice[T any](items []T) []T {
+	if items == nil {
+		return []T{}
+	}
+	return items
 }

@@ -57,8 +57,9 @@ type DashboardResponse struct {
 	AvailableMonthRange     assets.AvailableMonthRange    `json:"availableMonthRange"`
 	Networth                CurrentNetworth               `json:"networth"`
 	Expenses                map[string][]posting.Posting  `json:"expenses"`
-	// ExpensePace is nil when the current month has no meaningful projection.
-	ExpensePace          *ExpensePaceSummary       `json:"expense_pace"`
+	// ExpensePace is omitted when the current month has no meaningful
+	// projection, matching the generated optional TypeScript field.
+	ExpensePace          *ExpensePaceSummary       `json:"expense_pace,omitempty"`
 	CashFlows            []CashFlow                `json:"cashFlows"`
 	TransactionSequences []TransactionSequence     `json:"transactionSequences"`
 	Transactions         []transaction.Transaction `json:"transactions"`

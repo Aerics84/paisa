@@ -111,7 +111,8 @@ export interface DashboardResponse {
   networth: CurrentNetworth;
   expenses: { [key: string]: Posting[] };
   /**
-   * ExpensePace is nil when the current month has no meaningful projection.
+   * ExpensePace is omitted when the current month has no meaningful
+   * projection, matching the generated optional TypeScript field.
    */
   expense_pace?: ExpensePaceSummary;
   cashFlows: CashFlow[];
