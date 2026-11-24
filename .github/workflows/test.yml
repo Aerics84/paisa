@@ -54,6 +54,7 @@ jobs:
           nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && bun --version && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
       - run: node scripts/check-a11y-policy.mjs
+      - run: node scripts/check-docs.mjs
       - run: npm run check:coverage
       - name: Install govulncheck
         run: |

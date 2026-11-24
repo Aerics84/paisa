@@ -5,7 +5,7 @@
 
 <a href="./COPYING"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue" alt="License: AGPL-3.0-or-later" /></a>
 <a href="https://github.com/Aerics84/paisa/commits/master"><img src="https://img.shields.io/github/last-commit/Aerics84/paisa" alt="Last commit" /></a>
-<img src="https://img.shields.io/badge/go-1.24-00ADD8?logo=go&logoColor=white" alt="Go 1.24" />
+<img src="https://img.shields.io/badge/go-1.26-00ADD8?logo=go&logoColor=white" alt="Go 1.26" />
 <img src="https://img.shields.io/badge/svelte-5-FF3E00?logo=svelte&logoColor=white" alt="Svelte 5" />
 <a href="https://github.com/Aerics84/paisa/pkgs/container/paisa"><img src="https://img.shields.io/badge/docker-ghcr.io%2Faerics84%2Fpaisa-2496ED?logo=docker&logoColor=white" alt="Docker image" /></a>
 <a href="https://github.com/ananthakumaran/paisa"><img src="https://img.shields.io/badge/upstream-ananthakumaran%2Fpaisa-555555?logo=github&logoColor=white" alt="Upstream repository" /></a>
@@ -29,7 +29,7 @@ Paisa reads a plain-text journal written in [ledger](https://www.ledger-cli.org/
 | **Correct numbers for European data**        | Decimal-comma amount parsing, EUR metal prices from the Yahoo EU provider, timezone-aware journal dates, hledger `acost` cost basis, GBp/GBX normalisation and transfer-aware savings rates.                                                                                                                             |
 | **Sharper dashboards**                       | Total and invested savings rates with a 20 % guideline, expense subcategory drilldown, and a preview dashboard with a selected-month review: net income trend, top/flop positions, checking account history and Sankey flows.                                                                                            |
 | **Fixes and hardening**                      | Untrusted HTML removed, per-IP rate limiting, SQLite WAL and backup pruning, concurrency-safe price cache, safer import template handling, CRLF-aware account renames and Yahoo cookie/crumb authentication.                                                                                                             |
-| **Modern base**                              | Svelte 5, Bulma 1, Vite 8 and Go 1.24, with upstream v0.7.8 (including its security fix) merged.                                                                                                                                                                                                                         |
+| **Modern base**                              | Svelte 5, Bulma 1, Vite 8 and Go 1.26, with upstream v0.7.8 (including its security fix) merged.                                                                                                                                                                                                                         |
 
 ### Germany tax overview
 
@@ -76,7 +76,7 @@ docker run --rm -p 7500:7500 ghcr.io/aerics84/paisa:latest-demo
 
 ### From source
 
-Build requirements: Go 1.24+, Node 24+, npm 12+ and a C toolchain for SQLite (`gcc`/`clang`). Beancount journals additionally require `beancount>=3.2.3` and `beanquery>=0.2.0` on `PATH` (`bean-check` and `bean-query`).
+Build requirements: Go 1.26+, Node 24+, npm 12+ and a C toolchain for SQLite (`gcc`/`clang`). Beancount journals additionally require `beancount>=3.2.3` and `beanquery>=0.2.0` on `PATH` (`bean-check` and `bean-query`).
 
 ```bash
 git clone https://github.com/Aerics84/paisa.git

@@ -87,8 +87,8 @@ export const handleError: HandleClientError = async ({ error, kind }) => {
 
 const footer = `
 <p class="mt-3">
-  Please report this issue at <a href="https://github.com/ananthakumaran/paisa/issues"
-    >https://github.com/ananthakumaran/paisa/issues</a
+  Please report this issue at <a href="https://github.com/Aerics84/paisa/issues"
+    >https://github.com/Aerics84/paisa/issues</a
   >. Closing and reopening the app may help.
 </p>
 `;
