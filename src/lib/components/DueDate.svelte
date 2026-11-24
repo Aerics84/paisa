@@ -3,11 +3,15 @@
   import { dueDateIcon } from "$lib/utils";
   import dayjs from "dayjs";
 
-  export let dueDate: dayjs.Dayjs;
-  export let paidDate: dayjs.Dayjs;
-  export let amountDue: number;
+  interface Props {
+    dueDate: dayjs.Dayjs;
+    paidDate: dayjs.Dayjs;
+    amountDue: number;
+  }
 
-  $: icon = dueDateIcon(dueDate, paidDate);
+  let { dueDate, paidDate, amountDue }: Props = $props();
+
+  let icon = $derived(dueDateIcon(dueDate, paidDate));
 </script>
 
 {#if shouldShowNoDues(paidDate, amountDue)}

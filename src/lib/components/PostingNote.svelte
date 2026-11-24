@@ -1,6 +1,10 @@
 <script lang="ts">
   import { formatTextAsHtml, type Posting } from "$lib/utils";
-  export let posting: Posting;
+  interface Props {
+    posting: Posting;
+  }
+
+  let { posting }: Props = $props();
 </script>
 
 {#if posting.note != ""}

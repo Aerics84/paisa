@@ -4,30 +4,38 @@
   import CapitalGainDetailCard from "./CapitalGainDetailCard.svelte";
   import Toggleable from "./Toggleable.svelte";
 
-  export let financialYear: string;
-  export let capitalGains: CapitalGain[];
-  export let totals: Record<string, FYCapitalGain> | undefined = undefined;
+  interface Props {
+    financialYear: string;
+    capitalGains: CapitalGain[];
+    totals?: Record<string, FYCapitalGain> | undefined;
+  }
 
-  const fyGains: FYCapitalGain[] = _.compact(capitalGains.map((cg) => cg.fy[financialYear]));
-  const fyTotal = totals?.[financialYear];
+  let { financialYear, capitalGains, totals = undefined }: Props = $props();
 
-  const total = fyTotal
-    ? {
-        withdrawn: fyTotal.sell_price,
-        gain: fyTotal.tax.gain,
-        taxableGain: fyTotal.tax.taxable,
-        shortTermTax: fyTotal.tax.short_term,
-        longTermTax: fyTotal.tax.long_term,
-        slab: fyTotal.tax.slab
-      }
-    : {
-        withdrawn: _.sumBy(fyGains, (fy) => fy.sell_price),
-        gain: _.sumBy(fyGains, (fy) => fy.tax.gain),
-        taxableGain: _.sumBy(fyGains, (fy) => fy.tax.taxable),
-        shortTermTax: _.sumBy(fyGains, (fy) => fy.tax.short_term),
-        longTermTax: _.sumBy(fyGains, (fy) => fy.tax.long_term),
-        slab: _.sumBy(fyGains, (fy) => fy.tax.slab)
-      };
+  const fyGains: FYCapitalGain[] = $derived(
+    _.compact(capitalGains.map((cg) => cg.fy[financialYear]))
+  );
+  const fyTotal = $derived(totals?.[financialYear]);
+
+  const total = $derived(
+    fyTotal
+      ? {
+          withdrawn: fyTotal.sell_price,
+          gain: fyTotal.tax.gain,
+          taxableGain: fyTotal.tax.taxable,
+          shortTermTax: fyTotal.tax.short_term,
+          longTermTax: fyTotal.tax.long_term,
+          slab: fyTotal.tax.slab
+        }
+      : {
+          withdrawn: _.sumBy(fyGains, (fy) => fy.sell_price),
+          gain: _.sumBy(fyGains, (fy) => fy.tax.gain),
+          taxableGain: _.sumBy(fyGains, (fy) => fy.tax.taxable),
+          shortTermTax: _.sumBy(fyGains, (fy) => fy.tax.short_term),
+          longTermTax: _.sumBy(fyGains, (fy) => fy.tax.long_term),
+          slab: _.sumBy(fyGains, (fy) => fy.tax.slab)
+        }
+  );
 </script>
 
 <div class="column is-12">
@@ -111,7 +119,7 @@
                         slot="toggle"
                         let:active
                         let:onclick
-                        on:click={(e) => onclick(e)}
+                        onclick={(e) => onclick(e)}
                       >
                         <td>
                           <span class="icon has-text-link">

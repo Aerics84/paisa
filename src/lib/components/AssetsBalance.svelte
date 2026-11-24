@@ -13,8 +13,12 @@
   } from "$lib/table_formatters";
   import { iconText } from "$lib/icon";
 
-  export let breakdowns: Record<string, AssetBreakdown>;
-  export let indent = true;
+  interface Props {
+    breakdowns: Record<string, AssetBreakdown>;
+    indent?: boolean;
+  }
+
+  let { breakdowns, indent = true }: Props = $props();
 
   const mobile = typeof window !== "undefined" && isMobile();
 
@@ -98,10 +102,9 @@
     columns[3]
   ];
 
-  let tree: AssetBreakdown[] = [];
-  $: if (breakdowns) {
-    tree = buildTree(Object.values(breakdowns), (i) => i.group);
-  }
+  let tree = $derived(
+    breakdowns ? buildTree(Object.values(breakdowns), (i) => i.group) : ([] as AssetBreakdown[])
+  );
 </script>
 
 {#if indent}

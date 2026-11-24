@@ -12,10 +12,14 @@
   import PostingNote from "./PostingNote.svelte";
   import PostingStatus from "./PostingStatus.svelte";
 
-  export let posting: Posting;
-  export let color: string;
-  export let icon: boolean = false;
-  export let currencySymbol: string = "";
+  interface Props {
+    posting: Posting;
+    color: string;
+    icon?: boolean;
+    currencySymbol?: string;
+  }
+
+  let { posting, color, icon = false, currencySymbol = "" }: Props = $props();
 
   const fmt = (value: number) =>
     currencySymbol ? currencySymbol + formatCurrency(value, 2, "en-US") : formatCurrency(value);

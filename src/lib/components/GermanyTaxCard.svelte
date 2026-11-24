@@ -2,7 +2,11 @@
   import { downloadGermanyTaxYear } from "$lib/germany_tax_export";
   import { formatCurrency, formatFloat, type GermanyTaxYear } from "$lib/utils";
 
-  export let taxYear: GermanyTaxYear;
+  interface Props {
+    taxYear: GermanyTaxYear;
+  }
+
+  let { taxYear }: Props = $props();
 </script>
 
 <div class="column is-12">
@@ -10,7 +14,7 @@
     <header class="card-header">
       <p class="card-header-title">{taxYear.tax_year}</p>
       <div class="card-header-icon">
-        <button class="button is-small" on:click={() => downloadGermanyTaxYear(taxYear)}>
+        <button class="button is-small" onclick={() => downloadGermanyTaxYear(taxYear)}>
           Export CSV
         </button>
       </div>
