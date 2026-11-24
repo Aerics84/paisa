@@ -55,6 +55,14 @@ func (c Config) Clone() Config {
 // Load parses, validates and replaces the configuration. The previously
 // published snapshot stays untouched when parsing or validation fails.
 func (s *Store) Load(content []byte, path string) error {
+	s.updateMu.Lock()
+	defer s.updateMu.Unlock()
+
+	return s.loadLocked(content, path)
+}
+
+// loadLocked implements Load. The caller must hold updateMu.
+func (s *Store) loadLocked(content []byte, path string) error {
 	cfg, location, err := parseConfig(content)
 	if err != nil {
 		return err
@@ -73,19 +81,24 @@ func (s *Store) Load(content []byte, path string) error {
 	return nil
 }
 
-// LoadFile reads the configuration file at path and loads it.
+// LoadFile reads the configuration file at path and loads it. The read and the
+// swap happen under the same sequence lock so a concurrent Update or SaveConfig
+// cannot be reverted by a stale read.
 func (s *Store) LoadFile(path string) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return err
 	}
 
+	s.updateMu.Lock()
+	defer s.updateMu.Unlock()
+
 	content, err := os.ReadFile(absPath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file %s: %w", absPath, err)
 	}
 
-	return s.Load(content, absPath)
+	return s.loadLocked(content, absPath)
 }
 
 // Get returns a deep clone of the current configuration.
@@ -233,9 +246,22 @@ func (s *Store) MarkInitialized() {
 	s.onboarding = false
 }
 
-// save writes the current snapshot to the configured path without changing
-// the snapshot. It backs the legacy SaveConfig entry point.
-func (s *Store) save() error {
+// saveContent validates content, installs it as the current snapshot and
+// writes it to the bound path as one serialized operation.
+func (s *Store) saveContent(content []byte) error {
+	s.updateMu.Lock()
+	defer s.updateMu.Unlock()
+
+	if err := s.loadLocked(content, ""); err != nil {
+		return err
+	}
+
+	return s.writeSnapshotLocked()
+}
+
+// writeSnapshotLocked writes the current snapshot to the configured path. The
+// caller must hold updateMu.
+func (s *Store) writeSnapshotLocked() error {
 	s.mu.RLock()
 	cfg := s.config
 	path := s.configPath

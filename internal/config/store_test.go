@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -169,6 +170,85 @@ func TestLoadFailureKeepsPreviousSnapshot(t *testing.T) {
 	err = store.Load([]byte("journal_path: other.ledger\ndb_path: other.db\ntax_deductions:\n  accounts:\n    - account: Expenses:Health\n      category: made_up\n"), path)
 	require.Error(t, err)
 	assert.Equal(t, "main.ledger", store.Get().JournalPath)
+}
+
+func TestLoadFileReadsUnderSequenceLock(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: old.ledger\ndb_path: paisa.db\n"), 0644))
+
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), path))
+
+	store.updateMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		done <- store.LoadFile(path)
+	}()
+
+	select {
+	case err := <-done:
+		store.updateMu.Unlock()
+		t.Fatalf("LoadFile completed while the sequence lock was held: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	// Rewriting the file while the sequence lock is held proves that the read
+	// happens after the lock is acquired, not before it.
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: new.ledger\ndb_path: paisa.db\n"), 0644))
+	store.updateMu.Unlock()
+
+	require.NoError(t, <-done)
+	assert.Equal(t, "new.ledger", store.Get().JournalPath)
+}
+
+func TestUpdateWaitsForSequenceLock(t *testing.T) {
+	store, _ := newStoreWithFile(t)
+
+	store.updateMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		done <- store.Update(func(c *Config) error {
+			c.JournalPath = "changed.ledger"
+			return nil
+		})
+	}()
+
+	select {
+	case err := <-done:
+		store.updateMu.Unlock()
+		t.Fatalf("Update completed while the sequence lock was held: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	store.updateMu.Unlock()
+
+	require.NoError(t, <-done)
+	assert.Equal(t, "changed.ledger", store.Get().JournalPath)
+}
+
+func TestSaveConfigWaitsForSequenceLock(t *testing.T) {
+	store, path := newStoreWithFile(t)
+
+	store.updateMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		done <- store.saveContent([]byte("journal_path: saved.ledger\ndb_path: paisa.db\n"))
+	}()
+
+	select {
+	case err := <-done:
+		store.updateMu.Unlock()
+		t.Fatalf("saveContent completed while the sequence lock was held: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	store.updateMu.Unlock()
+
+	require.NoError(t, <-done)
+	_, err := os.Stat(path)
+	require.NoError(t, err)
+	assert.Equal(t, "saved.ledger", store.Get().JournalPath)
 }
 
 func TestInitializationTransitions(t *testing.T) {

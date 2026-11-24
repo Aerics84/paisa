@@ -442,12 +442,7 @@ func SaveConfigObject(config Config) error {
 }
 
 func SaveConfig(content []byte) error {
-	err := defaultStore.Load(content, "")
-	if err != nil {
-		return err
-	}
-
-	return defaultStore.save()
+	return defaultStore.saveContent(content)
 }
 
 func LoadConfigFile(path string) {
