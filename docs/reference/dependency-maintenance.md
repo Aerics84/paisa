@@ -147,12 +147,11 @@ Minimum validation:
 - authenticated app smoke test
 - page load and route navigation smoke test
 
-### Wave 2: Tailwind / DaisyUI / Bulma
+### Wave 2: Tailwind / Bulma
 
 Scope:
 
 - `tailwindcss`
-- `daisyui`
 - `bulma`
 - `@cityssm/bulma-sticky-table`
 - any style helpers or adapters tightly coupled to those libraries

@@ -4,14 +4,16 @@ import { extname, join } from "node:path";
 const root = "web/static";
 const MB = 1024 * 1024;
 
-// Keep frontend assets in check. The CSS limit is the pre-task size: daisyUI
-// was already tree-shaken by Tailwind, so removing it saves little. Most of the
-// remaining CSS is Bulma compiled once for the light theme and again inside
-// `html[data-theme="dark"]`; shrinking that further needs a separate theming
-// refactor (see .superpowers/sdd/.../task-4.1-report.md).
+// daisyUI is already tree-shaken by Tailwind, so removing it saves little.
+// Most of the remaining CSS is Bulma compiled once for the light theme and
+// again inside `html[data-theme="dark"]`. The CSS budget leaves just enough
+// headroom for normal style changes; re-adding the tree-shaken daisyUI
+// components (~0.09 MB) would exceed it. Shrinking the bundle further needs a
+// separate theming refactor to CSS custom properties.
 const BUDGETS = [
-  { name: "CSS", match: (ext) => ext === ".css", limit: 2.0 * MB },
+  { name: "CSS", match: (ext) => ext === ".css", limit: 1.9 * MB },
   { name: "JavaScript", match: (ext) => ext === ".js", limit: 5.0 * MB },
+  { name: "Workers", match: (ext) => ext === ".mjs", limit: 1.5 * MB },
   {
     name: "Fonts",
     match: (ext) => [".woff", ".woff2", ".ttf", ".otf"].includes(ext),

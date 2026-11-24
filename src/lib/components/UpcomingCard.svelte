@@ -29,6 +29,7 @@
 {#if schedule}
   {@const n = schedule.scheduled}
   {@const icon = scheduleIcon(schedule)}
+  {@const percent = progress(n)}
   <div class="has-text-centered mb-0 mr-3 max-w-[200px]">
     <div class="is-size-7 truncate">{transactionSequece.key}</div>
     <div class="my-1">
@@ -47,9 +48,13 @@
       ></div>
       <div
         class="radial-progress mx-3 mt-3 is-size-7 {icon.color}"
-        style="--value: {progress(
-          schedule.scheduled
-        )}; --thickness: 3px; --size: 100px; grid-area: 1/1"
+        style="--value: {percent}; --thickness: 3px; --size: 100px; grid-area: 1/1"
+        role="progressbar"
+        aria-label="{transactionSequece.key} recurring payment"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={percent}
+        aria-valuetext="due {n.fromNow()}"
       >
         <div class="is-size-6">
           <span class="icon">

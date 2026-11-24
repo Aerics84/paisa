@@ -256,9 +256,12 @@ func readLedgerFile(dir string, path string) *LedgerFile {
 	}
 
 	name, err := filepath.Rel(dir, path)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return &LedgerFile{
-		Name:     name,
+		Name:     filepath.ToSlash(name),
 		Content:  string(content),
 		Versions: []string{},
 	}
@@ -277,7 +280,7 @@ func readLedgerFileWithVersions(dir string, path string) *LedgerFile {
 			log.Fatal(err)
 		}
 
-		return name
+		return filepath.ToSlash(name)
 	})
 	sort.Sort(sort.Reverse(sort.StringSlice(versionPaths)))
 
@@ -287,7 +290,7 @@ func readLedgerFileWithVersions(dir string, path string) *LedgerFile {
 	}
 
 	return &LedgerFile{
-		Name:     name,
+		Name:     filepath.ToSlash(name),
 		Content:  string(content),
 		Versions: versionPaths,
 	}

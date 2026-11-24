@@ -186,10 +186,11 @@ $footerActiveColor: #d00;
 
     &:after {
       content: "";
-      justify-self: flex-end;
+      justify-self: end;
       width: 0.375rem;
       height: 0.375rem;
-      transform: rotate(-135deg);
+      rotate: -135deg;
+      translate: 0 -1px;
       box-shadow: inset 2px 2px;
       color: $link;
       transition: rotate 0.2s;
@@ -199,6 +200,7 @@ $footerActiveColor: #d00;
 
   details[open] > summary:after {
     rotate: 45deg;
+    translate: 0 1px;
   }
 
   .is-active {
@@ -1789,11 +1791,6 @@ div.is-hoverable:hover {
   .input,
   .select select {
     min-height: 44px;
-  }
-
-  .boxed-tab {
-    min-height: 38px;
-    height: auto;
   }
 
   .svelte-select {

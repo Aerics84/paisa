@@ -14,6 +14,7 @@
     <button
       class="boxed-tab {option.value === value ? 'is-active' : ''}"
       type="button"
+      aria-pressed={option.value === value}
       on:click={() => (value = option.value)}
     >
       {option.label}

@@ -197,3 +197,14 @@ func TestEditorAndSheetResponsesHaveNoNullOnEmptyDB(t *testing.T) {
 		})
 	}
 }
+
+func TestEditorFileNamesUseForwardSlashes(t *testing.T) {
+	base := t.TempDir()
+	path := filepath.Join(base, "archive", "old.ledger")
+	writeEditorFile(t, path, "2026-11-01 Nested\n")
+	writeEditorFile(t, path+".backup.2026-11-20-10-00-00.000", "2026-10-01 Old\n")
+
+	file := readLedgerFileWithVersions(base, path)
+	require.Equal(t, "archive/old.ledger", file.Name)
+	require.Equal(t, []string{"archive/old.ledger.backup.2026-11-20-10-00-00.000"}, file.Versions)
+}
