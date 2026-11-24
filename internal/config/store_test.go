@@ -1,0 +1,234 @@
+package config
+
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+const storeMinimalConfig = "journal_path: main.ledger\ndb_path: paisa.db\n"
+
+func newStoreWithFile(t *testing.T) (*Store, string) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "paisa.yaml")
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), path))
+	return store, path
+}
+
+func TestStoreReloadIsConsistent(t *testing.T) {
+	store := NewStore()
+	pathA := filepath.Join(t.TempDir(), "a.yaml")
+	pathB := filepath.Join(t.TempDir(), "b.yaml")
+	require.NoError(t, store.Load([]byte("journal_path: a.ledger\ndb_path: a.db\n"), pathA))
+
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			_ = store.Get()
+		}()
+		go func() {
+			defer wg.Done()
+			_ = store.Load([]byte("journal_path: b.ledger\ndb_path: b.db\n"), pathB)
+		}()
+	}
+	wg.Wait()
+
+	path := store.Get().JournalPath
+	require.Contains(t, []string{"a.ledger", "b.ledger"}, path)
+}
+
+func TestGetReturnsIsolatedCopy(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+commodities:
+  - name: VWCE
+    type: mutualfund
+    price: { provider: com-yahoo, code: VWCE }
+`), filepath.Join(t.TempDir(), "paisa.yaml")))
+
+	first := store.Get()
+	first.Commodities[0].Name = "MUTATED"
+
+	second := store.Get()
+	require.Equal(t, "VWCE", second.Commodities[0].Name)
+}
+
+func TestCloneIsolatesNestedPointersAndSlices(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+salary_income_accounts: [Income:Salary]
+tax_deductions:
+  accounts:
+    - account: Expenses:Health
+      category: health
+`), filepath.Join(t.TempDir(), "paisa.yaml")))
+
+	cfg := store.Get()
+	require.NotNil(t, cfg.SalaryIncomeAccounts)
+	(*cfg.SalaryIncomeAccounts)[0] = "Income:Mutated"
+	cfg.TaxDeductions.Accounts = nil
+
+	again := store.Get()
+	require.Equal(t, []string{"Income:Salary"}, *again.SalaryIncomeAccounts)
+	require.NotNil(t, again.TaxDeductions.Accounts)
+	require.Len(t, *again.TaxDeductions.Accounts, 1)
+}
+
+func TestUpdateIsAtomicAndValidated(t *testing.T) {
+	store, _ := newStoreWithFile(t)
+
+	require.Error(t, store.Update(func(c *Config) error {
+		c.JournalPath = "changed.ledger"
+		return errors.New("reject")
+	}))
+	require.Equal(t, "main.ledger", store.Get().JournalPath)
+
+	require.NoError(t, store.Update(func(c *Config) error {
+		c.JournalPath = "changed.ledger"
+		return nil
+	}))
+	require.Equal(t, "changed.ledger", store.Get().JournalPath)
+}
+
+func TestUpdateRejectsInvalidConfigAndKeepsPreviousSnapshot(t *testing.T) {
+	store, _ := newStoreWithFile(t)
+
+	require.Error(t, store.Update(func(c *Config) error {
+		c.LedgerCli = "not-a-ledger"
+		return nil
+	}))
+	require.Equal(t, "ledger", store.Get().LedgerCli)
+
+	require.Error(t, store.Update(func(c *Config) error {
+		c.TimeZone = "Not/AZone"
+		return nil
+	}))
+	require.Equal(t, "", store.Get().TimeZone)
+	require.Equal(t, "main.ledger", store.Get().JournalPath)
+}
+
+func TestUpdateWritesConfigAndUpdatesTimeZone(t *testing.T) {
+	store, path := newStoreWithFile(t)
+
+	require.NoError(t, store.Update(func(c *Config) error {
+		c.TimeZone = "Europe/Berlin"
+		c.DefaultCurrency = "EUR"
+		return nil
+	}))
+
+	assert.Equal(t, "Europe/Berlin", store.TimeZone().String())
+	assert.Equal(t, "EUR", store.Get().DefaultCurrency)
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "time_zone: Europe/Berlin")
+	assert.Contains(t, string(content), "default_currency: EUR")
+}
+
+func TestUpdateRejectsReadonlyConfig(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig+"readonly: true\n"), filepath.Join(t.TempDir(), "paisa.yaml")))
+
+	err := store.Update(func(c *Config) error {
+		c.JournalPath = "changed.ledger"
+		return nil
+	})
+	require.ErrorIs(t, err, ErrReadonly)
+	require.Equal(t, "main.ledger", store.Get().JournalPath)
+}
+
+func TestStorePathAndConfigDir(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "nested", "paisa.yaml")
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), path))
+
+	assert.Equal(t, path, store.Path())
+	assert.Equal(t, filepath.Dir(path), store.ConfigDir())
+}
+
+func TestLoadFailureKeepsPreviousSnapshot(t *testing.T) {
+	store, path := newStoreWithFile(t)
+
+	err := store.Load([]byte("journal_path: [unterminated\n"), path)
+	require.Error(t, err)
+	assert.Equal(t, "main.ledger", store.Get().JournalPath)
+
+	err = store.Load([]byte("journal_path: other.ledger\ndb_path: other.db\ntax_deductions:\n  accounts:\n    - account: Expenses:Health\n      category: made_up\n"), path)
+	require.Error(t, err)
+	assert.Equal(t, "main.ledger", store.Get().JournalPath)
+}
+
+func TestInitializationTransitions(t *testing.T) {
+	store := NewStore()
+	require.False(t, store.Initialized())
+	require.False(t, store.AutoCreated())
+
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	require.True(t, store.Initialized())
+	require.False(t, store.AutoCreated())
+
+	store.MarkAutoCreated()
+	require.True(t, store.AutoCreated())
+	require.False(t, store.Initialized())
+}
+
+func TestTryBeginOnboardingSucceedsOnce(t *testing.T) {
+	store := NewStore()
+	require.False(t, store.TryBeginOnboarding(), "a store without an auto-created config must not start onboarding")
+
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	store.MarkAutoCreated()
+
+	require.True(t, store.TryBeginOnboarding())
+	require.False(t, store.TryBeginOnboarding(), "the onboarding lock must be exclusive")
+
+	store.AbortOnboarding()
+	require.True(t, store.TryBeginOnboarding(), "aborting must release the lock")
+
+	store.MarkInitialized()
+	require.True(t, store.Initialized())
+	require.False(t, store.AutoCreated())
+	require.False(t, store.TryBeginOnboarding(), "an initialized config must never start onboarding again")
+}
+
+func TestConcurrentTryBeginOnboardingOnlyOneWinner(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	store.MarkAutoCreated()
+
+	var winners int
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if store.TryBeginOnboarding() {
+				mu.Lock()
+				winners++
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+
+	assert.Equal(t, 1, winners)
+}
+
+func TestDefaultStoreIsShared(t *testing.T) {
+	require.NotNil(t, DefaultStore())
+	assert.Same(t, defaultStore, DefaultStore())
+}

@@ -300,7 +300,7 @@ func TestSaveConfigObjectRoundTripsPriceUpdate(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "paisa.yaml")
 	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\nprice_update:\n  time: \"20:00\"\n"), 0644))
-	configPath = ""
+	defaultStore = NewStore()
 	LoadConfigFile(path)
 
 	require.NoError(t, SaveConfigObject(GetConfig()))
@@ -321,7 +321,7 @@ func TestSaveConfigObjectOmitsUnsetPriceUpdate(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "paisa.yaml")
 	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\n"), 0644))
-	configPath = ""
+	defaultStore = NewStore()
 	LoadConfigFile(path)
 
 	require.NoError(t, SaveConfigObject(GetConfig()))
@@ -335,7 +335,7 @@ func TestSaveConfigObjectRoundTripsUnsetTaxDeductions(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "paisa.yaml")
 	require.NoError(t, os.WriteFile(path, []byte("journal_path: test.ledger\ndb_path: test.db\n"), 0644))
-	configPath = ""
+	defaultStore = NewStore()
 	LoadConfigFile(path)
 	require.Nil(t, GetConfig().TaxDeductions)
 	require.NoError(t, SaveConfigObject(GetConfig()))

@@ -2,8 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +12,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"dario.cat/mergo"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 
 	"gopkg.in/yaml.v3"
@@ -236,9 +233,14 @@ type Config struct {
 	CreditCards []CreditCard `json:"credit_cards" yaml:"credit_cards"`
 }
 
-var config Config
-var configPath string
-var location *time.Location
+// defaultStore backs the package-level configuration helpers. New code should
+// depend on a *Store (or DefaultStore()) directly.
+var defaultStore = NewStore()
+
+// DefaultStore returns the process-wide configuration store.
+func DefaultStore() *Store {
+	return defaultStore
+}
 
 var defaultConfig = Config{
 	Readonly:              false,
@@ -281,9 +283,10 @@ var defaultTaxDeductionAccounts = []TaxDeductionAccount{
 }
 
 func TaxDeductionAccounts() []TaxDeductionAccount {
+	cfg := defaultStore.Get()
 	rules := defaultTaxDeductionAccounts
-	if config.TaxDeductions != nil && config.TaxDeductions.Accounts != nil {
-		rules = *config.TaxDeductions.Accounts
+	if cfg.TaxDeductions != nil && cfg.TaxDeductions.Accounts != nil {
+		rules = *cfg.TaxDeductions.Accounts
 	}
 	return append([]TaxDeductionAccount(nil), rules...)
 }
@@ -439,42 +442,25 @@ func SaveConfigObject(config Config) error {
 }
 
 func SaveConfig(content []byte) error {
-	err := LoadConfig(content, "")
+	err := defaultStore.Load(content, "")
 	if err != nil {
 		return err
 	}
 
-	yamlContent, err := yaml.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(configPath, yamlContent, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return defaultStore.save()
 }
 
 func LoadConfigFile(path string) {
-	path, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	content, err := os.ReadFile(path)
-	if err != nil {
-		log.Warn("Failed to read config file: ", path)
+	if err := defaultStore.LoadFile(absPath); err != nil {
 		log.Fatal(err)
 	}
 
-	err = LoadConfig(content, path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Info("Using config file: ", path)
+	log.Info("Using config file: ", absPath)
 }
 
 func normalizePriceProvider(provider string) string {
@@ -499,81 +485,34 @@ func normalizeConfig(value any) {
 	}
 }
 
-func LoadConfig(content []byte, cp string) error {
-	var configJson any
-	err := yaml.Unmarshal(content, &configJson)
-	if err != nil {
-		return err
-	}
-
-	normalizeConfig(configJson)
-
-	rawConfig := map[string]any{}
-	err = yaml.Unmarshal(content, &rawConfig)
-	if err != nil {
-		return err
-	}
-
-	err = schema.Validate(configJson)
-	if err != nil {
-		return errors.New(fmt.Sprintf("Invalid configuration\n%#v", err))
-	}
-
-	config = Config{}
-	err = yaml.Unmarshal(content, &config)
-	if err != nil {
-		return err
-	}
-
-	for i := range config.Commodities {
-		config.Commodities[i].Price.Provider = normalizePriceProvider(config.Commodities[i].Price.Provider)
-	}
-
-	err = mergo.Merge(&config, defaultConfig, mergo.WithOverrideEmptySlice)
-
-	if err != nil {
-		return err
-	}
-
-	applyRegionalProfileDefaults(rawConfig, &config)
-
-	if cp != "" && configPath == "" {
-		configPath = cp
-	}
-
-	if config.TimeZone == "" {
-		location = time.Local
-	} else {
-		location, err = time.LoadLocation(config.TimeZone)
-		if err != nil {
-			location = time.Local
-			return errors.New(fmt.Sprintf("Invalid time zone: %s\n%#v", config.TimeZone, err))
-		}
-	}
-
-	return nil
+// LoadConfig loads the configuration from content. A non-empty path binds the
+// configuration file path used by SaveConfig.
+func LoadConfig(content []byte, path string) error {
+	return defaultStore.Load(content, path)
 }
 
 func GetConfig() Config {
-	return config
+	return defaultStore.Get()
 }
 
 func GetJournalPath() string {
-	if !filepath.IsAbs(config.JournalPath) {
-		return filepath.Join(GetConfigDir(), config.JournalPath)
+	cfg := defaultStore.Get()
+	if !filepath.IsAbs(cfg.JournalPath) {
+		return filepath.Join(GetConfigDir(), cfg.JournalPath)
 	}
 
-	return config.JournalPath
+	return cfg.JournalPath
 }
 
 func GetSheetDir() string {
-	if config.SheetsDirectory == "" {
+	cfg := defaultStore.Get()
+	if cfg.SheetsDirectory == "" {
 		return filepath.Dir(GetJournalPath())
 	}
 
-	dir := config.SheetsDirectory
-	if !filepath.IsAbs(config.SheetsDirectory) {
-		dir = filepath.Join(GetConfigDir(), config.SheetsDirectory)
+	dir := cfg.SheetsDirectory
+	if !filepath.IsAbs(cfg.SheetsDirectory) {
+		dir = filepath.Join(GetConfigDir(), cfg.SheetsDirectory)
 	}
 
 	err := os.MkdirAll(dir, 0750)
@@ -585,19 +524,20 @@ func GetSheetDir() string {
 }
 
 func GetDBPath() string {
-	if !filepath.IsAbs(config.DBPath) {
-		return filepath.Join(GetConfigDir(), config.DBPath)
+	cfg := defaultStore.Get()
+	if !filepath.IsAbs(cfg.DBPath) {
+		return filepath.Join(GetConfigDir(), cfg.DBPath)
 	}
 
-	return config.DBPath
+	return cfg.DBPath
 }
 
 func GetConfigDir() string {
-	return filepath.Dir(configPath)
+	return defaultStore.ConfigDir()
 }
 
 func GetConfigPath() string {
-	return configPath
+	return defaultStore.Path()
 }
 
 func GetSchema() any {
@@ -636,29 +576,26 @@ func EnsureLogFilePath() (string, error) {
 }
 
 func DefaultCurrency() string {
-	return config.DefaultCurrency
+	return defaultStore.Get().DefaultCurrency
 }
 
 func TimeZone() *time.Location {
-	if location != nil {
-		return location
-	}
-
-	return time.Local
+	return defaultStore.TimeZone()
 }
 
 func SupportsTaxFeatures() bool {
-	return config.TaxRegime == TaxRegimeIndia || config.TaxRegime == TaxRegimeGermany
+	regime := defaultStore.Get().TaxRegime
+	return regime == TaxRegimeIndia || regime == TaxRegimeGermany
 }
 
 func SupportsIndiaTaxFeatures() bool {
-	return config.TaxRegime == TaxRegimeIndia
+	return defaultStore.Get().TaxRegime == TaxRegimeIndia
 }
 
 func SupportsScheduleAL() bool {
-	return config.TaxRegime == TaxRegimeIndia
+	return defaultStore.Get().TaxRegime == TaxRegimeIndia
 }
 
 func SupportsGermanyTaxFeatures() bool {
-	return config.TaxRegime == TaxRegimeGermany
+	return defaultStore.Get().TaxRegime == TaxRegimeGermany
 }
