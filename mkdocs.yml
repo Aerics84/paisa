@@ -31,6 +31,7 @@ nav:
       - reference/investment.md
       - reference/analysis.md
       - reference/dependency-maintenance.md
+      - reference/test-coverage.md
       - "Tax":
           - reference/tax/index.md
           - reference/tax/deductions.md

@@ -105,7 +105,7 @@ jobs:
 
       - run: npm run test:unit
 
-      - run: npm run test:coverage
+      - run: npm run check:coverage
 
       - name: P-PDF
         shell: bash

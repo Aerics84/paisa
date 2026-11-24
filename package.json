@@ -15,6 +15,7 @@
     "test:monthly": "bun test --preload ./src/happydom.ts src/lib/monthly_review.test.ts",
     "test:unit": "bun test --preload ./src/happydom.ts src",
     "test:coverage": "bun test --coverage --preload ./src/happydom.ts src",
+    "check:coverage": "node ./scripts/check-coverage.mjs",
     "test:all": "npm run test:unit && npm run test:regression",
     "test": "npm run build && bun test --preload ./src/happydom.ts src && go test ./...",
     "test:regression": "bun test tests/regression.test.ts",

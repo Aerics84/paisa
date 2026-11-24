@@ -1,2 +1,6 @@
 [test]
-coverageThreshold = { lines = 0.75, functions = 0.75 }
+# Do not set `coverageThreshold` here. Bun 1.4.4 enforces that key per file and
+# silently exits non-zero when any single file is below it, which cannot express
+# an aggregate ratchet and fails on files with deliberately low coverage.
+# The authoritative aggregate gate (lines 75 %, functions 75 %) lives in
+# scripts/check-coverage.mjs and runs via `npm run check:coverage`.

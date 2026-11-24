@@ -54,7 +54,7 @@ jobs:
           nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && bun --version && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
       - run: npm run test:unit
-      - run: npm run test:coverage
+      - run: npm run check:coverage
       - name: Install govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
