@@ -3,16 +3,22 @@
   import { onMount } from "svelte";
   import { TabulatorFull as Tabulator, type ColumnDefinition } from "tabulator-tables";
 
-  export let data: any[];
-  export let columns: ColumnDefinition[];
-  export let tree = false;
+  interface Props {
+    data: any[];
+    columns: ColumnDefinition[];
+    tree?: boolean;
+  }
+
+  let { data, columns, tree = false }: Props = $props();
 
   let tableComponent: HTMLElement;
   let tabulator: Tabulator;
 
-  $: if (data.length > 0) {
-    build();
-  }
+  $effect(() => {
+    if (data.length > 0) {
+      build();
+    }
+  });
 
   async function build() {
     if (data.length === 0) {

@@ -12,13 +12,17 @@
   import { renderRecurring } from "$lib/recurring";
   import _ from "lodash";
 
-  export let ts: TransactionSequence;
-  export let schedule: TransactionSchedule;
+  interface Props {
+    ts: TransactionSequence;
+    schedule: TransactionSchedule;
+  }
+
+  let { ts, schedule }: Props = $props();
   const HEIGHT = 50;
-  const icon = scheduleIcon(schedule);
+  let icon = $derived(scheduleIcon(schedule));
 
   let carousel: Carousel;
-  let pageSize = _.min([20, ts.transactions.length]);
+  let pageSize = $derived(_.min([20, ts.transactions.length]));
 
   function showPage(pageIndex: number) {
     carousel.goTo(pageSize - 1 - pageIndex);
@@ -77,8 +81,8 @@
       <div
         slot="prev"
         let:showPrevPage
-        on:click={showPrevPage}
-        on:keydown={(e) => {
+        onclick={showPrevPage}
+        onkeydown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             showPrevPage();
@@ -98,8 +102,8 @@
       <div
         slot="next"
         let:showNextPage
-        on:click={showNextPage}
-        on:keydown={(e) => {
+        onclick={showNextPage}
+        onkeydown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             showNextPage();

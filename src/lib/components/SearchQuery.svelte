@@ -2,17 +2,24 @@
   import { createEditor } from "$lib/search_query_editor";
   import type { EditorView } from "codemirror";
 
-  let editorDom: HTMLElement;
-  export let autocomplete: Record<string, string[]>;
+  interface Props {
+    autocomplete: Record<string, string[]>;
+  }
+
+  let { autocomplete }: Props = $props();
+
+  let editorDom = $state<HTMLElement>();
   let editor: EditorView;
 
-  $: if (autocomplete && editorDom) {
-    if (editor) {
-      editor.destroy();
-    }
+  $effect(() => {
+    if (autocomplete && editorDom) {
+      if (editor) {
+        editor.destroy();
+      }
 
-    editor = createEditor("", editorDom, autocomplete);
-  }
+      editor = createEditor("", editorDom, autocomplete);
+    }
+  });
 </script>
 
 <div class="search-query-editor" bind:this={editorDom}></div>

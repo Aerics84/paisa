@@ -6,9 +6,11 @@
   const currencies = _.map(USER_CONFIG.networth_currencies || [], (c) => c.name);
 
   // forget a stored selection that is no longer configured
-  $: if ($selectedCurrency && !_.includes(currencies, $selectedCurrency)) {
-    $selectedCurrency = "";
-  }
+  $effect(() => {
+    if ($selectedCurrency && !_.includes(currencies, $selectedCurrency)) {
+      $selectedCurrency = "";
+    }
+  });
 </script>
 
 {#if !_.isEmpty(currencies)}

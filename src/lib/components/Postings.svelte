@@ -20,7 +20,11 @@
     }
   };
 
-  export let postings: Posting[];
+  interface Props {
+    postings: Posting[];
+  }
+
+  let { postings }: Props = $props();
 </script>
 
 <div style="margin: 4px 0;">
