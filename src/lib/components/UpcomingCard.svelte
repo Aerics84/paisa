@@ -12,9 +12,13 @@
     type TransactionSequence
   } from "$lib/utils";
 
-  export let transactionSequece: TransactionSequence;
+  interface Props {
+    transactionSequece: TransactionSequence;
+  }
 
-  let schedule = nextUnpaidSchedule(transactionSequece);
+  let { transactionSequece }: Props = $props();
+
+  let schedule = $derived(nextUnpaidSchedule(transactionSequece));
 
   function progress(scheduled: TransactionSchedule["scheduled"]) {
     if (scheduled.isBefore(now()) || !transactionSequece.interval) {

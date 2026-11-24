@@ -1,12 +1,18 @@
 <script lang="ts">
   import _ from "lodash";
 
-  export let options: { label: string; value: any }[];
-  export let value: any;
-
-  $: if (value && !options.find((option) => option.value === value) && !_.isEmpty(options)) {
-    value = _.last(options).value;
+  interface Props {
+    options: { label: string; value: any }[];
+    value?: any;
   }
+
+  let { options, value = $bindable() }: Props = $props();
+
+  $effect(() => {
+    if (value && !options.find((option) => option.value === value) && !_.isEmpty(options)) {
+      value = _.last(options).value;
+    }
+  });
 </script>
 
 <div class="boxed-tabs">
@@ -15,7 +21,7 @@
       class="boxed-tab {option.value === value ? 'is-active' : ''}"
       type="button"
       aria-pressed={option.value === value}
-      on:click={() => (value = option.value)}
+      onclick={() => (value = option.value)}
     >
       {option.label}
     </button>

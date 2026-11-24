@@ -1,17 +1,31 @@
 <script lang="ts">
-  export let label = "";
-  export let value = "";
-  export let meta = "";
-  export let variant: "metric" | "rank" | "trend" = "metric";
-  export let valueClass = "";
+  import type { Snippet } from "svelte";
+
+  interface Props {
+    label?: string;
+    value?: string;
+    meta?: string;
+    variant?: "metric" | "rank" | "trend";
+    valueClass?: string;
+    children?: Snippet;
+  }
+
+  let {
+    label = "",
+    value = "",
+    meta = "",
+    variant = "metric",
+    valueClass = "",
+    children
+  }: Props = $props();
 </script>
 
 <div class={`paisa-stat-strip__item paisa-stat-strip__item--${variant}`}>
   <div class={`paisa-stat-strip__stack paisa-stat-strip__stack--${variant}`}>
     <span>{label}</span>
 
-    {#if $$slots.default}
-      <slot />
+    {#if children}
+      {@render children()}
     {:else}
       <strong class={valueClass}>{value}</strong>
       {#if meta}

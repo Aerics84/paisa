@@ -396,7 +396,7 @@
           <aside class="menu">
             <FileTree
               path=""
-              on:select={(e) => selectFile(e.detail)}
+              onselect={(file) => selectFile(file)}
               files={buildDirectoryTree(_.values(filesMap))}
               selectedFileName={selectedFile?.name}
               hasUnsavedChanges={$editorState.hasUnsavedChanges}
