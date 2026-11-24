@@ -59,6 +59,7 @@ jobs:
       - run: node scripts/check-a11y-policy.mjs
       - run: node scripts/check-docs.mjs
       - run: npm run check:coverage
+      - run: node scripts/check-runes.mjs
       - name: Install govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
