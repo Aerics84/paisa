@@ -1,24 +1,36 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
 const read = (path) => readFileSync(path, "utf8");
 const goMod = read("go.mod");
 const readme = read("README.md");
-const hooks = read("src/hooks.client.ts");
 const mkdocs = read("mkdocs.yml");
 
 const goVersion = goMod.match(/^go (\d+\.\d+)/m)?.[1];
 if (!goVersion) throw new Error("go version missing in go.mod");
 
 const failures = [];
-if (!readme.includes(`go-${goVersion}-`) || !readme.includes(`Go ${goVersion}`)) {
-  failures.push(`README must mention Go ${goVersion}`);
+const badgeVersions = [...readme.matchAll(/go-(\d+\.\d+)-/g)].map((match) => match[1]);
+const textVersions = [...readme.matchAll(/Go (\d+\.\d+)/g)].map((match) => match[1]);
+if (!badgeVersions.length || !textVersions.length) {
+  failures.push(`README must mention Go ${goVersion} in a badge and in text`);
 }
-const staleGo = ["Go 1.24", "go-1.24"].filter((needle) => readme.includes(needle));
-if (staleGo.length) {
-  failures.push(`README must not mention ${staleGo.join(" or ")}`);
+const staleVersions = [...new Set([...badgeVersions, ...textVersions])].filter(
+  (version) => version !== goVersion
+);
+if (staleVersions.length) {
+  failures.push(
+    `README mentions stale Go ${staleVersions.join(", Go ")}; expected Go ${goVersion}`
+  );
 }
-if (hooks.includes("ananthakumaran/paisa/issues")) {
-  failures.push("error footer must point to the fork issue tracker");
+const upstreamIssueLinks = readdirSync("src", { recursive: true })
+  .filter((file) => /\.(ts|svelte)$/.test(file))
+  .map((file) => join("src", file))
+  .filter((file) => read(file).includes("ananthakumaran/paisa/issues"));
+if (upstreamIssueLinks.length) {
+  failures.push(
+    `upstream issue link in ${upstreamIssueLinks.join(", ")}; use the fork issue tracker`
+  );
 }
 if (!mkdocs.includes("github.com/Aerics84/paisa")) {
   failures.push("mkdocs repo_url must point to the fork");
