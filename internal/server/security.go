@@ -12,31 +12,41 @@ import (
 )
 
 // cspTemplate is the Content-Security-Policy sent with every response. The
-// single %s is the script-src directive value, which is either a hash of the
-// inline bootstrap script or the 'unsafe-inline' fallback.
+// single %s is the script-src directive value, which is either the hashes of
+// the inline bootstrap scripts or the 'unsafe-inline' fallback.
 const cspTemplate = "default-src 'self'; script-src 'self' %s; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 var (
 	scriptTagPattern = regexp.MustCompile(`(?is)<script\b([^>]*)>(.*?)</script\s*>`)
-	scriptSrcPattern = regexp.MustCompile(`(?i)\bsrc\s*=`)
+	// Match src only when it is the whole attribute name, so data-src (or any
+	// other *-src attribute) is not treated as an external script source.
+	scriptSrcPattern = regexp.MustCompile(`(?i)(?:^|\s)src\s*=`)
 )
 
-// BuildCSP returns the Content-Security-Policy header value. When scriptHash
-// is empty (inline script extraction failed), it falls back to 'unsafe-inline'
-// so the application keeps working.
-func BuildCSP(scriptHash string) string {
+// BuildCSP returns the Content-Security-Policy header value. Every hash becomes
+// a separate 'sha256-...' source. An empty list (inline script extraction
+// failed) falls back to 'unsafe-inline' so the application keeps working.
+func BuildCSP(scriptHashes []string) string {
 	scriptSrc := "'unsafe-inline'"
-	if scriptHash != "" {
-		scriptSrc = fmt.Sprintf("'sha256-%s'", scriptHash)
+
+	sources := make([]string, 0, len(scriptHashes))
+	for _, hash := range scriptHashes {
+		if hash == "" {
+			continue
+		}
+		sources = append(sources, fmt.Sprintf("'sha256-%s'", hash))
+	}
+	if len(sources) > 0 {
+		scriptSrc = strings.Join(sources, " ")
 	}
 
 	return fmt.Sprintf(cspTemplate, scriptSrc)
 }
 
 // SecurityHeaders adds hardening headers to every response and allows only the
-// hashed inline bootstrap script.
-func SecurityHeaders(scriptHash string) gin.HandlerFunc {
-	csp := BuildCSP(scriptHash)
+// hashed inline bootstrap scripts.
+func SecurityHeaders(scriptHashes []string) gin.HandlerFunc {
+	csp := BuildCSP(scriptHashes)
 
 	return func(c *gin.Context) {
 		header := c.Writer.Header()
@@ -49,10 +59,17 @@ func SecurityHeaders(scriptHash string) gin.HandlerFunc {
 	}
 }
 
-// extractInlineScriptHash returns the base64 encoded SHA-256 of the first
+// extractInlineScriptHashes returns the base64 encoded SHA-256 of every
 // non-empty inline <script> in html. Scripts that load external sources via a
 // src attribute are ignored. It returns an error when no inline script exists.
-func extractInlineScriptHash(html []byte) (string, error) {
+//
+// The extractor is a deliberately simple regex matcher: it assumes a literal
+// "</script>" never appears inside a JavaScript string and that no inline
+// script is hidden inside an HTML comment. Unexpected script counts are not
+// errors because every discovered inline script is hashed.
+func extractInlineScriptHashes(html []byte) ([]string, error) {
+	hashes := make([]string, 0, 1)
+
 	for _, match := range scriptTagPattern.FindAllSubmatch(html, -1) {
 		attributes := string(match[1])
 		content := string(match[2])
@@ -66,8 +83,12 @@ func extractInlineScriptHash(html []byte) (string, error) {
 		}
 
 		sum := sha256.Sum256([]byte(content))
-		return base64.StdEncoding.EncodeToString(sum[:]), nil
+		hashes = append(hashes, base64.StdEncoding.EncodeToString(sum[:]))
 	}
 
-	return "", errors.New("no inline script found")
+	if len(hashes) == 0 {
+		return nil, errors.New("no inline script found")
+	}
+
+	return hashes, nil
 }

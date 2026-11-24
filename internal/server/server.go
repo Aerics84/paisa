@@ -60,11 +60,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	db := deps.DB
 
 	router := gin.New()
-	scriptHash, err := extractInlineScriptHash([]byte(web.Index))
+	scriptHashes, err := extractInlineScriptHashes([]byte(web.Index))
 	if err != nil {
 		log.Warnf("could not hash inline bootstrap script: %v", err)
 	}
-	router.Use(SecurityHeaders(scriptHash))
+	router.Use(SecurityHeaders(scriptHashes))
 	// Do not trust X-Forwarded-For from arbitrary clients. Otherwise a caller
 	// can rotate the header to bypass the per-IP rate limiter.
 	if err := router.SetTrustedProxies(nil); err != nil {
