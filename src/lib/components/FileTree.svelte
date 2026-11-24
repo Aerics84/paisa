@@ -25,13 +25,13 @@
   }
 </script>
 
-<ul class={root && "du-menu du-menu-sm w-full p-0"}>
+<ul class={root && "file-tree w-full p-0"}>
   {#each files as file}
     {#if file.type != "directory"}
       <li>
         <button
           on:click={() => dispatch("select", file)}
-          class={"button-reset " + (file.name == selectedFileName ? "du-active" : "")}
+          class={"button-reset " + (file.name == selectedFileName ? "is-active" : "")}
           type="button"
         >
           <span class="icon is-small">

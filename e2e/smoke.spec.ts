@@ -19,3 +19,19 @@ test("import page exposes the staging flow", async ({ page }) => {
   await expect(page.getByTestId("import-page")).toBeVisible();
   await expect(page.getByTestId("file-dropzone")).toBeVisible();
 });
+
+test("replacement UI components render without client errors", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await page.goto("/expense/monthly");
+  await expect(page.locator(".boxed-tabs")).toBeVisible();
+
+  await page.goto("/ledger/editor");
+  await expect(page.locator(".file-tree")).toBeVisible();
+
+  await page.goto("/more/config");
+  await expect(page.getByTestId("config-page")).toBeVisible();
+
+  expect(errors).toEqual([]);
+});

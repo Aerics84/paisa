@@ -22,7 +22,6 @@ $yellow: $amber-500;
 
 @import "bulma/sass/utilities";
 @import "bulma/sass/utilities/mixins";
-@import "@fortawesome/fontawesome-free/scss/fontawesome.scss";
 
 $menu-item-hover-background-color: rgba($link, 0.12);
 $menu-item-active-color: $link;
@@ -95,52 +94,201 @@ $footerActiveColor: #d00;
   }
 }
 
-// daisy UI color override
-.du-tabs {
-  --rounded-btn: #{$radius};
-  background-color: $grey-lightest !important;
+// Boxed tab selector (replaces daisyUI `tabs-box tabs-sm`).
+.boxed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.25rem;
+  background-color: $grey-lightest;
+  border-radius: 0.625rem;
+}
 
-  .du-tab {
-    color: $grey-dark !important;
-    // daisyUI 5 emits component rules inside `@layer utilities`, so Bulma's
-    // unlayered `button` reset (`padding: 0; font-size: 1em`) wins over the
-    // layered `.du-tab` metrics. Re-assert the `tabs-sm` metrics here so the
-    // month selector keeps its boxed pill shape.
-    padding-inline: var(--du-tab-p, 0.5rem);
-    font-size: 0.875rem;
+.boxed-tab {
+  min-height: 38px;
+  height: auto;
+  padding-inline: 0.5rem;
+  border: none;
+  border-radius: $radius;
+  background: none;
+  color: $grey-dark;
+  font-size: 0.875rem;
+  cursor: pointer;
 
-    &.du-tab-active {
-      background-color: $white !important;
-      color: $black-bis !important;
-    }
+  &:hover {
+    color: $black-bis;
+  }
+
+  &.is-active {
+    background-color: $white;
+    color: $black-bis;
   }
 }
 
-.du-menu {
-  summary:after {
-    color: $link;
+// Hierarchical file menu (replaces daisyUI `menu menu-sm`).
+.file-tree {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: 0.875rem;
+  list-style: none;
+
+  ul {
+    position: relative;
+    margin: 0;
+    margin-inline-start: 1rem;
+    padding: 0;
+    padding-inline-start: 0.5rem;
+    list-style: none;
+
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0.75rem;
+      bottom: 0.75rem;
+      left: 0;
+      width: 1px;
+      background-color: $grey-lightest;
+    }
   }
 
-  a,
+  li {
+    list-style: none;
+  }
+
+  button,
   summary {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(auto, max-content) auto max-content;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
     border-radius: $radius-small;
     color: $grey-dark;
+    text-align: start;
+    user-select: none;
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      background-color 0.2s;
+
+    &:hover {
+      background-color: $white-ter;
+    }
   }
 
-  a:hover,
-  summary:hover {
-    background-color: $white-ter !important;
+  summary {
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:after {
+      content: "";
+      justify-self: flex-end;
+      width: 0.375rem;
+      height: 0.375rem;
+      transform: rotate(-135deg);
+      box-shadow: inset 2px 2px;
+      color: $link;
+      transition: rotate 0.2s;
+      pointer-events: none;
+    }
   }
 
-  a.du-active {
-    color: $link !important;
+  details[open] > summary:after {
+    rotate: 45deg;
+  }
+
+  .is-active {
     background-color: $white !important;
+    color: $link !important;
     font-weight: bold;
   }
 }
 
-.du-range {
-  --range-shdw: var(--fallback-bc, oklch(var(--nc) / 1));
+// Native range input styled like the former daisyUI `range range-xs`.
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: clamp(3rem, 20rem, 100%);
+  height: 1rem;
+  margin: 0;
+  background: transparent;
+  color: $grey;
+  cursor: pointer;
+  vertical-align: middle;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+
+  &::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    border-radius: $radius;
+    background-color: rgba($grey, 0.2);
+  }
+
+  &::-moz-range-track {
+    height: 0.5rem;
+    border: none;
+    border-radius: $radius;
+    background-color: rgba($grey, 0.2);
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.25rem;
+    border: 0.25rem solid currentColor;
+    border-radius: 50%;
+    background-color: $white;
+  }
+
+  &::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    border: 0.25rem solid currentColor;
+    border-radius: 50%;
+    background-color: $white;
+  }
+}
+
+// Radial progress ring (replaces daisyUI `radial-progress`).
+.radial-progress {
+  --value: 0;
+  --size: 5rem;
+  --thickness: calc(var(--size) / 10);
+
+  position: relative;
+  display: inline-grid;
+  flex-shrink: 0;
+  place-content: center;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  &:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(currentColor calc(var(--value) * 1%), transparent 0);
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - var(--thickness)),
+      #000 calc(100% + 0.5px - var(--thickness))
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - var(--thickness)),
+      #000 calc(100% + 0.5px - var(--thickness))
+    );
+  }
 }
 
 .modal-background {
@@ -1643,8 +1791,7 @@ div.is-hoverable:hover {
     min-height: 44px;
   }
 
-  .du-tabs .du-tab,
-  .du-tabs-sm .du-tab {
+  .boxed-tab {
     min-height: 38px;
     height: auto;
   }

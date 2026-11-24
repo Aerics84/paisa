@@ -53,6 +53,7 @@ jobs:
           npm run build
           nix develop --command bash -lc 'go build && export PATH="${BUN_INSTALL:-$HOME/.bun}/bin:$PATH" && bun --version && unset PAISA_CONFIG && TZ=UTC bun test tests/regression.test.ts'
           nix develop --command go test ./...
+      - run: node scripts/check-assets.mjs
       - run: npm run check:api
       - run: node scripts/check-preview-parity.mjs
       - run: node scripts/check-a11y-policy.mjs
@@ -94,6 +95,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+      - run: node scripts/check-assets.mjs
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()

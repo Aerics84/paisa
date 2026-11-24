@@ -9,10 +9,10 @@
   }
 </script>
 
-<div class="du-tabs du-tabs-box du-tabs-sm">
+<div class="boxed-tabs">
   {#each options as option}
     <button
-      class="du-tab {option.value === value ? 'du-tab-active' : ''}"
+      class="boxed-tab {option.value === value ? 'is-active' : ''}"
       type="button"
       on:click={() => (value = option.value)}
     >

@@ -5,11 +5,25 @@
     scheduleIcon,
     totalRecurring
   } from "$lib/transaction_sequence";
-  import { formatCurrencyCrude, now, type TransactionSequence } from "$lib/utils";
+  import {
+    formatCurrencyCrude,
+    now,
+    type TransactionSchedule,
+    type TransactionSequence
+  } from "$lib/utils";
 
   export let transactionSequece: TransactionSequence;
 
   let schedule = nextUnpaidSchedule(transactionSequece);
+
+  function progress(scheduled: TransactionSchedule["scheduled"]) {
+    if (scheduled.isBefore(now()) || !transactionSequece.interval) {
+      return 0;
+    }
+
+    const percent = (scheduled.diff(now(), "day") / transactionSequece.interval) * 100;
+    return Math.max(0, Math.min(100, percent));
+  }
 </script>
 
 {#if schedule}
@@ -28,15 +42,14 @@
     </div>
     <div class="grid justify-center">
       <div
-        class="mx-3 mt-3 du-radial-progress is-size-7 has-text-grey-lighter opacity-20"
+        class="radial-progress mx-3 mt-3 is-size-7 has-text-grey-lighter opacity-20"
         style="--value: 100; --thickness: 3px; --size: 100px; grid-area: 1/1"
       ></div>
       <div
-        class="mx-3 mt-3 du-radial-progress is-size-7 {icon.color}"
-        style="--value: {n.isBefore(now())
-          ? '0'
-          : (schedule.scheduled.diff(now(), 'day') / transactionSequece.interval) *
-            100}; --thickness: 3px; --size: 100px; ; grid-area: 1/1"
+        class="radial-progress mx-3 mt-3 is-size-7 {icon.color}"
+        style="--value: {progress(
+          schedule.scheduled
+        )}; --thickness: 3px; --size: 100px; grid-area: 1/1"
       >
         <div class="is-size-6">
           <span class="icon">

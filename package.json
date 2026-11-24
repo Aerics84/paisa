@@ -109,7 +109,6 @@
     "axios": "^1.15.2",
     "bun-types": "^1.4.4",
     "concurrently": "^10.0.6",
-    "daisyui": "^5.5.19",
     "date-picker-svelte": "^3.0.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
