@@ -719,7 +719,7 @@ func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
 			},
 			{
 				Date:            "2026/10/11",
-				Payee:           "Bakery & CafÃ©",
+				Payee:           "Bakery & Café",
 				Amount:          12.50,
 				Currency:        "INR",
 				IsDebit:         true,
@@ -734,5 +734,5 @@ func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
 	assert.Contains(t, out, `2026-10-11 * "Consolidated Debits (2 items)"`)
 	assert.NotContains(t, out, "2026/10/11")
 	assert.Contains(t, out, "Coffee Shop")
-	assert.Contains(t, out, "Bakery CafÃ©")
+	assert.Contains(t, out, "Bakery Café")
 }

@@ -44,7 +44,7 @@ func TestBackgroundPriceSyncEndToEnd(t *testing.T) {
 	runner := pricesync.NewRunner()
 
 	var syncErr error
-	manager := pricesync.New(db, config.GetConfig, store,
+	manager := pricesync.New(db, config.DefaultStore().Get, store,
 		func(pricesync.SyncOptions) pricesync.Outcome {
 			// Write a price directly, as the real sync function would. The
 			// error is captured here and asserted on the test goroutine after
@@ -91,7 +91,7 @@ func TestPartialRunInvalidatesCacheOnce(t *testing.T) {
 
 	store := pricesync.NewMemoryStateStore()
 	runner := pricesync.NewRunner()
-	manager := pricesync.New(db, config.GetConfig, store,
+	manager := pricesync.New(db, config.DefaultStore().Get, store,
 		func(pricesync.SyncOptions) pricesync.Outcome {
 			cache.Clear()
 			return pricesync.Outcome{Success: false, Partial: true, FailedCommodities: []string{"NFLX"}}
@@ -124,7 +124,7 @@ func TestBackgroundSyncHTTPEndToEnd(t *testing.T) {
 	runner := pricesync.NewRunner()
 
 	var syncErr error
-	manager := pricesync.New(db, config.GetConfig, store,
+	manager := pricesync.New(db, config.DefaultStore().Get, store,
 		func(pricesync.SyncOptions) pricesync.Outcome {
 			syncErr = price.UpsertMerged(db, config.Stock, "MSFT", "MSFT",
 				[]*price.Price{{

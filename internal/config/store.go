@@ -184,7 +184,9 @@ func (s *Store) ConfigDir() string {
 	return filepath.Dir(s.Path())
 }
 
-// JournalPath returns the absolute path of the journal file.
+// JournalPath returns the path of the journal file. A relative journal path is
+// resolved against the bound configuration directory; the result is only
+// guaranteed to be absolute when the store was loaded from an absolute path.
 func (s *Store) JournalPath() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -219,7 +221,9 @@ func (s *Store) SheetDir() string {
 	return dir
 }
 
-// DBPath returns the absolute path of the database file.
+// DBPath returns the path of the database file. A relative DB path is resolved
+// against the bound configuration directory; the result is only guaranteed to
+// be absolute when the store was loaded from an absolute path.
 func (s *Store) DBPath() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

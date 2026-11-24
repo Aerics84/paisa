@@ -49,7 +49,7 @@ func openSyncTestDBWithConfig(t *testing.T, content string) *gorm.DB {
 // network. Tests that need to control the sync function construct their own
 // manager inline.
 func testPriceManager(t *testing.T, db *gorm.DB) *pricesync.Manager {
-	return pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(),
+	return pricesync.New(db, config.DefaultStore().Get, pricesync.NewMemoryStateStore(),
 		func(pricesync.SyncOptions) pricesync.Outcome {
 			return pricesync.Outcome{Success: true}
 		}, pricesync.NewRunner(), time.Now)
@@ -125,7 +125,7 @@ func TestBackgroundSyncRequiresPrices(t *testing.T) {
 		atomic.AddInt32(&calls, 1)
 		return pricesync.Outcome{Success: true}
 	}
-	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
+	manager := pricesync.New(db, config.DefaultStore().Get, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
 	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"background":true}`
@@ -152,7 +152,7 @@ readonly: true
 		atomic.AddInt32(&calls, 1)
 		return pricesync.Outcome{Success: true}
 	}
-	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
+	manager := pricesync.New(db, config.DefaultStore().Get, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
 	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
@@ -175,7 +175,7 @@ func TestSyncStatusIncludesJobID(t *testing.T) {
 		<-release
 		return pricesync.Outcome{Success: true}
 	}
-	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
+	manager := pricesync.New(db, config.DefaultStore().Get, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
 	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
@@ -209,7 +209,7 @@ func TestConcurrentBackgroundRequestsStartOneJob(t *testing.T) {
 		<-release
 		return pricesync.Outcome{Success: true}
 	}
-	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
+	manager := pricesync.New(db, config.DefaultStore().Get, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
 	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`

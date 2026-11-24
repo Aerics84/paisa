@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -54,8 +55,24 @@ func currencyTestDate(day int) time.Time {
 func TestNetworthHandlerUsesInjectedConfig(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// The auth middleware reads the process-wide store. Keep the global
-	// configuration userless so the request without credentials is allowed.
+	// The auth middleware no longer reads the process-wide store, so this global
+	// LoadConfig is only a negative control: it clears any networth_currencies
+	// leaked by earlier tests. The response must still come from the injected
+	// store below.
+	globalStore := config.DefaultStore()
+	previousGlobal := globalStore.Get()
+	previousInitialized := globalStore.Initialized()
+	previousPath := globalStore.Path()
+	t.Cleanup(func() {
+		if !previousInitialized {
+			return
+		}
+		content, err := yaml.Marshal(previousGlobal)
+		if err != nil {
+			return
+		}
+		_ = config.LoadConfig(content, previousPath)
+	})
 	require.NoError(t, config.LoadConfig([]byte("journal_path: global.ledger\ndb_path: global.db\ndefault_currency: INR\n"), ""))
 
 	store := config.NewStore()
@@ -79,6 +96,8 @@ networth_currencies:
 	var body NetworthResponse
 	require.NoError(t, json.Unmarshal(response.Body.Bytes(), &body))
 	require.Len(t, body.CurrencyNetworths, 1)
+	require.Equal(t, "USD", body.CurrencyNetworths[0].Name)
+	require.Equal(t, "$", body.CurrencyNetworths[0].Symbol)
 	require.Equal(t, "USD", body.CurrencyNetworths[0].Commodity)
 }
 
