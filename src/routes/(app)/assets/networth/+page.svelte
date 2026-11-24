@@ -19,41 +19,43 @@
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { selectedCurrency } from "../../../../persisted_store";
 
-  let points: Networth[] = [];
-  let defaultPoints: Networth[] = [];
-  let currencyNetworths: CurrencyNetworth[] = [];
-  let stats = { networth: 0, investment: 0, gain: 0, xirr: 0 };
-  let svg: Element;
-  let destroy: () => void;
-  let legends: Legend[] = [];
+  let defaultPoints = $state<Networth[]>([]);
+  let currencyNetworths = $state<CurrencyNetworth[]>([]);
+  let svg = $state<Element>();
+  let destroy: (() => void) | undefined;
+  let legends = $state<Legend[]>([]);
 
-  $: selected = _.find(currencyNetworths, (c) => c.name === $selectedCurrency);
-  $: symbol = selected?.symbol || "";
-  $: points = selected ? selected.networthTimeline : defaultPoints;
-  $: fmt = (v: number) => (symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v));
-  $: stats = computePeriodStats(points, $dateRange.from, $dateRange.to);
-  $: showKpis = hasNetworthKpiData(selected, points);
+  let selected = $derived(_.find(currencyNetworths, (c) => c.name === $selectedCurrency));
+  let symbol = $derived(selected?.symbol || "");
+  let points = $derived(selected ? selected.networthTimeline : defaultPoints);
+  let fmt = $derived((v: number) =>
+    symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v)
+  );
+  let stats = $derived(computePeriodStats(points, $dateRange.from, $dateRange.to));
+  let showKpis = $derived(hasNetworthKpiData(selected, points));
 
-  $: if (svg) {
-    if (destroy) {
-      destroy();
-      destroy = null;
+  $effect(() => {
+    if (svg) {
+      if (destroy) {
+        destroy();
+        destroy = undefined;
+      }
+
+      const inRange = _.filter(
+        points,
+        (p) => p.date.isSameOrBefore($dateRange.to) && p.date.isSameOrAfter($dateRange.from)
+      );
+
+      if (_.isEmpty(inRange)) {
+        // D3 owns this container; Svelte only supplies the element.
+        // eslint-disable-next-line svelte/no-dom-manipulating
+        svg.innerHTML = "";
+        legends = [];
+      } else {
+        ({ destroy, legends } = renderNetworth(inRange, svg, { currencySymbol: symbol }));
+      }
     }
-
-    const inRange = _.filter(
-      points,
-      (p) => p.date.isSameOrBefore($dateRange.to) && p.date.isSameOrAfter($dateRange.from)
-    );
-
-    if (_.isEmpty(inRange)) {
-      // D3 owns this container; Svelte only supplies the element.
-      // eslint-disable-next-line svelte/no-dom-manipulating
-      svg.innerHTML = "";
-      legends = [];
-    } else {
-      ({ destroy, legends } = renderNetworth(inRange, svg, { currencySymbol: symbol }));
-    }
-  }
+  });
 
   onDestroy(async () => {
     if (destroy) {

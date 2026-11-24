@@ -7,17 +7,15 @@
   import { setAllowedDateRange, year } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
 
-  let scheduleAls: Record<string, ScheduleAL>;
-  let selectedScheduleAl: ScheduleAL;
-  let loaded = false;
+  let scheduleAls = $state<Record<string, ScheduleAL>>();
+  let selectedScheduleAl = $derived(scheduleAls ? scheduleAls[$year] : undefined);
+  let loaded = $state(false);
 
-  $: if (scheduleAls) {
-    selectedScheduleAl = scheduleAls[$year];
-  }
-
-  $: if (selectedScheduleAl) {
-    renderBreakdowns(selectedScheduleAl.entries);
-  }
+  $effect(() => {
+    if (selectedScheduleAl) {
+      renderBreakdowns(selectedScheduleAl.entries);
+    }
+  });
 
   onMount(async () => {
     ({ schedule_als: scheduleAls } = await getScheduleAL());

@@ -11,8 +11,8 @@
   import { onMount } from "svelte";
   import type { ColumnDefinition } from "tabulator-tables";
 
-  let breakdowns: Record<string, LiabilityBreakdown> = {};
-  let isEmpty = false;
+  let breakdowns = $state<Record<string, LiabilityBreakdown>>({});
+  let isEmpty = $state(false);
 
   onMount(async () => {
     ({ liability_breakdowns: breakdowns } = await getLiabilityBalance());
@@ -57,10 +57,7 @@
     { title: "APR", field: "apr", hozAlign: "right", formatter: nonZeroFloatChange }
   ];
 
-  let tree: LiabilityBreakdown[] = [];
-  $: if (breakdowns) {
-    tree = buildTree(Object.values(breakdowns), (i) => i.group);
-  }
+  let tree = $derived(buildTree(Object.values(breakdowns), (i) => i.group));
 </script>
 
 <section class="section" class:is-hidden={!isEmpty}>

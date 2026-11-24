@@ -8,19 +8,19 @@
   import _ from "lodash";
   import { onMount } from "svelte";
 
-  let commodities: string[] = [];
-  let selectedCommodities: string[] = [];
-  let security_type: PortfolioAggregate[] = [];
-  let name_and_security_type: PortfolioAggregate[] = [];
-  let rating: PortfolioAggregate[] = [];
-  let industry: PortfolioAggregate[] = [];
-  let isEmpty = false;
-  let color: any;
+  let commodities = $state<string[]>([]);
+  let selectedCommodities = $state<string[]>([]);
+  let security_type = $state<PortfolioAggregate[]>([]);
+  let name_and_security_type = $state<PortfolioAggregate[]>([]);
+  let rating = $state<PortfolioAggregate[]>([]);
+  let industry = $state<PortfolioAggregate[]>([]);
+  let isEmpty = $state(false);
+  let color = $state<ReturnType<typeof generateColorScheme>>();
 
-  let securityTypeR: any,
-    portfolioR: any,
-    industryR: any,
-    ratingR: any = null;
+  let securityTypeR = $state<ReturnType<typeof renderPortfolioBreakdown>>();
+  let portfolioR = $state<ReturnType<typeof renderPortfolioBreakdown>>();
+  let industryR = $state<ReturnType<typeof renderPortfolioBreakdown>>();
+  let ratingR = $state<ReturnType<typeof renderPortfolioBreakdown>>();
 
   onMount(async () => {
     ({ name_and_security_type, security_type, rating, industry, commodities } =
@@ -43,15 +43,17 @@
     color = generateColorScheme(commodities);
   });
 
-  $: if (securityTypeR) {
-    securityTypeR.renderer(filterCommodityBreakdowns(security_type, selectedCommodities), color);
-    ratingR.renderer(filterCommodityBreakdowns(rating, selectedCommodities), color);
-    industryR.renderer(filterCommodityBreakdowns(industry, selectedCommodities), color);
-    portfolioR.renderer(
-      filterCommodityBreakdowns(name_and_security_type, selectedCommodities),
-      color
-    );
-  }
+  $effect(() => {
+    if (securityTypeR) {
+      securityTypeR.renderer(filterCommodityBreakdowns(security_type, selectedCommodities), color);
+      ratingR.renderer(filterCommodityBreakdowns(rating, selectedCommodities), color);
+      industryR.renderer(filterCommodityBreakdowns(industry, selectedCommodities), color);
+      portfolioR.renderer(
+        filterCommodityBreakdowns(name_and_security_type, selectedCommodities),
+        color
+      );
+    }
+  });
 </script>
 
 <section class="section tab-interest" class:is-hidden={!isEmpty}>

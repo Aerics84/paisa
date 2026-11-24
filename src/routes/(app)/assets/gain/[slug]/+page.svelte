@@ -24,68 +24,74 @@
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { selectedCurrency } from "../../../../../persisted_store";
 
-  let commodities: string[] = [];
-  let selectedCommodities: string[] = [];
-  let security_type: PortfolioAggregate[] = [];
-  let name_and_security_type: PortfolioAggregate[] = [];
-  let rating: PortfolioAggregate[] = [];
-  let industry: PortfolioAggregate[] = [];
-  let color: any;
+  let commodities = $state<string[]>([]);
+  let selectedCommodities = $state<string[]>([]);
+  let security_type = $state<PortfolioAggregate[]>([]);
+  let name_and_security_type = $state<PortfolioAggregate[]>([]);
+  let rating = $state<PortfolioAggregate[]>([]);
+  let industry = $state<PortfolioAggregate[]>([]);
+  let color = $state<ReturnType<typeof generateColorScheme>>();
 
-  let securityTypeEmpty: boolean = false;
-  let nameAndSecurityTypeEmpty: boolean = false;
-  let ratingEmpty: boolean = false;
-  let industryEmpty: boolean = false;
+  let securityTypeEmpty = $state(false);
+  let nameAndSecurityTypeEmpty = $state(false);
+  let ratingEmpty = $state(false);
+  let industryEmpty = $state(false);
 
-  export let data: PageData;
-  let gain: AccountGain;
-  let overview: Networth;
-  let assetBreakdown: AssetBreakdown;
+  let { data }: { data: PageData } = $props();
+  let gain = $state<AccountGain>();
+  let assetBreakdown = $state<AssetBreakdown>();
   let legends = buildLegends();
 
   let destroyCallback = () => {};
-  let postings: Posting[] = [];
 
-  let securityTypeR: any,
-    portfolioR: any,
-    industryR: any,
-    ratingR: any = null;
+  let securityTypeR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
+  let portfolioR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
+  let industryR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
+  let ratingR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
 
   const timelineId = "d3-account-timeline-breakdown";
 
-  $: current = gain ? _.find(gain.currencies, (c) => c.name === $selectedCurrency) : null;
-  $: symbol = current ? current.symbol : "";
-  $: timeline = current ? current.networthTimeline : gain?.networthTimeline;
-  $: xirr = current ? current.xirr : gain?.xirr;
-  $: overview = _.last(timeline);
-  $: absoluteReturn = current
-    ? overview && overview.investmentAmount !== 0
-      ? overview.gainAmount / overview.investmentAmount
-      : 0
-    : assetBreakdown?.absoluteReturn;
+  let current = $derived(
+    gain ? _.find(gain.currencies, (c) => c.name === $selectedCurrency) : null
+  );
+  let symbol = $derived(current ? current.symbol : "");
+  let timeline = $derived(current ? current.networthTimeline : gain?.networthTimeline);
+  let xirr = $derived(current ? current.xirr : gain?.xirr);
+  let overview = $derived(_.last(timeline));
+  let absoluteReturn = $derived(
+    current
+      ? overview && overview.investmentAmount !== 0
+        ? overview.gainAmount / overview.investmentAmount
+        : 0
+      : assetBreakdown?.absoluteReturn
+  );
   function formatGain(v: number) {
     return symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
   }
-  $: fmt = formatGain;
-  $: postings = _.chain(current ? current.postings : gain?.postings || [])
-    .sortBy((p) => p.date)
-    .reverse()
-    .take(100)
-    .value();
+  const fmt = formatGain;
+  let postings = $derived(
+    _.chain(current ? current.postings : gain?.postings || [])
+      .sortBy((p) => p.date)
+      .reverse()
+      .take(100)
+      .value()
+  );
 
   // re-render the timeline when the data or the selected currency changes
-  $: if (gain) {
-    destroyCallback();
-    const element = document.getElementById(timelineId);
-    if (element) {
-      element.innerHTML = "";
+  $effect(() => {
+    if (gain) {
+      destroyCallback();
+      const element = document.getElementById(timelineId);
+      if (element) {
+        element.innerHTML = "";
+      }
+      destroyCallback = overview
+        ? renderAccountOverview(timeline, current ? current.postings : gain.postings, timelineId, {
+            currencySymbol: symbol
+          })
+        : () => {};
     }
-    destroyCallback = overview
-      ? renderAccountOverview(timeline, current ? current.postings : gain.postings, timelineId, {
-          currencySymbol: symbol
-        })
-      : () => {};
-  }
+  });
 
   onDestroy(async () => {
     destroyCallback();
@@ -131,12 +137,14 @@
     industryEmpty = industry.length === 0;
   });
 
-  $: if (securityTypeR) {
-    securityTypeR(filterCommodityBreakdowns(security_type, selectedCommodities), color);
-    ratingR(filterCommodityBreakdowns(rating, selectedCommodities), color);
-    industryR(filterCommodityBreakdowns(industry, selectedCommodities), color);
-    portfolioR(filterCommodityBreakdowns(name_and_security_type, selectedCommodities), color);
-  }
+  $effect(() => {
+    if (securityTypeR) {
+      securityTypeR(filterCommodityBreakdowns(security_type, selectedCommodities), color);
+      ratingR(filterCommodityBreakdowns(rating, selectedCommodities), color);
+      industryR(filterCommodityBreakdowns(industry, selectedCommodities), color);
+      portfolioR(filterCommodityBreakdowns(name_and_security_type, selectedCommodities), color);
+    }
+  });
 </script>
 
 <section class="section">
