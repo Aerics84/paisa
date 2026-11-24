@@ -251,6 +251,15 @@ func TestSaveConfigWaitsForSequenceLock(t *testing.T) {
 	assert.Equal(t, "saved.ledger", store.Get().JournalPath)
 }
 
+func TestFinancialYearStartingMonthAccessor(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte("journal_path: main.ledger\ndb_path: paisa.db\nfinancial_year_starting_month: 7\n"), ""))
+	assert.Equal(t, time.July, store.FinancialYearStartingMonth())
+
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	assert.Equal(t, time.April, store.FinancialYearStartingMonth(), "the india profile default must still apply")
+}
+
 func TestInitializationTransitions(t *testing.T) {
 	store := NewStore()
 	require.False(t, store.Initialized())

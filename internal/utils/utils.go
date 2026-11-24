@@ -45,11 +45,12 @@ func BTreeToSlice[I btree.Item](tree *btree.BTree) []I {
 }
 
 func FY(date time.Time) string {
-	if config.GetConfig().FinancialYearStartingMonth == time.January {
+	startingMonth := config.FinancialYearStartingMonth()
+	if startingMonth == time.January {
 		return fmt.Sprintf("%d", date.Year())
 	}
 
-	if date.Month() < config.GetConfig().FinancialYearStartingMonth {
+	if date.Month() < startingMonth {
 		return fmt.Sprintf("%d-%d", date.Year()-1, date.Year()%100)
 	} else {
 		return fmt.Sprintf("%d-%d", date.Year(), (date.Year()+1)%100)
@@ -57,11 +58,12 @@ func FY(date time.Time) string {
 }
 
 func FYHuman(date time.Time) string {
-	if config.GetConfig().FinancialYearStartingMonth == time.January {
+	startingMonth := config.FinancialYearStartingMonth()
+	if startingMonth == time.January {
 		return fmt.Sprintf("%d", date.Year())
 	}
 
-	if date.Month() < config.GetConfig().FinancialYearStartingMonth {
+	if date.Month() < startingMonth {
 		return fmt.Sprintf("%d - %d", date.Year()-1, date.Year()%100)
 	} else {
 		return fmt.Sprintf("%d - %d", date.Year(), (date.Year()+1)%100)
@@ -77,17 +79,19 @@ func YearHumanCutOffAt(date time.Time, cutoff time.Time) string {
 }
 
 func ParseFY(fy string) (time.Time, time.Time) {
+	startingMonth := config.FinancialYearStartingMonth()
 	start, _ := time.ParseInLocation("2006", strings.Split(fy, " ")[0], config.TimeZone())
-	start = start.AddDate(0, int(config.GetConfig().FinancialYearStartingMonth-time.January), 0)
+	start = start.AddDate(0, int(startingMonth-time.January), 0)
 	return BeginningOfFinancialYear(start), EndOfFinancialYear(start)
 }
 
 func BeginningOfFinancialYear(date time.Time) time.Time {
+	startingMonth := config.FinancialYearStartingMonth()
 	beginningOfMonth := BeginningOfMonth(date)
-	if beginningOfMonth.Month() < config.GetConfig().FinancialYearStartingMonth {
-		return beginningOfMonth.AddDate(-1, int(config.GetConfig().FinancialYearStartingMonth-beginningOfMonth.Month()), 0)
+	if beginningOfMonth.Month() < startingMonth {
+		return beginningOfMonth.AddDate(-1, int(startingMonth-beginningOfMonth.Month()), 0)
 	} else {
-		return beginningOfMonth.AddDate(0, -int(beginningOfMonth.Month()-config.GetConfig().FinancialYearStartingMonth), 0)
+		return beginningOfMonth.AddDate(0, -int(beginningOfMonth.Month()-startingMonth), 0)
 	}
 }
 

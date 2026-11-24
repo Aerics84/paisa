@@ -574,6 +574,10 @@ func DefaultCurrency() string {
 	return defaultStore.Get().DefaultCurrency
 }
 
+func FinancialYearStartingMonth() time.Month {
+	return defaultStore.FinancialYearStartingMonth()
+}
+
 func TimeZone() *time.Location {
 	return defaultStore.TimeZone()
 }

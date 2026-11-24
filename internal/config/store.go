@@ -161,6 +161,15 @@ func (s *Store) Update(mutate func(*Config) error) error {
 	return nil
 }
 
+// FinancialYearStartingMonth returns the configured first month of the
+// financial year without cloning the whole configuration.
+func (s *Store) FinancialYearStartingMonth() time.Month {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.config.FinancialYearStartingMonth
+}
+
 // Path returns the absolute path of the loaded configuration file.
 func (s *Store) Path() string {
 	s.mu.RLock()

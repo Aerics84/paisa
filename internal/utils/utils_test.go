@@ -80,6 +80,24 @@ func TestOpenDBAppliesPragmasToEveryConnection(t *testing.T) {
 	}
 }
 
+func TestFinancialYearHelpersUseConfiguredStartingMonth(t *testing.T) {
+	require.NoError(t, config.LoadConfig([]byte(
+		"journal_path: test.ledger\ndb_path: test.db\nfinancial_year_starting_month: 7\n",
+	), ""))
+
+	june := time.Date(2024, time.June, 15, 0, 0, 0, 0, time.UTC)
+	july := time.Date(2024, time.July, 1, 0, 0, 0, 0, time.UTC)
+
+	assert.Equal(t, "2023-24", FY(june))
+	assert.Equal(t, "2023 - 24", FYHuman(june))
+	assert.Equal(t, "2024-25", FY(july))
+	assert.Equal(t, "2023-07-01", BeginningOfFinancialYear(june).Format("2006-01-02"))
+	assert.Equal(t, "2024-07-01", BeginningOfFinancialYear(july).Format("2006-01-02"))
+
+	start, _ := ParseFY("2024")
+	assert.Equal(t, "2024-07-01", start.Format("2006-01-02"))
+}
+
 func TestBuildSubPath(t *testing.T) {
 	baseDirectory := filepath.FromSlash("/usr/home/john/paisa")
 
