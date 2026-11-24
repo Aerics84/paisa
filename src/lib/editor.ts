@@ -1,4 +1,4 @@
-import { ajax } from "$lib/utils";
+import { validateEditorFile } from "./api/editor";
 import { ledger } from "$lib/parser";
 import { StreamLanguage } from "@codemirror/language";
 import { keymap, type KeyBinding } from "@codemirror/view";
@@ -23,11 +23,10 @@ export { editorState } from "../store";
 
 async function lint(editor: EditorView, name = ""): Promise<Diagnostic[]> {
   const doc = editor.state.doc;
-  const response = await ajax("/api/editor/validate", {
-    method: "POST",
-    body: JSON.stringify({ name, content: editor.state.doc.toString() }),
-    background: true
-  });
+  const response = await validateEditorFile(
+    { name, content: editor.state.doc.toString() },
+    { background: true }
+  );
 
   editorState.update((current) =>
     _.assign({}, current, { errors: response.errors, output: response.output })

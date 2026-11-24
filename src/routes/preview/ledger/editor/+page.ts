@@ -1,8 +1,8 @@
 import { redirect } from "@sveltejs/kit";
-import { ajax } from "$lib/utils";
+import { getEditorFiles } from "$lib/api/editor";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async () => {
-  const { files } = await ajax("/api/editor/files");
+  const { files } = await getEditorFiles();
   redirect(307, `/ledger/editor/${files[0].name}`);
 };

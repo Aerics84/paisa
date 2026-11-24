@@ -8,22 +8,21 @@ import (
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/config"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
 type fileAPI struct {
 	name, extension string
-	get, delete     func(string) gin.H
+	get, delete     func(string) string
 }
 
 var fileAPIs = []fileAPI{
 	{"ledger", ".ledger",
-		func(name string) gin.H { return GetFile(LedgerFile{Name: name}) },
-		func(name string) gin.H { return DeleteBackups(LedgerFile{Name: name}) }},
+		func(name string) string { return GetFile(LedgerFile{Name: name}).Message },
+		func(name string) string { return DeleteBackups(LedgerFile{Name: name}).Message }},
 	{"sheet", ".paisa",
-		func(name string) gin.H { return GetSheet(SheetFile{Name: name}) },
-		func(name string) gin.H { return DeleteSheetBackups(SheetFile{Name: name}) }},
+		func(name string) string { return GetSheet(SheetFile{Name: name}).Message },
+		func(name string) string { return DeleteSheetBackups(SheetFile{Name: name}).Message }},
 }
 
 func configureEditor(t *testing.T, root string, readonly bool) {
@@ -56,8 +55,8 @@ func TestEditorRejectsTraversal(t *testing.T) {
 			for _, readonly := range []bool{false, true} {
 				configureEditor(t, base, readonly)
 				for _, name := range []string{"../secret" + api.extension, "nested/../../secret" + api.extension} {
-					for _, handler := range []func(string) gin.H{api.get, api.delete} {
-						require.Equal(t, "Invalid file name", handler(filepath.FromSlash(name))["message"])
+					for _, handler := range []func(string) string{api.get, api.delete} {
+						require.Equal(t, "Invalid file name", handler(filepath.FromSlash(name)))
 					}
 				}
 			}
@@ -75,8 +74,8 @@ func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
 
 	for _, name := range []string{"expenses", "expenses.txt"} {
 		result := SaveFile(nil, LedgerFile{Name: name, Content: ""})
-		require.Equal(t, false, result["saved"])
-		require.Equal(t, "File name must end with .ledger", result["message"])
+		require.Equal(t, false, result.Saved)
+		require.Equal(t, "File name must end with .ledger", result.Message)
 	}
 }
 

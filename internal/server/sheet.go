@@ -11,7 +11,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -26,35 +25,35 @@ type SheetFile struct {
 	Operation string   `json:"operation"`
 }
 
-func GetSheets(db *gorm.DB) gin.H {
+func GetSheets(db *gorm.DB) SheetFilesResponse {
 	dir := config.GetSheetDir()
 	paths, _ := doublestar.FilepathGlob(dir + "/**/*" + EXTENSION)
 
-	files := []*SheetFile{}
+	files := []SheetFile{}
 	for _, path := range paths {
-		files = append(files, readSheetFileWithVersions(dir, path))
+		files = append(files, *readSheetFileWithVersions(dir, path))
 	}
 
 	postings := query.Init(db).All()
 	postings = service.PopulateMarketPrice(db, postings)
 
-	return gin.H{"files": files, "postings": postings}
+	return SheetFilesResponse{Files: files, Postings: nonNilSlice(postings)}
 }
 
-func GetSheet(file SheetFile) gin.H {
+func GetSheet(file SheetFile) SheetFileResponse {
 	dir := config.GetSheetDir()
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
-		return gin.H{"message": "Invalid file name"}
+		return SheetFileResponse{Message: "Invalid file name"}
 	}
-	return gin.H{"file": readSheetFile(dir, filePath)}
+	return SheetFileResponse{File: readSheetFile(dir, filePath)}
 }
 
-func DeleteSheetBackups(file SheetFile) gin.H {
+func DeleteSheetBackups(file SheetFile) SheetFileResponse {
 	dir := config.GetSheetDir()
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
-		return gin.H{"message": "Invalid file name"}
+		return SheetFileResponse{Message: "Invalid file name"}
 	}
 
 	if !config.GetConfig().Readonly {
@@ -67,16 +66,16 @@ func DeleteSheetBackups(file SheetFile) gin.H {
 		}
 	}
 
-	return gin.H{"file": readSheetFileWithVersions(dir, filePath)}
+	return SheetFileResponse{File: readSheetFileWithVersions(dir, filePath)}
 }
 
-func SaveSheetFile(db *gorm.DB, file SheetFile) gin.H {
+func SaveSheetFile(db *gorm.DB, file SheetFile) SheetSaveResponse {
 	dir := config.GetSheetDir()
 
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"saved": false, "message": "Invalid file name"}
+		return SheetSaveResponse{Saved: false, Message: "Invalid file name"}
 	}
 
 	now := utils.Now()
@@ -85,44 +84,44 @@ func SaveSheetFile(db *gorm.DB, file SheetFile) gin.H {
 	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"saved": false, "message": "Failed to create directory"}
+		return SheetSaveResponse{Saved: false, Message: "Failed to create directory"}
 	}
 
 	fileStat, err := os.Stat(filePath)
 	if err != nil && file.Operation != "overwrite" && file.Operation != "create" {
 		log.Warn(err)
-		return gin.H{"saved": false, "message": "File does not exist"}
+		return SheetSaveResponse{Saved: false, Message: "File does not exist"}
 	}
 
 	var perm os.FileMode = 0644
 	if err == nil {
 		if file.Operation == "create" {
-			return gin.H{"saved": false, "message": "File already exists"}
+			return SheetSaveResponse{Saved: false, Message: "File already exists"}
 		}
 
 		perm = fileStat.Mode().Perm()
 		existingContent, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Warn(err)
-			return gin.H{"saved": false, "message": "Failed to read file"}
+			return SheetSaveResponse{Saved: false, Message: "Failed to read file"}
 		}
 
 		err = os.WriteFile(backupPath, existingContent, perm)
 		if err != nil {
 			log.Warn(err)
-			return gin.H{"saved": false, "message": "Failed to create backup"}
+			return SheetSaveResponse{Saved: false, Message: "Failed to create backup"}
 		}
 	}
 
 	err = os.WriteFile(filePath, []byte(file.Content), perm)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"saved": false, "message": "Failed to write file"}
+		return SheetSaveResponse{Saved: false, Message: "Failed to write file"}
 	}
 
 	pruneOldBackups(filePath, now)
 
-	return gin.H{"saved": true, "file": readSheetFileWithVersions(dir, filePath)}
+	return SheetSaveResponse{Saved: true, File: readSheetFileWithVersions(dir, filePath)}
 }
 
 func readSheetFile(dir string, path string) *SheetFile {
@@ -134,8 +133,9 @@ func readSheetFile(dir string, path string) *SheetFile {
 	name, err := filepath.Rel(dir, path)
 
 	return &SheetFile{
-		Name:    name,
-		Content: string(content),
+		Name:     name,
+		Content:  string(content),
+		Versions: []string{},
 	}
 }
 

@@ -7,9 +7,9 @@
   import { iconText } from "$lib/icon";
   import { change } from "$lib/posting";
   import { getLedger } from "$lib/api/ledger";
+  import { getEditorFiles } from "$lib/api/editor";
   import { editorState } from "$lib/search_query_editor";
   import {
-    ajax,
     postingUrl,
     type Posting,
     formatCurrency,
@@ -46,7 +46,7 @@
   });
 
   onMount(async () => {
-    ({ files, accounts, commodities } = await ajax("/api/editor/files"));
+    ({ files, accounts, commodities } = await getEditorFiles());
     const postings = (await getLedger()).postings;
     filteredPostings = postings;
     rows = _.map(postings, (p) => ({

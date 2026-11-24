@@ -108,6 +108,10 @@ export type {
   RetirementGoalProgress,
   SavingsGoalProgress
 } from "./api/goals";
+import type { LedgerFile } from "./api/editor";
+import type { SheetFile } from "./api/sheets";
+export type { EditorFileInput, FileError as LedgerFileError, LedgerFile } from "./api/editor";
+export type { SheetFile } from "./api/sheets";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -227,26 +231,13 @@ export interface Legend {
   selected?: boolean;
 }
 
-interface File {
-  type: "file";
-  name: string;
-  content: string;
-  versions: string[];
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface LedgerFile extends File {}
-
 export interface Directory {
   type: "directory";
   name: string;
   children: Array<Directory | LedgerFile | SheetFile>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SheetFile extends File {}
-
-export function buildDirectoryTree<T extends File>(files: T[]) {
+export function buildDirectoryTree<T extends LedgerFile | SheetFile>(files: T[]) {
   const root: Directory = {
     type: "directory",
     name: "",
@@ -272,13 +263,6 @@ export function buildDirectoryTree<T extends File>(files: T[]) {
   }
 
   return root.children;
-}
-
-export interface LedgerFileError {
-  line_from: number;
-  line_to: number;
-  error: string;
-  message: string;
 }
 
 export interface SheetFileError {
@@ -346,56 +330,6 @@ export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
 
 export function ajax(route: "/api/account/tf_idf"): Promise<AccountTfIdf>;
-
-export function ajax(
-  route: "/api/editor/files",
-  options?: RequestOptions
-): Promise<{
-  files: LedgerFile[];
-  accounts: string[];
-  commodities: string[];
-  payees: string[];
-}>;
-
-export function ajax(
-  route: "/api/editor/validate",
-  options?: RequestOptions
-): Promise<{ errors: LedgerFileError[]; output: string }>;
-
-export function ajax(
-  route: "/api/editor/save",
-  options?: RequestOptions
-): Promise<{ errors: LedgerFileError[]; saved: boolean; file: LedgerFile; message: string }>;
-
-export function ajax(
-  route: "/api/editor/file",
-  options?: RequestOptions
-): Promise<{ file: LedgerFile }>;
-
-export function ajax(
-  route: "/api/editor/file/delete_backups",
-  options?: RequestOptions
-): Promise<{ file: LedgerFile }>;
-
-export function ajax(route: "/api/sheets/files"): Promise<{
-  files: SheetFile[];
-  postings: Posting[];
-}>;
-
-export function ajax(
-  route: "/api/sheets/save",
-  options?: RequestOptions
-): Promise<{ saved: boolean; file: SheetFile; message: string }>;
-
-export function ajax(
-  route: "/api/sheets/file",
-  options?: RequestOptions
-): Promise<{ file: SheetFile }>;
-
-export function ajax(
-  route: "/api/sheets/file/delete_backups",
-  options?: RequestOptions
-): Promise<{ file: SheetFile }>;
 
 export function ajax(
   route: "/api/price/delete",

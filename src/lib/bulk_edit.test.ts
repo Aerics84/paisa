@@ -22,7 +22,8 @@ describe("bulk_editor", () => {
             type: "file",
             name: "main.ledger",
             content: before.toString(),
-            versions: []
+            versions: [],
+            operation: ""
           };
           const {
             newFiles: [newLedgerFile]
@@ -42,7 +43,8 @@ describe("bulk_editor", () => {
       type: "file",
       name: "main.ledger",
       content: toCRLF(before.toString()),
-      versions: []
+      versions: [],
+      operation: ""
     };
     const {
       newFiles: [newLedgerFile],

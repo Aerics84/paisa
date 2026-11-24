@@ -20,7 +20,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/cache"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
-	"github.com/ananthakumaran/paisa/internal/ledger"
 	"github.com/ananthakumaran/paisa/internal/model/template"
 	"github.com/ananthakumaran/paisa/internal/prediction"
 	"github.com/ananthakumaran/paisa/internal/pricesync"
@@ -430,7 +429,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 
 	router.POST("/api/editor/save", func(c *gin.Context) {
 		if config.GetConfig().Readonly {
-			c.JSON(200, gin.H{"errors": []ledger.LedgerFileError{}, "saved": false, "message": "Readonly mode"})
+			c.JSON(200, EditorSaveResponse{Errors: []FileError{}, Saved: false, Message: "Readonly mode"})
 			return
 		}
 
@@ -469,7 +468,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 
 	router.POST("/api/sheets/save", func(c *gin.Context) {
 		if config.GetConfig().Readonly {
-			c.JSON(200, gin.H{"saved": false, "message": "Readonly mode"})
+			c.JSON(200, SheetSaveResponse{Saved: false, Message: "Readonly mode"})
 			return
 		}
 

@@ -13,6 +13,7 @@
   import type { EditorView } from "codemirror";
   import { onMount } from "svelte";
   import { ajax } from "$lib/utils";
+  import { saveEditorFile } from "$lib/api/editor";
   import {
     deleteTemplate,
     getTemplates,
@@ -214,11 +215,10 @@
   }
 
   async function saveToFile(destinationFile: string) {
-    const { saved, message } = await ajax("/api/editor/save", {
-      method: "POST",
-      body: JSON.stringify({ name: destinationFile, content: preview, operation: "overwrite" }),
-      background: true
-    });
+    const { saved, message } = await saveEditorFile(
+      { name: destinationFile, content: preview, operation: "overwrite" },
+      { background: true }
+    );
 
     if (saved) {
       toast.toast({

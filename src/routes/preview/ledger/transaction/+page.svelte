@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { ajax, isMobile, type LedgerFile, type Transaction as T } from "$lib/utils";
+  import { isMobile, type LedgerFile, type Transaction as T } from "$lib/utils";
   import { getBalancedPostings, getTransactions } from "$lib/api/ledger";
+  import { getEditorFiles, saveEditorFile } from "$lib/api/editor";
   import _ from "lodash";
   import { onDestroy, onMount } from "svelte";
   import VirtualList from "svelte-tiny-virtual-list";
@@ -56,7 +57,7 @@
   };
 
   async function loadTransactions() {
-    ({ files, accounts, commodities } = await ajax("/api/editor/files"));
+    ({ files, accounts, commodities } = await getEditorFiles());
     ({ transactions } = await getTransactions());
     handleInputRaw(get(editorState).predicate);
 
@@ -80,11 +81,10 @@
 
   async function saveAll(newFiles: LedgerFile[]) {
     for (const newFile of newFiles) {
-      const { saved, message } = await ajax("/api/editor/save", {
-        method: "POST",
-        body: JSON.stringify({ name: newFile.name, content: newFile.content }),
-        background: true
-      });
+      const { saved, message } = await saveEditorFile(
+        { name: newFile.name, content: newFile.content },
+        { background: true }
+      );
 
       if (!saved) {
         toast.toast({

@@ -4,13 +4,14 @@
   import { askConfirm } from "$lib/confirm";
   import { shouldDeferNavigation } from "$lib/navigation_guard";
   import {
-    ajax,
     buildDirectoryTree,
     formatFloatUptoPrecision,
     type LedgerFile,
     type Posting,
     type SheetFile
   } from "$lib/utils";
+  import { getEditorFiles } from "$lib/api/editor";
+  import { deleteSheetBackups, getSheetFile, getSheetFiles, saveSheetFile } from "$lib/api/sheets";
   import { redo, undo } from "@codemirror/commands";
   import type { KeyBinding } from "@codemirror/view";
   import * as toast from "bulma-toast";
@@ -128,8 +129,8 @@
 
   async function loadFiles(selectedFileName: string) {
     let files;
-    ({ files: ledgerFiles, accounts, commodities } = await ajax("/api/editor/files"));
-    ({ files, postings } = await ajax("/api/sheets/files"));
+    ({ files: ledgerFiles, accounts, commodities } = await getEditorFiles());
+    ({ files, postings } = await getSheetFiles());
     filesMap = _.fromPairs(_.map(files, (f) => [f.name, f]));
     if (!_.isEmpty(files)) {
       selectedFile = _.find(files, (f) => f.name == selectedFileName) || files[0];
@@ -144,32 +145,23 @@
   }
 
   async function revert(version: string) {
-    const { file } = await ajax("/api/sheets/file", {
-      method: "POST",
-      body: JSON.stringify({ name: version }),
-      background: true
-    });
+    const { file } = await getSheetFile(version, { background: true });
 
     updateContent(editor, file.content);
   }
 
   async function deleteBackups() {
-    const { file } = await ajax("/api/sheets/file/delete_backups", {
-      method: "POST",
-      body: JSON.stringify({ name: selectedFile.name }),
-      background: true
-    });
+    const { file } = await deleteSheetBackups(selectedFile.name, { background: true });
 
     selectedFile.versions = file.versions;
   }
 
   async function save() {
     const doc = editor.state.doc;
-    const { saved, file, message } = await ajax("/api/sheets/save", {
-      method: "POST",
-      body: JSON.stringify({ name: selectedFile.name, content: doc.toString() }),
-      background: true
-    });
+    const { saved, file, message } = await saveSheetFile(
+      { name: selectedFile.name, content: doc.toString() },
+      { background: true }
+    );
 
     if (!saved) {
       toast.toast({
@@ -218,11 +210,10 @@
 
   async function createFile(destinationFile: string) {
     destinationFile = destinationFile.trim() + ".paisa";
-    const { saved, message } = await ajax("/api/sheets/save", {
-      method: "POST",
-      body: JSON.stringify({ name: destinationFile, content: "", operation: "create" }),
-      background: true
-    });
+    const { saved, message } = await saveSheetFile(
+      { name: destinationFile, content: "", operation: "create" },
+      { background: true }
+    );
 
     if (saved) {
       toast.toast({

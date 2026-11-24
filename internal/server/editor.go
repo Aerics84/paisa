@@ -13,7 +13,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -26,7 +25,7 @@ type LedgerFile struct {
 	Operation string   `json:"operation"`
 }
 
-func GetFiles(db *gorm.DB) gin.H {
+func GetFiles(db *gorm.DB) EditorFilesResponse {
 	var accounts []string
 	var payees []string
 	var commodities []string
@@ -36,25 +35,30 @@ func GetFiles(db *gorm.DB) gin.H {
 
 	path := config.GetJournalPath()
 
-	files := []*LedgerFile{}
+	files := []LedgerFile{}
 	dir := filepath.Dir(path)
 	paths, _ := doublestar.FilepathGlob(dir + "/**/*" + filepath.Ext(path))
 
 	for _, path = range paths {
-		files = append(files, readLedgerFileWithVersions(dir, path))
+		files = append(files, *readLedgerFileWithVersions(dir, path))
 	}
 
-	return gin.H{"files": files, "accounts": accounts, "payees": payees, "commodities": commodities}
+	return EditorFilesResponse{
+		Files:       files,
+		Accounts:    nonNilSlice(accounts),
+		Payees:      nonNilSlice(payees),
+		Commodities: nonNilSlice(commodities),
+	}
 }
 
-func GetFile(file LedgerFile) gin.H {
+func GetFile(file LedgerFile) EditorFileResponse {
 	path := config.GetJournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
-		return gin.H{"message": "Invalid file name"}
+		return EditorFileResponse{Message: "Invalid file name"}
 	}
-	return gin.H{"file": readLedgerFile(dir, filePath)}
+	return EditorFileResponse{File: readLedgerFile(dir, filePath)}
 }
 
 // pruneOldBackups keeps every backup from the cutoff day, the newest backup
@@ -120,12 +124,12 @@ func calendarDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-func DeleteBackups(file LedgerFile) gin.H {
+func DeleteBackups(file LedgerFile) EditorFileResponse {
 	path := config.GetJournalPath()
 	dir := filepath.Dir(path)
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
-		return gin.H{"message": "Invalid file name"}
+		return EditorFileResponse{Message: "Invalid file name"}
 	}
 
 	if !config.GetConfig().Readonly {
@@ -138,18 +142,18 @@ func DeleteBackups(file LedgerFile) gin.H {
 		}
 	}
 
-	return gin.H{"file": readLedgerFileWithVersions(dir, filePath)}
+	return EditorFileResponse{File: readLedgerFileWithVersions(dir, filePath)}
 }
 
-func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
+func SaveFile(db *gorm.DB, file LedgerFile) EditorSaveResponse {
 	path := config.GetJournalPath()
 	if extension := filepath.Ext(path); extension != "" && filepath.Ext(file.Name) != extension {
-		return gin.H{"errors": []ledger.LedgerFileError{}, "saved": false, "message": "File name must end with " + extension}
+		return EditorSaveResponse{Errors: []FileError{}, Saved: false, Message: "File name must end with " + extension}
 	}
 
 	errors, _, err := validateFile(file)
 	if err != nil {
-		return gin.H{"errors": errors, "saved": false, "message": "Validation failed"}
+		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Validation failed"}
 	}
 
 	dir := filepath.Dir(path)
@@ -157,7 +161,7 @@ func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
 	filePath, err := utils.BuildSubPath(dir, file.Name)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"errors": errors, "saved": false, "message": "Invalid file name"}
+		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Invalid file name"}
 	}
 
 	now := utils.Now()
@@ -166,51 +170,51 @@ func SaveFile(db *gorm.DB, file LedgerFile) gin.H {
 	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"errors": errors, "saved": false, "message": "Failed to create directory"}
+		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Failed to create directory"}
 	}
 
 	fileStat, err := os.Stat(filePath)
 	if err != nil && file.Operation != "overwrite" && file.Operation != "create" {
 		log.Warn(err)
-		return gin.H{"errors": errors, "saved": false, "message": "File does not exist"}
+		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "File does not exist"}
 	}
 
 	var perm os.FileMode = 0644
 	if err == nil {
 		if file.Operation == "create" {
-			return gin.H{"errors": errors, "saved": false, "message": "File already exists"}
+			return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "File already exists"}
 		}
 
 		perm = fileStat.Mode().Perm()
 		existingContent, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Warn(err)
-			return gin.H{"errors": errors, "saved": false, "message": "Failed to read file"}
+			return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Failed to read file"}
 		}
 
 		err = os.WriteFile(backupPath, existingContent, perm)
 		if err != nil {
 			log.Warn(err)
-			return gin.H{"errors": errors, "saved": false, "message": "Failed to create backup"}
+			return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Failed to create backup"}
 		}
 	}
 
 	err = os.WriteFile(filePath, []byte(file.Content), perm)
 	if err != nil {
 		log.Warn(err)
-		return gin.H{"errors": errors, "saved": false, "message": "Failed to write file"}
+		return EditorSaveResponse{Errors: fileErrors(errors), Saved: false, Message: "Failed to write file"}
 	}
 
 	pruneOldBackups(filePath, now)
 
 	Sync(db, SyncRequest{Journal: true})
 
-	return gin.H{"errors": errors, "saved": true, "file": readLedgerFileWithVersions(dir, filePath)}
+	return EditorSaveResponse{Errors: fileErrors(errors), Saved: true, File: readLedgerFileWithVersions(dir, filePath)}
 }
 
-func ValidateFile(file LedgerFile) gin.H {
+func ValidateFile(file LedgerFile) EditorValidateResponse {
 	errors, output, _ := validateFile(file)
-	return gin.H{"errors": errors, "output": output}
+	return EditorValidateResponse{Errors: fileErrors(errors), Output: output}
 }
 
 func validateFile(file LedgerFile) ([]ledger.LedgerFileError, string, error) {
@@ -254,8 +258,9 @@ func readLedgerFile(dir string, path string) *LedgerFile {
 	name, err := filepath.Rel(dir, path)
 
 	return &LedgerFile{
-		Name:    name,
-		Content: string(content),
+		Name:     name,
+		Content:  string(content),
+		Versions: []string{},
 	}
 }
 

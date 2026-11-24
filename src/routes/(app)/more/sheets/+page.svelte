@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import FileModal from "$lib/components/FileModal.svelte";
-  import { ajax } from "$lib/utils";
+  import { saveSheetFile } from "$lib/api/sheets";
   import * as toast from "bulma-toast";
 
   let modalOpen = false;
@@ -11,11 +11,10 @@
 
   async function createFile(destinationFile: string) {
     destinationFile = destinationFile.trim() + ".paisa";
-    const { saved, message } = await ajax("/api/sheets/save", {
-      method: "POST",
-      body: JSON.stringify({ name: destinationFile, content: "", operation: "create" }),
-      background: true
-    });
+    const { saved, message } = await saveSheetFile(
+      { name: destinationFile, content: "", operation: "create" },
+      { background: true }
+    );
 
     if (saved) {
       toast.toast({

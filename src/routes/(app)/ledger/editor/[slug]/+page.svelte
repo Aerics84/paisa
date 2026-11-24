@@ -10,7 +10,13 @@
   import { askConfirm } from "$lib/confirm";
   import { shouldDeferNavigation } from "$lib/navigation_guard";
   import { insertTab } from "@codemirror/commands";
-  import { ajax, buildDirectoryTree, type LedgerFile } from "$lib/utils";
+  import { buildDirectoryTree, type LedgerFile } from "$lib/utils";
+  import {
+    deleteEditorBackups,
+    getEditorFile,
+    getEditorFiles,
+    saveEditorFile
+  } from "$lib/api/editor";
   import { redo, undo } from "@codemirror/commands";
   import type { KeyBinding } from "@codemirror/view";
   import * as toast from "bulma-toast";
@@ -134,7 +140,7 @@
 
   async function loadFiles(selectedFileName: string) {
     let files;
-    ({ files, accounts, commodities, payees } = await ajax("/api/editor/files"));
+    ({ files, accounts, commodities, payees } = await getEditorFiles());
     filesMap = _.fromPairs(_.map(files, (f) => [f.name, f]));
     if (!_.isEmpty(files)) {
       selectedFile = _.find(files, (f) => f.name == selectedFileName) || files[0];
@@ -149,11 +155,7 @@
   }
 
   async function revert(version: string) {
-    const { file } = await ajax("/api/editor/file", {
-      method: "POST",
-      body: JSON.stringify({ name: version }),
-      background: true
-    });
+    const { file } = await getEditorFile(version, { background: true });
 
     updateContent(editor, file.content);
   }
@@ -166,22 +168,17 @@
   }
 
   async function deleteBackups() {
-    const { file } = await ajax("/api/editor/file/delete_backups", {
-      method: "POST",
-      body: JSON.stringify({ name: selectedFile.name }),
-      background: true
-    });
+    const { file } = await deleteEditorBackups(selectedFile.name, { background: true });
 
     selectedFile.versions = file.versions;
   }
 
   async function save() {
     const doc = editor.state.doc;
-    const { errors, saved, file, message } = await ajax("/api/editor/save", {
-      method: "POST",
-      body: JSON.stringify({ name: selectedFile.name, content: doc.toString() }),
-      background: true
-    });
+    const { errors, saved, file, message } = await saveEditorFile(
+      { name: selectedFile.name, content: doc.toString() },
+      { background: true }
+    );
 
     if (!saved) {
       toast.toast({
@@ -240,11 +237,10 @@
   }
 
   async function createFile(destinationFile: string) {
-    const { saved, message } = await ajax("/api/editor/save", {
-      method: "POST",
-      body: JSON.stringify({ name: destinationFile, content: "", operation: "create" }),
-      background: true
-    });
+    const { saved, message } = await saveEditorFile(
+      { name: destinationFile, content: "", operation: "create" },
+      { background: true }
+    );
 
     if (saved) {
       toast.toast({

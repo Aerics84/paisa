@@ -365,6 +365,81 @@ export interface LedgerFile {
 }
 
 //////////
+// source: editor_types.go
+
+/**
+ * FileError is the wire shape of ledger.LedgerFileError. It mirrors the
+ * validation diagnostic on the editor and sheet endpoints without pulling the
+ * whole ledger package into the generated wire types.
+ */
+export interface FileError {
+  file_name?: string;
+  line_from: number /* uint64 */;
+  line_to: number /* uint64 */;
+  error: string;
+  message: string;
+}
+/**
+ * EditorFilesResponse is the JSON body returned by GET /api/editor/files.
+ */
+export interface EditorFilesResponse {
+  files: LedgerFile[];
+  accounts: string[];
+  payees: string[];
+  commodities: string[];
+}
+/**
+ * EditorFileResponse is the JSON body returned by POST /api/editor/file and
+ * POST /api/editor/file/delete_backups. An invalid path returns only the
+ * message, so both fields are optional on the wire.
+ */
+export interface EditorFileResponse {
+  file?: LedgerFile;
+  message?: string;
+}
+/**
+ * EditorValidateResponse is the JSON body returned by POST /api/editor/validate.
+ */
+export interface EditorValidateResponse {
+  errors: FileError[];
+  output: string;
+}
+/**
+ * EditorSaveResponse is the JSON body returned by POST /api/editor/save. A
+ * failed save has a message and no file; a successful save has a file and no
+ * message.
+ */
+export interface EditorSaveResponse {
+  errors: FileError[];
+  saved: boolean;
+  file?: LedgerFile;
+  message?: string;
+}
+/**
+ * SheetFilesResponse is the JSON body returned by GET /api/sheets/files.
+ */
+export interface SheetFilesResponse {
+  files: SheetFile[];
+  postings: Posting[];
+}
+/**
+ * SheetFileResponse is the JSON body returned by POST /api/sheets/file and
+ * POST /api/sheets/file/delete_backups.
+ */
+export interface SheetFileResponse {
+  file?: SheetFile;
+  message?: string;
+}
+/**
+ * SheetSaveResponse is the JSON body returned by POST /api/sheets/save.
+ */
+export interface SheetSaveResponse {
+  saved: boolean;
+  file?: SheetFile;
+  message?: string;
+}
+
+//////////
 // source: expense.go
 
 export interface Node {
