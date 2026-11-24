@@ -3,7 +3,7 @@
   import Select from "svelte-select";
   import _ from "lodash";
   import PriceCodeSearchModal from "./PriceCodeSearchModal.svelte";
-  import { iconGlyph, iconsList } from "$lib/icon";
+  import { iconGlyph, loadIcons } from "$lib/icon";
   import AccountSelect from "./AccountsSelect.svelte";
   import { hashPassword } from "$lib/utils";
   import { beginPasswordHash, endPasswordHash } from "$lib/password_hash";
@@ -31,6 +31,11 @@
 
   let open = depth < 1;
   let passwordError = "";
+  let iconsLoading = false;
+  let icons: string[] | null = null;
+  let iconsPromise: Promise<string[]> | null = null;
+  let iconItems: { value: string; label: string }[] = [];
+  let iconQuery = "";
   $: title = _.startCase(key);
   $: fieldPath = path || key;
   $: fieldId = `config-field-${fieldPath.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
@@ -95,15 +100,53 @@
     return null;
   }
 
-  async function searchIcons(text: string) {
-    text = text.toLowerCase();
+  function loadIconList(): Promise<string[]> {
+    if (!iconsPromise) {
+      iconsLoading = true;
+      iconsPromise = loadIcons()
+        .then((result) => {
+          icons = result;
+          return result;
+        })
+        .finally(() => {
+          iconsLoading = false;
+        });
+    }
+    return iconsPromise;
+  }
+
+  function filterIcons(all: string[], text: string): string[] {
     if (_.isEmpty(text)) {
-      return _.take(iconsList, ICON_MAX_RESULTS);
+      return _.take(all, ICON_MAX_RESULTS);
     }
     return _.take(
-      iconsList.filter((icon) => icon.includes(text)),
+      all.filter((icon) => icon.includes(text)),
       ICON_MAX_RESULTS
     );
+  }
+
+  async function prepareIcons() {
+    const all = await loadIconList();
+    iconItems = filterIcons(all, iconQuery).map((icon) => ({ value: icon, label: icon }));
+  }
+
+  function openIconPicker() {
+    if (icons || iconsPromise) {
+      return;
+    }
+    void prepareIcons();
+  }
+
+  async function searchIcons(text: string) {
+    text = (text || "").toLowerCase();
+    iconQuery = text;
+    if (!icons) {
+      if (_.isEmpty(text)) {
+        return [];
+      }
+      await loadIconList();
+    }
+    return filterIcons(icons || [], text);
   }
 </script>
 
@@ -172,9 +215,11 @@
     </div>
     <div class="field-body">
       <div class="field">
-        <div class="control" style="max-width: 350px">
+        <div class="control" style="max-width: 350px" on:focusin={openIconPicker}>
           <Select
             bind:value
+            items={iconItems}
+            loading={iconsLoading}
             class="icon-select is-small"
             showChevron={true}
             loadOptions={searchIcons}

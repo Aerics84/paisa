@@ -1,33 +1,110 @@
 import _ from "lodash";
-import arcticons from "../../fonts/arcticons-info.json";
 import fa6brands from "../../fonts/fa6-brands-info.json";
 import fa6regular from "../../fonts/fa6-regular-info.json";
 import fa6solid from "../../fonts/fa6-solid-info.json";
-import fluentemoji from "../../fonts/fluent-emoji-high-contrast-info.json";
-import mdi from "../../fonts/mdi-info.json";
 import { stemmer } from "stemmer";
 
-const icons = {
-  arcticons: arcticons["codepoints"],
+export type IconFont =
+  "fa6-solid" | "fa6-regular" | "fa6-brands" | "arcticons" | "mdi" | "fluent-emoji-high-contrast";
+
+type IconCodepoints = Record<string, number>;
+
+interface IconMetadata {
+  codepoints: IconCodepoints;
+}
+
+const REPLACEMENT_GLYPH = 65533;
+
+// Only the small Font Awesome metadata ships in the initial bundle. The large
+// icon sets are imported on demand by `loadIconFont` so that the icon picker
+// and configured icons do not cost every page load.
+const codepoints: Partial<Record<IconFont, IconCodepoints>> = {
   "fa6-brands": fa6brands["codepoints"],
   "fa6-regular": fa6regular["codepoints"],
-  "fa6-solid": fa6solid["codepoints"],
-  "fluent-emoji-high-contrast": fluentemoji["codepoints"],
-  mdi: mdi["codepoints"]
+  "fa6-solid": fa6solid["codepoints"]
 };
+
+const ICON_FONTS: IconFont[] = [
+  "arcticons",
+  "fa6-brands",
+  "fa6-regular",
+  "fa6-solid",
+  "fluent-emoji-high-contrast",
+  "mdi"
+];
+
+function unwrapMetadata(module: unknown): IconMetadata {
+  const namespace = module as { default?: IconMetadata } & Partial<IconMetadata>;
+  return namespace.default ?? (namespace as IconMetadata);
+}
+
+const fontLoaders: Partial<Record<IconFont, () => Promise<IconMetadata>>> = {
+  arcticons: async () => unwrapMetadata(await import("../../fonts/arcticons-info.json")),
+  "fluent-emoji-high-contrast": async () =>
+    unwrapMetadata(await import("../../fonts/fluent-emoji-high-contrast-info.json")),
+  mdi: async () => unwrapMetadata(await import("../../fonts/mdi-info.json"))
+};
+
+const pendingLoads = new Map<IconFont, Promise<void>>();
+
+/**
+ * Loads the metadata of an icon font on demand. Resolves immediately for the
+ * built-in Font Awesome sets and for fonts that are already cached.
+ */
+export function loadIconFont(font: IconFont): Promise<void> {
+  if (codepoints[font]) {
+    return Promise.resolve();
+  }
+
+  const loader = fontLoaders[font];
+  if (!loader) {
+    return Promise.resolve();
+  }
+
+  let pending = pendingLoads.get(font);
+  if (!pending) {
+    pending = loader()
+      .then((metadata) => {
+        codepoints[font] = metadata["codepoints"];
+      })
+      .catch((error) => {
+        // A failed chunk load must not break rendering; keep the replacement
+        // glyph and allow a later attempt to retry.
+        pendingLoads.delete(font);
+        console.warn(`Could not load icon font "${font}"`, error);
+      });
+    pendingLoads.set(font, pending);
+  }
+
+  return pending;
+}
+
+let icons: string[] | null = null;
+
+/**
+ * Loads every icon font and returns the flat `font:name` list used by the icon
+ * picker. The result is cached after the first call.
+ */
+export async function loadIcons(): Promise<string[]> {
+  await Promise.all(ICON_FONTS.map((font) => loadIconFont(font)));
+
+  if (!icons) {
+    icons = _.flatMap(ICON_FONTS, (font) => {
+      return _.map(codepoints[font] || {}, (_code, name) => `${font}:${name}`);
+    });
+  }
+
+  return icons;
+}
 
 export function iconGlyph(symbol: string): string {
   if (!symbol) {
-    return String.fromCodePoint(65533);
+    return String.fromCodePoint(REPLACEMENT_GLYPH);
   }
   const [font, name] = symbol.split(":");
-  const code = (icons as Record<string, Record<string, number>>)[font]?.[name] || 65533;
+  const code = codepoints[font as IconFont]?.[name] || REPLACEMENT_GLYPH;
   return String.fromCodePoint(code);
 }
-
-export const iconsList = _.flatMap(icons, (glyph, font) => {
-  return _.map(glyph, (code, name) => `${font}:${name}`);
-});
 
 interface IconLookup {
   symbol: string;
