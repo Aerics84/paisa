@@ -530,7 +530,7 @@ func TestGetMonthlyReviewIncludesPostingsAcrossTimezoneOffsets(t *testing.T) {
 func TestMonthlyDashboardRouteRejectsInvalidMonth(t *testing.T) {
 	setMonthlyReviewNow(t, "2022-03-15")
 	db := openMonthlyReviewTestDB(t)
-	router := Build(db, false)
+	router := Build(Deps{DB: db, Config: config.DefaultStore()}, false)
 
 	for _, month := range []string{"", "2022", "2022-13", "abc", "2022-1"} {
 		recorder := httptest.NewRecorder()

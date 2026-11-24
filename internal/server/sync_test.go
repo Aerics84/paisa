@@ -64,7 +64,7 @@ func TestNewPriceManagerNonNil(t *testing.T) {
 func TestSyncStatusEndpoint(t *testing.T) {
 	db := openSyncTestDB(t)
 	manager := testPriceManager(t, db)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/sync/status", nil)
@@ -80,7 +80,7 @@ func TestSyncStatusEndpoint(t *testing.T) {
 func TestBackgroundSyncReturns202AndStartsOneJob(t *testing.T) {
 	db := openSyncTestDB(t)
 	manager := testPriceManager(t, db)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
 	w := httptest.NewRecorder()
@@ -102,7 +102,7 @@ func TestBackgroundSyncReturns202AndStartsOneJob(t *testing.T) {
 func TestBackgroundSyncIgnoresJournalAndPortfolios(t *testing.T) {
 	db := openSyncTestDB(t)
 	manager := testPriceManager(t, db)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	for _, body := range []string{
 		`{"prices":true,"journal":true,"background":true}`,
@@ -126,7 +126,7 @@ func TestBackgroundSyncRequiresPrices(t *testing.T) {
 		return pricesync.Outcome{Success: true}
 	}
 	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"background":true}`
 	w := httptest.NewRecorder()
@@ -153,7 +153,7 @@ readonly: true
 		return pricesync.Outcome{Success: true}
 	}
 	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
 	w := httptest.NewRecorder()
@@ -176,7 +176,7 @@ func TestSyncStatusIncludesJobID(t *testing.T) {
 		return pricesync.Outcome{Success: true}
 	}
 	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
 	w := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestConcurrentBackgroundRequestsStartOneJob(t *testing.T) {
 		return pricesync.Outcome{Success: true}
 	}
 	manager := pricesync.New(db, config.GetConfig, pricesync.NewMemoryStateStore(), syncFn, pricesync.NewRunner(), time.Now)
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	body := `{"prices":true,"background":true}`
 

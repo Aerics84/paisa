@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"os"
+	"time"
 
+	"github.com/ananthakumaran/paisa/internal/auth"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/model/migrations"
 	"github.com/ananthakumaran/paisa/internal/server"
@@ -31,7 +33,7 @@ var serveCmd = &cobra.Command{
 			db = db.Debug()
 		}
 
-		server.Listen(db, host, port)
+		server.Listen(server.Deps{DB: db, Config: config.DefaultStore(), Auth: auth.NewStore(24 * time.Hour)}, host, port)
 	},
 }
 

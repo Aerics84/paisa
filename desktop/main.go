@@ -7,6 +7,7 @@ import (
 
 	"github.com/ananthakumaran/paisa/cmd"
 	"github.com/ananthakumaran/paisa/desktop/logger"
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/server"
 	"github.com/ananthakumaran/paisa/internal/version"
 	"github.com/shopspring/decimal"
@@ -50,7 +51,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title: "Paisa",
 		AssetServer: &assetserver.Options{
-			Handler: server.Build(&app.db, false).Handler(),
+			Handler: server.Build(server.Deps{DB: &app.db, Config: config.DefaultStore()}, false).Handler(),
 		},
 		BackgroundColour: &options.RGBA{R: 250, G: 250, B: 250, A: 1},
 		OnStartup:        app.startup,

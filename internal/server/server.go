@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
+	"github.com/ananthakumaran/paisa/internal/auth"
 	"github.com/ananthakumaran/paisa/internal/cache"
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
@@ -41,12 +42,25 @@ import (
 
 var monthlyRouteMonthPattern = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
 
-func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
-	return BuildWithManager(db, enableCompression, NewPriceManager(db, pricesync.NewMemoryStateStore()))
+// Deps are the long-lived dependencies shared by the HTTP handlers.
+type Deps struct {
+	DB     *gorm.DB
+	Config *config.Store
+	Auth   *auth.Store
 }
 
-func BuildWithManager(db *gorm.DB, enableCompression bool, manager *pricesync.Manager) *gin.Engine {
+func Build(deps Deps, enableCompression bool) *gin.Engine {
+	return BuildWithManager(deps, enableCompression, NewPriceManager(deps.DB, pricesync.NewMemoryStateStore()))
+}
+
+func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Manager) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
+
+	if deps.Auth == nil {
+		deps.Auth = auth.NewStore(24 * time.Hour)
+	}
+
+	db := deps.DB
 
 	router := gin.New()
 	// Do not trust X-Forwarded-For from arbitrary clients. Otherwise a caller
@@ -93,7 +107,7 @@ func BuildWithManager(db *gorm.DB, enableCompression bool, manager *pricesync.Ma
 			n := utils.Now().UTC()
 			now = &n
 		}
-		c.JSON(200, gin.H{"config": config.GetConfig(), "accounts": accounting.AllAccounts(db), "now": now, "schema": config.GetSchema()})
+		c.JSON(200, gin.H{"config": deps.Config.Get(), "accounts": accounting.AllAccounts(db), "now": now, "schema": config.GetSchema()})
 	})
 
 	router.POST("/api/config", func(c *gin.Context) {
@@ -524,9 +538,9 @@ func BuildWithManager(db *gorm.DB, enableCompression bool, manager *pricesync.Ma
 	return router
 }
 
-func Listen(db *gorm.DB, host string, port int) {
-	manager := NewPriceManager(db, pricesync.NewFileStateStore(pricesync.StatePathForDB(config.GetDBPath())))
-	router := BuildWithManager(db, true, manager)
+func Listen(deps Deps, host string, port int) {
+	manager := NewPriceManager(deps.DB, pricesync.NewFileStateStore(pricesync.StatePathForDB(config.GetDBPath())))
+	router := BuildWithManager(deps, true, manager)
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 
 	displayHost := host

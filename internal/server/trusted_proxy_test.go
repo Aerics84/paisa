@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,7 +13,7 @@ import (
 func TestBuildIgnoresForwardedForHeader(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	router := Build(nil, false)
+	router := Build(Deps{DB: nil, Config: config.DefaultStore()}, false)
 	router.GET("/test-client-ip", func(c *gin.Context) {
 		c.String(http.StatusOK, c.ClientIP())
 	})

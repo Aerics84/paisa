@@ -136,7 +136,7 @@ func TestBackgroundSyncHTTPEndToEnd(t *testing.T) {
 			return pricesync.Outcome{Success: true}
 		}, runner, time.Now)
 
-	router := BuildWithManager(db, false, manager)
+	router := BuildWithManager(Deps{DB: db, Config: config.DefaultStore()}, false, manager)
 
 	post := httptest.NewRequest(http.MethodPost, "/api/sync", strings.NewReader(`{"prices":true,"background":true}`))
 	post.Header.Set("Content-Type", "application/json")

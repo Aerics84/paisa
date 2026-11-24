@@ -142,7 +142,7 @@ func TestGetTaxOverviewAllowsValidYearWithoutPostings(t *testing.T) {
 func TestTaxOverviewRouteRejectsInvalidYear(t *testing.T) {
 	loadTaxOverviewConfig(t)
 	db := openTaxOverviewTestDB(t)
-	router := Build(db, false)
+	router := Build(Deps{DB: db, Config: config.DefaultStore()}, false)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/tax_overview?year=abc", nil)
