@@ -1,10 +1,11 @@
 <script lang="ts">
   import { sync } from "$lib/sync";
-  import { isLoggedIn, isMobile, logout, supportsPortfolioAnalysis } from "$lib/utils";
+  import { authStatus, isMobile, logout, supportsPortfolioAnalysis } from "$lib/utils";
   import { startPriceUpdate } from "$lib/price_update";
   import { refresh } from "../../store";
   import { obscure } from "../../persisted_store";
   import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
 
   async function syncWithLoader(request: Record<string, any>) {
     try {
@@ -22,12 +23,17 @@
     void refresh();
   });
 
-  function doLogout() {
-    logout();
+  async function doLogout() {
+    await logout();
     goto("/login");
   }
 
-  let showLogout = isLoggedIn();
+  let showLogout = false;
+
+  onMount(async () => {
+    const status = await authStatus();
+    showLogout = status.authenticated;
+  });
 </script>
 
 <div class="dropdown ml-2 is-hoverable {isMobile() ? 'is-left' : 'is-right'}">

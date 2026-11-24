@@ -1,4 +1,3 @@
-import sha256 from "crypto-js/sha256";
 import dayjs from "dayjs";
 import _ from "lodash";
 import * as d3 from "d3";
@@ -979,8 +978,6 @@ export interface SheetLineResult {
   align?: "left" | "right";
 }
 
-const tokenKey = "token";
-
 type RequestOptions = RequestInit & {
   background?: boolean;
 };
@@ -1267,17 +1264,17 @@ export async function ajax(
     options.headers = {
       "Content-Type": "application/json"
     };
-
-    const token = localStorage.getItem(tokenKey);
-    if (!_.isEmpty(token)) {
-      options.headers["X-Auth"] = token;
-    }
+    options.credentials = "same-origin";
 
     const response = await fetch(route, options);
     const body = await response.text();
 
-    if (response.status == 401 && route != "/api/ping") {
-      logout();
+    if (
+      response.status == 401 &&
+      route != "/api/ping" &&
+      !route.startsWith("/api/auth/")
+    ) {
+      await logout();
       await redirectToLogin();
       error(401, "Unauthorized");
     }
@@ -1302,16 +1299,39 @@ export async function ajax(
 }
 
 export async function login(username: string, password: string) {
-  localStorage.setItem(tokenKey, `${username}:${sha256(password)}`);
-  return await ajax("/api/ping");
+  return await ajax<{ success: boolean; username?: string; error?: string }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password })
+  });
 }
 
-export function isLoggedIn() {
-  return !_.isEmpty(localStorage.getItem(tokenKey));
+export async function authStatus(): Promise<{
+  auth_enabled: boolean;
+  authenticated: boolean;
+}> {
+  return await ajax("/api/auth/status");
 }
 
-export function logout() {
-  localStorage.removeItem(tokenKey);
+export async function logout() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin"
+    });
+  } catch {
+    // Clearing the session is best effort: a network failure must not trap the
+    // user in the logged-in view. The cookie is HttpOnly, so the client cannot
+    // remove it directly.
+  }
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  const { hash } = await ajax<{ hash: string }>("/api/auth/hash", {
+    method: "POST",
+    body: JSON.stringify({ password })
+  });
+
+  return hash;
 }
 
 async function redirectToLogin() {

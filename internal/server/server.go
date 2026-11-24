@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,8 +34,6 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"github.com/throttled/throttled/v2"
-	"github.com/throttled/throttled/v2/store/memstore"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +54,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	gin.SetMode(gin.ReleaseMode)
 
 	if deps.Auth == nil {
-		deps.Auth = auth.NewStore(24 * time.Hour)
+		deps.Auth = auth.NewStore(sessionTTL)
 	}
 
 	db := deps.DB
@@ -74,7 +71,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 
 	router.Use(Logger(log.StandardLogger()), gin.Recovery())
 
-	router.Use(TokenAuthMiddleware())
+	router.Use(CSRFMiddleware(), TokenAuthMiddleware(deps))
 
 	// Another process (for example `paisa update` from a timer) can change the
 	// database. Drop the in-memory caches when it signals that it finished.
@@ -100,6 +97,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	router.GET("/api/version", func(c *gin.Context) {
 		c.JSON(200, gin.H{"version": version.String()})
 	})
+
+	router.POST("/api/auth/login", HandleLogin(deps))
+	router.POST("/api/auth/logout", HandleLogout(deps))
+	router.GET("/api/auth/status", HandleAuthStatus(deps))
+	router.POST("/api/auth/hash", HandleHash(deps))
 
 	router.GET("/api/config", func(c *gin.Context) {
 		var now *time.Time
@@ -574,55 +576,4 @@ func Listen(deps Deps, host string, port int) {
 
 func rateLimitKey(c *gin.Context) string {
 	return c.ClientIP()
-}
-
-func TokenAuthMiddleware() gin.HandlerFunc {
-	store, err := memstore.NewCtx(10)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	quota := throttled.RateQuota{
-		MaxRate:  throttled.PerMin(6),
-		MaxBurst: 3,
-	}
-
-	rateLimiter, err := throttled.NewGCRARateLimiterCtx(store, quota)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return func(c *gin.Context) {
-		userAccounts := config.GetConfig().UserAccounts
-		if len(userAccounts) == 0 || !strings.HasPrefix(c.Request.URL.Path, "/api") {
-			c.Next()
-			return
-		}
-
-		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0)
-		if detail.Remaining <= 0 {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
-			return
-		}
-
-		tokens := strings.SplitN(c.Request.Header.Get("X-Auth"), ":", 2)
-		if len(tokens) != 2 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
-			return
-		}
-
-		hashed := utils.Sha256(tokens[1])
-		for _, userAccount := range userAccounts {
-			if subtle.ConstantTimeCompare([]byte(userAccount.Username), []byte(tokens[0])) == 1 &&
-				subtle.ConstantTimeCompare([]byte(userAccount.Password), []byte("sha256:"+hashed)) == 1 {
-				c.Next()
-				return
-			}
-		}
-
-		rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 1)
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-		return
-
-	}
 }

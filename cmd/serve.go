@@ -15,6 +15,7 @@ import (
 
 var port int
 var host string
+var secureCookies bool
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -33,6 +34,8 @@ var serveCmd = &cobra.Command{
 			db = db.Debug()
 		}
 
+		server.SetSecureCookies(secureCookies)
+
 		server.Listen(server.Deps{DB: db, Config: config.DefaultStore(), Auth: auth.NewStore(24 * time.Hour)}, host, port)
 	},
 }
@@ -41,4 +44,6 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().IntVarP(&port, "port", "p", 7500, "port to listen on")
 	serveCmd.Flags().StringVar(&host, "host", "", "host to listen on (default is all interfaces)")
+	serveCmd.Flags().BoolVar(&secureCookies, "secure-cookies", os.Getenv("PAISA_SECURE_COOKIES") == "true",
+		"mark session cookies Secure even when TLS terminates at a reverse proxy (also PAISA_SECURE_COOKIES=true)")
 }

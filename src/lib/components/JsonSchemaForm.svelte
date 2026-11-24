@@ -1,11 +1,11 @@
 <script lang="ts">
-  import sha256 from "crypto-js/sha256";
   import type { JSONSchema7 } from "json-schema";
   import Select from "svelte-select";
   import _ from "lodash";
   import PriceCodeSearchModal from "./PriceCodeSearchModal.svelte";
   import { iconGlyph, iconsList } from "$lib/icon";
   import AccountSelect from "./AccountsSelect.svelte";
+  import { hashPassword } from "$lib/utils";
 
   interface Schema extends JSONSchema7 {
     "ui:header"?: string;
@@ -137,9 +137,16 @@
             id={fieldId}
             aria-label={title}
             bind:value={rawValue}
-            on:change={() => {
-              if (!_.isEmpty(rawValue)) {
-                value = "sha256:" + sha256(sha256(rawValue).toString()).toString();
+            on:change={async () => {
+              if (_.isEmpty(rawValue)) {
+                return;
+              }
+
+              try {
+                value = await hashPassword(rawValue);
+              } catch {
+                // Keep the previously stored hash when hashing fails; the user
+                // can retry without losing the rest of the form state.
               }
             }}
           />
