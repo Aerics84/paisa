@@ -11,17 +11,16 @@ icon to add a new username and password. Once you save the
 configuration, you will get logged out if you had not logged in
 earlier via another account.
 
-It is important to understand that authentication only protects the
-application user interface. If someone can access your computer and
-they can access the folder where Paisa stores the ledger and database
-files, they will be able to view your data.
+Authentication controls access through Paisa's UI and API. It does not
+encrypt the ledger or database files; anyone with filesystem access can
+read them.
 
 ## Implementation details
 
-Paisa never stores your password in plain text. The configuration file only
-contains a salted hash, and Paisa compares hashes whenever you log in. No one
-can read the configuration file and recover the password, including you. If you
-forget the password, remove the user accounts from the
+Paisa never stores your password in plain text. The configuration file contains
+a hash, not the password: new hashes are salted Argon2id, while older `sha256:`
+hashes are unsalted double SHA-256 and are upgraded on the next successful
+login. If you forget the password, remove the user accounts from the
 [configuration](./config.md) file to regain access.
 
 ### Password hashing
@@ -32,18 +31,19 @@ each password. The stored value has the form
 `argon2id$v=19$m=65536,t=3,p=2$<salt>$<hash>`.
 
 Configuration files written by older releases contain legacy `sha256:` hashes
-(SHA-256 applied twice). These hashes still verify. After the next successful
-login Paisa replaces the stored hash with an Argon2id hash, provided the
-configuration file is writable. With `readonly: true` the login succeeds and
-the upgrade is retried on a later login.
+(SHA-256 applied twice without a salt). These hashes still verify. After the
+next successful login Paisa replaces the stored hash with an Argon2id hash,
+provided the configuration file is writable. With `readonly: true` the login
+succeeds and the upgrade is retried on a later login.
 
 ### Sessions
 
 A successful login creates a session in memory and sets the `paisa_session`
 cookie. The token is 256 bits of randomness. The cookie is `HttpOnly`,
-`SameSite=Strict`, scoped to `Path=/`, expires after 24 hours, and is marked
-`Secure` when the request arrives over TLS. Logging out deletes the session on
-the server and clears the cookie.
+`SameSite=Strict`, scoped to `Path=/`, and expires after 24 hours. Use
+`--secure-cookies` or `PAISA_SECURE_COOKIES=true` to mark it `Secure` when
+HTTPS is terminated by a reverse proxy (see below). Logging out deletes the
+session on the server and clears the cookie.
 
 Sessions exist only inside the running Paisa process. Restarting the server
 invalidates every session, and multiple Paisa instances do not share sessions.
@@ -57,6 +57,10 @@ The authentication endpoints are:
 - `POST /api/auth/logout` ends the current session.
 - `GET /api/auth/status` reports `auth_enabled`, `authenticated`, and the
   current `username`.
+- `POST /api/auth/hash` with `{"password": "..."}` returns an Argon2id hash for
+  the Configuration page. It is reachable without a session only during
+  bootstrap (when no accounts exist); once accounts exist it requires
+  authentication. Passwords must be at least 8 characters long.
 
 ### Failed logins
 
@@ -69,16 +73,17 @@ Paisa resets it.
 
 The session cookie uses `SameSite=Strict`. In addition, Paisa rejects
 state-changing API requests (`POST`, `PUT`, `PATCH`, and `DELETE` below `/api`)
-when the `Origin` or `Referer` header names a different host. Paisa sends no
-CORS headers and expects the API to be used from the same origin as the user
-interface. Requests without an `Origin` or `Referer` header, such as CLI
-clients, are allowed.
+when the `Origin` header names a different host. `Referer` is checked only as a
+fallback when `Origin` is absent. Paisa sends no CORS headers and expects the
+API to be used from the same origin as the user interface. Requests without
+either header, such as CLI clients, are allowed.
 
 ### Legacy `X-Auth` header
 
-API clients can still authenticate with the deprecated `X-Auth` header. Its
-value is `username:<sha256-hex>`, where `<sha256-hex>` is the hexadecimal
-SHA-256 digest of the password. Paisa marks responses to these requests with
+While an account still stores a legacy `sha256:` hash, API clients can
+authenticate with the deprecated `X-Auth` header. Its value is
+`username:<sha256-hex>`, where `<sha256-hex>` is the hexadecimal SHA-256 digest
+of the password. Paisa marks responses to these requests with
 `Deprecation: true` and a `Sunset` header, and logs a warning. The header will
 be removed in 0.10.0. Once a legacy password hash has been upgraded to
 Argon2id, the old `X-Auth` value no longer authenticates.
@@ -94,10 +99,12 @@ Argon2id, the old `X-Auth` value no longer authenticates.
     attack can be performed to obtain the data including your password and
     session token.
 
-When Paisa receives a request over TLS, it marks the session cookie `Secure`
-automatically. If a reverse proxy terminates TLS and forwards plain HTTP to
-Paisa, start Paisa with `--secure-cookies` or set
-`PAISA_SECURE_COOKIES=true` so the cookie is still marked `Secure`.
+`paisa serve` has no TLS listener; it only serves plain HTTP. Expose it through
+a reverse proxy that terminates HTTPS and forwards requests to Paisa. Start
+Paisa with `--secure-cookies` or set `PAISA_SECURE_COOKIES=true`: this is the
+supported way to mark the session cookie `Secure` even though the proxied
+request reaches Paisa over plain HTTP. Without that flag, the built-in server
+does not mark the session cookie `Secure`.
 
 ### Configuration and backups
 
