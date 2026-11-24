@@ -1,13 +1,12 @@
 import dayjs from "dayjs";
 import _ from "lodash";
 import * as d3 from "d3";
-import { loading } from "../store";
 import type { JSONSchema7 } from "json-schema";
 import { get } from "svelte/store";
 import { obscure } from "../persisted_store";
-import { error } from "@sveltejs/kit";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
+import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -978,12 +977,8 @@ export interface SheetLineResult {
   align?: "left" | "right";
 }
 
-type RequestOptions = RequestInit & {
-  background?: boolean;
-};
-
 export function parseApiDate(value: string) {
-  return dayjs(value.slice(0, 10));
+  return parseDate(value);
 }
 
 export function ajax(
@@ -1247,51 +1242,8 @@ export async function ajax(
   options?: RequestOptions,
   params?: Record<string, string>
 ) {
-  const background = options?.background;
-  if (!background) {
-    loading.set(true);
-  }
-
-  try {
-    if (!_.isEmpty(params)) {
-      _.each(params, (value, key) => {
-        route = route.replace(`:${key}`, value);
-      });
-    }
-
-    options = options || {};
-
-    options.headers = {
-      "Content-Type": "application/json"
-    };
-    options.credentials = "same-origin";
-
-    const response = await fetch(route, options);
-    const body = await response.text();
-
-    if (response.status == 401 && route != "/api/ping" && !route.startsWith("/api/auth/")) {
-      await logout();
-      await redirectToLogin();
-      error(401, "Unauthorized");
-    }
-
-    return JSON.parse(body, (key, value) => {
-      if (
-        _.isString(value) &&
-        /Date|date|time|now/.test(key) &&
-        /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(
-          value
-        )
-      ) {
-        return parseApiDate(value);
-      }
-      return value;
-    });
-  } finally {
-    if (!background) {
-      loading.set(false);
-    }
-  }
+  const { body } = await rawRequest(route, options, params);
+  return reviveDates(JSON.parse(body));
 }
 
 export async function login(username: string, password: string) {
@@ -1338,20 +1290,6 @@ export async function hashPassword(password: string): Promise<string> {
   }
 
   return hash;
-}
-
-async function redirectToLogin() {
-  try {
-    const { goto } = await import("$app/navigation");
-    await goto("/login");
-    return;
-  } catch {
-    // Fall back to a hard navigation when app navigation is unavailable.
-  }
-
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
-  }
 }
 
 function normalize(value: number) {
