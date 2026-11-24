@@ -187,6 +187,48 @@ func TestCapitalGainsJSONContract(t *testing.T) {
 	requireFixture(t, "testdata/api/capital_gains.json", rec.Body.String())
 }
 
+// TestCapitalGainsOrphanSellJSONContract pins the empty posting pair list of a
+// sell without a matching lot (for example a transfer-out). The generated type
+// declares an array, so the wire value must be [] and never null.
+func TestCapitalGainsOrphanSellJSONContract(t *testing.T) {
+	utils.SetNow("2026-11-22")
+	t.Cleanup(utils.ResetNow)
+
+	db := openTaxContractDB(t)
+	require.NoError(t, db.Create(&[]posting.Posting{
+		taxContractPosting(1, "orphan-sell", "2025-06-01", "Assets:Equity:EQUITY", "EQUITY", "-4", "-600"),
+	}).Error)
+
+	engine := taxContractRouter(t, db, indiaTaxContractConfig)
+
+	rec := engine.get(t, "/api/capital_gains")
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var body CapitalGainsResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+
+	requireFixture(t, "testdata/api/capital_gains_orphan_sell.json", rec.Body.String())
+}
+
+// TestGermanyTaxEmptyDBJSONContract exercises the Germany branch of
+// GET /api/capital_income_tax without postings, so the unsupported-regime
+// short-circuit is not the only path under test.
+func TestGermanyTaxEmptyDBJSONContract(t *testing.T) {
+	utils.SetNow("2026-11-22")
+	t.Cleanup(utils.ResetNow)
+
+	db := openTaxContractDB(t)
+	engine := taxContractRouter(t, db, germanyTaxContractConfig)
+
+	rec := engine.get(t, "/api/capital_income_tax")
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.JSONEq(t, `{"tax_years":{}}`, rec.Body.String())
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assertNoNull(t, body, "/api/capital_income_tax")
+}
+
 // TestGermanyTaxJSONContract pins the wire format of GET
 // /api/capital_income_tax, including the nested posting pairs and the
 // optional partial exemption rate.

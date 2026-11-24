@@ -117,6 +117,9 @@ func computeCapitalGains(db *gorm.DB, account string, commodity config.Commodity
 			fyCapitalGain.PurchasePrice = fyCapitalGain.PurchasePrice.Add(purchasePrice)
 			fyCapitalGain.SellPrice = fyCapitalGain.SellPrice.Add(p.Amount.Neg())
 			fyCapitalGain.PostingPairs = append(fyCapitalGain.PostingPairs, postingPairs...)
+			if fyCapitalGain.PostingPairs == nil {
+				fyCapitalGain.PostingPairs = []PostingPair{}
+			}
 
 			capitalGain.FY[fy] = fyCapitalGain
 

@@ -1,0 +1,38 @@
+{
+  "capital_gains": {
+    "Assets:Equity:EQUITY": {
+      "account": "Assets:Equity:EQUITY",
+      "tax_category": "equity",
+      "fy": {
+        "2025": {
+          "units": 4,
+          "purchase_price": 0,
+          "sell_price": 600,
+          "tax": {
+            "gain": 0,
+            "taxable": 0,
+            "slab": 0,
+            "long_term": 0,
+            "short_term": 0
+          },
+          "posting_pairs": []
+        }
+      }
+    }
+  },
+  "totals": {
+    "2025": {
+      "units": 4,
+      "purchase_price": 0,
+      "sell_price": 600,
+      "tax": {
+        "gain": 0,
+        "taxable": 0,
+        "slab": 0,
+        "long_term": 0,
+        "short_term": 0
+      },
+      "posting_pairs": []
+    }
+  }
+}
