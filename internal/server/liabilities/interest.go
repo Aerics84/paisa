@@ -1,6 +1,7 @@
 package liabilities
 
 import (
+	"sort"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/accounting"
@@ -8,7 +9,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -27,19 +27,23 @@ type Interest struct {
 	APR              decimal.Decimal `json:"apr"`
 }
 
-func GetInterest(db *gorm.DB) gin.H {
+func GetInterest(db *gorm.DB) []Interest {
 	postings := query.Init(db).Like("Liabilities:%").All()
 	expenses := query.Init(db).Like("Expenses:Interest:%").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	byAccount := lo.GroupBy(postings, func(p posting.Posting) string { return p.RestName(1) })
-	var interests []Interest
+	interests := []Interest{}
 	for account, ps := range byAccount {
 		es := lo.Filter(expenses, func(e posting.Posting, _ int) bool { return e.RestName(1) == "Interest:"+account })
 		ps = append(ps, es...)
 		interests = append(interests, Interest{Account: "Liabilities:" + account, APR: service.APR(db, ps), OverviewTimeline: computeOverviewTimeline(db, ps)})
 	}
 
-	return gin.H{"interest_timeline_breakdown": interests}
+	// Map iteration order is not stable; the API contract returns the accounts
+	// sorted so clients and golden tests see a deterministic list.
+	sort.Slice(interests, func(i, j int) bool { return interests[i].Account < interests[j].Account })
+
+	return interests
 }
 
 func computeOverviewTimeline(db *gorm.DB, postings []posting.Posting) []Overview {

@@ -1,0 +1,151 @@
+{
+  "creditCard": {
+    "account": "Liabilities:CreditCard:Visa",
+    "network": "visa",
+    "number": "4111",
+    "balance": 400,
+    "bills": [
+      {
+        "statementStartDate": "2026-10-21T00:00:00Z",
+        "statementEndDate": "2026-11-20T00:00:00Z",
+        "dueDate": "2026-12-05T00:00:00Z",
+        "paidDate": null,
+        "credits": 100,
+        "debits": 500,
+        "DebitsRunningBalance": 500,
+        "openingBalance": 0,
+        "closingBalance": 400,
+        "postings": [
+          {
+            "id": 4,
+            "transaction_id": "fixture-card-spend",
+            "date": "2026-11-19T00:00:00Z",
+            "payee": "Fixture Payee",
+            "account": "Liabilities:CreditCard:Visa",
+            "commodity": "EUR",
+            "quantity": -500,
+            "amount": -500,
+            "status": "cleared",
+            "tag_recurring": "",
+            "tag_period": "",
+            "tax_category": "",
+            "tax_category_legacy": "",
+            "transaction_begin_line": 4,
+            "transaction_end_line": 5,
+            "file_name": "fixture.ledger",
+            "forecast": false,
+            "note": "",
+            "transaction_note": "",
+            "market_amount": 0,
+            "balance": 0
+          },
+          {
+            "id": 5,
+            "transaction_id": "fixture-card-pay",
+            "date": "2026-11-20T00:00:00Z",
+            "payee": "Fixture Payee",
+            "account": "Liabilities:CreditCard:Visa",
+            "commodity": "EUR",
+            "quantity": 100,
+            "amount": 100,
+            "status": "cleared",
+            "tag_recurring": "",
+            "tag_period": "",
+            "tax_category": "",
+            "tax_category_legacy": "",
+            "transaction_begin_line": 5,
+            "transaction_end_line": 6,
+            "file_name": "fixture.ledger",
+            "forecast": false,
+            "note": "",
+            "transaction_note": "",
+            "market_amount": 0,
+            "balance": 0
+          }
+        ],
+        "transactions": [
+          {
+            "id": "fixture-card-spend",
+            "date": "2026-11-19T00:00:00Z",
+            "payee": "Fixture Payee",
+            "postings": [
+              {
+                "id": 4,
+                "transaction_id": "fixture-card-spend",
+                "date": "2026-11-19T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Liabilities:CreditCard:Visa",
+                "commodity": "EUR",
+                "quantity": -500,
+                "amount": -500,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 4,
+                "transaction_end_line": 5,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              }
+            ],
+            "tag_recurring": "",
+            "tag_period": "",
+            "beginLine": 4,
+            "endLine": 5,
+            "fileName": "fixture.ledger",
+            "note": ""
+          },
+          {
+            "id": "fixture-card-pay",
+            "date": "2026-11-20T00:00:00Z",
+            "payee": "Fixture Payee",
+            "postings": [
+              {
+                "id": 5,
+                "transaction_id": "fixture-card-pay",
+                "date": "2026-11-20T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Liabilities:CreditCard:Visa",
+                "commodity": "EUR",
+                "quantity": 100,
+                "amount": 100,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 5,
+                "transaction_end_line": 6,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              }
+            ],
+            "tag_recurring": "",
+            "tag_period": "",
+            "beginLine": 5,
+            "endLine": 6,
+            "fileName": "fixture.ledger",
+            "note": ""
+          }
+        ]
+      }
+    ],
+    "creditLimit": 100000,
+    "yearlySpends": {
+      "2025 - 26": {
+        "2026-11": 500
+      }
+    },
+    "expirationDate": "2030-12-31T00:00:00Z"
+  },
+  "found": true
+}

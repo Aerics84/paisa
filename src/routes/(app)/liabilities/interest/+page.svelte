@@ -6,14 +6,15 @@
     renderOverview,
     renderPerAccountOverview
   } from "$lib/liabilities/interest";
-  import { ajax, type Legend } from "$lib/utils";
+  import { getLiabilityInterest } from "$lib/api/liabilities";
+  import { type Legend } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
   let isEmpty = false;
   let legends: Legend[] = [];
 
   onMount(async () => {
-    const { interest_timeline_breakdown: interests } = await ajax("/api/liabilities/interest");
+    const { interest_timeline_breakdown: interests } = await getLiabilityInterest();
 
     if (_.isEmpty(interests)) {
       isEmpty = true;

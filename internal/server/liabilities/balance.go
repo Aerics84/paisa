@@ -11,7 +11,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -24,12 +23,12 @@ type AssetBreakdown struct {
 	APR            decimal.Decimal `json:"apr"`
 }
 
-func GetBalance(db *gorm.DB) gin.H {
+func GetBalance(db *gorm.DB) map[string]AssetBreakdown {
 	postings := query.Init(db).Like("Liabilities:%").All()
 	expenses := query.Init(db).Like("Expenses:Interest:%").All()
 	postings = service.PopulateMarketPrice(db, postings)
 	breakdowns := computeBreakdown(db, postings, expenses)
-	return gin.H{"liability_breakdowns": breakdowns}
+	return breakdowns
 }
 
 func computeBreakdown(db *gorm.DB, postings, expenses []posting.Posting) map[string]AssetBreakdown {

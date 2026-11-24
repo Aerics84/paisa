@@ -5,16 +5,17 @@
     nonZeroCurrency,
     nonZeroFloatChange
   } from "$lib/table_formatters";
-  import { ajax, buildTree, type LiabilityBreakdown } from "$lib/utils";
+  import { getLiabilityBalance } from "$lib/api/liabilities";
+  import { buildTree, type LiabilityBreakdown } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
   import type { ColumnDefinition } from "tabulator-tables";
 
-  let breakdowns: LiabilityBreakdown[] = [];
+  let breakdowns: Record<string, LiabilityBreakdown> = {};
   let isEmpty = false;
 
   onMount(async () => {
-    ({ liability_breakdowns: breakdowns } = await ajax("/api/liabilities/balance"));
+    ({ liability_breakdowns: breakdowns } = await getLiabilityBalance());
 
     if (_.isEmpty(breakdowns)) {
       isEmpty = true;

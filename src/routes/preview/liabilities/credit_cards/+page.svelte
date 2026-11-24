@@ -1,7 +1,8 @@
 <script lang="ts">
   import CreditCardCard from "$lib/components/CreditCardCard.svelte";
   import ZeroState from "$lib/components/ZeroState.svelte";
-  import { ajax, helpUrl, type CreditCardSummary } from "$lib/utils";
+  import { getCreditCards } from "$lib/api/credit_cards";
+  import { helpUrl, type CreditCardSummary } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -9,7 +10,7 @@
   let creditCards: CreditCardSummary[] = [];
 
   onMount(async () => {
-    ({ creditCards } = await ajax("/api/credit_cards"));
+    ({ creditCards } = await getCreditCards());
     if (_.isEmpty(creditCards)) {
       isEmpty = true;
     }

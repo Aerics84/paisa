@@ -1,0 +1,58 @@
+{
+  "interest_timeline_breakdown": [
+    {
+      "account": "Liabilities:CreditCard:Visa",
+      "overview_timeline": [
+        {
+          "date": "2026-11-19T00:00:00Z",
+          "drawn_amount": 500,
+          "repaid_amount": 0,
+          "interest_amount": 0
+        },
+        {
+          "date": "2026-11-20T00:00:00Z",
+          "drawn_amount": 500,
+          "repaid_amount": 100,
+          "interest_amount": 0
+        },
+        {
+          "date": "2026-11-21T00:00:00Z",
+          "drawn_amount": 500,
+          "repaid_amount": 100,
+          "interest_amount": 0
+        },
+        {
+          "date": "2026-11-22T00:00:00Z",
+          "drawn_amount": 500,
+          "repaid_amount": 100,
+          "interest_amount": 0
+        }
+      ],
+      "apr": 0
+    },
+    {
+      "account": "Liabilities:Loan",
+      "overview_timeline": [
+        {
+          "date": "2026-11-20T00:00:00Z",
+          "drawn_amount": 1000,
+          "repaid_amount": 0,
+          "interest_amount": 0
+        },
+        {
+          "date": "2026-11-21T00:00:00Z",
+          "drawn_amount": 1000,
+          "repaid_amount": 210,
+          "interest_amount": 10
+        },
+        {
+          "date": "2026-11-22T00:00:00Z",
+          "drawn_amount": 1000,
+          "repaid_amount": 210,
+          "interest_amount": 10
+        }
+      ],
+      "apr": 308.01
+    }
+  ]
+}

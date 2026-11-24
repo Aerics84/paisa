@@ -2,7 +2,8 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { renderMonthlyRepaymentTimeline } from "$lib/repayment";
-  import { ajax, type Legend } from "$lib/utils";
+  import { getLiabilityRepayment } from "$lib/api/liabilities";
+  import { type Legend } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -10,7 +11,7 @@
   let legends: Legend[] = [];
 
   onMount(async () => {
-    const { repayments: repayments } = await ajax("/api/liabilities/repayment");
+    const { repayments } = await getLiabilityRepayment();
     if (_.isEmpty(repayments)) {
       isEmpty = true;
     } else {

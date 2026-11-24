@@ -10,7 +10,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -42,7 +41,7 @@ type CreditCardBill struct {
 	Transactions         []transaction.Transaction `json:"transactions"`
 }
 
-func GetCreditCards(db *gorm.DB) gin.H {
+func GetCreditCards(db *gorm.DB) CreditCardsResponse {
 	creditCards := []CreditCardSummary{}
 
 	for _, creditCardConfig := range config.GetConfig().CreditCards {
@@ -50,19 +49,19 @@ func GetCreditCards(db *gorm.DB) gin.H {
 		creditCards = append(creditCards, buildCreditCard(db, creditCardConfig, ps, false))
 	}
 
-	return gin.H{"creditCards": creditCards}
+	return CreditCardsResponse{CreditCards: creditCards}
 }
 
-func GetCreditCard(db *gorm.DB, account string) gin.H {
+func GetCreditCard(db *gorm.DB, account string) CreditCardResponse {
 	for _, creditCardConfig := range config.GetConfig().CreditCards {
 		if creditCardConfig.Account == account {
 			ps := query.Init(db).Where("account = ?", creditCardConfig.Account).All()
 			creditCard := buildCreditCard(db, creditCardConfig, ps, true)
-			return gin.H{"creditCard": creditCard, "found": true}
+			return CreditCardResponse{CreditCard: &creditCard, Found: true}
 		}
 	}
 
-	return gin.H{"found": false}
+	return CreditCardResponse{Found: false}
 }
 
 func yearlySpends(db *gorm.DB, date time.Time, postings []posting.Posting) map[string]map[string]decimal.Decimal {

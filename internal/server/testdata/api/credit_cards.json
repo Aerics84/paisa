@@ -1,0 +1,28 @@
+{
+  "creditCards": [
+    {
+      "account": "Liabilities:CreditCard:Visa",
+      "network": "visa",
+      "number": "4111",
+      "balance": 400,
+      "bills": [
+        {
+          "statementStartDate": "2026-10-21T00:00:00Z",
+          "statementEndDate": "2026-11-20T00:00:00Z",
+          "dueDate": "2026-12-05T00:00:00Z",
+          "paidDate": null,
+          "credits": 100,
+          "debits": 500,
+          "DebitsRunningBalance": 500,
+          "openingBalance": 0,
+          "closingBalance": 400,
+          "postings": [],
+          "transactions": []
+        }
+      ],
+      "creditLimit": 100000,
+      "yearlySpends": {},
+      "expirationDate": "2030-12-31T00:00:00Z"
+    }
+  ]
+}

@@ -7,9 +7,9 @@
   import LevelItem from "$lib/components/LevelItem.svelte";
   import TransactionCard from "$lib/components/TransactionCard.svelte";
   import { renderYearlySpends } from "$lib/credit_cards";
+  import { getCreditCard } from "$lib/api/credit_cards";
   import { iconify } from "$lib/icon";
   import {
-    ajax,
     formatCurrency,
     formatPercentage,
     type CreditCardBill,
@@ -25,7 +25,6 @@
 
   let creditCard: CreditCardSummary;
   let currentBill: CreditCardBill;
-  let found = false;
   let small = true;
   let rendered = false;
 
@@ -41,11 +40,12 @@
   }
 
   onMount(async () => {
-    ({ creditCard, found } = await ajax("/api/credit_cards/:account", null, data));
-    if (!found) {
+    const response = await getCreditCard(data.account);
+    if (!response.found || !response.creditCard) {
       return goto("/liabilities/credit_cards");
     }
 
+    creditCard = response.creditCard;
     currentBill = lastBill(creditCard);
   });
 </script>

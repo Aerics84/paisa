@@ -16,6 +16,9 @@ type_mappings:
   assets.CheckingBalancePoint: "CheckingBalancePoint"
   assets.AvailableMonthRange: "AvailableMonthRange"
   assets.AssetBreakdown: "AssetBreakdown"
+  liabilities.Interest: "Interest"
+  liabilities.Overview: "InterestOverview"
+  liabilities.AssetBreakdown: "LiabilityBreakdown"
   service.PostingReturn: "PostingReturn"
   goal.GoalSummary: "GoalSummary"
   service.GoalIntelligence: "GoalIntelligence"
@@ -44,6 +47,10 @@ packages:
       import type { Posting } from "./posting.gen";
   - path: "github.com/ananthakumaran/paisa/internal/server/assets"
     output_path: "src/lib/api/assets.gen.ts"
+  # Liability wire types. Only the response payload structs are part of the
+  # contract; the handlers themselves stay server-side.
+  - path: "github.com/ananthakumaran/paisa/internal/server/liabilities"
+    output_path: "src/lib/api/liabilities.gen.ts"
   - path: "github.com/ananthakumaran/paisa/internal/server/goal"
     output_path: "src/lib/api/goal.gen.ts"
     frontmatter: |
@@ -92,6 +99,10 @@ packages:
       import type { GoalSummary } from "./goal.gen";
       import type { IngestionResult } from "./importer.gen";
       import type { Rule as ImportRule } from "./import_rule.gen";
+      import type {
+        AssetBreakdown as LiabilityBreakdown,
+        Interest
+      } from "./liabilities.gen";
       import type { Posting } from "./posting.gen";
       import type { ReconciliationReport } from "./reconciliation.gen";
       import type { PostingReturn } from "./service.gen";

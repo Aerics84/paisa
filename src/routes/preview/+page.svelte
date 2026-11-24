@@ -20,6 +20,7 @@
   } from "$lib/monthly_review";
   import { createFlowRenderController, flowSignature, flowState } from "$lib/preview_flow";
   import { getDashboard } from "$lib/api/dashboard";
+  import { getLiabilityBalance } from "$lib/api/liabilities";
   import { getNetworth } from "$lib/api/assets";
   import {
     enrichTrantionSequence,
@@ -71,7 +72,7 @@
   let goalSummaries: GoalSummary[] = [];
   let transactionSequences: TransactionSequence[] = [];
   let budgetsByMonth: Record<string, Budget> = {};
-  let liabilityBreakdowns: LiabilityBreakdown[] = [];
+  let liabilityBreakdowns: Record<string, LiabilityBreakdown> = {};
   let networthOverview: Networth;
   let networthTimeline: Networth[] = [];
   let monthlyReview: MonthlyReviewResponse | null = null;
@@ -198,7 +199,7 @@
       const [dashboard, networthResponse, liabilitiesResponse] = await Promise.all([
         getDashboard(),
         getNetworth(),
-        ajax("/api/liabilities/balance")
+        getLiabilityBalance()
       ]);
 
       cashFlows = dashboard.cashFlows;
@@ -554,7 +555,7 @@
     goalSummaries.length > 0 ||
     transactionSequences.length > 0 ||
     !_.isEmpty(budgetsByMonth) ||
-    liabilityBreakdowns.length > 0 ||
+    !_.isEmpty(liabilityBreakdowns) ||
     networthTimeline.length > 0 ||
     currentNetworthValue !== 0;
   $: isEmpty = loadError || !hasDashboardData;

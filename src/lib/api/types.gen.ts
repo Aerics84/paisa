@@ -10,6 +10,7 @@ import type { Config } from "./config.gen";
 import type { GoalSummary } from "./goal.gen";
 import type { IngestionResult } from "./importer.gen";
 import type { Rule as ImportRule } from "./import_rule.gen";
+import type { AssetBreakdown as LiabilityBreakdown, Interest } from "./liabilities.gen";
 import type { Posting } from "./posting.gen";
 import type { ReconciliationReport } from "./reconciliation.gen";
 import type { PostingReturn } from "./service.gen";
@@ -650,6 +651,45 @@ export interface SavingsMetrics {
   Surplus: number;
   OverallRate: number;
   OverallRateAvailable: boolean;
+}
+
+//////////
+// source: liabilities_types.go
+
+/**
+ * LiabilityInterestResponse is the JSON body returned by
+ * GET /api/liabilities/interest.
+ */
+export interface LiabilityInterestResponse {
+  interest_timeline_breakdown: Interest[];
+}
+/**
+ * LiabilityBalanceResponse is the JSON body returned by
+ * GET /api/liabilities/balance. The breakdowns are keyed by account group.
+ */
+export interface LiabilityBalanceResponse {
+  liability_breakdowns: { [key: string]: LiabilityBreakdown };
+}
+/**
+ * LiabilityRepaymentResponse is the JSON body returned by
+ * GET /api/liabilities/repayment.
+ */
+export interface LiabilityRepaymentResponse {
+  repayments: Posting[];
+}
+/**
+ * CreditCardsResponse is the JSON body returned by GET /api/credit_cards.
+ */
+export interface CreditCardsResponse {
+  creditCards: CreditCardSummary[];
+}
+/**
+ * CreditCardResponse is the JSON body returned by GET /api/credit_cards/:account.
+ * CreditCard is omitted when the configured card cannot be found.
+ */
+export interface CreditCardResponse {
+  creditCard?: CreditCardSummary;
+  found: boolean;
 }
 
 //////////

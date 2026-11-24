@@ -70,6 +70,8 @@ export type {
   RebalanceItem,
   RebalancePlan
 };
+export type { Interest, InterestOverview, LiabilityBreakdown } from "./api/liabilities";
+export type { CreditCardBill, CreditCardSummary } from "./api/credit_cards";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -147,34 +149,12 @@ export interface Price {
   value: number;
 }
 
-export interface InterestOverview {
-  date: dayjs.Dayjs;
-  drawn_amount: number;
-  repaid_amount: number;
-  interest_amount: number;
-}
-
-export interface Interest {
-  account: string;
-  overview_timeline: InterestOverview[];
-  apr: number;
-}
-
 export interface AccountTfIdf {
   tf_idf: Record<string, Record<string, number>>;
   index: {
     docs: Record<string, Record<string, number>>;
     tokens: Record<string, Record<string, number>>;
   };
-}
-
-export interface LiabilityBreakdown {
-  group: string;
-  drawn_amount: number;
-  repaid_amount: number;
-  interest_amount: number;
-  balance_amount: number;
-  apr: number;
 }
 
 export interface Tax {
@@ -564,30 +544,6 @@ export interface SyncResponse {
   warning?: string;
 }
 
-export interface CreditCardBill {
-  openingBalance: number;
-  closingBalance: number;
-  debits: number;
-  credits: number;
-  statementStartDate: dayjs.Dayjs;
-  statementEndDate: dayjs.Dayjs;
-  dueDate: dayjs.Dayjs;
-  paidDate: dayjs.Dayjs;
-  postings: Posting[];
-  transactions: Transaction[];
-}
-
-export interface CreditCardSummary {
-  account: string;
-  network: string;
-  number: string;
-  balance: number;
-  bills: CreditCardBill[];
-  creditLimit: number;
-  expirationDate: dayjs.Dayjs;
-  yearlySpends: { [year: string]: { [month: string]: number } };
-}
-
 export interface GoalSummary {
   type: string;
   name: string;
@@ -660,23 +616,7 @@ export function ajax(route: "/api/schedule_al"): Promise<{
 }>;
 export function ajax(route: "/api/diagnosis"): Promise<{ issues: Issue[] }>;
 export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
-export function ajax(route: "/api/liabilities/repayment"): Promise<{ repayments: Posting[] }>;
-export function ajax(
-  route: "/api/liabilities/balance"
-): Promise<{ liability_breakdowns: LiabilityBreakdown[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;
-
-export function ajax(route: "/api/liabilities/interest"): Promise<{
-  interest_timeline_breakdown: Interest[];
-}>;
-
-export function ajax(route: "/api/credit_cards"): Promise<{ creditCards: CreditCardSummary[] }>;
-
-export function ajax(
-  route: "/api/credit_cards/:account",
-  options?: RequestOptions,
-  params?: Record<string, string>
-): Promise<{ creditCard: CreditCardSummary; found: boolean }>;
 
 export function ajax(route: "/api/goals"): Promise<{ goals: GoalSummary[] }>;
 export function ajax(

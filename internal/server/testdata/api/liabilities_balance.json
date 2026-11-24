@@ -1,0 +1,36 @@
+{
+  "liability_breakdowns": {
+    "Liabilities": {
+      "group": "Liabilities",
+      "drawn_amount": 1500,
+      "repaid_amount": 310,
+      "interest_amount": 10,
+      "balance_amount": 1200,
+      "apr": 133.79
+    },
+    "Liabilities:CreditCard": {
+      "group": "Liabilities:CreditCard",
+      "drawn_amount": 500,
+      "repaid_amount": 100,
+      "interest_amount": 0,
+      "balance_amount": 400,
+      "apr": 0
+    },
+    "Liabilities:CreditCard:Visa": {
+      "group": "Liabilities:CreditCard:Visa",
+      "drawn_amount": 500,
+      "repaid_amount": 100,
+      "interest_amount": 0,
+      "balance_amount": 400,
+      "apr": 0
+    },
+    "Liabilities:Loan": {
+      "group": "Liabilities:Loan",
+      "drawn_amount": 1000,
+      "repaid_amount": 210,
+      "interest_amount": 10,
+      "balance_amount": 800,
+      "apr": 308.01
+    }
+  }
+}

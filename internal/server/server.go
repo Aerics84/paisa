@@ -377,15 +377,15 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/liabilities/interest", func(c *gin.Context) {
-		c.JSON(200, liabilities.GetInterest(db))
+		c.JSON(200, LiabilityInterestResponse{InterestTimelineBreakdown: liabilities.GetInterest(db)})
 	})
 
 	router.GET("/api/liabilities/balance", func(c *gin.Context) {
-		c.JSON(200, liabilities.GetBalance(db))
+		c.JSON(200, LiabilityBalanceResponse{LiabilityBreakdowns: liabilities.GetBalance(db)})
 	})
 
 	router.GET("/api/liabilities/repayment", func(c *gin.Context) {
-		c.JSON(200, liabilities.GetRepayment(db))
+		c.JSON(200, LiabilityRepaymentResponse{Repayments: liabilities.GetRepayment(db)})
 	})
 
 	router.GET("/api/logs", func(c *gin.Context) {
