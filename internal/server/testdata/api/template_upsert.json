@@ -1,0 +1,9 @@
+{
+  "template": {
+    "id": "custom:Fixture Custom",
+    "name": "Fixture Custom",
+    "content": "{{payee}}",
+    "template_type": "custom"
+  },
+  "saved": true
+}

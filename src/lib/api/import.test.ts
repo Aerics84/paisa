@@ -119,6 +119,30 @@ test("commitImport posts staged rows and returns the commit summary", async () =
   expect(response.target_file).toBe("/ledger/main.ledger");
 });
 
+test("commitImport keeps a null error list from a clean commit", async () => {
+  globalThis.fetch = fetchReturning({
+    success: true,
+    committed_count: 1,
+    target_file: "/ledger/main.ledger",
+    manifest_committed: false,
+    errors: null
+  });
+
+  const { commitImport } = await import("./import");
+  const response = await commitImport(
+    {
+      base_account: "Assets:Checking:Fixture",
+      commodity: "INR",
+      group_by_date: false,
+      raw_content: "",
+      transactions: []
+    },
+    { background: true }
+  );
+
+  expect(response.errors).toBeNull();
+});
+
 test("getReconciliation maps generated_at to dayjs and keeps the rest of the wire shape", async () => {
   globalThis.fetch = fetchReturning({
     generated_at: "2026-11-22T10:11:12Z",

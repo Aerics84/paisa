@@ -33,7 +33,7 @@ type CommitImportResponse struct {
 	CommittedCount    int                     `json:"committed_count"`
 	TargetFile        string                  `json:"target_file"`
 	ManifestCommitted bool                    `json:"manifest_committed"`
-	Errors            []ImportValidationError `json:"errors"`
+	Errors            []ImportValidationError `json:"errors" tstype:"ImportValidationError[] | null"`
 }
 
 // ReconciliationResponse is the JSON body returned by

@@ -192,10 +192,17 @@ func TestHandleCommitImport(t *testing.T) {
 		CommittedCount int    `json:"committed_count"`
 		TargetFile     string `json:"target_file"`
 	}
-	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	body := rec.Body.Bytes()
+	require.NoError(t, json.Unmarshal(body, &resp))
 	assert.True(t, resp.Success)
 	assert.Equal(t, 1, resp.CommittedCount)
 	assert.Equal(t, filepath.ToSlash(journalPath), resp.TargetFile)
+
+	// A clean commit keeps the historical null error list on the wire; the
+	// generated TypeScript type reflects this as ImportValidationError[] | null.
+	var raw map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(body, &raw))
+	assert.Equal(t, "null", string(raw["errors"]))
 
 	content, err := os.ReadFile(journalPath)
 	require.NoError(t, err)

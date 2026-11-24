@@ -421,7 +421,7 @@ export interface CommitImportResponse {
   committed_count: number /* int */;
   target_file: string;
   manifest_committed: boolean;
-  errors: ImportValidationError[];
+  errors: ImportValidationError[] | null;
 }
 /**
  * ReconciliationResponse is the JSON body returned by

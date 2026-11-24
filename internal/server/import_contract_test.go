@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -103,6 +104,61 @@ func TestRulesJSONContract(t *testing.T) {
 	expected, err := os.ReadFile("testdata/api/rules.json")
 	require.NoError(t, err)
 	require.JSONEq(t, string(expected), rec.Body.String())
+}
+
+// TestTemplatesJSONContract pins the success shape of a single template
+// upsert. The GET list is checked structurally instead of as a golden file
+// because it embeds the large set of builtin handlebars templates, which would
+// make the fixture churn on every bundled template change.
+func TestTemplatesJSONContract(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, config.LoadConfig([]byte(
+		"journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"+
+			"import_templates:\n  - name: Existing\n    content: \"{{date}}\"\n",
+	), configPath))
+	t.Cleanup(func() {
+		_ = config.LoadConfig([]byte("journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"), "")
+	})
+
+	db := openImportTestDB(t)
+	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+
+	payload := `{"name": "Fixture Custom", "content": "{{payee}}"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/templates/upsert", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	expected, err := os.ReadFile("testdata/api/template_upsert.json")
+	require.NoError(t, err)
+	require.JSONEq(t, string(expected), rec.Body.String())
+
+	// GET /api/templates also includes builtin templates. Assert the custom
+	// template we just wrote is present with the documented field set instead
+	// of pinning the embedded list.
+	listReq := httptest.NewRequest(http.MethodGet, "/api/templates", nil)
+	listRec := httptest.NewRecorder()
+	router.ServeHTTP(listRec, listReq)
+	require.Equal(t, http.StatusOK, listRec.Code)
+
+	var list TemplatesResponse
+	require.NoError(t, json.Unmarshal(listRec.Body.Bytes(), &list))
+
+	var found bool
+	for _, template := range list.Templates {
+		require.NotEmpty(t, template.ID)
+		require.NotEmpty(t, template.Name)
+		require.NotEmpty(t, template.TemplateType)
+		if template.Name == "Fixture Custom" {
+			found = true
+			require.Equal(t, "custom:Fixture Custom", template.ID)
+			require.Equal(t, "{{payee}}", template.Content)
+			require.Equal(t, "custom", string(template.TemplateType))
+		}
+	}
+	require.True(t, found, "upserted template must appear in GET /api/templates")
 }
 
 // normalizeGeneratedAt replaces the wall-clock timestamp of a reconciliation

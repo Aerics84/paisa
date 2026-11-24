@@ -48,6 +48,11 @@ export async function parseStatement(
   });
 }
 
+/**
+ * Wire commit summary. `errors` is null for a clean commit and an array when
+ * the ledger reported validation warnings. The client keeps that distinction
+ * instead of normalising null to [].
+ */
 export type CommitImportResult = CommitImportResponse & {
   message?: string;
   error?: string;
