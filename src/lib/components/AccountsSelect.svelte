@@ -8,7 +8,7 @@
     accounts?: string[];
   }
 
-  let { allAccounts, accounts = $bindable([]) }: Props = $props();
+  let { allAccounts, accounts = $bindable() }: Props = $props();
 
   type AccountItem = { value: string; label: string; created?: boolean };
 
@@ -18,7 +18,7 @@
 
   // svelte-ignore state_referenced_locally
   let allAccountItems = $state<AccountItem[]>(toItems(allAccounts));
-  let accountItems = $state<AccountItem[]>(toItems(accounts));
+  let accountItems = $state<AccountItem[]>(toItems(accounts ?? []));
 
   let filterText = $state("");
 
@@ -27,7 +27,7 @@
   });
 
   $effect(() => {
-    accountItems = toItems(accounts);
+    accountItems = toItems(accounts ?? []);
   });
 
   function handleFilter(items: any[]) {
