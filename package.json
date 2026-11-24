@@ -36,6 +36,8 @@
     "e2e:install": "playwright install --with-deps chromium",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "gen:api": "go tool tygo generate && prettier --write src/lib/api/types.gen.ts src/lib/api/config.gen.ts",
+    "check:api": "go tool tygo generate && prettier --write src/lib/api/types.gen.ts src/lib/api/config.gen.ts && git diff --exit-code -- src/lib/api/types.gen.ts src/lib/api/config.gen.ts",
     "lint": "npm run check:format:all && eslint .",
     "format": "npm run format:all"
   },

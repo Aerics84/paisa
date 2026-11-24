@@ -114,7 +114,12 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			n := utils.Now().UTC()
 			now = &n
 		}
-		c.JSON(200, gin.H{"config": deps.Config.Get(), "accounts": accounting.AllAccounts(db), "now": now, "schema": config.GetSchema()})
+		c.JSON(200, ConfigResponse{
+			Config:   deps.Config.Get(),
+			Accounts: accounting.AllAccounts(deps.DB),
+			Now:      now,
+			Schema:   config.GetSchema(),
+		})
 	})
 
 	router.POST("/api/config", func(c *gin.Context) {

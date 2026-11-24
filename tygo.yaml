@@ -1,0 +1,26 @@
+# Generates wire types for the HTTP API: time.Time is an RFC3339 string and
+# decimal.Decimal is a JSON number (see internal/server/json.go). Date/Decimal
+# to Dayjs/number conversion belongs to the API client, not to tygo.
+type_mappings:
+  time.Time: "string"
+  time.Month: "number"
+  time.Weekday: "number"
+  decimal.Decimal: "number"
+
+packages:
+  # Only the configuration structs are part of the config wire contract; keep
+  # the server-side store out of the generated types.
+  - path: "github.com/ananthakumaran/paisa/internal/config"
+    output_path: "src/lib/api/config.gen.ts"
+    exclude_files:
+      - "store.go"
+  # Response DTOs live in api_types.go. server.go defines the non-wire Deps
+  # struct, so it is excluded.
+  - path: "github.com/ananthakumaran/paisa/internal/server"
+    output_path: "src/lib/api/types.gen.ts"
+    exclude_files:
+      - "server.go"
+    type_mappings:
+      config.Config: "Config"
+    frontmatter: |
+      import type { Config } from "./config.gen";
