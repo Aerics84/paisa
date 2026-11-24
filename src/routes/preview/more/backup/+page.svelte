@@ -13,13 +13,8 @@
 
     try {
       const route = `/api/backup/export${includeSecrets ? "?include_secrets=true" : ""}`;
-      const headers: Record<string, string> = {};
-      const token = localStorage.getItem("token");
-      if (token) {
-        headers["X-Auth"] = token;
-      }
 
-      const response = await fetch(route, { headers });
+      const response = await fetch(route, { credentials: "same-origin" });
       if (!response.ok) {
         throw new Error(`Failed to download backup: ${response.statusText}`);
       }

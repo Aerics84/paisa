@@ -173,6 +173,29 @@ func TestStatusReportsDisabledAuthWithoutUsers(t *testing.T) {
 	body := decodeBody(t, rec)
 	assert.Equal(t, false, body["auth_enabled"])
 	assert.Equal(t, false, body["authenticated"])
+	assert.Equal(t, "", body["username"])
+}
+
+func TestLoginRateLimitsRepeatedFailures(t *testing.T) {
+	router := testRouter(t, legacyAccountConfig("secret", false))
+
+	for attempt := 0; attempt < 4; attempt++ {
+		assert.Equal(t, http.StatusUnauthorized, doLogin(t, router, "alice", "wrong").Code,
+			"failed attempt %d should be rejected with 401", attempt+1)
+	}
+
+	rec := doLogin(t, router, "alice", "wrong")
+	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
+	assert.Contains(t, strings.ToLower(string(rec.Body.Bytes())), "too many login attempts")
+}
+
+func TestSuccessfulLoginsAreNotRateLimited(t *testing.T) {
+	router := testRouter(t, argon2AccountConfig(t, "secret"))
+
+	for attempt := 0; attempt < 5; attempt++ {
+		rec := doLogin(t, router, "alice", "secret")
+		require.Equal(t, http.StatusOK, rec.Code, "login %d should succeed", attempt+1)
+	}
 }
 
 func TestStatusReportsEnabledAuthAndSession(t *testing.T) {
@@ -181,12 +204,14 @@ func TestStatusReportsEnabledAuthAndSession(t *testing.T) {
 	before := decodeBody(t, getWithCookie(router, "/api/auth/status", nil))
 	assert.Equal(t, true, before["auth_enabled"])
 	assert.Equal(t, false, before["authenticated"])
+	assert.Equal(t, "", before["username"])
 
 	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
 
 	after := decodeBody(t, getWithCookie(router, "/api/auth/status", cookie))
 	assert.Equal(t, true, after["auth_enabled"])
 	assert.Equal(t, true, after["authenticated"])
+	assert.Equal(t, "alice", after["username"])
 }
 
 func TestLogoutClearsCookie(t *testing.T) {

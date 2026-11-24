@@ -12,6 +12,7 @@
   } from "../../persisted_store";
   import _ from "lodash";
   import {
+    authStatus,
     financialYear,
     forEachFinancialYear,
     helpUrl,
@@ -52,13 +53,18 @@
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
     if (get(year) == "") {
       year.set(financialYear(now()));
     }
 
-    const rawToken = localStorage.getItem("token") || "";
-    sidebarIdentity = rawToken.split(":")[0] || "";
+    try {
+      const status = await authStatus();
+      sidebarIdentity = status.username || "";
+    } catch {
+      sidebarIdentity = "";
+    }
+
     sidebarInitials = sidebarIdentity
       .split(/[^A-Za-z0-9]+/)
       .filter(Boolean)

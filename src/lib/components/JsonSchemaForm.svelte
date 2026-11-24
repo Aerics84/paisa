@@ -6,6 +6,7 @@
   import { iconGlyph, iconsList } from "$lib/icon";
   import AccountSelect from "./AccountsSelect.svelte";
   import { hashPassword } from "$lib/utils";
+  import { beginPasswordHash, endPasswordHash } from "$lib/password_hash";
 
   interface Schema extends JSONSchema7 {
     "ui:header"?: string;
@@ -142,11 +143,14 @@
                 return;
               }
 
+              beginPasswordHash();
               try {
                 value = await hashPassword(rawValue);
               } catch {
                 // Keep the previously stored hash when hashing fails; the user
                 // can retry without losing the rest of the form state.
+              } finally {
+                endPasswordHash();
               }
             }}
           />

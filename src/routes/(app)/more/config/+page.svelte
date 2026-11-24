@@ -8,6 +8,7 @@
   import { refresh } from "../../../../store";
   import { askConfirm } from "$lib/confirm";
   import { sync } from "$lib/sync";
+  import { pendingPasswordHashes } from "$lib/password_hash";
 
   let lastConfig: UserConfig;
   let config: UserConfig;
@@ -64,6 +65,10 @@
   }
 
   async function save(newConfig: UserConfig) {
+    if ($pendingPasswordHashes > 0) {
+      return;
+    }
+
     isLoading = true;
     try {
       let success = false;
@@ -128,8 +133,11 @@
                 <button
                   on:click={(_e) => save(config)}
                   class="button is-success {isLoading && 'is-loading'}"
-                  disabled={!hasChanges}>Save</button
+                  disabled={!hasChanges || $pendingPasswordHashes > 0}>Save</button
                 >
+                {#if $pendingPasswordHashes > 0}
+                  <span class="help has-text-grey">Hashing…</span>
+                {/if}
               </div>
               <div class="control">
                 <button

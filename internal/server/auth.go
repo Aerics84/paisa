@@ -53,7 +53,22 @@ type hashRequest struct {
 // session cookie. Successful legacy (sha256) logins are transparently upgraded
 // to Argon2id when the configuration is writable.
 func HandleLogin(deps Deps) gin.HandlerFunc {
+	// Login failures are throttled independently of the general API limiter,
+	// because /api/auth/login is exempt from session authentication.
+	rateLimiter := newAuthRateLimiter()
+
 	return func(c *gin.Context) {
+		limitKey := rateLimitKey(c)
+
+		if _, detail, err := rateLimiter.RateLimitCtx(c.Request.Context(), limitKey, 0); err == nil && detail.Remaining <= 0 {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many login attempts. Try again later."})
+			return
+		}
+
+		failed := func() {
+			rateLimiter.RateLimitCtx(c.Request.Context(), limitKey, 1)
+		}
+
 		var request loginRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
@@ -63,12 +78,14 @@ func HandleLogin(deps Deps) gin.HandlerFunc {
 		cfg := deps.Config.Get()
 		account, found := findUserAccount(cfg.UserAccounts, request.Username)
 		if !found || request.Password == "" {
+			failed()
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 			return
 		}
 
 		ok, needsRehash, err := utils.VerifyPassword(account.Password, request.Password)
 		if err != nil || !ok {
+			failed()
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 			return
 		}
@@ -124,15 +141,18 @@ func HandleAuthStatus(deps Deps) gin.HandlerFunc {
 		cfg := deps.Config.Get()
 
 		authenticated := false
+		username := ""
 		if token, err := c.Cookie(sessionCookieName); err == nil && token != "" {
-			if _, ok := deps.Auth.Lookup(token); ok {
+			if session, ok := deps.Auth.Lookup(token); ok {
 				authenticated = true
+				username = session.Username
 			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"auth_enabled":  len(cfg.UserAccounts) > 0,
 			"authenticated": authenticated,
+			"username":      username,
 		})
 	}
 }
@@ -248,10 +268,7 @@ func CSRFMiddleware() gin.HandlerFunc {
 	}
 }
 
-// TokenAuthMiddleware authenticates API requests using the paisa_session
-// cookie. It accepts the legacy X-Auth header for one release and marks such
-// responses as deprecated.
-func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
+func newAuthRateLimiter() throttled.RateLimiterCtx {
 	store, err := memstore.NewCtx(10)
 	if err != nil {
 		log.Fatal(err)
@@ -266,6 +283,15 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return rateLimiter
+}
+
+// TokenAuthMiddleware authenticates API requests using the paisa_session
+// cookie. It accepts the legacy X-Auth header for one release and marks such
+// responses as deprecated.
+func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
+	rateLimiter := newAuthRateLimiter()
 
 	return func(c *gin.Context) {
 		cfg := deps.Config.Get()
