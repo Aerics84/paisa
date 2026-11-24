@@ -24,14 +24,6 @@ func ciiStartDate() time.Time                 { return configuredDate("2001-03-3
 func equityLongTermTaxStartDate() time.Time   { return configuredDate("2018-04-01") }
 func equityRateChangeDate() time.Time         { return configuredDate("2024-07-23") }
 
-type Tax struct {
-	Gain      decimal.Decimal `json:"gain"`
-	Taxable   decimal.Decimal `json:"taxable"`
-	Slab      decimal.Decimal `json:"slab"`
-	LongTerm  decimal.Decimal `json:"long_term"`
-	ShortTerm decimal.Decimal `json:"short_term"`
-}
-
 func Add(a, b Tax) Tax {
 	return Tax{Gain: a.Gain.Add(b.Gain), Taxable: a.Taxable.Add(b.Taxable), LongTerm: a.LongTerm.Add(b.LongTerm), ShortTerm: a.ShortTerm.Add(b.ShortTerm), Slab: a.Slab.Add(b.Slab)}
 }

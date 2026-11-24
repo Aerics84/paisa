@@ -7,7 +7,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/taxation"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -33,7 +32,7 @@ type CapitalGain struct {
 	FY          map[string]FYCapitalGain `json:"fy"`
 }
 
-func GetCapitalGains(db *gorm.DB) gin.H {
+func GetCapitalGains(db *gorm.DB) CapitalGainsResponse {
 	capitalGains := map[string]CapitalGain{}
 	if config.SupportsIndiaTaxFeatures() {
 		commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
@@ -47,7 +46,7 @@ func GetCapitalGains(db *gorm.DB) gin.H {
 		})
 	}
 
-	return gin.H{"capital_gains": capitalGains, "totals": ComputeCapitalGainTotals(capitalGains)}
+	return CapitalGainsResponse{CapitalGains: capitalGains, Totals: ComputeCapitalGainTotals(capitalGains)}
 }
 
 // ComputeCapitalGainTotals nets capital gains across accounts per financial
@@ -69,6 +68,9 @@ func ComputeCapitalGainTotals(gains map[string]CapitalGain) map[string]FYCapital
 	for fy, total := range totals {
 		total.Tax.ShortTerm = decimal.Max(total.Tax.ShortTerm, decimal.Zero)
 		total.Tax.LongTerm = decimal.Max(total.Tax.LongTerm, decimal.Zero)
+		if total.PostingPairs == nil {
+			total.PostingPairs = []PostingPair{}
+		}
 		totals[fy] = total
 	}
 

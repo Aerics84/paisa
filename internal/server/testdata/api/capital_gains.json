@@ -1,0 +1,76 @@
+{
+  "capital_gains": {
+    "Assets:Equity:EQUITY": {
+      "account": "Assets:Equity:EQUITY",
+      "tax_category": "equity",
+      "fy": {
+        "2025": {
+          "units": 4,
+          "purchase_price": 400,
+          "sell_price": 600,
+          "tax": { "gain": 200, "taxable": 200, "slab": 0, "long_term": 25, "short_term": 0 },
+          "posting_pairs": [
+            {
+              "purchase": {
+                "id": 1,
+                "transaction_id": "buy",
+                "date": "2024-05-01T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Assets:Equity:EQUITY",
+                "commodity": "EQUITY",
+                "quantity": 4,
+                "amount": 400,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 1,
+                "transaction_end_line": 2,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              },
+              "sell": {
+                "id": 2,
+                "transaction_id": "sell",
+                "date": "2025-06-01T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Assets:Equity:EQUITY",
+                "commodity": "EQUITY",
+                "quantity": -4,
+                "amount": -600,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 2,
+                "transaction_end_line": 3,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              },
+              "tax": { "gain": 200, "taxable": 200, "slab": 0, "long_term": 25, "short_term": 0 }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "totals": {
+    "2025": {
+      "units": 4,
+      "purchase_price": 400,
+      "sell_price": 600,
+      "tax": { "gain": 200, "taxable": 200, "slab": 0, "long_term": 25, "short_term": 0 },
+      "posting_pairs": []
+    }
+  }
+}

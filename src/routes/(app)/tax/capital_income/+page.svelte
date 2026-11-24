@@ -1,13 +1,14 @@
 <script lang="ts">
   import GermanyTaxCard from "$lib/components/GermanyTaxCard.svelte";
-  import { ajax, type GermanyTaxYear } from "$lib/utils";
+  import { getCapitalIncomeTax } from "$lib/api/tax";
+  import type { GermanyTaxYear } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
 
   let taxYears: GermanyTaxYear[] = [];
 
   onMount(async () => {
-    const { tax_years: taxYearsByYear } = await ajax("/api/capital_income_tax");
+    const { tax_years: taxYearsByYear } = await getCapitalIncomeTax();
     taxYears = _.chain(taxYearsByYear).values().sortBy("tax_year").reverse().value();
   });
 </script>

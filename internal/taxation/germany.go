@@ -5,23 +5,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type GermanyTaxBreakdown struct {
-	GrossRealizedGain            decimal.Decimal `json:"gross_realized_gain"`
-	RealizedLoss                 decimal.Decimal `json:"realized_loss"`
-	RealizedGain                 decimal.Decimal `json:"realized_gain"`
-	PartialExemptionAmount       decimal.Decimal `json:"partial_exemption_amount"`
-	TaxableAmountBeforeAllowance decimal.Decimal `json:"taxable_amount_before_allowance"`
-	AllowanceUsed                decimal.Decimal `json:"allowance_used"`
-	TaxableAmount                decimal.Decimal `json:"taxable_amount"`
-	CapitalIncomeTax             decimal.Decimal `json:"capital_income_tax"`
-	SolidaritySurcharge          decimal.Decimal `json:"solidarity_surcharge"`
-	ChurchTax                    decimal.Decimal `json:"church_tax"`
-	WithholdingTaxPaid           decimal.Decimal `json:"withholding_tax_paid"`
-	TaxCreditUsed                decimal.Decimal `json:"tax_credit_used"`
-	TotalTax                     decimal.Decimal `json:"total_tax"`
-	NetTaxDue                    decimal.Decimal `json:"net_tax_due"`
-}
-
 type GermanyTaxInput struct {
 	GrossRealizedGain            decimal.Decimal
 	RealizedLoss                 decimal.Decimal

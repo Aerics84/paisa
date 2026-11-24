@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { CapitalGain, FYCapitalGain } from "$lib/utils";
   import CapitalGainCard from "$lib/components/CapitalGainCard.svelte";
-  import { ajax } from "$lib/utils";
+  import { getCapitalGains } from "$lib/api/tax";
   import _ from "lodash";
   import { onMount } from "svelte";
 
@@ -10,8 +10,7 @@
   let totals: Record<string, FYCapitalGain> = {};
 
   onMount(async () => {
-    const { capital_gains: capital_gains, totals: totalsResponse } =
-      await ajax("/api/capital_gains");
+    const { capital_gains: capital_gains, totals: totalsResponse } = await getCapitalGains();
 
     years = _.chain(capital_gains)
       .values()

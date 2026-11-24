@@ -11,7 +11,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/service"
 	"github.com/ananthakumaran/paisa/internal/taxation"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -38,9 +37,9 @@ type Harvestable struct {
 	CurrentUnitDate       time.Time          `json:"current_unit_date"`
 }
 
-func GetHarvest(db *gorm.DB) gin.H {
+func GetHarvest(db *gorm.DB) HarvestResponse {
 	if !config.SupportsIndiaTaxFeatures() {
-		return gin.H{"harvestables": map[string]Harvestable{}}
+		return HarvestResponse{Harvestables: map[string]Harvestable{}}
 	}
 
 	commodities := lo.Filter(c.All(), func(c config.Commodity, _ int) bool {
@@ -51,7 +50,7 @@ func GetHarvest(db *gorm.DB) gin.H {
 	harvestables := lo.MapValues(byAccount, func(postings []posting.Posting, account string) Harvestable {
 		return computeHarvestable(db, account, c.FindByName(postings[0].Commodity), postings)
 	})
-	return gin.H{"harvestables": harvestables}
+	return HarvestResponse{Harvestables: harvestables}
 }
 
 func computeHarvestable(db *gorm.DB, account string, commodity config.Commodity, postings []posting.Posting) Harvestable {

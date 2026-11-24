@@ -72,6 +72,35 @@ export type {
 };
 export type { Interest, InterestOverview, LiabilityBreakdown } from "./api/liabilities";
 export type { CreditCardBill, CreditCardSummary } from "./api/credit_cards";
+export type {
+  CapitalGain,
+  FYCapitalGain,
+  GermanyTaxAccount,
+  GermanyTaxDiagnostic,
+  GermanyTaxPostingPair,
+  GermanyTaxSummary,
+  GermanyTaxYear,
+  HarvestBreakdown,
+  Harvestable,
+  PostingPair,
+  ScheduleAL,
+  ScheduleALEntry,
+  ScheduleALSection,
+  Tax,
+  TaxOverview,
+  TaxOverviewCapitalIncome,
+  TaxOverviewCapitalIncomeAccount,
+  TaxOverviewCategory,
+  TaxOverviewCoverage,
+  TaxOverviewCoverageAccount,
+  TaxOverviewDiagnostic,
+  TaxOverviewIncomeTaxPayment,
+  TaxOverviewIncomeTaxPayments,
+  TaxOverviewPosting,
+  TaxOverviewPostingSource,
+  TaxOverviewSection,
+  TaxOverviewSummary
+} from "./api/tax";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
   regional_profile: "india",
@@ -157,228 +186,11 @@ export interface AccountTfIdf {
   };
 }
 
-export interface Tax {
-  gain: number;
-  taxable: number;
-  short_term: number;
-  long_term: number;
-  slab: number;
-}
-
-export interface PostingPair {
-  purchase: Posting;
-  sell: Posting;
-  tax: Tax;
-}
-
-export interface FYCapitalGain {
-  tax: Tax;
-  units: number;
-  purchase_price: number;
-  sell_price: number;
-  posting_pairs: PostingPair[];
-}
-export interface HarvestBreakdown {
-  units: number;
-  purchase_date: string;
-  purchase_price: number;
-  purchase_unit_price: number;
-  current_price: number;
-  tax: Tax;
-}
-
-export interface Harvestable {
-  account: string;
-  tax_category: string;
-  total_units: number;
-  harvestable_units: number;
-  unrealized_gain: number;
-  taxable_unrealized_gain: number;
-  current_unit_price: number;
-  current_unit_date: string;
-  harvest_breakdown: HarvestBreakdown[];
-}
-
-export interface CapitalGain {
-  account: string;
-  tax_category: string;
-  fy: { [key: string]: FYCapitalGain };
-}
-
-export interface GermanyTaxPostingPair {
-  purchase: Posting;
-  sell: Posting;
-  realized_gain: number;
-  partial_exemption_rate?: number | null;
-  partial_exemption_amount: number;
-  taxable_gain: number;
-}
-
-export interface GermanyTaxAccount {
-  account: string;
-  commodity: string;
-  commodity_type: string;
-  partial_exemption_rate?: number | null;
-  units: number;
-  purchase_price: number;
-  sell_price: number;
-  realized_gain: number;
-  partial_exemption_amount: number;
-  taxable_gain: number;
-  posting_pairs: GermanyTaxPostingPair[];
-}
-
-export interface GermanyTaxSummary {
-  gross_realized_gain: number;
-  realized_loss: number;
-  realized_gain: number;
-  partial_exemption_amount: number;
-  taxable_amount_before_allowance: number;
-  allowance_used: number;
-  taxable_amount: number;
-  capital_income_tax: number;
-  solidarity_surcharge: number;
-  church_tax: number;
-  total_tax: number;
-  withholding_tax_paid: number;
-  tax_credit_used: number;
-  net_tax_due: number;
-}
-
-export interface GermanyTaxDiagnostic {
-  level: string;
-  summary: string;
-  details: string;
-}
-
-export interface GermanyTaxYear {
-  tax_year: string;
-  settings: UserConfig["germany_tax"];
-  summary: GermanyTaxSummary;
-  accounts: GermanyTaxAccount[];
-  diagnostics: GermanyTaxDiagnostic[];
-}
-
-export interface TaxOverviewPosting {
-  transaction_id: string;
-  date: dayjs.Dayjs;
-  payee: string;
-  account: string;
-  amount: number;
-  note: string;
-  file_name: string;
-  transaction_begin_line: number;
-  source: "tag" | "transaction" | "account";
-  category: string;
-}
-
-export interface TaxOverviewCategory {
-  key: string;
-  label: string;
-  total: number;
-  postings: TaxOverviewPosting[];
-}
-
-export interface TaxOverviewSection {
-  key: string;
-  label: string;
-  form: string;
-  total: number;
-  posting_count: number;
-  categories: TaxOverviewCategory[];
-}
-
-export interface TaxOverviewSummary {
-  expense_candidates: number;
-  matched_expense_posting_count: number;
-  capital_income_booked: number;
-  capital_income_calculated: number;
-  income_tax_paid: number;
-  income_tax_posting_count: number;
-  diagnostic_count: number;
-}
-
-export interface TaxOverviewIncomeTaxPayment {
-  transaction_id: string;
-  date: dayjs.Dayjs;
-  payee: string;
-  account: string;
-  amount: number;
-  note: string;
-  file_name: string;
-  transaction_begin_line: number;
-}
-
-export interface TaxOverviewIncomeTaxPayments {
-  total: number;
-  posting_count: number;
-  postings: TaxOverviewIncomeTaxPayment[];
-}
-
-export interface TaxOverviewCoverageAccount {
-  account: string;
-  unmatched_posting_count: number;
-}
-
-export interface TaxOverviewCoverage {
-  accounts_with_unmatched_postings: number;
-  unmatched_posting_count: number;
-  accounts: TaxOverviewCoverageAccount[];
-}
-
-export interface TaxOverviewCapitalIncomeAccount {
-  account: string;
-  realized_gain: number;
-}
-
-export interface TaxOverviewCapitalIncome {
-  realized_gains: number;
-  realized_losses: number;
-  dividends: number;
-  interest: number;
-  taxes_booked: number;
-  sales: number;
-  accounts: TaxOverviewCapitalIncomeAccount[];
-}
-
-export interface TaxOverviewDiagnostic {
-  level: string;
-  summary: string;
-  details: string;
-}
-
-export interface TaxOverview {
-  years: string[];
-  selected_year: string;
-  summary: TaxOverviewSummary;
-  sections: TaxOverviewSection[];
-  coverage: TaxOverviewCoverage;
-  capital_income: TaxOverviewCapitalIncome;
-  income_tax_payments: TaxOverviewIncomeTaxPayments;
-  diagnostics: TaxOverviewDiagnostic[];
-}
-
 export interface Issue {
   level: string;
   summary: string;
   description: string;
   details: string;
-}
-
-export interface ScheduleALSection {
-  code: string;
-  section: string;
-  details: string;
-}
-
-export interface ScheduleALEntry {
-  section: ScheduleALSection;
-  amount: number;
-}
-
-export interface ScheduleAL {
-  entries: ScheduleALEntry[];
-  date: dayjs.Dayjs;
 }
 
 export interface Point {
@@ -601,19 +413,6 @@ export function parseApiDate(value: string) {
 export function ajax(
   route: "/api/config"
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
-export function ajax(route: "/api/harvest"): Promise<{ harvestables: Record<string, Harvestable> }>;
-export function ajax(route: "/api/capital_gains"): Promise<{
-  capital_gains: Record<string, CapitalGain>;
-  totals: Record<string, FYCapitalGain>;
-}>;
-export function ajax(
-  route: "/api/capital_income_tax"
-): Promise<{ tax_years: Record<string, GermanyTaxYear> }>;
-export function ajax(route: "/api/tax_overview"): Promise<TaxOverview>;
-export function ajax(route: `/api/tax_overview?year=${string}`): Promise<TaxOverview>;
-export function ajax(route: "/api/schedule_al"): Promise<{
-  schedule_als: Record<string, ScheduleAL>;
-}>;
 export function ajax(route: "/api/diagnosis"): Promise<{ issues: Issue[] }>;
 export function ajax(route: "/api/logs"): Promise<{ logs: Log[] }>;
 export function ajax(route: "/api/price"): Promise<{ prices: Record<string, Price[]> }>;

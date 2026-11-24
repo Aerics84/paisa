@@ -1,0 +1,81 @@
+{
+  "schedule_als": {
+    "2026": {
+      "entries": [
+        {
+          "section": { "code": "immovable", "section": "A (1)", "details": "Immovable Assets" },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "metal",
+            "section": "B (1) (i)",
+            "details": "Jewellery, bullion etc"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "art",
+            "section": "B (1) (ii)",
+            "details": "Archaeological collections, drawings, painting, sculpture or any work of art"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "vehicle",
+            "section": "B (1) (ii)",
+            "details": "Vehicles, yachts, boats and aircrafts"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "bank",
+            "section": "B (1) (iv) (a)",
+            "details": "Financial assets: Bank (including all deposits)"
+          },
+          "amount": 5000
+        },
+        {
+          "section": {
+            "code": "share",
+            "section": "B (1) (iv) (b)",
+            "details": "Financial assets: Shares and securities"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "insurance",
+            "section": "B (1) (iv) (c)",
+            "details": "Financial assets: Insurance policies"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "loan",
+            "section": "B (1) (iv) (d)",
+            "details": "Financial assets: Loans and advances given"
+          },
+          "amount": 0
+        },
+        {
+          "section": {
+            "code": "cash",
+            "section": "B (1) (iv) (e)",
+            "details": "Financial assets: Cash in hand"
+          },
+          "amount": 0
+        },
+        {
+          "section": { "code": "liability", "section": "C (1)", "details": "Liabilities" },
+          "amount": 0
+        }
+      ],
+      "date": "2026-12-31T00:00:00Z"
+    }
+  }
+}

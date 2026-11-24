@@ -1,0 +1,98 @@
+{
+  "tax_years": {
+    "2024": {
+      "tax_year": "2024",
+      "settings": {
+        "annual_allowance": 100,
+        "capital_income_tax_rate": 0.25,
+        "solidarity_surcharge_rate": 0.055,
+        "church_tax_rate": 0
+      },
+      "summary": {
+        "gross_realized_gain": 120,
+        "realized_loss": 0,
+        "realized_gain": 120,
+        "partial_exemption_amount": 36,
+        "taxable_amount_before_allowance": 84,
+        "allowance_used": 84,
+        "taxable_amount": 0,
+        "capital_income_tax": 0,
+        "solidarity_surcharge": 0,
+        "church_tax": 0,
+        "withholding_tax_paid": 30,
+        "tax_credit_used": 0,
+        "total_tax": 0,
+        "net_tax_due": 0
+      },
+      "accounts": [
+        {
+          "account": "Assets:Equity:VWCE",
+          "commodity": "VWCE",
+          "commodity_type": "mutualfund",
+          "partial_exemption_rate": 0.3,
+          "units": 4,
+          "purchase_price": 400,
+          "sell_price": 520,
+          "realized_gain": 120,
+          "partial_exemption_amount": 36,
+          "taxable_gain": 84,
+          "posting_pairs": [
+            {
+              "purchase": {
+                "id": 1,
+                "transaction_id": "buy",
+                "date": "2024-01-10T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Assets:Equity:VWCE",
+                "commodity": "VWCE",
+                "quantity": 4,
+                "amount": 400,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 1,
+                "transaction_end_line": 2,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              },
+              "sell": {
+                "id": 2,
+                "transaction_id": "sell",
+                "date": "2024-02-15T00:00:00Z",
+                "payee": "Fixture Payee",
+                "account": "Assets:Equity:VWCE",
+                "commodity": "VWCE",
+                "quantity": -4,
+                "amount": -520,
+                "status": "cleared",
+                "tag_recurring": "",
+                "tag_period": "",
+                "tax_category": "",
+                "tax_category_legacy": "",
+                "transaction_begin_line": 2,
+                "transaction_end_line": 3,
+                "file_name": "fixture.ledger",
+                "forecast": false,
+                "note": "",
+                "transaction_note": "",
+                "market_amount": 0,
+                "balance": 0
+              },
+              "realized_gain": 120,
+              "partial_exemption_rate": 0.3,
+              "partial_exemption_amount": 36,
+              "taxable_gain": 84
+            }
+          ]
+        }
+      ],
+      "diagnostics": []
+    }
+  }
+}

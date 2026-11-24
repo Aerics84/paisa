@@ -8,7 +8,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -47,9 +46,9 @@ type ScheduleAL struct {
 	Date    time.Time         `json:"date"`
 }
 
-func GetScheduleAL(db *gorm.DB) gin.H {
+func GetScheduleAL(db *gorm.DB) ScheduleALResponse {
 	if !config.SupportsScheduleAL() {
-		return gin.H{"schedule_als": map[string]ScheduleAL{}}
+		return ScheduleALResponse{ScheduleALs: map[string]ScheduleAL{}}
 	}
 
 	postings := query.Init(db).Like("Assets:%", "Liabilities:%").All()
@@ -68,7 +67,7 @@ func GetScheduleAL(db *gorm.DB) gin.H {
 		scheduleALs[utils.FYHuman(start)] = ScheduleAL{Entries: computeScheduleAL(postings), Date: start}
 	}
 
-	return gin.H{"schedule_als": scheduleALs}
+	return ScheduleALResponse{ScheduleALs: scheduleALs}
 }
 
 func computeScheduleAL(postings []posting.Posting) []ScheduleALEntry {

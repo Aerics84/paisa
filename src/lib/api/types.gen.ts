@@ -6,7 +6,7 @@ import type {
   BalanceSummary,
   CheckingBalancePoint
 } from "./assets.gen";
-import type { Config } from "./config.gen";
+import type { CommodityType, Config, GermanyTaxConfig } from "./config.gen";
 import type { GoalSummary } from "./goal.gen";
 import type { IngestionResult } from "./importer.gen";
 import type { Rule as ImportRule } from "./import_rule.gen";
@@ -14,6 +14,7 @@ import type { AssetBreakdown as LiabilityBreakdown, Interest } from "./liabiliti
 import type { Posting } from "./posting.gen";
 import type { ReconciliationReport } from "./reconciliation.gen";
 import type { PostingReturn } from "./service.gen";
+import type { GermanyTaxBreakdown, Tax as TaxationTax } from "./taxation.gen";
 import type { Template } from "./template.gen";
 import type { Transaction } from "./transaction.gen";
 
@@ -214,13 +215,13 @@ export interface Budget {
 export interface PostingPair {
   purchase: Posting;
   sell: Posting;
-  tax: any /* taxation.Tax */;
+  tax: TaxationTax;
 }
 export interface FYCapitalGain {
   units: number;
   purchase_price: number;
   sell_price: number;
-  tax: any /* taxation.Tax */;
+  tax: TaxationTax;
   posting_pairs: PostingPair[];
 }
 export interface CapitalGain {
@@ -424,7 +425,7 @@ export interface GermanyTaxPostingPair {
 export interface GermanyTaxAccount {
   account: string;
   commodity: string;
-  commodity_type: any /* config.CommodityType */;
+  commodity_type: CommodityType;
   partial_exemption_rate?: number /* float64 */;
   units: number;
   purchase_price: number;
@@ -441,8 +442,8 @@ export interface GermanyTaxDiagnostic {
 }
 export interface GermanyTaxYear {
   tax_year: string;
-  settings: any /* config.GermanyTaxConfig */;
-  summary: any /* taxation.GermanyTaxBreakdown */;
+  settings: GermanyTaxConfig;
+  summary: GermanyTaxBreakdown;
   accounts: GermanyTaxAccount[];
   diagnostics: GermanyTaxDiagnostic[];
 }
@@ -456,7 +457,7 @@ export interface HarvestBreakdown {
   purchase_price: number;
   current_price: number;
   purchase_unit_price: number;
-  tax: any /* taxation.Tax */;
+  tax: TaxationTax;
 }
 export interface Harvestable {
   account: string;
@@ -1002,4 +1003,34 @@ export interface TaxOverviewDiagnostic {
   level: string;
   summary: string;
   details: string;
+}
+
+//////////
+// source: tax_types.go
+
+/**
+ * HarvestResponse is the JSON body returned by GET /api/harvest.
+ */
+export interface HarvestResponse {
+  harvestables: { [key: string]: Harvestable };
+}
+/**
+ * CapitalGainsResponse is the JSON body returned by GET /api/capital_gains.
+ */
+export interface CapitalGainsResponse {
+  capital_gains: { [key: string]: CapitalGain };
+  totals: { [key: string]: FYCapitalGain };
+}
+/**
+ * GermanyTaxResponse is the JSON body returned by GET
+ * /api/capital_income_tax.
+ */
+export interface GermanyTaxResponse {
+  tax_years: { [key: string]: GermanyTaxYear };
+}
+/**
+ * ScheduleALResponse is the JSON body returned by GET /api/schedule_al.
+ */
+export interface ScheduleALResponse {
+  schedule_als: { [key: string]: ScheduleAL };
 }

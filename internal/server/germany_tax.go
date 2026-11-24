@@ -8,26 +8,25 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/taxation"
 	"github.com/ananthakumaran/paisa/internal/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 type GermanyTaxPostingPair struct {
-	Purchase                posting.Posting `json:"purchase"`
-	Sell                    posting.Posting `json:"sell"`
-	RealizedGain            decimal.Decimal `json:"realized_gain"`
-	PartialExemptionRate    *float64        `json:"partial_exemption_rate"`
-	PartialExemptionAmount  decimal.Decimal `json:"partial_exemption_amount"`
-	TaxableGain             decimal.Decimal `json:"taxable_gain"`
+	Purchase               posting.Posting `json:"purchase"`
+	Sell                   posting.Posting `json:"sell"`
+	RealizedGain           decimal.Decimal `json:"realized_gain"`
+	PartialExemptionRate   *float64        `json:"partial_exemption_rate,omitempty"`
+	PartialExemptionAmount decimal.Decimal `json:"partial_exemption_amount"`
+	TaxableGain            decimal.Decimal `json:"taxable_gain"`
 }
 
 type GermanyTaxAccount struct {
 	Account                string                  `json:"account"`
 	Commodity              string                  `json:"commodity"`
 	CommodityType          config.CommodityType    `json:"commodity_type"`
-	PartialExemptionRate   *float64                `json:"partial_exemption_rate"`
+	PartialExemptionRate   *float64                `json:"partial_exemption_rate,omitempty"`
 	Units                  decimal.Decimal         `json:"units"`
 	PurchasePrice          decimal.Decimal         `json:"purchase_price"`
 	SellPrice              decimal.Decimal         `json:"sell_price"`
@@ -51,9 +50,9 @@ type GermanyTaxYear struct {
 	Diagnostics []GermanyTaxDiagnostic       `json:"diagnostics"`
 }
 
-func GetGermanyTax(db *gorm.DB) gin.H {
+func GetGermanyTax(db *gorm.DB) GermanyTaxResponse {
 	if !config.SupportsGermanyTaxFeatures() {
-		return gin.H{"tax_years": map[string]GermanyTaxYear{}}
+		return GermanyTaxResponse{TaxYears: map[string]GermanyTaxYear{}}
 	}
 
 	postings, incomePostings, withholdingTaxPostings := collectGermanyTaxPostings(db)
@@ -93,7 +92,7 @@ func GetGermanyTax(db *gorm.DB) gin.H {
 		return *reportYear
 	})
 
-	return gin.H{"tax_years": result}
+	return GermanyTaxResponse{TaxYears: result}
 }
 
 func buildGermanyTaxYear(

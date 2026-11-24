@@ -1,0 +1,146 @@
+{
+  "years": ["2025"],
+  "selected_year": "2025",
+  "summary": {
+    "expense_candidates": 699,
+    "matched_expense_posting_count": 1,
+    "capital_income_booked": 118.06,
+    "capital_income_calculated": 0,
+    "income_tax_paid": 110,
+    "income_tax_posting_count": 1,
+    "diagnostic_count": 0
+  },
+  "sections": [
+    {
+      "key": "work_expenses",
+      "label": "Werbungskosten",
+      "form": "Anlage N",
+      "total": 699,
+      "posting_count": 1,
+      "categories": [
+        {
+          "key": "work_equipment",
+          "label": "Arbeitsmittel",
+          "total": 699,
+          "postings": [
+            {
+              "transaction_id": "chair",
+              "date": "2025-09-09T00:00:00Z",
+              "payee": "Chair Shop",
+              "account": "Expenses:Household:Goods",
+              "amount": 699,
+              "note": "desk chair",
+              "file_name": "fixture.ledger",
+              "transaction_begin_line": 10,
+              "source": "tag",
+              "category": "work_equipment"
+            }
+          ]
+        },
+        {
+          "key": "work_training",
+          "label": "Fortbildung und Fachliteratur",
+          "total": 0,
+          "postings": []
+        },
+        { "key": "work_travel", "label": "Reisekosten", "total": 0, "postings": [] },
+        { "key": "work_commute", "label": "Wege zur Arbeit", "total": 0, "postings": [] },
+        { "key": "work_home_office", "label": "Homeoffice", "total": 0, "postings": [] },
+        {
+          "key": "work_phone_internet",
+          "label": "Telefon und Internet",
+          "total": 0,
+          "postings": []
+        },
+        {
+          "key": "tax_advice",
+          "label": "Steuerberatung und -software",
+          "total": 0,
+          "postings": []
+        },
+        { "key": "work_other", "label": "Sonstige Werbungskosten", "total": 0, "postings": [] }
+      ]
+    },
+    {
+      "key": "insurance",
+      "label": "Vorsorgeaufwand",
+      "form": "Anlage Vorsorgeaufwand",
+      "total": 0,
+      "posting_count": 0,
+      "categories": [
+        {
+          "key": "health_insurance",
+          "label": "Kranken- und Pflegeversicherung",
+          "total": 0,
+          "postings": []
+        },
+        { "key": "other_insurance", "label": "Sonstige Versicherungen", "total": 0, "postings": [] }
+      ]
+    },
+    {
+      "key": "extraordinary",
+      "label": "Außergewöhnliche Belastungen",
+      "form": "Hauptvordruck",
+      "total": 0,
+      "posting_count": 0,
+      "categories": [{ "key": "health", "label": "Krankheitskosten", "total": 0, "postings": [] }]
+    },
+    {
+      "key": "household",
+      "label": "Haushaltsnahe Dienstleistungen",
+      "form": "Hauptvordruck",
+      "total": 0,
+      "posting_count": 0,
+      "categories": [
+        {
+          "key": "household_service",
+          "label": "Haushaltsnahe Dienstleistungen",
+          "total": 0,
+          "postings": []
+        },
+        { "key": "craftsman", "label": "Handwerkerleistungen", "total": 0, "postings": [] }
+      ]
+    },
+    {
+      "key": "donations",
+      "label": "Spenden und Mitgliedsbeiträge",
+      "form": "Hauptvordruck",
+      "total": 0,
+      "posting_count": 0,
+      "categories": [
+        { "key": "donation", "label": "Spenden und Mitgliedsbeiträge", "total": 0, "postings": [] }
+      ]
+    }
+  ],
+  "coverage": {
+    "accounts_with_unmatched_postings": 1,
+    "unmatched_posting_count": 1,
+    "accounts": [{ "account": "Expenses:Broker:Taxes", "unmatched_posting_count": 1 }]
+  },
+  "capital_income": {
+    "realized_gains": 0,
+    "realized_losses": 0,
+    "dividends": 118.06,
+    "interest": 0,
+    "taxes_booked": 12,
+    "sales": 0,
+    "accounts": []
+  },
+  "income_tax_payments": {
+    "total": 110,
+    "posting_count": 1,
+    "postings": [
+      {
+        "transaction_id": "tax",
+        "date": "2025-06-10T00:00:00Z",
+        "payee": "FINANZAMT",
+        "account": "Expenses:Tax:IncomeTax",
+        "amount": 110,
+        "note": "",
+        "file_name": "fixture.ledger",
+        "transaction_begin_line": 20
+      }
+    ]
+  },
+  "diagnostics": []
+}

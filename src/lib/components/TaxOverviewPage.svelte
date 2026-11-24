@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ajax, formatCurrency } from "$lib/utils";
+  import { formatCurrency } from "$lib/utils";
+  import { getTaxOverview } from "$lib/api/tax";
   import type { TaxOverview, TaxOverviewCoverage } from "$lib/utils";
   import { downloadTaxOverview } from "$lib/tax_overview_export";
   import TaxOverviewSection from "./TaxOverviewSection.svelte";
@@ -35,7 +36,7 @@
     const sequence = ++loadSequence;
     error = "";
     try {
-      const data = await ajax(year ? `/api/tax_overview?year=${year}` : "/api/tax_overview");
+      const data = await getTaxOverview(year);
       if (sequence !== loadSequence) {
         return;
       }

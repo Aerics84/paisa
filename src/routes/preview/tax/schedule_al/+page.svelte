@@ -1,7 +1,8 @@
 <script lang="ts">
   import { renderBreakdowns } from "$lib/schedule_al";
   import _ from "lodash";
-  import { ajax, type ScheduleAL } from "$lib/utils";
+  import { getScheduleAL } from "$lib/api/tax";
+  import type { ScheduleAL } from "$lib/utils";
   import { onMount } from "svelte";
   import { setAllowedDateRange, year } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
@@ -19,7 +20,7 @@
   }
 
   onMount(async () => {
-    ({ schedule_als: scheduleAls } = await ajax("/api/schedule_al"));
+    ({ schedule_als: scheduleAls } = await getScheduleAL());
     loaded = true;
 
     setAllowedDateRange(_.map(Object.values(scheduleAls), (e) => e.date));

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { renderHarvestables } from "$lib/harvest";
-  import { ajax } from "$lib/utils";
+  import { getHarvest } from "$lib/api/tax";
   import { onMount } from "svelte";
 
   onMount(async () => {
-    const { harvestables: harvestables } = await ajax("/api/harvest");
+    const { harvestables: harvestables } = await getHarvest();
     renderHarvestables(Object.values(harvestables));
   });
 </script>

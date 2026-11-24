@@ -16,6 +16,10 @@ type_mappings:
   assets.CheckingBalancePoint: "CheckingBalancePoint"
   assets.AvailableMonthRange: "AvailableMonthRange"
   assets.AssetBreakdown: "AssetBreakdown"
+  config.GermanyTaxConfig: "GermanyTaxConfig"
+  config.CommodityType: "CommodityType"
+  taxation.Tax: "TaxationTax"
+  taxation.GermanyTaxBreakdown: "GermanyTaxBreakdown"
   liabilities.Interest: "Interest"
   liabilities.Overview: "InterestOverview"
   liabilities.AssetBreakdown: "LiabilityBreakdown"
@@ -78,6 +82,13 @@ packages:
     output_path: "src/lib/api/template.gen.ts"
     include_files:
       - "template.go"
+  # Taxation wire types shared by the harvest, capital gain and Germany tax
+  # responses. Only the response DTOs are generated; calculation helpers stay
+  # server-side.
+  - path: "github.com/ananthakumaran/paisa/internal/taxation"
+    output_path: "src/lib/api/taxation.gen.ts"
+    include_files:
+      - "wire_types.go"
   # Response DTOs live in api_types.go. server.go defines the non-wire Deps
   # struct, so it is excluded.
   - path: "github.com/ananthakumaran/paisa/internal/server"
@@ -95,7 +106,7 @@ packages:
         BalanceSummary,
         CheckingBalancePoint
       } from "./assets.gen";
-      import type { Config } from "./config.gen";
+      import type { CommodityType, Config, GermanyTaxConfig } from "./config.gen";
       import type { GoalSummary } from "./goal.gen";
       import type { IngestionResult } from "./importer.gen";
       import type { Rule as ImportRule } from "./import_rule.gen";
@@ -106,5 +117,6 @@ packages:
       import type { Posting } from "./posting.gen";
       import type { ReconciliationReport } from "./reconciliation.gen";
       import type { PostingReturn } from "./service.gen";
+      import type { GermanyTaxBreakdown, Tax as TaxationTax } from "./taxation.gen";
       import type { Template } from "./template.gen";
       import type { Transaction } from "./transaction.gen";
