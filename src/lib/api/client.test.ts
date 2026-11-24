@@ -1,6 +1,7 @@
 import { afterEach, expect, test, mock } from "bun:test";
 import dayjs from "dayjs";
 import { loading } from "../../store";
+import { ajax } from "../utils";
 import { request, reviveDates } from "./client";
 
 const originalFetch = globalThis.fetch;
@@ -42,11 +43,6 @@ test("reviveDates converts only date-like keys", () => {
 });
 
 test("ajax keeps legacy behaviour: 400 body is returned and dates are revived", async () => {
-  // Another test file installs a process-wide mock for "./utils". A distinct
-  // specifier loads the real module instead of that stub.
-  const realUtils = "../utils.ts?legacy-ajax";
-  const { ajax } = await import(realUtils);
-
   globalThis.fetch = mock(
     async () =>
       new Response(JSON.stringify({ error: "invalid config", date: "2026-11-22T12:00:00Z" }), {
@@ -54,7 +50,7 @@ test("ajax keeps legacy behaviour: 400 body is returned and dates are revived", 
       })
   ) as unknown as typeof fetch;
 
-  const body = (await ajax("/api/config", { method: "POST" })) as {
+  const body = (await ajax("/api/config", { method: "POST" })) as unknown as {
     error: string;
     date: dayjs.Dayjs;
   };
