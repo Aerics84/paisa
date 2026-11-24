@@ -3,24 +3,15 @@ import { parseDate, request } from "./client";
 import type { AssetBreakdown } from "./assets.gen";
 import type { Posting, Transaction } from "./ledger";
 import { postingsFromWire, transactionsFromWire } from "./ledger";
+import { budgetFromWire, cashFlowFromWire, transactionSequenceFromWire } from "./cashflow";
+import type { TransactionSequenceInput } from "./cashflow";
 import type {
-  AccountBudget as WireAccountBudget,
-  Budget as WireBudget,
   BudgetResponse as WireBudgetResponse,
-  CashFlow as WireCashFlow,
   DashboardResponse as WireDashboardResponse,
   ExpensePaceSummary as WireExpensePace,
   Networth as WireNetworth
 } from "./types.gen";
-import type { AccountBudget, Budget, CashFlow, ExpensePace, GoalSummary, Networth } from "../utils";
-
-/** Wire recurring transaction sequence; transactions still carry string dates. */
-export type WireTransactionSequence = WireDashboardResponse["transactionSequences"][number];
-
-/** Recurring transaction sequence with posting/transaction dates converted. */
-export type TransactionSequence = Omit<WireTransactionSequence, "transactions"> & {
-  transactions: Transaction[];
-};
+import type { Budget, CashFlow, ExpensePace, GoalSummary, Networth } from "../utils";
 
 export interface Dashboard {
   checkingBalances: { asset_breakdowns: Record<string, AssetBreakdown> };
@@ -34,7 +25,7 @@ export interface Dashboard {
   expenses: Record<string, Posting[]>;
   expense_pace: ExpensePace | null;
   cashFlows: CashFlow[];
-  transactionSequences: TransactionSequence[];
+  transactionSequences: TransactionSequenceInput[];
   transactions: Transaction[];
   budget: { budgetsByMonth: Record<string, Budget> };
   goalSummaries: GoalSummary[];
@@ -44,42 +35,12 @@ function networthFromWire(wire: WireNetworth): Networth {
   return { ...wire, date: parseDate(wire.date) };
 }
 
-function cashFlowFromWire(wire: WireCashFlow): CashFlow {
-  return { ...wire, date: parseDate(wire.date) };
-}
-
-function accountBudgetFromWire(wire: WireAccountBudget): AccountBudget {
-  return {
-    account: wire.account,
-    date: parseDate(wire.date),
-    actual: wire.actual,
-    forecast: wire.forecast,
-    available: wire.available,
-    rollover: wire.rollover,
-    expenses: postingsFromWire(wire.expenses ?? [])
-  };
-}
-
-function budgetFromWire(wire: WireBudget): Budget {
-  return {
-    date: parseDate(wire.date),
-    accounts: wire.accounts.map(accountBudgetFromWire),
-    availableThisMonth: wire.availableThisMonth,
-    endOfMonthBalance: wire.endOfMonthBalance,
-    forecast: wire.forecast
-  };
-}
-
 function budgetResponseFromWire(wire: WireBudgetResponse): Dashboard["budget"] {
   const budgetsByMonth: Record<string, Budget> = {};
   for (const [month, budget] of Object.entries(wire.budgetsByMonth ?? {})) {
     budgetsByMonth[month] = budgetFromWire(budget);
   }
   return { budgetsByMonth };
-}
-
-function sequenceFromWire(wire: WireTransactionSequence): TransactionSequence {
-  return { ...wire, transactions: transactionsFromWire(wire.transactions ?? []) };
 }
 
 function expensePaceFromWire(wire: WireExpensePace | null | undefined): ExpensePace | null {
@@ -117,7 +78,7 @@ export async function getDashboard(): Promise<Dashboard> {
     expenses,
     expense_pace: expensePaceFromWire(wire.expense_pace),
     cashFlows: (wire.cashFlows ?? []).map(cashFlowFromWire),
-    transactionSequences: (wire.transactionSequences ?? []).map(sequenceFromWire),
+    transactionSequences: (wire.transactionSequences ?? []).map(transactionSequenceFromWire),
     transactions: transactionsFromWire(wire.transactions ?? []),
     budget: budgetResponseFromWire(wire.budget),
     // The generated goal types use plain strings where the domain type narrows

@@ -1,6 +1,12 @@
 import { afterEach, expect, test, mock } from "bun:test";
 import dayjs from "dayjs";
 import { getDashboard } from "./dashboard";
+import {
+  accountBudgetFromWire,
+  budgetFromWire,
+  cashFlowFromWire,
+  transactionSequenceFromWire
+} from "./cashflow";
 import type { DashboardResponse } from "./types.gen";
 
 const originalFetch = globalThis.fetch;
@@ -164,4 +170,23 @@ test("getDashboard turns null arrays and null expense pace into safe values", as
   expect(dashboard.expenses).toEqual({});
   expect(dashboard.goalSummaries).toEqual([]);
   expect(dashboard.expense_pace).toBeNull();
+});
+
+test("getDashboard uses the shared cashflow wire mappers", async () => {
+  const fixture = dashboardFixture();
+  globalThis.fetch = mock(
+    async () => new Response(JSON.stringify(fixture))
+  ) as unknown as typeof fetch;
+
+  const dashboard = await getDashboard();
+  const budget = fixture.budget.budgetsByMonth["2026-11"];
+
+  expect(dashboard.cashFlows).toEqual(fixture.cashFlows.map(cashFlowFromWire));
+  expect(dashboard.transactionSequences).toEqual(
+    fixture.transactionSequences.map(transactionSequenceFromWire)
+  );
+  expect(dashboard.budget.budgetsByMonth["2026-11"]).toEqual(budgetFromWire(budget));
+  expect(dashboard.budget.budgetsByMonth["2026-11"].accounts[0]).toEqual(
+    accountBudgetFromWire(budget.accounts[0])
+  );
 });

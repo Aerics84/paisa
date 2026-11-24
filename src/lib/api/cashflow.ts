@@ -168,7 +168,11 @@ function incomeYearlyCardFromWire(wire: WireIncomeYearlyCard): IncomeYearlyCard 
   };
 }
 
-function accountBudgetFromWire(wire: WireAccountBudget): AccountBudget {
+/**
+ * Shared with the dashboard payload, which embeds the same budget objects.
+ * Exported so there is a single mapping from wire budget accounts to domain.
+ */
+export function accountBudgetFromWire(wire: WireAccountBudget): AccountBudget {
   return {
     ...wire,
     date: parseDate(wire.date),
@@ -176,7 +180,8 @@ function accountBudgetFromWire(wire: WireAccountBudget): AccountBudget {
   };
 }
 
-function budgetFromWire(wire: WireBudget): Budget {
+/** Shared with the dashboard payload. See `accountBudgetFromWire`. */
+export function budgetFromWire(wire: WireBudget): Budget {
   return {
     ...wire,
     date: parseDate(wire.date),
@@ -184,7 +189,8 @@ function budgetFromWire(wire: WireBudget): Budget {
   };
 }
 
-function cashFlowFromWire(wire: WireCashFlow): CashFlow {
+/** Shared with the dashboard payload. */
+export function cashFlowFromWire(wire: WireCashFlow): CashFlow {
   return { ...wire, date: parseDate(wire.date) };
 }
 
@@ -192,7 +198,10 @@ function incomeStatementFromWire(wire: WireIncomeStatement): IncomeStatement {
   return { ...wire, date: parseDate(wire.date) };
 }
 
-function transactionSequenceFromWire(wire: WireTransactionSequence): TransactionSequenceInput {
+/** Shared with the dashboard payload. */
+export function transactionSequenceFromWire(
+  wire: WireTransactionSequence
+): TransactionSequenceInput {
   return { ...wire, transactions: transactionsFromWire(wire.transactions ?? []) };
 }
 
