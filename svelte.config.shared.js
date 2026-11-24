@@ -19,11 +19,6 @@ const svelteConfig = {
   version: { name: version },
   preprocess: vitePreprocess(),
 
-  onwarn: (warning, handler) => {
-    if (warning.code.startsWith("a11y-")) return;
-    handler(warning);
-  },
-
   adapter: adapter({
     pages: "web/static",
     assets: "web/static",
