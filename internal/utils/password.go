@@ -22,11 +22,15 @@ const (
 	argon2SaltLen  = 16
 	argon2KeyLen   = 32
 
-	// Upper bounds accepted while verifying an existing encoding.
-	argon2MaxMemory    = 1024 * 1024 // KiB, 1 GiB
-	argon2MaxTime      = 32
-	argon2MaxThreads   = 32
+	// Upper bounds accepted while verifying an existing encoding. They are far
+	// above the parameters produced by HashPassword, but low enough that a
+	// tampered encoding can not trigger a huge allocation or long CPU burn.
+	argon2MaxMemory  = 256 * 1024 // KiB, 256 MiB
+	argon2MaxTime    = 10
+	argon2MaxThreads = 8
+
 	legacySHA256Prefix = "sha256:"
+	legacySHA256HexLen = 64 // hex encoded SHA-256 digest
 )
 
 // HashPassword returns an Argon2id hash of password in the format
@@ -63,6 +67,10 @@ func HashPassword(password string) (string, error) {
 // encodings return an error so that they can never verify successfully.
 func VerifyPassword(encoded, password string) (ok bool, needsRehash bool, err error) {
 	if strings.HasPrefix(encoded, legacySHA256Prefix) {
+		if !isLowerHex(encoded[len(legacySHA256Prefix):], legacySHA256HexLen) {
+			return false, false, fmt.Errorf("invalid password hash: malformed legacy sha256 digest")
+		}
+
 		expected := legacySHA256Prefix + Sha256(Sha256(password))
 		matched := subtle.ConstantTimeCompare([]byte(encoded), []byte(expected)) == 1
 		return matched, matched, nil
@@ -124,16 +132,19 @@ func parseArgon2ID(encoded string) (memory, iterations uint32, threads uint8, sa
 		}
 	}
 
+	// Validate p before computing 8*p: with p bounded, the multiplication can
+	// not overflow, and a huge tampered value is rejected up front.
+	if p < 1 || p > argon2MaxThreads {
+		return 0, 0, 0, nil, nil, fmt.Errorf("invalid password hash: unsupported parallelism parameter")
+	}
+	threads = uint8(p)
+
 	if memory < 8*p || memory > argon2MaxMemory {
 		return 0, 0, 0, nil, nil, fmt.Errorf("invalid password hash: unsupported memory parameter")
 	}
 	if iterations < 1 || iterations > argon2MaxTime {
 		return 0, 0, 0, nil, nil, fmt.Errorf("invalid password hash: unsupported time parameter")
 	}
-	if p < 1 || p > argon2MaxThreads {
-		return 0, 0, 0, nil, nil, fmt.Errorf("invalid password hash: unsupported parallelism parameter")
-	}
-	threads = uint8(p)
 
 	salt, err = base64.RawStdEncoding.DecodeString(parts[3])
 	if err != nil {
@@ -152,4 +163,20 @@ func parseArgon2ID(encoded string) (memory, iterations uint32, threads uint8, sa
 	}
 
 	return memory, iterations, threads, salt, key, nil
+}
+
+// isLowerHex reports whether s is exactly n lowercase hexadecimal characters.
+func isLowerHex(s string, n int) bool {
+	if len(s) != n {
+		return false
+	}
+
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+
+	return true
 }
