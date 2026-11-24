@@ -32,6 +32,7 @@ nav:
       - reference/analysis.md
       - reference/dependency-maintenance.md
       - reference/test-coverage.md
+      - reference/svelte5-conventions.md
       - "Tax":
           - reference/tax/index.md
           - reference/tax/deductions.md

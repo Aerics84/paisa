@@ -24,6 +24,11 @@ npm run check:runes
 The command prints the current counts and fails when a count exceeds its budget.
 CI runs it after the other gates.
 
+The count is textual and line-based, not an AST analysis. Only `on:click` is
+tracked; other `on:` event directives are unguarded, and a net-zero swap (one
+usage removed while another is added) passes. Treat the gate as a guard-rail,
+not as proof that the migration is complete.
+
 Budgets only go down. After a migration batch, lower them to the measured counts:
 
 ```sh
@@ -82,6 +87,31 @@ Props that parents set with `bind:` must be declared with `$bindable()`:
 Only mark a prop as bindable when the component writes back to it. Regular
 one-way props stay plain destructured values.
 
+## Local state: `$state`
+
+Using `$props()` puts the component in runes mode. Plain local `let` is then no
+longer reactive when markup reads it; handlers must write a `$state` value.
+
+```svelte
+<!-- before -->
+<script lang="ts">
+  let open = false;
+</script>
+<button on:click={() => (open = !open)}>Toggle</button>
+{#if open}<p>Panel</p>{/if}
+
+<!-- after -->
+<script lang="ts">
+  let open = $state(false);
+</script>
+<button onclick={() => (open = !open)}>Toggle</button>
+{#if open}<p>Panel</p>{/if}
+```
+
+Objects and arrays mutated in place also need `$state`; use `$state.raw(...)`
+only for values that are always replaced wholesale. This applies even when the
+state is read by an `$effect` only.
+
 ## Derived values: `$:` → `$derived`
 
 ```svelte
@@ -109,6 +139,11 @@ one-way props stay plain destructured values.
 For multi-statement derivations use `$derived.by(() => { ... })`. Derived
 values are pure calculations; do not assign to them.
 
+If a `$:` statement reads state and is also assigned by handlers, it is not a
+pure derivation: a `$derived` value cannot be written. Keep it in `$state` and
+assign in the handler, or use `$state` plus `$effect` when the assignment must
+react to several inputs. See [Local state](#local-state-state).
+
 ## Side effects: `$:` → `$effect`
 
 ```svelte
@@ -123,6 +158,11 @@ values are pure calculations; do not assign to them.
 
 <!-- after -->
 <script lang="ts">
+  interface Props {
+    chartData: unknown;
+    renderer?: { draw: (data: unknown) => void };
+  }
+
   let { chartData, renderer }: Props = $props();
 
   $effect(() => {
@@ -158,6 +198,10 @@ Modifiers become explicit code in the handler. Component listeners follow the
 same pattern: `on:change` becomes `onchange`, plus the matching callback prop
 below. The ratchet currently tracks `on:click`; all `on:` directives are migrated
 the same way.
+
+`|capture` and `|once` cannot be expressed as inline code alone. Keep an
+explicit `addEventListener(..., { capture: true })` or `{ once: true }` (for
+example inside `$effect`); do not approximate them by calling the handler once.
 
 ## Component events: `createEventDispatcher` → callback props
 
@@ -221,9 +265,13 @@ expression.
 
 1. Replace `export let` with a typed `$props()` destructure.
 2. Add `$bindable()` only for props written through `bind:`.
-3. Replace `$:` value calculations with `$derived`/`$derived.by`.
-4. Replace `$:` side effects with `$effect` and clean up subscriptions.
-5. Replace `on:event` with `onevent`; inline modifiers explicitly.
-6. Replace `createEventDispatcher` with callback props.
-7. Keep stores and behavior unchanged.
-8. Run `npm run check:runes` and, after the batch, `--update-budget`.
+3. Convert local `let` read by markup to `$state(...)`; when a `$:` both reads
+   state and is assigned by handlers, do not use plain `$derived` — use `$state`
+   plus `$effect` or event-driven assignment.
+4. Replace `$:` value calculations with `$derived`/`$derived.by`.
+5. Replace `$:` side effects with `$effect` and clean up subscriptions.
+6. Replace `on:event` with `onevent`; inline modifiers explicitly and use
+   `addEventListener` options for `|capture`/`|once`.
+7. Replace `createEventDispatcher` with callback props.
+8. Keep stores and behavior unchanged.
+9. Run `npm run check:runes` and, after the batch, `--update-budget`.

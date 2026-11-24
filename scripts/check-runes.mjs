@@ -161,10 +161,11 @@ function printReport(files, { counts, perFile }, budgets) {
     const budget = budgets[metric.key];
     console.error(`  - ${metric.key}: ${count} measured, budget is ${budget} (+${count - budget})`);
 
-    const topFiles = [...perFile[metric.key].entries()]
+    const largestUsage = [...perFile[metric.key].entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, 5);
-    for (const [file, matches] of topFiles) {
+    console.error("    largest remaining usage:");
+    for (const [file, matches] of largestUsage) {
       console.error(`      ${displayPath(file)} (${matches})`);
     }
     console.error(`    ${metric.hint}`);
@@ -258,6 +259,9 @@ function main(argv) {
   }
 }
 
-if (import.meta.main) {
+if (import.meta.main === undefined) {
+  console.error("runes budget: import.meta.main is unavailable; run with Node >= 24.2");
+  process.exitCode = 2;
+} else if (import.meta.main) {
   main(process.argv.slice(2));
 }
