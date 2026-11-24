@@ -1,0 +1,12 @@
+{
+  "errors": [
+    {
+      "line_from": 1,
+      "line_to": 1,
+      "error": "",
+      "message": "Invalid file name"
+    }
+  ],
+  "saved": false,
+  "message": "Validation failed"
+}

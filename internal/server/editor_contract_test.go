@@ -111,6 +111,53 @@ func TestEditorSaveJSONContract(t *testing.T) {
 	require.JSONEq(t, string(expected), rec.Body.String())
 }
 
+// TestEditorSaveValidationErrorJSONContract pins a populated FileError list.
+// A traversal name fails validation before any ledger binary is invoked, so
+// this deterministically exercises fileErrors plus the file_name omitempty tag
+// and the error/message keys.
+func TestEditorSaveValidationErrorJSONContract(t *testing.T) {
+	base := t.TempDir()
+	configureEditor(t, base, false)
+
+	db := openTestDB(t)
+	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+
+	payload := `{"name": "../outside.ledger", "content": ""}`
+	req := httptest.NewRequest(http.MethodPost, "/api/editor/save", bytes.NewBufferString(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var got EditorSaveResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+	require.False(t, got.Saved)
+	require.Len(t, got.Errors, 1)
+	require.Empty(t, got.Errors[0].FileName)
+	require.Equal(t, uint64(1), got.Errors[0].LineFrom)
+	require.Equal(t, uint64(1), got.Errors[0].LineTo)
+	require.Equal(t, "", got.Errors[0].Error)
+	require.Equal(t, "Invalid file name", got.Errors[0].Message)
+	require.Nil(t, got.File)
+	require.Equal(t, "Validation failed", got.Message)
+
+	expected, err := os.ReadFile("testdata/api/editor_save_validation_error.json")
+	require.NoError(t, err)
+	require.JSONEq(t, string(expected), rec.Body.String())
+
+	// The validate endpoint uses the same conversion; pin its full body too.
+	validateReq := httptest.NewRequest(http.MethodPost, "/api/editor/validate", bytes.NewBufferString(payload))
+	validateReq.Header.Set("Content-Type", "application/json")
+	validateRec := httptest.NewRecorder()
+	router.ServeHTTP(validateRec, validateReq)
+	require.Equal(t, http.StatusOK, validateRec.Code)
+	require.JSONEq(
+		t,
+		`{"errors":[{"line_from":1,"line_to":1,"error":"","message":"Invalid file name"}],"output":""}`,
+		validateRec.Body.String(),
+	)
+}
+
 // TestEditorAndSheetResponsesHaveNoNullOnEmptyDB enforces the null discipline:
 // list responses and file responses use empty arrays/objects instead of null.
 func TestEditorAndSheetResponsesHaveNoNullOnEmptyDB(t *testing.T) {
