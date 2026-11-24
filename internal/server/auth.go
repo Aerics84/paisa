@@ -161,7 +161,17 @@ func HandleAuthStatus(deps Deps) gin.HandlerFunc {
 // session during bootstrap (no user accounts configured); otherwise the auth
 // middleware requires a valid session or the deprecated X-Auth header.
 func HandleHash(deps Deps) gin.HandlerFunc {
+	// Hashing is CPU/memory intensive. Bootstrap mode allows unauthenticated
+	// access, so cap per-IP usage independently of the general API limiter.
+	rateLimiter := newAuthRateLimiter()
+
 	return func(c *gin.Context) {
+		limitKey := rateLimitKey(c)
+		if _, detail, err := rateLimiter.RateLimitCtx(c.Request.Context(), limitKey, 0); err == nil && detail.Remaining <= 0 {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many hash requests. Try again later."})
+			return
+		}
+
 		cfg := deps.Config.Get()
 		if len(cfg.UserAccounts) > 0 {
 			if _, ok := c.Get(authUsernameKey); !ok {
@@ -182,6 +192,8 @@ func HandleHash(deps Deps) gin.HandlerFunc {
 			})
 			return
 		}
+
+		rateLimiter.RateLimitCtx(c.Request.Context(), limitKey, 1)
 
 		hash, err := utils.HashPassword(request.Password)
 		if err != nil {
@@ -300,14 +312,17 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 			return
 		}
 
-		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0)
-		if detail.Remaining <= 0 {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
+		// Public paths are exempt from the general limiter. In particular, the
+		// SPA can fire many parallel requests when a session expires; those 401s
+		// must not consume the budget that /api/auth/login needs.
+		if isPublicAuthPath(c.Request.URL.Path) {
+			c.Next()
 			return
 		}
 
-		if isPublicAuthPath(c.Request.URL.Path) {
-			c.Next()
+		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0)
+		if detail.Remaining <= 0 {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
 			return
 		}
 

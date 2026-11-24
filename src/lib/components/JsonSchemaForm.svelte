@@ -30,6 +30,7 @@
   export let modalOpen = false;
 
   let open = depth < 1;
+  let passwordError = "";
   $: title = _.startCase(key);
   $: fieldPath = path || key;
   $: fieldId = `config-field-${fieldPath.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
@@ -139,6 +140,8 @@
             aria-label={title}
             bind:value={rawValue}
             on:change={async () => {
+              passwordError = "";
+
               if (_.isEmpty(rawValue)) {
                 return;
               }
@@ -148,13 +151,17 @@
                 value = await hashPassword(rawValue);
               } catch {
                 // Keep the previously stored hash when hashing fails; the user
-                // can retry without losing the rest of the form state.
+                // can retry without saving a plaintext or undefined value.
+                passwordError = "Could not hash password; previous value kept";
               } finally {
                 endPasswordHash();
               }
             }}
           />
         </div>
+        {#if passwordError}
+          <p class="help is-danger">{passwordError}</p>
+        {/if}
       </div>
     </div>
   </div>

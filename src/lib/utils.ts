@@ -1327,10 +1327,19 @@ export async function logout() {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  const { hash } = await ajax<{ hash: string }>("/api/auth/hash", {
+  const response = await ajax<{ hash?: unknown; error?: string }>("/api/auth/hash", {
     method: "POST",
     body: JSON.stringify({ password })
   });
+
+  const hash = response?.hash;
+  if (typeof hash !== "string" || !hash.startsWith("argon2id$")) {
+    const message =
+      typeof response?.error === "string" && response.error
+        ? response.error
+        : "Could not hash password";
+    throw new Error(message);
+  }
 
   return hash;
 }

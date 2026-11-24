@@ -198,6 +198,30 @@ func TestSuccessfulLoginsAreNotRateLimited(t *testing.T) {
 	}
 }
 
+func TestPublicAuthPathsBypassGeneralRateLimit(t *testing.T) {
+	router := testRouter(t, argon2AccountConfig(t, "secret"))
+
+	// Four invalid token attempts consume the general limiter budget; the
+	// fifth request to a protected endpoint is rejected.
+	var last *httptest.ResponseRecorder
+	for attempt := 0; attempt < 5; attempt++ {
+		last = getWithCookie(router, "/api/version", nil)
+	}
+	require.Equal(t, http.StatusTooManyRequests, last.Code)
+
+	// Public auth paths must still work even while the general limiter is
+	// exhausted. Bad credentials use the login-specific limiter, not the
+	// middleware budget.
+	bad := doLogin(t, router, "alice", "wrong")
+	assert.Equal(t, http.StatusUnauthorized, bad.Code)
+
+	good := doLogin(t, router, "alice", "secret")
+	require.Equal(t, http.StatusOK, good.Code)
+
+	status := getWithCookie(router, "/api/auth/status", nil)
+	assert.Equal(t, http.StatusOK, status.Code)
+}
+
 func TestStatusReportsEnabledAuthAndSession(t *testing.T) {
 	router := testRouter(t, legacyAccountConfig("secret", false))
 
@@ -422,4 +446,26 @@ func TestHashEndpointRejectsShortPassword(t *testing.T) {
 
 	rec := postJSON(t, router, "/api/auth/hash", `{"password":"short"}`, nil)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestHashEndpointIsRateLimited(t *testing.T) {
+	router := testRouter(t, noAccountConfig)
+
+	rec := postJSON(t, router, "/api/auth/hash", `{"password":"longenough"}`, nil)
+	require.Equal(t, http.StatusOK, rec.Code)
+	hash, ok := decodeBody(t, rec)["hash"].(string)
+	require.True(t, ok)
+	assert.True(t, strings.HasPrefix(hash, "argon2id$"))
+
+	// The first call above consumed one slot. Three more fit in the burst,
+	// after which the limiter must reject the request before doing Argon2id
+	// work again.
+	for attempt := 0; attempt < 3; attempt++ {
+		require.Equal(t, http.StatusOK,
+			postJSON(t, router, "/api/auth/hash", `{"password":"longenough"}`, nil).Code)
+	}
+
+	rec = postJSON(t, router, "/api/auth/hash", `{"password":"longenough"}`, nil)
+	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
+	assert.Contains(t, strings.ToLower(string(rec.Body.Bytes())), "too many hash requests")
 }
