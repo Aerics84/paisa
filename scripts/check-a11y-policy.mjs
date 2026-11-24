@@ -4,10 +4,10 @@ const svelteConfig = readFileSync("svelte.config.shared.js", "utf8");
 const packageJson = readFileSync("package.json", "utf8");
 
 const failures = [];
-if (svelteConfig.includes('startsWith("a11y') || svelteConfig.includes("startsWith('a11y")) {
+if (/startsWith\((["'])a11y[-_]/.test(svelteConfig)) {
   failures.push("svelte.config.shared.js suppresses a11y warnings");
 }
-if (/a11y-[a-z-]+:ignore/.test(packageJson)) {
+if (/a11y[-_][a-z_-]+:ignore/.test(packageJson)) {
   failures.push("package.json suppresses a11y compiler warnings");
 }
 if (failures.length) {
