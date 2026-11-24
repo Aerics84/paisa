@@ -13,9 +13,10 @@
   import ZeroState from "$lib/components/ZeroState.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
 
-  let legends: Legend[] = [];
-  let graph: Record<string, Graph>, expenses: Posting[];
-  let isEmpty = false;
+  let legends = $state<Legend[]>([]);
+  let graph = $state<Record<string, Graph>>();
+  let expenses = $state<Posting[]>();
+  let isEmpty = $state(false);
 
   function maxDepth(prefix: string) {
     if (!graph) return 1;
@@ -48,16 +49,18 @@
     };
   }
 
-  $: if (graph) {
-    if (graph[$year] == null) {
-      isEmpty = true;
-    } else {
-      legends = renderFlow(
-        filter(_.cloneDeep(graph[$year]), $cashflowIncomeDepth, $cashflowExpenseDepth)
-      );
-      isEmpty = false;
+  $effect(() => {
+    if (graph) {
+      if (graph[$year] == null) {
+        isEmpty = true;
+      } else {
+        legends = renderFlow(
+          filter(_.cloneDeep(graph[$year]), $cashflowIncomeDepth, $cashflowExpenseDepth)
+        );
+        isEmpty = false;
+      }
     }
-  }
+  });
 
   onMount(async () => {
     ({ expenses, graph } = await getExpense());

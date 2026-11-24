@@ -17,16 +17,12 @@
   import ZeroState from "$lib/components/ZeroState.svelte";
 
   const monthStart = now().startOf("month");
-  let budgetsByMonth: Record<string, Budget> = {};
-  let currentMonthAccountBudgets: AccountBudget[] = [];
-  let currentMonthBudget: Budget;
-  let checkingBalance: number, availableForBudgeting: number;
-  let isEmpty = false;
-
-  $: {
-    currentMonthBudget = budgetsByMonth[$month];
-    currentMonthAccountBudgets = budgetsByMonth[$month]?.accounts || [];
-  }
+  let budgetsByMonth = $state<Record<string, Budget>>({});
+  let currentMonthAccountBudgets = $derived(budgetsByMonth[$month]?.accounts || []);
+  let currentMonthBudget = $derived(budgetsByMonth[$month]);
+  let checkingBalance = $state<number>();
+  let availableForBudgeting = $state<number>();
+  let isEmpty = $state(false);
 
   onMount(async () => {
     ({ budgetsByMonth, checkingBalance, availableForBudgeting } = await getBudget());

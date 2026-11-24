@@ -14,15 +14,15 @@
   import ZeroState from "$lib/components/ZeroState.svelte";
   import { iconify } from "$lib/icon";
 
-  let isEmpty = false;
+  let isEmpty = $state(false);
 
-  let svg: Element;
-  let incomeStatement: IncomeStatement;
-  let renderer: (data: IncomeStatement) => void;
-  let yearly: Record<string, IncomeStatement> = {};
-  let diff: number;
-  let diffPercent: number;
-  let years: string[] = [];
+  let svg = $state<Element>();
+  let incomeStatement = $state<IncomeStatement>();
+  let renderer = $state<((data: IncomeStatement) => void) | undefined>();
+  let yearly = $state<Record<string, IncomeStatement>>({});
+  let diff = $state<number>();
+  let diffPercent = $state<number>();
+  let years = $state<string[]>([]);
 
   type AccountGroupName =
     "income" | "interest" | "equity" | "pnl" | "liabilities" | "tax" | "expenses";
@@ -54,20 +54,24 @@
 
   const accountGroups: AccountGroup[] = [];
 
-  $: if (yearly && renderer) {
-    if (yearly[$year] == null) {
-      incomeStatement = null;
-      isEmpty = true;
-    } else {
-      incomeStatement = yearly[$year];
-      years = _.sortBy(_.keys(yearly)).reverse();
-      diff = incomeStatement.endingBalance - incomeStatement.startingBalance;
-      diffPercent = diff / incomeStatement.startingBalance;
+  $effect(() => {
+    if (renderer) {
+      const statement = yearly[$year];
+      if (statement == null) {
+        incomeStatement = undefined;
+        isEmpty = true;
+      } else {
+        incomeStatement = statement;
+        years = _.sortBy(_.keys(yearly)).reverse();
+        const change = statement.endingBalance - statement.startingBalance;
+        diff = change;
+        diffPercent = change / statement.startingBalance;
 
-      renderer(incomeStatement);
-      isEmpty = false;
+        renderer(statement);
+        isEmpty = false;
+      }
     }
-  }
+  });
 
   function uniqueAccounts(statements: IncomeStatement[], key: AccountGroupName) {
     const accounts = new Set<string>();

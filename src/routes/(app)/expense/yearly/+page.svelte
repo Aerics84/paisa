@@ -18,58 +18,60 @@
   import LegendCard from "$lib/components/LegendCard.svelte";
 
   let groups = writable([]);
-  let z: d3.ScaleOrdinal<string, string, never>,
-    renderer: (ps: Posting[]) => void,
-    expenses: Posting[],
-    grouped_expenses: Record<string, Posting[]>,
-    grouped_incomes: Record<string, Posting[]>,
-    grouped_investments: Record<string, Posting[]>,
-    grouped_taxes: Record<string, Posting[]>;
+  let z = $state<d3.ScaleOrdinal<string, string, never>>();
+  let renderer = $state<((ps: Posting[]) => void) | undefined>();
+  let expenses = $state<Posting[]>();
+  let grouped_expenses = $state<Record<string, Posting[]>>();
+  let grouped_incomes = $state<Record<string, Posting[]>>();
+  let grouped_investments = $state<Record<string, Posting[]>>();
+  let grouped_taxes = $state<Record<string, Posting[]>>();
 
-  let currentYearExpenses: Posting[] = [];
+  let currentYearExpenses = $state<Posting[]>([]);
 
-  let legends: Legend[] = [];
+  let legends = $state<Legend[]>([]);
 
-  let income = "",
-    netIncome = "",
-    taxRate = "",
-    tax = "",
-    expenseRate = "",
-    expense = "",
-    investment = "",
-    savingRate = "";
+  let income = $state("");
+  let netIncome = $state("");
+  let taxRate = $state("");
+  let tax = $state("");
+  let expenseRate = $state("");
+  let expense = $state("");
+  let investment = $state("");
+  let savingRate = $state("");
 
-  $: if (grouped_expenses && renderer) {
-    currentYearExpenses = grouped_expenses[$year];
-    renderCalendar(currentYearExpenses, z, $groups);
+  $effect(() => {
+    if (grouped_expenses && renderer) {
+      currentYearExpenses = grouped_expenses[$year];
+      renderCalendar(currentYearExpenses, z, $groups);
 
-    const expenses = grouped_expenses[$year] || [];
-    const incomes = grouped_incomes[$year] || [];
-    const taxes = grouped_taxes[$year] || [];
-    const investments = grouped_investments[$year] || [];
+      const expenses = grouped_expenses[$year] || [];
+      const incomes = grouped_incomes[$year] || [];
+      const taxes = grouped_taxes[$year] || [];
+      const investments = grouped_investments[$year] || [];
 
-    income = sumCurrency(incomes, -1);
+      income = sumCurrency(incomes, -1);
 
-    tax = sumCurrency(taxes);
-    expense = sumCurrency(expenses);
-    investment = sumCurrency(investments);
+      tax = sumCurrency(taxes);
+      expense = sumCurrency(expenses);
+      investment = sumCurrency(investments);
 
-    if (_.isEmpty(incomes)) {
-      expenseRate = "";
-      taxRate = "";
-      savingRate = "";
-      netIncome = "";
-    } else {
-      netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
-      taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " of income";
-      expenseRate =
-        formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
-      savingRate =
-        formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+      if (_.isEmpty(incomes)) {
+        expenseRate = "";
+        taxRate = "";
+        savingRate = "";
+        netIncome = "";
+      } else {
+        netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
+        taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " of income";
+        expenseRate =
+          formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+        savingRate =
+          formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+      }
+
+      renderer(expenses);
     }
-
-    renderer(expenses);
-  }
+  });
 
   onMount(async () => {
     ({

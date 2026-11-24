@@ -27,73 +27,73 @@
 
   let detailScope = writable(ROOT_EXPENSE_SCOPE);
   let timelineGroup = writable<string | null>(null);
-  let z: d3.ScaleOrdinal<string, string, never>,
-    renderer: (ps: Posting[], scope?: string) => void,
-    expenses: Posting[],
-    grouped_expenses: Record<string, Posting[]>,
-    grouped_incomes: Record<string, Posting[]>,
-    grouped_investments: Record<string, Posting[]>,
-    grouped_taxes: Record<string, Posting[]>,
-    destroy: () => void;
+  let z = $state<d3.ScaleOrdinal<string, string, never>>();
+  let renderer = $state<((ps: Posting[], scope?: string) => void) | undefined>();
+  let expenses = $state<Posting[]>();
+  let grouped_expenses = $state<Record<string, Posting[]>>();
+  let grouped_incomes = $state<Record<string, Posting[]>>();
+  let grouped_investments = $state<Record<string, Posting[]>>();
+  let grouped_taxes = $state<Record<string, Posting[]>>();
+  let destroy = $state<(() => void) | undefined>();
 
-  let legends: Legend[] = [];
+  let legends = $state<Legend[]>([]);
 
-  let taxRate = "",
-    netIncome = "",
-    tax = "",
-    expenseRate = "",
-    expense = "",
-    saving = "",
-    savingRate = "",
-    income = "";
+  let taxRate = $state("");
+  let netIncome = $state("");
+  let tax = $state("");
+  let expenseRate = $state("");
+  let expense = $state("");
+  let saving = $state("");
+  let savingRate = $state("");
+  let income = $state("");
 
-  let current_month_expenses: Posting[] = [];
-  let breadcrumbs = expenseBreadcrumb(ROOT_EXPENSE_SCOPE);
-  let monthHasExpenses = false;
-  let detailScopeLabel = "Expenses";
+  let current_month_expenses = $state<Posting[]>([]);
+  let breadcrumbs = $derived(expenseBreadcrumb($detailScope));
+  let monthHasExpenses = $derived((grouped_expenses?.[$month] || []).length > 0);
+  let detailScopeLabel = $derived(_.last(breadcrumbs)?.label || ROOT_EXPENSE_SCOPE);
 
-  $: if (grouped_expenses && z) {
-    current_month_expenses = _.chain(
-      filterExpenseScope(grouped_expenses?.[$month] || [], $detailScope)
-    )
-      .sortBy((e) => e.date)
-      .reverse()
-      .value();
-  }
-
-  $: if (grouped_expenses && renderer) {
-    renderCalendar($month, grouped_expenses[$month] || [], z, $detailScope);
-
-    const expenses = filterExpenseScope(grouped_expenses[$month] || [], $detailScope);
-    const incomes = grouped_incomes[$month] || [];
-    const taxes = grouped_taxes[$month] || [];
-    const investments = grouped_investments[$month] || [];
-
-    income = sumCurrency(incomes, -1);
-    tax = sumCurrency(taxes);
-    expense = sumCurrency(expenses);
-    saving = sumCurrency(investments);
-
-    if (_.isEmpty(incomes)) {
-      taxRate = "";
-      expenseRate = "";
-      savingRate = "";
-      netIncome = "";
-    } else {
-      netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
-      taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " on income";
-      expenseRate =
-        formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
-      savingRate =
-        formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+  $effect(() => {
+    if (grouped_expenses && z) {
+      current_month_expenses = _.chain(
+        filterExpenseScope(grouped_expenses?.[$month] || [], $detailScope)
+      )
+        .sortBy((e) => e.date)
+        .reverse()
+        .value();
     }
+  });
 
-    renderer(expenses, $detailScope);
-  }
+  $effect(() => {
+    if (grouped_expenses && renderer) {
+      renderCalendar($month, grouped_expenses[$month] || [], z, $detailScope);
 
-  $: breadcrumbs = expenseBreadcrumb($detailScope);
-  $: monthHasExpenses = (grouped_expenses?.[$month] || []).length > 0;
-  $: detailScopeLabel = _.last(breadcrumbs)?.label || ROOT_EXPENSE_SCOPE;
+      const expenses = filterExpenseScope(grouped_expenses[$month] || [], $detailScope);
+      const incomes = grouped_incomes[$month] || [];
+      const taxes = grouped_taxes[$month] || [];
+      const investments = grouped_investments[$month] || [];
+
+      income = sumCurrency(incomes, -1);
+      tax = sumCurrency(taxes);
+      expense = sumCurrency(expenses);
+      saving = sumCurrency(investments);
+
+      if (_.isEmpty(incomes)) {
+        taxRate = "";
+        expenseRate = "";
+        savingRate = "";
+        netIncome = "";
+      } else {
+        netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
+        taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " on income";
+        expenseRate =
+          formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+        savingRate =
+          formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+      }
+
+      renderer(expenses, $detailScope);
+    }
+  });
 
   onDestroy(async () => {
     if (destroy) {
@@ -189,8 +189,10 @@
                     {:else}
                       <a
                         href={crumb.scope}
-                        on:click|preventDefault={() => detailScope.set(crumb.scope)}
-                        >{crumb.label}</a
+                        onclick={(event) => {
+                          event.preventDefault();
+                          detailScope.set(crumb.scope);
+                        }}>{crumb.label}</a
                       >
                     {/if}
                   </li>
@@ -227,7 +229,7 @@
                 <button
                   type="button"
                   class="button is-ghost is-small current-month-breakdown-reset"
-                  on:click={() => detailScope.set(ROOT_EXPENSE_SCOPE)}>← Alle Kategorien</button
+                  onclick={() => detailScope.set(ROOT_EXPENSE_SCOPE)}>← Alle Kategorien</button
                 >
               {/if}
               <ZeroState item={current_month_expenses}>

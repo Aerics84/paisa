@@ -8,31 +8,37 @@
   import ZeroState from "$lib/components/ZeroState.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
 
-  let legends: Legend[] = [];
-  let cashFlows: CashFlow[] = [];
-  let renderer: (cashflows: CashFlow[]) => void;
+  let legends = $state<Legend[]>([]);
+  let cashFlows = $state<CashFlow[]>([]);
+  let renderer = $state<((cashflows: CashFlow[]) => void) | undefined>();
 
-  $: visibleCashFlows = _.filter(
-    cashFlows,
-    (c) => c.date.isSameOrBefore($dateRange.to) && c.date.isSameOrAfter($dateRange.from)
+  let visibleCashFlows = $derived(
+    _.filter(
+      cashFlows,
+      (c) => c.date.isSameOrBefore($dateRange.to) && c.date.isSameOrAfter($dateRange.from)
+    )
   );
 
-  $: if (!_.isEmpty(cashFlows) && renderer) {
-    renderer(visibleCashFlows);
-  }
+  $effect(() => {
+    if (!_.isEmpty(cashFlows) && renderer) {
+      renderer(visibleCashFlows);
+    }
+  });
 
-  $: cashFlowSummary = _.isEmpty(visibleCashFlows)
-    ? []
-    : (() => {
-        const income = _.sumBy(visibleCashFlows, "income");
-        const expenses = _.sumBy(visibleCashFlows, "expenses");
-        const tax = _.sumBy(visibleCashFlows, "tax");
-        return [
-          { label: "Income", value: income },
-          { label: "Expenses", value: expenses + tax },
-          { label: "Net", value: income - expenses - tax }
-        ];
-      })();
+  let cashFlowSummary = $derived(
+    _.isEmpty(visibleCashFlows)
+      ? []
+      : (() => {
+          const income = _.sumBy(visibleCashFlows, "income");
+          const expenses = _.sumBy(visibleCashFlows, "expenses");
+          const tax = _.sumBy(visibleCashFlows, "tax");
+          return [
+            { label: "Income", value: income },
+            { label: "Expenses", value: expenses + tax },
+            { label: "Net", value: income - expenses - tax }
+          ];
+        })()
+  );
 
   onMount(async () => {
     ({ cash_flows: cashFlows } = await getCashFlow());
