@@ -2,24 +2,30 @@
   import Select from "svelte-select";
   import Modal from "$lib/components/Modal.svelte";
   import _ from "lodash";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { ajax, type AutoCompleteItem, type PriceProvider } from "$lib/utils";
 
+  interface Props {
+    open?: boolean;
+    onselect?: (value: { code: string; provider: string }) => void;
+  }
+
+  let { open = $bindable(false), onselect }: Props = $props();
+
   let label = "Choose Price Provider";
-  export let open = false;
-  let code = "";
+  let code = $state("");
 
-  let providers: PriceProvider[] = [];
-  let selectedProvider: PriceProvider = null;
+  let providers = $state<PriceProvider[]>([]);
+  let selectedProvider = $state<PriceProvider>(null);
 
-  let filters: Record<string, AutoCompleteItem> = {};
+  let filters = $state<Record<string, AutoCompleteItem>>({});
 
   onMount(async () => {
     ({ providers } = await ajax("/api/price/providers", { background: true }));
     selectedProvider = providers[0];
   });
 
-  let isLoading = false;
+  let isLoading = $state(false);
   async function clearProviderCache() {
     isLoading = true;
     try {
@@ -34,7 +40,7 @@
     }
   }
 
-  let autocompleteCache: number[] = [];
+  let autocompleteCache = $state<number[]>([]);
   function clearCache(i: number) {
     autocompleteCache[i] = (autocompleteCache[i] || 0) + 1;
   }
@@ -74,14 +80,12 @@
       return completions;
     };
   }
-
-  const dispatch = createEventDispatcher();
 </script>
 
 <Modal bind:active={open} footerClass="is-justify-content-space-between">
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">{label}</p>
-    <button class="delete" aria-label="close" on:click={(e) => close(e)}></button>
+    <button class="delete" aria-label="close" onclick={(e) => close(e)}></button>
   </svelte:fragment>
   <div style="min-height: 500px;" slot="body">
     {#if selectedProvider}
@@ -89,7 +93,7 @@
         <label class="label" for="">Provider</label>
         <div class="control">
           <div class="select">
-            <select bind:value={selectedProvider} required on:change={(_e) => reset()}>
+            <select bind:value={selectedProvider} required onchange={() => reset()}>
               {#each providers as provider}
                 <option value={provider}>{provider.label}</option>
               {/each}
@@ -150,18 +154,18 @@
       <button
         class="button is-success"
         disabled={_.isEmpty(code)}
-        on:click={(e) => {
-          dispatch("select", { code: code, provider: selectedProvider.code });
+        onclick={(e) => {
+          onselect?.({ code: code, provider: selectedProvider.code });
           reset();
           close(e);
         }}>Select</button
       >
-      <button class="button" on:click={(e) => close(e)}>Cancel</button>
+      <button class="button" onclick={(e) => close(e)}>Cancel</button>
     </div>
 
     <div>
       <button
-        on:click={(_e) => clearProviderCache()}
+        onclick={() => clearProviderCache()}
         class="button is-danger {isLoading && 'is-loading'}"
         disabled={!selectedProvider}>Clear Provider Cache</button
       >

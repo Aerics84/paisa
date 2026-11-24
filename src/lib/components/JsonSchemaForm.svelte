@@ -3,6 +3,7 @@
   import Select from "svelte-select";
   import _ from "lodash";
   import PriceCodeSearchModal from "./PriceCodeSearchModal.svelte";
+  import JsonSchemaForm from "./JsonSchemaForm.svelte";
   import { iconGlyph, loadIcons } from "$lib/icon";
   import AccountSelect from "./AccountsSelect.svelte";
   import { hashPassword } from "$lib/utils";
@@ -16,30 +17,46 @@
 
   const ICON_MAX_RESULTS = 200;
 
-  export let key: string;
-  export let path: string = "";
-  export let value: any;
-  export let rawValue: string = "";
-  export let schema: Schema;
-  export let depth: number = 0;
-  export let required = false;
-  export let deletable: () => void = null;
-  export let disabled: boolean = false;
-  export let allAccounts: string[];
+  interface Props {
+    key: string;
+    path?: string;
+    value?: any;
+    rawValue?: string;
+    schema: Schema;
+    depth?: number;
+    required?: boolean;
+    deletable?: (() => void) | null;
+    disabled?: boolean;
+    allAccounts: string[];
+    modalOpen?: boolean;
+  }
 
-  export let modalOpen = false;
+  let {
+    key,
+    path = "",
+    value = $bindable(),
+    rawValue = $bindable(""),
+    schema,
+    depth = 0,
+    required = false,
+    deletable = null,
+    disabled = false,
+    allAccounts,
+    modalOpen = $bindable(false)
+  }: Props = $props();
 
-  let open = depth < 1;
-  let passwordError = "";
-  let iconsLoading = false;
-  let iconsError = "";
+  // svelte-ignore state_referenced_locally
+  let open = $state(depth < 1);
+  let passwordError = $state("");
+  let iconsLoading = $state(false);
+  let iconsError = $state("");
   let icons: string[] | null = null;
   let iconsPromise: Promise<string[]> | null = null;
-  let iconItems: { value: string; label: string }[] = [];
+  let iconItems = $state<{ value: string; label: string }[]>([]);
   let iconQuery = "";
-  $: title = _.startCase(key);
-  $: fieldPath = path || key;
-  $: fieldId = `config-field-${fieldPath.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  let title = $derived(_.startCase(key));
+  let fieldPath = $derived(path || key);
+  let fieldId = $derived(`config-field-${fieldPath.replace(/[^a-zA-Z0-9_-]/g, "-")}`);
 
   function newItem(schema: any) {
     if (Array.isArray(schema.default) && schema.default.length > 0) {
@@ -185,7 +202,7 @@
 
 {#if deletable}
   <button
-    on:click={(_e) => deletable()}
+    onclick={() => deletable()}
     class="config-delete"
     aria-label={`Delete ${title}`}
     type="button"
@@ -215,7 +232,7 @@
             id={fieldId}
             aria-label={title}
             bind:value={rawValue}
-            on:change={async () => {
+            onchange={async () => {
               passwordError = "";
 
               if (_.isEmpty(rawValue)) {
@@ -275,7 +292,7 @@
         {#if iconsError}
           <p class="help is-danger">
             {iconsError}
-            <button type="button" class="is-link" on:click={() => openIconPicker()}>Retry</button>
+            <button type="button" class="is-link" onclick={() => openIconPicker()}>Retry</button>
           </p>
         {/if}
       </div>
@@ -390,7 +407,7 @@
     </span>
 
     <button
-      on:click={(_e) => (modalOpen = true)}
+      onclick={() => (modalOpen = true)}
       class="is-link"
       aria-label={`Edit ${title}`}
       type="button"
@@ -403,22 +420,22 @@
 
   <PriceCodeSearchModal
     bind:open={modalOpen}
-    on:select={(e) => {
-      value["code"] = e.detail.code;
-      value["provider"] = e.detail.provider;
+    onselect={(selection) => {
+      value["code"] = selection.code;
+      value["provider"] = selection.provider;
     }}
   />
 
   <div class="config-body {depth % 2 == 1 ? 'odd' : 'even'}">
     {#each sortedProperties(schema) as [key, subSchema]}
-      <svelte:self
+      <JsonSchemaForm
         {allAccounts}
         required={_.includes(schema.required || [], key)}
         depth={depth + 1}
         {key}
         path={`${fieldPath}.${key}`}
         bind:value={value[key]}
-        schema={subSchema}
+        schema={subSchema as Schema}
         disabled={true}
       />
     {/each}
@@ -429,7 +446,7 @@
       class="is-link is-light invertable"
       data-tippy-content={documentation(schema)}
       type="button"
-      on:click={(_e) => toggle()}
+      onclick={() => toggle()}
     >
       <span>{schema["ui:header"] ? value[schema["ui:header"]] || title : title}</span>
       <span class="icon is-small">
@@ -441,14 +458,14 @@
   {#if open}
     <div class="config-body {depth % 2 == 1 ? 'odd' : 'even'}">
       {#each sortedProperties(schema) as [key, subSchema]}
-        <svelte:self
+        <JsonSchemaForm
           {allAccounts}
           required={_.includes(schema.required || [], key)}
           depth={depth + 1}
           {key}
           path={`${fieldPath}.${key}`}
           bind:value={value[key]}
-          schema={subSchema}
+          schema={subSchema as Schema}
         />
       {/each}
     </div>
@@ -459,7 +476,7 @@
       class="is-link is-light invertable"
       data-tippy-content={documentation(schema)}
       type="button"
-      on:click={(_e) => (open = !open)}
+      onclick={() => (open = !open)}
     >
       <span>{title}</span>
       <span class="icon is-small">
@@ -468,7 +485,7 @@
     </button>
     {#if open}
       <button
-        on:click={(_e) => (value = [newItem(schema), ...(value ?? [])])}
+        onclick={() => (value = [newItem(schema), ...(value ?? [])])}
         class="config-add"
         aria-label={`Add ${title}`}
         type="button"
@@ -483,7 +500,7 @@
   {#if open}
     <div class="config-body {depth % 2 == 1 ? 'odd' : 'even'}">
       {#each value as _item, i}
-        <svelte:self
+        <JsonSchemaForm
           {allAccounts}
           deletable={() => {
             value.splice(i, 1);
@@ -493,7 +510,7 @@
           key=""
           path={`${fieldPath}[${i}]`}
           bind:value={value[i]}
-          schema={schema.items}
+          schema={schema.items as Schema}
         />
       {/each}
     </div>
