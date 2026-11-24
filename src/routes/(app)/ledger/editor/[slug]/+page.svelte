@@ -23,7 +23,7 @@
   import type { EditorView } from "codemirror";
   import { format } from "$lib/journal";
   import _ from "lodash";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { beforeNavigate, goto, afterNavigate } from "$app/navigation";
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
@@ -202,26 +202,29 @@
   }
 
   $effect(() => {
-    if (selectedFile) {
-      if (
-        !editor ||
-        editorFileName !== selectedFile.name ||
-        editor.state.doc.toString() != selectedFile.content
-      ) {
+    const file = selectedFile;
+    const dom = editorDom;
+    const autocompletions = {
+      string: accounts,
+      strong: payees,
+      unit: commodities
+    };
+    if (!file) return;
+
+    // Legacy reactive statements did not reschedule themselves on their own
+    // writes; untrack mirrors that and keeps the editor creation from looping.
+    untrack(() => {
+      if (!editor || editorFileName !== file.name || editor.state.doc.toString() != file.content) {
         if (editor) {
           editor.destroy();
         }
 
-        editor = createEditor(selectedFile.content, editorDom, {
-          name: selectedFile.name,
+        editor = createEditor(file.content, dom, {
+          name: file.name,
           keybindings,
-          autocompletions: {
-            string: accounts,
-            strong: payees,
-            unit: commodities
-          }
+          autocompletions
         });
-        editorFileName = selectedFile.name;
+        editorFileName = file.name;
         if (lineNumber > 0) {
           moveToLine(editor, lineNumber, true);
           focus(editor);
@@ -230,7 +233,7 @@
           moveToEnd(editor);
         }
       }
-    }
+    });
   });
 
   let modalOpen = $state(false);

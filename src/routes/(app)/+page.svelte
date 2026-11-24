@@ -62,15 +62,18 @@
   let checkingBalances = $state<Record<string, AssetBreakdown>>({});
   let destroyed = false;
 
+  const NO_EXPENSES: Posting[] = [];
+
   onDestroy(() => {
     destroyed = true;
   });
 
   $effect(() => {
     if (renderer) {
-      selectedExpenses = expenses[month] || [];
-      renderer(selectedExpenses);
-      totalExpense = _.sumBy(selectedExpenses, (p) => p.amount);
+      const postings = expenses[month] || NO_EXPENSES;
+      selectedExpenses = postings;
+      renderer(postings);
+      totalExpense = _.sumBy(postings, (p) => p.amount);
     }
   });
 

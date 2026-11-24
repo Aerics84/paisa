@@ -11,7 +11,7 @@
   import Dropzone from "svelte-file-dropzone";
   import _ from "lodash";
   import type { EditorView } from "codemirror";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { ajax } from "$lib/utils";
   import { saveEditorFile } from "$lib/api/editor";
   import {
@@ -173,12 +173,18 @@
   });
 
   $effect(() => {
-    if (selectedTemplate && templateEditor) {
-      if (templateEditor.state.doc.toString() != selectedTemplate.content) {
+    const template = selectedTemplate;
+    const dom = templateEditorDom;
+    if (!template) return;
+
+    // Legacy reactive statements did not reschedule themselves on their own
+    // writes; untrack mirrors that and keeps the editor creation from looping.
+    untrack(() => {
+      if (templateEditor && templateEditor.state.doc.toString() != template.content) {
         templateEditor.destroy();
-        templateEditor = createTemplateEditor(selectedTemplate.content, templateEditorDom);
+        templateEditor = createTemplateEditor(template.content, dom);
       }
-    }
+    });
   });
 
   async function handleFilesSelect(e: { detail: { acceptedFiles: File[] } }) {

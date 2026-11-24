@@ -17,7 +17,7 @@
   import * as toast from "bulma-toast";
   import type { EditorView } from "codemirror";
   import _ from "lodash";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { beforeNavigate, goto, afterNavigate } from "$app/navigation";
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
@@ -182,19 +182,27 @@
   }
 
   $effect(() => {
-    if (selectedFile) {
-      if (!editor || editor.state.doc.toString() != selectedFile.content) {
+    const file = selectedFile;
+    const dom = editorDom;
+    const rows = postings;
+    const autocomplete = {
+      account: accounts,
+      commodity: commodities,
+      filename: ledgerFiles.map((f) => f.name)
+    };
+    if (!file) return;
+
+    // Legacy reactive statements did not reschedule themselves on their own
+    // writes; untrack mirrors that and keeps the editor creation from looping.
+    untrack(() => {
+      if (!editor || editor.state.doc.toString() != file.content) {
         if (editor) {
           editor.destroy();
         }
 
-        editor = createEditor(selectedFile.content, editorDom, postings, {
+        editor = createEditor(file.content, dom, rows, {
           keybindings,
-          autocomplete: {
-            account: accounts,
-            commodity: commodities,
-            filename: ledgerFiles.map((f) => f.name)
-          }
+          autocomplete
         });
         if (lineNumber > 0) {
           moveToLine(editor, lineNumber, true);
@@ -202,7 +210,7 @@
           lineNumber = 0;
         }
       }
-    }
+    });
   });
 
   let modalOpen = $state(false);
