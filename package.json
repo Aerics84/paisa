@@ -32,6 +32,8 @@
     "build": "vite build",
     "build:watch": "vite build --watch",
     "preview": "vite preview",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "npm run check:format:all && eslint .",
@@ -81,10 +83,12 @@
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@codemirror/merge": "^6.12.1",
     "@eslint/js": "^10.0.1",
     "@happy-dom/global-registrator": "^21.0.4",
     "@lezer/generator": "^1.8.0",
+    "@playwright/test": "^1.65.1",
     "@sveltejs/adapter-static": "^4.0.0",
     "@sveltejs/kit": "^3.1.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

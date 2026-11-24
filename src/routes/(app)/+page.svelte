@@ -128,262 +128,116 @@
   });
 </script>
 
-<section class="section" class:is-hidden={!isEmpty}>
-  <div class="container is-fluid">
-    <div class="columns">
-      <div class="column is-12">
-        <ZeroState item={!isEmpty}>
-          <div class="has-text-left" style="max-width: 640px;">
-            <p class="mb-2">
-              Looks like you are new here, you can either get started or look at a demo setup
-            </p>
-            <div>
-              <p class="is-size-4">I want to get started</p>
-              <ol class="ml-5 mt-2 mb-4">
-                <li>
-                  Go to <a href="/more/config">configuration</a> page and set your regional profile, default
-                  currency and locale.
-                </li>
-                <li>
-                  Go to <a href="/ledger/editor">editor</a> page and start adding transactions to your
-                  journal.
-                </li>
-              </ol>
-              <p class="is-size-4">I want to view a Demo</p>
-              <p class="ml-3"></p>
-              <ol class="ml-5 mt-2 mb-4">
-                <li>
-                  Click the button below to load a demo setup. This will load a demo journal and
-                  starter config matching your current regional profile.
-                </li>
-                <li>
-                  Once you are done playing around, you can go to <a href="/ledger/editor">editor</a
-                  > page and select all the content and delete them.
-                </li>
-                <li>
-                  Go to <a href="/more/config">configuration</a> page and click the reset to defaults
-                  button.
-                </li>
-              </ol>
+<div data-testid="dashboard-page">
+  <section class="section" class:is-hidden={!isEmpty}>
+    <div class="container is-fluid">
+      <div class="columns">
+        <div class="column is-12">
+          <ZeroState item={!isEmpty}>
+            <div class="has-text-left" style="max-width: 640px;">
+              <p class="mb-2">
+                Looks like you are new here, you can either get started or look at a demo setup
+              </p>
+              <div>
+                <p class="is-size-4">I want to get started</p>
+                <ol class="ml-5 mt-2 mb-4">
+                  <li>
+                    Go to <a href="/more/config">configuration</a> page and set your regional profile,
+                    default currency and locale.
+                  </li>
+                  <li>
+                    Go to <a href="/ledger/editor">editor</a> page and start adding transactions to your
+                    journal.
+                  </li>
+                </ol>
+                <p class="is-size-4">I want to view a Demo</p>
+                <p class="ml-3"></p>
+                <ol class="ml-5 mt-2 mb-4">
+                  <li>
+                    Click the button below to load a demo setup. This will load a demo journal and
+                    starter config matching your current regional profile.
+                  </li>
+                  <li>
+                    Once you are done playing around, you can go to <a href="/ledger/editor"
+                      >editor</a
+                    > page and select all the content and delete them.
+                  </li>
+                  <li>
+                    Go to <a href="/more/config">configuration</a> page and click the reset to defaults
+                    button.
+                  </li>
+                </ol>
 
-              <button type="button" on:click={(_e) => initDemo()} class="button is-link">
-                Setup Demo
-              </button>
+                <button type="button" on:click={(_e) => initDemo()} class="button is-link">
+                  Setup Demo
+                </button>
+              </div>
             </div>
-          </div>
-        </ZeroState>
+          </ZeroState>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="section tab-networth" class:is-hidden={isEmpty}>
-  <div class="container is-fluid">
-    <div class="tile is-ancestor is-align-items-start">
-      <div class="tile is-4 is-vertical">
-        <div class="tile is-parent">
-          <div class="tile is-child">
-            <div class="content">
-              <p class="subtitle">
-                <a class="secondary-link has-text-grey" href="/assets/networth">Assets</a>
-              </p>
-              <div class="content">
-                <div>
-                  {#if networth}
-                    <nav class="level grid-2">
-                      <LevelItem
-                        narrow
-                        title="Net worth"
-                        color={COLORS.primary}
-                        value={formatCurrencyWithSymbol(networth.balanceAmount)}
-                      />
-
-                      <LevelItem
-                        narrow
-                        title="Net Investment"
-                        color={COLORS.secondary}
-                        value={formatCurrencyWithSymbol(networth.netInvestmentAmount)}
-                      />
-                    </nav>
-                    <nav class="level grid-2">
-                      <LevelItem
-                        narrow
-                        title="Gain / Loss"
-                        color={networth.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
-                        value={formatCurrencyWithSymbol(networth.gainAmount)}
-                      />
-
-                      <LevelItem narrow title="XIRR" value={formatFloat(xirr)} />
-                    </nav>
-                  {/if}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {#if !_.isEmpty(checkingBalances)}
-          <div class="tile is-parent">
-            <article class="tile is-child">
-              <div class="content">
-                <p class="subtitle">
-                  <a class="secondary-link has-text-grey" href="/assets/balance">Checking Balance</a
-                  >
-                </p>
-                <div class="content">
-                  <MasonryGrid gap={10} maxStretchColumnSize={400} align="stretch">
-                    {#each _.values(checkingBalances) as assetBreakdown}
-                      <div class="is-flex-grow-1">
-                        <BalanceCard {assetBreakdown} />
-                      </div>
-                    {/each}
-                  </MasonryGrid>
-                </div>
-              </div>
-            </article>
-          </div>
-        {/if}
-
-        <div class="tile is-parent">
-          <article class="tile is-child min-w-0">
-            <p class="subtitle">
-              <a class="secondary-link has-text-grey" href="/cash_flow/monthly">Cash Flow</a>
-            </p>
-            <div class="content box px-2 pb-0">
-              <ZeroState item={cashFlows}>
-                <strong>Oops!</strong> You have not made any transactions in the last 3 months.
-              </ZeroState>
-
-              <LegendCard legends={cashflowLegends} clazz="mb-2 overflow-x-auto" />
-
-              <svg
-                class:is-not-visible={_.isEmpty(cashFlows)}
-                id="d3-current-cash-flow"
-                height="250"
-                width="100%"
-              />
-            </div>
-          </article>
-        </div>
-        {#if currentBudget}
+  <section class="section tab-networth" class:is-hidden={isEmpty}>
+    <div class="container is-fluid">
+      <div class="tile is-ancestor is-align-items-start">
+        <div class="tile is-4 is-vertical">
           <div class="tile is-parent">
             <div class="tile is-child">
               <div class="content">
                 <p class="subtitle">
-                  <a class="secondary-link has-text-grey" href="/expense/budget">Budget</a>
+                  <a class="secondary-link has-text-grey" href="/assets/networth">Assets</a>
                 </p>
                 <div class="content">
                   <div>
-                    {#each currentBudget.accounts as accountBudget (accountBudget)}
-                      <BudgetCard compact {accountBudget} />
-                    {/each}
+                    {#if networth}
+                      <nav class="level grid-2">
+                        <LevelItem
+                          narrow
+                          title="Net worth"
+                          color={COLORS.primary}
+                          value={formatCurrencyWithSymbol(networth.balanceAmount)}
+                        />
+
+                        <LevelItem
+                          narrow
+                          title="Net Investment"
+                          color={COLORS.secondary}
+                          value={formatCurrencyWithSymbol(networth.netInvestmentAmount)}
+                        />
+                      </nav>
+                      <nav class="level grid-2">
+                        <LevelItem
+                          narrow
+                          title="Gain / Loss"
+                          color={networth.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
+                          value={formatCurrencyWithSymbol(networth.gainAmount)}
+                        />
+
+                        <LevelItem narrow title="XIRR" value={formatFloat(xirr)} />
+                      </nav>
+                    {/if}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        {/if}
-        {#if currentExpensePace}
-          <div class="tile is-parent">
-            <div class="tile is-child">
-              <div class="content">
-                <p class="subtitle">
-                  <a class="secondary-link has-text-grey" href="/expense/budget"
-                    >Prognose Monatsende</a
-                  >
-                </p>
-                <div class="content box px-3 py-2">
-                  <span class="has-text-weight-bold"
-                    >{formatCurrencyWithSymbol(currentExpensePace.projectedExpenses)}</span
-                  >
-                  {#if currentExpensePace.overBudget != null}
-                    <span class="tag is-danger is-light ml-2"
-                      >über Budget {formatCurrencyWithSymbol(currentExpensePace.overBudget)}</span
-                    >
-                  {/if}
-                </div>
-              </div>
-            </div>
-          </div>
-        {/if}
-        {#if !_.isEmpty(goalSummaries)}
-          <div class="tile">
-            <div class="tile is-parent is-12">
+
+          {#if !_.isEmpty(checkingBalances)}
+            <div class="tile is-parent">
               <article class="tile is-child">
                 <div class="content">
                   <p class="subtitle">
-                    <a class="secondary-link has-text-grey" href="/more/goals">Goals</a>
+                    <a class="secondary-link has-text-grey" href="/assets/balance"
+                      >Checking Balance</a
+                    >
                   </p>
                   <div class="content">
-                    {#each goalSummaries as goal}
-                      <GoalSummaryCard {goal} small />
-                    {/each}
-                  </div>
-                </div>
-              </article>
-            </div>
-          </div>
-        {/if}
-      </div>
-      <div class="tile is-vertical">
-        <div class="tile is-parent is-12">
-          <article class="tile is-child">
-            <p class="subtitle is-flex is-justify-content-space-between is-align-items-end">
-              <span
-                ><a class="secondary-link has-text-grey" href="/expense/monthly">Expenses</a>
-                <span class="is-size-5 has-text-weight-bold px-2" style="color: {COLORS.expenses}"
-                  >{formatCurrency(totalExpense)}</span
-                ></span
-              >
-              <LastNMonths n={3} bind:value={month} />
-            </p>
-            <div class="content box px-3">
-              <ZeroState item={selectedExpenses}>
-                <strong>Hurray!</strong> You have no expenses this month.
-              </ZeroState>
-              <svg id="d3-current-month-breakdown" width="100%" />
-            </div>
-          </article>
-        </div>
-        {#if !_.isEmpty(transactionSequences)}
-          <div class="tile">
-            <div class="tile is-parent is-12">
-              <article class="tile is-child">
-                <div class="content">
-                  <p class="subtitle">
-                    <a class="secondary-link has-text-grey" href="/cash_flow/recurring">Recurring</a
-                    >
-                  </p>
-                  <div class="content box">
-                    <div
-                      class="grid grid-rows-1 overflow-hidden"
-                      style="grid-auto-rows: 0px; grid-template-columns: repeat(auto-fit, minmax(130px, 150px));"
-                    >
-                      {#each transactionSequences as ts (ts)}
-                        <UpcomingCard transactionSequece={ts} />
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </div>
-        {/if}
-        {#if !_.isEmpty(transactions)}
-          <div class="tile">
-            <div class="tile is-parent is-12">
-              <article class="tile is-child">
-                <div class="content">
-                  <p class="subtitle">
-                    <a class="secondary-link has-text-grey" href="/ledger/transaction"
-                      >Recent Transactions</a
-                    >
-                  </p>
-                  <div>
-                    <MasonryGrid gap={10} maxStretchColumnSize={500} align="stretch">
-                      {#each _.take(transactions, 20) as t}
-                        <div class="mr-3 is-flex-grow-1">
-                          <TransactionCard {t} />
+                    <MasonryGrid gap={10} maxStretchColumnSize={400} align="stretch">
+                      {#each _.values(checkingBalances) as assetBreakdown}
+                        <div class="is-flex-grow-1">
+                          <BalanceCard {assetBreakdown} />
                         </div>
                       {/each}
                     </MasonryGrid>
@@ -391,12 +245,163 @@
                 </div>
               </article>
             </div>
+          {/if}
+
+          <div class="tile is-parent">
+            <article class="tile is-child min-w-0">
+              <p class="subtitle">
+                <a class="secondary-link has-text-grey" href="/cash_flow/monthly">Cash Flow</a>
+              </p>
+              <div class="content box px-2 pb-0">
+                <ZeroState item={cashFlows}>
+                  <strong>Oops!</strong> You have not made any transactions in the last 3 months.
+                </ZeroState>
+
+                <LegendCard legends={cashflowLegends} clazz="mb-2 overflow-x-auto" />
+
+                <svg
+                  class:is-not-visible={_.isEmpty(cashFlows)}
+                  id="d3-current-cash-flow"
+                  height="250"
+                  width="100%"
+                />
+              </div>
+            </article>
           </div>
-        {/if}
+          {#if currentBudget}
+            <div class="tile is-parent">
+              <div class="tile is-child">
+                <div class="content">
+                  <p class="subtitle">
+                    <a class="secondary-link has-text-grey" href="/expense/budget">Budget</a>
+                  </p>
+                  <div class="content">
+                    <div>
+                      {#each currentBudget.accounts as accountBudget (accountBudget)}
+                        <BudgetCard compact {accountBudget} />
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
+          {#if currentExpensePace}
+            <div class="tile is-parent">
+              <div class="tile is-child">
+                <div class="content">
+                  <p class="subtitle">
+                    <a class="secondary-link has-text-grey" href="/expense/budget"
+                      >Prognose Monatsende</a
+                    >
+                  </p>
+                  <div class="content box px-3 py-2">
+                    <span class="has-text-weight-bold"
+                      >{formatCurrencyWithSymbol(currentExpensePace.projectedExpenses)}</span
+                    >
+                    {#if currentExpensePace.overBudget != null}
+                      <span class="tag is-danger is-light ml-2"
+                        >über Budget {formatCurrencyWithSymbol(currentExpensePace.overBudget)}</span
+                      >
+                    {/if}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
+          {#if !_.isEmpty(goalSummaries)}
+            <div class="tile">
+              <div class="tile is-parent is-12">
+                <article class="tile is-child">
+                  <div class="content">
+                    <p class="subtitle">
+                      <a class="secondary-link has-text-grey" href="/more/goals">Goals</a>
+                    </p>
+                    <div class="content">
+                      {#each goalSummaries as goal}
+                        <GoalSummaryCard {goal} small />
+                      {/each}
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          {/if}
+        </div>
+        <div class="tile is-vertical">
+          <div class="tile is-parent is-12">
+            <article class="tile is-child">
+              <p class="subtitle is-flex is-justify-content-space-between is-align-items-end">
+                <span
+                  ><a class="secondary-link has-text-grey" href="/expense/monthly">Expenses</a>
+                  <span class="is-size-5 has-text-weight-bold px-2" style="color: {COLORS.expenses}"
+                    >{formatCurrency(totalExpense)}</span
+                  ></span
+                >
+                <LastNMonths n={3} bind:value={month} />
+              </p>
+              <div class="content box px-3">
+                <ZeroState item={selectedExpenses}>
+                  <strong>Hurray!</strong> You have no expenses this month.
+                </ZeroState>
+                <svg id="d3-current-month-breakdown" width="100%" />
+              </div>
+            </article>
+          </div>
+          {#if !_.isEmpty(transactionSequences)}
+            <div class="tile">
+              <div class="tile is-parent is-12">
+                <article class="tile is-child">
+                  <div class="content">
+                    <p class="subtitle">
+                      <a class="secondary-link has-text-grey" href="/cash_flow/recurring"
+                        >Recurring</a
+                      >
+                    </p>
+                    <div class="content box">
+                      <div
+                        class="grid grid-rows-1 overflow-hidden"
+                        style="grid-auto-rows: 0px; grid-template-columns: repeat(auto-fit, minmax(130px, 150px));"
+                      >
+                        {#each transactionSequences as ts (ts)}
+                          <UpcomingCard transactionSequece={ts} />
+                        {/each}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          {/if}
+          {#if !_.isEmpty(transactions)}
+            <div class="tile">
+              <div class="tile is-parent is-12">
+                <article class="tile is-child">
+                  <div class="content">
+                    <p class="subtitle">
+                      <a class="secondary-link has-text-grey" href="/ledger/transaction"
+                        >Recent Transactions</a
+                      >
+                    </p>
+                    <div>
+                      <MasonryGrid gap={10} maxStretchColumnSize={500} align="stretch">
+                        {#each _.take(transactions, 20) as t}
+                          <div class="mr-3 is-flex-grow-1">
+                            <TransactionCard {t} />
+                          </div>
+                        {/each}
+                      </MasonryGrid>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          {/if}
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+</div>
 
 <style lang="scss">
   p.subtitle {

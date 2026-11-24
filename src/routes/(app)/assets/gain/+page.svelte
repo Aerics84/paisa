@@ -20,7 +20,14 @@
   <div class="container is-fluid">
     <div class="columns">
       <div class="column is-12">
-        <div class="box overflow-x-auto">
+        <!-- WCAG 2.1.1: horizontal scrolling needs keyboard access. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <div
+          class="box overflow-x-auto"
+          tabindex="0"
+          role="region"
+          aria-label="Gain overview chart"
+        >
           <LegendCard {legends} clazz="ml-4" />
           <svg id="d3-gain-overview" />
         </div>

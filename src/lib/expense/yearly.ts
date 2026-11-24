@@ -114,7 +114,7 @@ export function renderCalendar(
     .selectAll("div.day")
     .data((d) => [d])
     .join("div")
-    .attr("class", "day has-text-grey-light")
+    .attr("class", "day has-text-grey-dark")
     .text((d) => d);
 
   infoDiv

@@ -38,16 +38,28 @@
             </div>
             <form on:submit|preventDefault={tryLogin}>
               <div class="field">
-                <label for="" class="label">Username</label>
+                <label for="login-username" class="label">Username</label>
                 <div class="control">
-                  <input class="input" type="text" bind:value={username} />
+                  <input
+                    id="login-username"
+                    class="input"
+                    type="text"
+                    autocomplete="username"
+                    bind:value={username}
+                  />
                 </div>
               </div>
 
               <div class="field">
-                <label for="" class="label">Password</label>
+                <label for="login-password" class="label">Password</label>
                 <div class="control">
-                  <input class="input" type="password" bind:value={password} />
+                  <input
+                    id="login-password"
+                    class="input"
+                    type="password"
+                    autocomplete="current-password"
+                    bind:value={password}
+                  />
                 </div>
                 {#if invalid}
                   <p class="help is-danger">{invalidErrorMessage}</p>

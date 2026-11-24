@@ -102,7 +102,7 @@
   }
 </script>
 
-<div class="section">
+<div class="section" data-testid="config-page">
   <div class="container is-fluid">
     <div class="columns">
       <div class="column is-12">

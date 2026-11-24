@@ -70,7 +70,11 @@
       {#if overview}
         <div class="is-flex is-align-items-center" style="gap: 0.75rem;">
           <div class="select is-small">
-            <select bind:value={selectedYear} on:change={(e) => load(e.currentTarget.value)}>
+            <select
+              bind:value={selectedYear}
+              aria-label="Steuerjahr"
+              on:change={(e) => load(e.currentTarget.value)}
+            >
               {#each overview.years.slice().reverse() as year}
                 <option value={year}>Steuerjahr {year}</option>
               {/each}

@@ -311,7 +311,7 @@
 
 <FileModal bind:open={modalOpen} on:save={(e) => saveToFile(e.detail)} />
 
-<section class="section tab-import" style="padding-bottom: 0 !important">
+<section class="section tab-import" data-testid="import-page" style="padding-bottom: 0 !important">
   <div class="container is-fluid">
     <div class="tabs is-toggle is-toggle-rounded is-small mb-4">
       <ul>
@@ -397,6 +397,7 @@
                 searchable={true}
                 clearable={false}
                 floatingConfig={{ strategy: "fixed" }}
+                inputAttributes={{ "aria-label": "Import template" }}
                 onchange={() => {
                   saveAsName = selectedTemplate.name;
                 }}
@@ -462,14 +463,16 @@
       </div>
       <div class="column is-7 py-0">
         <div class="box p-3 mb-3">
-          <Dropzone
-            multiple={false}
-            inputElement={input}
-            accept=".csv,.txt,.sta,.mt940,.xlsx,.pdf,.xml,.CSV,.TXT,.STA,.MT940,.XLSX,.PDF,.XML"
-            on:drop={handleFilesSelect}
-          >
-            Drag 'n' drop CSV, TXT, STA, MT940, XLSX, PDF, XML file here or click to select
-          </Dropzone>
+          <div data-testid="file-dropzone">
+            <Dropzone
+              multiple={false}
+              inputElement={input}
+              accept=".csv,.txt,.sta,.mt940,.xlsx,.pdf,.xml,.CSV,.TXT,.STA,.MT940,.XLSX,.PDF,.XML"
+              on:drop={handleFilesSelect}
+            >
+              Drag 'n' drop CSV, TXT, STA, MT940, XLSX, PDF, XML file here or click to select
+            </Dropzone>
+          </div>
         </div>
         <div class="is-flex justify-end mb-3 gap-4">
           <div class="field color-switch">

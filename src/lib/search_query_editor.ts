@@ -670,7 +670,10 @@ export function createEditor(
           fontSize: "14px"
         }
       }),
-      EditorView.contentAttributes.of({ "data-enable-grammarly": "false" }),
+      EditorView.contentAttributes.of({
+        "data-enable-grammarly": "false",
+        "aria-label": "Search query"
+      }),
       queryExtension(),
       linter(lint),
       autocompletion({

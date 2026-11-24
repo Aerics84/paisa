@@ -94,7 +94,15 @@
     </div>
     <div class="columns">
       <div class="column is-12">
-        <div class="box overflow-x-auto" style="max-width: 98rem;">
+        <!-- WCAG 2.1.1: horizontal scrolling needs keyboard access. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <div
+          class="box overflow-x-auto"
+          style="max-width: 98rem;"
+          tabindex="0"
+          role="region"
+          aria-label="Postings"
+        >
           <div style="width: 98rem;">
             <div
               class="px-3 pt-1 grid grid-cols-7x gap-1 posting-row items-baseline has-text-weight-bold"

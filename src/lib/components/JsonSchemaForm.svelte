@@ -131,6 +131,7 @@
             class="input is-small"
             style="max-width: 350px;"
             type="password"
+            aria-label={title}
             bind:value={rawValue}
             on:change={() => {
               if (!_.isEmpty(rawValue)) {
@@ -203,7 +204,7 @@
         <div class="control">
           {#if schema.enum}
             <div class="select is-small">
-              <select {disabled} bind:value {required}>
+              <select {disabled} bind:value {required} aria-label={title}>
                 {#each schema.enum as option}
                   <option value={option}>{option}</option>
                 {/each}
@@ -216,6 +217,7 @@
               class="textarea is-small"
               style="min-width: 350px;max-width: 350px; width: 350px;"
               rows="5"
+              aria-label={title}
               bind:value
               spellcheck="false"
               data-enable-grammarly="false"></textarea>
@@ -227,6 +229,7 @@
               class="input is-small"
               style="max-width: 350px;"
               type="text"
+              aria-label={title}
               bind:value
             />
           {/if}
@@ -250,6 +253,7 @@
             min={schema.minimum}
             max={schema.maximum}
             step={schema.type == "integer" ? 1 : 0.01}
+            aria-label={title}
             bind:value
           />
         </div>

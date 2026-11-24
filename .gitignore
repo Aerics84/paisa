@@ -29,6 +29,12 @@ fonts/*
 /result
 brand/*.png
 
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Local docs that should stay out of the remote repo
 /docs/superpowers/
 /docs/images/ux/

@@ -50,7 +50,11 @@ export function createDiffEditor(oldContent: string, newContent: string, dom: El
     basicSetup,
     State.readOnly.of(true),
     StreamLanguage.define(ledger),
-    EditorView.contentAttributes.of({ "data-enable-grammarly": "false" }),
+    EditorView.contentAttributes.of({
+      "data-enable-grammarly": "false",
+      role: "textbox",
+      "aria-label": "Ledger editor"
+    }),
     lintGutter(),
     linter((editor) => lint(editor, name))
   ];
@@ -79,7 +83,10 @@ export function createEditor(
       keymap.of(opts.keybindings || []),
       basicSetup,
       State.readOnly.of(!!opts.readonly),
-      EditorView.contentAttributes.of({ "data-enable-grammarly": "false" }),
+      EditorView.contentAttributes.of({
+        "data-enable-grammarly": "false",
+        "aria-label": "Ledger editor"
+      }),
       StreamLanguage.define(ledger),
       lintGutter(),
       linter((editor) => lint(editor, opts.name)),

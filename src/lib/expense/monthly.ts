@@ -87,7 +87,7 @@ export function renderCalendar(
     .selectAll("span.day")
     .data((d) => [d])
     .join("span")
-    .attr("class", "day has-text-grey-light")
+    .attr("class", "day has-text-grey-dark")
     .style("position", "absolute")
     .text((d) => d.date().toString());
 

@@ -140,7 +140,14 @@
     <div class="columns flex-wrap">
       {#if incomeStatement}
         <div class="column is-12">
-          <div class="box py-2 my-0 overflow-x-auto">
+          <!-- WCAG 2.1.1: horizontal scrolling needs keyboard access. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <div
+            class="box py-2 my-0 overflow-x-auto"
+            tabindex="0"
+            role="region"
+            aria-label="Income statement summary"
+          >
             <div class="is-flex mr-2 is-align-items-baseline" style="min-width: fit-content">
               <div class="ml-3 custom-icon is-size-5 whitespace-nowrap">
                 {$year}
@@ -170,7 +177,14 @@
         </div>
       {/if}
       <div class="column is-12">
-        <div class="box overflow-x-auto">
+        <!-- WCAG 2.1.1: horizontal scrolling needs keyboard access. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <div
+          class="box overflow-x-auto"
+          tabindex="0"
+          role="region"
+          aria-label="Income statement chart"
+        >
           <ZeroState item={!isEmpty}
             ><strong>Oops!</strong> You have not made any transactions for the selected year.</ZeroState
           >
@@ -186,7 +200,14 @@
   <div class="container is-fluid">
     <div class="columns">
       <div class="column is-12 pb-0">
-        <div class="box pt-0 overflow-x-auto max-h-screen max-w-fit">
+        <!-- WCAG 2.1.1: scrolling needs keyboard access. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <div
+          class="box pt-0 overflow-x-auto max-h-screen max-w-fit"
+          tabindex="0"
+          role="region"
+          aria-label="Income statement table"
+        >
           <table
             class="table is-narrow is-hoverable is-light-border has-sticky-header has-sticky-column"
           >

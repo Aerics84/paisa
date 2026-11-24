@@ -63,7 +63,10 @@ export function createEditor(content: string, dom: Element) {
       keymap.of([{ key: "Tab", run: insertTab }]),
       basicSetup,
       syntaxHighlighting(classHighlighter),
-      EditorView.contentAttributes.of({ "data-enable-grammarly": "false" }),
+      EditorView.contentAttributes.of({
+        "data-enable-grammarly": "false",
+        "aria-label": "Import template editor"
+      }),
       StreamLanguage.define(handlebars),
       lintGutter(),
       linter(lint),

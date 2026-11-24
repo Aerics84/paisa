@@ -444,7 +444,7 @@
     {#if selectedSubSubLink?.financialYearPicker || selectedSubLink?.financialYearPicker || selectedLink?.financialYearPicker}
       <div class="has-text-centered">
         <div class="select is-small">
-          <select bind:value={$year}>
+          <select bind:value={$year} aria-label="Financial year">
             {#each years as fy}
               <option>{fy}</option>
             {/each}

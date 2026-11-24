@@ -582,6 +582,9 @@ nav.level.grid-2 {
 .navbar-link {
   &.is-active {
     font-weight: 600;
+    // The selected navbar background is the Bulma link colour in both
+    // themes, so the text must stay white for WCAG AA contrast.
+    color: #ffffff;
   }
 }
 
@@ -611,7 +614,7 @@ button.navbar-link {
 .cm-editor {
   .cm-gutters {
     background-color: $white-ter;
-    color: $grey-light;
+    color: $grey-dark;
     border: none;
     border-top-left-radius: $radius-small;
     border-bottom-left-radius: $radius-small;
@@ -637,10 +640,10 @@ button.navbar-link {
     $hl-orange: #f5871f;
     $hl-red: #c82829;
     $hl-purple: #8959a8;
-    $hl-violet: #6c71c4;
+    $hl-violet: #5a5fae;
     $hl-blue: #4271ae;
     $hl-cyan: #3e999f;
-    $hl-green: #718c00;
+    $hl-green: #4d6400;
 
     .tok-heading {
       font-weight: bold;
@@ -1011,7 +1014,7 @@ span.progress-percent.less-than-10 {
 .dropzone {
   border-color: $white-ter !important;
   background-color: $white-bis !important;
-  color: $grey !important;
+  color: $grey-dark !important;
   transition: none !important;
 }
 
@@ -1181,7 +1184,9 @@ textarea:invalid {
 .posting-row {
   grid-template-columns: 6rem 20rem 16rem 8rem 10rem 8rem 6rem 6rem 6rem 6rem;
   grid-auto-flow: column;
-  overflow-x: auto;
+  // The wrapping `.box` owns horizontal scrolling; a second scroll container
+  // here is unreachable by keyboard and duplicates that behaviour.
+  overflow-x: visible;
   border-bottom: 1px solid rgba($grey-lightest, 0.5);
 }
 

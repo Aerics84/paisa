@@ -14,7 +14,12 @@
   <div>
     <p class="heading">{title}</p>
     {#if color}
-      <p class="title" style="padding: 5px; color: {color};">{value}</p>
+      <p
+        class="title"
+        style="padding: 5px; color: color-mix(in srgb, {color} 45%, var(--app-text));"
+      >
+        {value}
+      </p>
     {:else}
       <p class="title has-text-grey-dark">{value}</p>
     {/if}

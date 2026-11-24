@@ -69,3 +69,35 @@ jobs:
           name: security-report
           path: .cache/security
           retention-days: 90
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - name: Install npm 12.2.1
+        run: |
+          npm install -g npm@12.2.1
+          npm --version
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.11"
+      - name: Install ledger
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ledger
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 30
