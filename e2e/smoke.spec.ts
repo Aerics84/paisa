@@ -12,6 +12,12 @@ function collectBrowserErrors(page: import("@playwright/test").Page) {
 test("dashboard renders with the germany-eu fixture", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("dashboard-page")).toBeVisible();
+  await expect(
+    page
+      .getByText(/Letzte Buchungen|Sieht aus, als wärst du neu hier/)
+      .filter({ visible: true })
+      .first()
+  ).toBeVisible();
 });
 
 test("login page uses the configured locale", async ({ page }) => {
