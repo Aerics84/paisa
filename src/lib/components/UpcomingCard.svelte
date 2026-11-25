@@ -5,6 +5,7 @@
     scheduleIcon,
     totalRecurring
   } from "$lib/transaction_sequence";
+  import { t } from "$lib/i18n";
   import {
     formatCurrencyCrude,
     now,
@@ -54,11 +55,13 @@
         class="radial-progress mx-3 mt-3 is-size-7 {icon.color}"
         style="--value: {percent}; --thickness: 3px; --size: 100px; grid-area: 1/1"
         role="progressbar"
-        aria-label="{transactionSequece.key} recurring payment"
+        aria-label={$t("components.upcoming.recurringPayment", {
+          name: transactionSequece.key
+        })}
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow={percent}
-        aria-valuetext="due {n.fromNow()}"
+        aria-valuetext={$t("liabilities.due", { relative: n.fromNow() })}
       >
         <div class="is-size-6">
           <span class="icon">
@@ -66,7 +69,7 @@
           </span>
         </div>
         <span>{formatCurrencyCrude(totalRecurring(transactionSequece))}</span>
-        <span>due {n.fromNow()}</span>
+        <span>{$t("liabilities.due", { relative: n.fromNow() })}</span>
       </div>
     </div>
   </div>

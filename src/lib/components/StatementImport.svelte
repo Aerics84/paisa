@@ -4,6 +4,7 @@
   import * as toast from "bulma-toast";
   import RuleStudioModal from "./RuleStudioModal.svelte";
   import TransactionStagingTable from "./TransactionStagingTable.svelte";
+  import { t, type MessageKey } from "$lib/i18n";
   import { ajax } from "$lib/utils";
   import {
     commitImport as commitImportRequest,
@@ -47,15 +48,15 @@
   let mappingError: string | null = $state(null);
   let columnMapping: IngestionColumnMapping = $state(emptyColumnMapping());
 
-  const mappingFields: Array<{ key: MappingKey; label: string }> = [
-    { key: "date", label: "Date *" },
-    { key: "description", label: "Description / Payee" },
-    { key: "amount", label: "Amount" },
-    { key: "debit", label: "Debit" },
-    { key: "credit", label: "Credit" },
-    { key: "balance", label: "Balance" },
-    { key: "currency", label: "Currency" },
-    { key: "dr_cr", label: "Dr / Cr" }
+  const mappingFields: Array<{ key: MappingKey; labelKey: MessageKey }> = [
+    { key: "date", labelKey: "components.statementImport.field.date" },
+    { key: "description", labelKey: "components.statementImport.field.description" },
+    { key: "amount", labelKey: "ledger.table.amount" },
+    { key: "debit", labelKey: "components.statementImport.field.debit" },
+    { key: "credit", labelKey: "components.statementImport.field.credit" },
+    { key: "balance", labelKey: "ledger.table.balance" },
+    { key: "currency", labelKey: "ledger.import.currency" },
+    { key: "dr_cr", labelKey: "components.statementImport.field.drCr" }
   ];
 
   function emptyColumnMapping(): IngestionColumnMapping {
@@ -331,7 +332,7 @@
 
   async function analyzePastedContent() {
     if (!pasteContent.trim()) {
-      toast.toast({ message: "Paste a statement first", type: "is-warning" });
+      toast.toast({ message: $t("components.statementImport.pasteFirst"), type: "is-warning" });
       return;
     }
     parseErrorMessage = null;
@@ -346,7 +347,7 @@
 
   async function runIngest(mode: "replace" | "merge" = "replace") {
     if (!rawFileContent.trim()) {
-      toast.toast({ message: "No statement content to analyze", type: "is-warning" });
+      toast.toast({ message: $t("components.statementImport.noContent"), type: "is-warning" });
       return;
     }
 
@@ -373,10 +374,9 @@
       if (response.already_imported) {
         stagedTransactions = [];
         includedStaged = [];
-        alreadyImportedMessage =
-          "This statement was already imported and committed to the ledger. No rows were staged again.";
+        alreadyImportedMessage = $t("components.statementImport.alreadyImportedMessage");
         toast.toast({
-          message: "Statement already imported — nothing to stage.",
+          message: $t("components.statementImport.alreadyImportedToast"),
           type: "is-info",
           duration: 5000
         });
@@ -399,7 +399,11 @@
       }
 
       toast.toast({
-        message: `Parsed ${response.total_parsed} transactions (${response.auto_categorized} rule-matched, ${response.possible_duplicates} duplicates flagged)`,
+        message: $t("components.statementImport.parsed", {
+          count: response.total_parsed,
+          matched: response.auto_categorized,
+          duplicates: response.possible_duplicates
+        }),
         type: "is-info",
         duration: 4000
       });
@@ -456,7 +460,10 @@
 
       if (res?.saved) {
         toast.toast({
-          message: `Saved rule for "${note}" -> ${tx.selected_account}`,
+          message: $t("components.statementImport.ruleSaved", {
+            name: note,
+            account: tx.selected_account
+          }),
           type: "is-success",
           duration: 3500
         });
@@ -473,7 +480,9 @@
       }
     } catch (e) {
       toast.toast({
-        message: `Failed to save rule: ${errorMessage(e)}`,
+        message: $t("components.ruleStudio.saveFailedWithError", {
+          error: errorMessage(e)
+        }),
         type: "is-danger",
         duration: 5000
       });
@@ -488,7 +497,7 @@
     if ($readonly) return;
     if (!selectedAccount.trim()) {
       toast.toast({
-        message: "Please select your Source / Bank Account first.",
+        message: $t("components.statementImport.sourceRequired"),
         type: "is-warning"
       });
       return;
@@ -496,7 +505,10 @@
 
     const selected = stagedTransactions.filter((_, idx) => includedStaged[idx]);
     if (selected.length === 0) {
-      toast.toast({ message: "No transactions selected to commit", type: "is-warning" });
+      toast.toast({
+        message: $t("components.statementImport.noSelection"),
+        type: "is-warning"
+      });
       return;
     }
 
@@ -526,7 +538,9 @@
 
       if (res.success && typeof res.committed_count === "number") {
         toast.toast({
-          message: `Successfully appended ${res.committed_count} transactions to the ledger`,
+          message: $t("components.statementImport.committed", {
+            count: res.committed_count
+          }),
           type: "is-success",
           duration: 6000
         });
@@ -537,20 +551,24 @@
         currentSourceType = "";
       } else if (res.success) {
         toast.toast({
-          message: res.message || "Import request was accepted",
+          message: res.message || $t("components.statementImport.accepted"),
           type: "is-warning",
           duration: 6000
         });
       } else {
         toast.toast({
-          message: `Failed to commit transactions: ${res.error || res.message || "unknown error"}`,
+          message: $t("components.statementImport.commitFailed", {
+            error: res.error || res.message || $t("components.statementImport.unknownError")
+          }),
           type: "is-danger",
           duration: 6000
         });
       }
     } catch (e) {
       toast.toast({
-        message: `Failed to commit transactions: ${errorMessage(e)}`,
+        message: $t("components.statementImport.commitFailed", {
+          error: errorMessage(e)
+        }),
         type: "is-danger"
       });
     } finally {
@@ -574,35 +592,37 @@
 <div class="columns mb-0">
   <div class="column is-4 py-0">
     <div class="box p-3 mb-3">
-      <h4 class="title is-6 mb-2">1. Upload or Paste Statement</h4>
+      <h4 class="title is-6 mb-2">{$t("components.statementImport.uploadHeading")}</h4>
       <Dropzone
         multiple={false}
         accept=".csv,.txt,.ofx,.qfx,.xls,.xlsx,.pdf,.CSV,.TXT,.OFX,.QFX,.XLS,.XLSX,.PDF"
         on:drop={handleDrop}
       >
-        Drag 'n' drop CSV, OFX, QFX, Excel or PDF statement here
+        {$t("components.statementImport.dropzone")}
       </Dropzone>
       <div class="mt-2 is-size-7 has-text-grey">
-        Detected format:
+        {$t("components.statementImport.detectedFormat")}
         <span class="tag is-small is-light uppercase">{detectedFormat}</span>
       </div>
 
       <div class="field mt-3 mb-0">
-        <label class="label is-small" for="statement-paste">Or paste statement text</label>
+        <label class="label is-small" for="statement-paste"
+          >{$t("components.statementImport.pasteLabel")}</label
+        >
         <div class="control">
           <textarea
             id="statement-paste"
             class="textarea is-small font-mono"
             rows="4"
             bind:value={pasteContent}
-            placeholder="Paste CSV or OFX content here..."></textarea>
+            placeholder={$t("components.statementImport.pastePlaceholder")}></textarea>
         </div>
         <button
           class="button is-small is-link is-light mt-2"
           disabled={ingestLoading || !pasteContent.trim()}
           onclick={analyzePastedContent}
         >
-          Analyze Pasted Text
+          {$t("components.statementImport.analyzePaste")}
         </button>
       </div>
     </div>
@@ -612,10 +632,10 @@
         <div class="field is-grouped is-align-items-center mb-2">
           <label class="checkbox is-size-7">
             <input type="checkbox" bind:checked={mappingEnabled} />
-            Use column mapping
+            {$t("components.statementImport.useColumnMapping")}
           </label>
           <span class="help is-size-7 ml-3">
-            Override the detected columns for any bank or language.
+            {$t("components.statementImport.columnMappingHint")}
           </span>
         </div>
 
@@ -625,7 +645,9 @@
 
         {#if mappingEnabled}
           <div class="field mb-2">
-            <label class="label is-small" for="statement-header-row">Header row</label>
+            <label class="label is-small" for="statement-header-row"
+              >{$t("components.statementImport.headerRow")}</label
+            >
             <div class="select is-small is-fullwidth">
               <select
                 id="statement-header-row"
@@ -634,10 +656,14 @@
               >
                 {#each mappingRows.slice(0, Math.min(mappingRows.length, 20)) as row, index}
                   <option value={index}>
-                    Row {index + 1}: {row
-                      .filter((cell) => String(cell ?? "").trim())
-                      .slice(0, 4)
-                      .join(" | ") || "(empty)"}
+                    {$t("components.statementImport.rowOption", {
+                      number: index + 1,
+                      preview:
+                        row
+                          .filter((cell) => String(cell ?? "").trim())
+                          .slice(0, 4)
+                          .join(" | ") || $t("components.statementImport.emptyValue")
+                    })}
                   </option>
                 {/each}
               </select>
@@ -648,7 +674,7 @@
             {#each mappingFields as field}
               <div class="column is-3">
                 <label class="label is-small" for={`statement-map-${field.key}`}
-                  >{field.label}</label
+                  >{$t(field.labelKey)}</label
                 >
                 <div class="select is-small is-fullwidth">
                   <select
@@ -658,7 +684,12 @@
                   >
                     <option value={-1}>—</option>
                     {#each mappingColumns() as header, index}
-                      <option value={index}>{index + 1}: {header || "(empty)"}</option>
+                      <option value={index}>
+                        {$t("components.statementImport.columnOption", {
+                          number: index + 1,
+                          header: header || $t("components.statementImport.emptyValue")
+                        })}
+                      </option>
                     {/each}
                   </select>
                 </div>
@@ -670,9 +701,11 @@
     {/if}
 
     <div class="box p-3 mb-3">
-      <h4 class="title is-6 mb-2">2. Statement Account</h4>
+      <h4 class="title is-6 mb-2">{$t("components.statementImport.statementAccountHeading")}</h4>
       <div class="field mb-3">
-        <label class="label is-small" for="statement-base-account">Source / Bank Account</label>
+        <label class="label is-small" for="statement-base-account"
+          >{$t("components.statementImport.sourceAccount")}</label
+        >
         <div class="control">
           <input
             id="statement-base-account"
@@ -680,7 +713,7 @@
             type="text"
             list="statement-accounts"
             bind:value={selectedAccount}
-            placeholder="e.g. Assets:Checking:MyBank"
+            placeholder={$t("components.statementImport.sourceAccountPlaceholder")}
           />
           <datalist id="statement-accounts">
             {#each accountsList as acc}
@@ -689,12 +722,14 @@
           </datalist>
         </div>
         <p class="help is-size-7">
-          The physical account whose statement you are importing. Remembered for the next import.
+          {$t("components.statementImport.sourceAccountHelp")}
         </p>
       </div>
 
       <div class="field is-grouped is-align-items-center mb-0">
-        <label class="label is-small mb-0 mr-2" for="statement-delimiter">Delimiter</label>
+        <label class="label is-small mb-0 mr-2" for="statement-delimiter"
+          >{$t("components.statementImport.delimiter")}</label
+        >
         <div class="control">
           <input
             id="statement-delimiter"
@@ -711,21 +746,20 @@
           disabled={ingestLoading || !rawFileContent.trim()}
           onclick={() => runIngest()}
         >
-          Re-analyze
+          {$t("components.statementImport.reanalyze")}
         </button>
       </div>
     </div>
 
     <div class="box p-3">
-      <h4 class="title is-6 mb-2">3. Append to Ledger</h4>
+      <h4 class="title is-6 mb-2">{$t("components.statementImport.appendHeading")}</h4>
       <p class="is-size-7 has-text-grey mb-2">
-        Selected rows are written through the backend, which formats them for the configured ledger
-        dialect.
+        {$t("components.statementImport.appendDescription")}
       </p>
       <div class="field mb-3">
         <label class="checkbox is-size-7">
           <input type="checkbox" bind:checked={groupByDate} />
-          Club multiple debit entries per date into a single transaction
+          {$t("components.statementImport.groupByDate")}
         </label>
       </div>
       <button
@@ -735,14 +769,14 @@
         onclick={commitImport}
       >
         <span class="icon is-small"><i class="fas fa-check-double"></i></span>
-        <span>Commit {selectedCount()} Transactions</span>
+        <span>{$t("components.statementImport.commitButton", { count: selectedCount() })}</span>
       </button>
     </div>
   </div>
 
   <div class="column is-8 py-0">
     <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
-      <h4 class="title is-6 mb-0">Staged Transactions</h4>
+      <h4 class="title is-6 mb-0">{$t("components.statementImport.stagedHeading")}</h4>
       <button
         class="button is-primary is-light is-small"
         onclick={() => {
@@ -751,20 +785,22 @@
         }}
       >
         <span class="icon is-small"><i class="fas fa-sliders"></i></span>
-        <span>Rule Studio</span>
+        <span>{$t("components.statementImport.ruleStudio")}</span>
       </button>
     </div>
 
     {#if parseErrorMessage}
       <div class="message invertable is-danger mb-3">
-        <div class="message-header">Ingestion Warning</div>
+        <div class="message-header">{$t("components.statementImport.ingestionWarning")}</div>
         <div class="message-body">{parseErrorMessage}</div>
       </div>
     {/if}
 
     {#if alreadyImportedMessage}
       <div class="notification is-info is-light mb-3">
-        <p class="has-text-weight-semibold mb-1">Already imported</p>
+        <p class="has-text-weight-semibold mb-1">
+          {$t("components.statementImport.alreadyImportedTitle")}
+        </p>
         <p class="is-size-7">{alreadyImportedMessage}</p>
       </div>
     {/if}
@@ -774,7 +810,7 @@
         <span class="icon is-large has-text-grey">
           <i class="fas fa-spinner fa-spin fa-2x"></i>
         </span>
-        <p class="has-text-grey is-size-6 mt-2">Analyzing statement...</p>
+        <p class="has-text-grey is-size-6 mt-2">{$t("components.statementImport.analyzing")}</p>
       </div>
     {:else if stagedTransactions.length > 0}
       <TransactionStagingTable
@@ -790,10 +826,11 @@
         <span class="icon is-large has-text-grey-light mb-2">
           <i class="fas fa-file-invoice-dollar fa-3x"></i>
         </span>
-        <p class="has-text-grey is-size-6 font-semibold">No Statement Uploaded Yet</p>
+        <p class="has-text-grey is-size-6 font-semibold">
+          {$t("components.statementImport.emptyTitle")}
+        </p>
         <p class="is-size-7 has-text-grey">
-          Drag 'n' drop a bank statement or paste CSV/OFX content on the left to start
-          auto-categorizing.
+          {$t("components.statementImport.emptyHint")}
         </p>
       </div>
     {/if}

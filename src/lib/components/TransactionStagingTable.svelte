@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { StagedTransaction } from "$lib/api/import";
+  import { t } from "$lib/i18n";
 
   let {
     transactions = $bindable([]),
@@ -183,25 +184,31 @@
         class="button is-small {filterStatus === 'all' ? 'is-info' : 'is-light'}"
         onclick={() => (filterStatus = "all")}
       >
-        All ({transactions.length})
+        {$t("components.stagingTable.filterAll", { count: transactions.length })}
       </button>
       <button
         class="button is-small {filterStatus === 'new' ? 'is-success' : 'is-light'}"
         onclick={() => (filterStatus = "new")}
       >
-        Ready ({transactions.filter((t) => !t.is_duplicate && !!t.selected_account).length})
+        {$t("components.stagingTable.filterReady", {
+          count: transactions.filter((t) => !t.is_duplicate && !!t.selected_account).length
+        })}
       </button>
       <button
         class="button is-small {filterStatus === 'duplicate' ? 'is-warning' : 'is-light'}"
         onclick={() => (filterStatus = "duplicate")}
       >
-        Duplicates ({transactions.filter((t) => t.is_duplicate).length})
+        {$t("components.stagingTable.filterDuplicates", {
+          count: transactions.filter((t) => t.is_duplicate).length
+        })}
       </button>
       <button
         class="button is-small {filterStatus === 'unassigned' ? 'is-danger' : 'is-light'}"
         onclick={() => (filterStatus = "unassigned")}
       >
-        Uncategorized ({transactions.filter((t) => !t.selected_account).length})
+        {$t("components.stagingTable.filterUncategorized", {
+          count: transactions.filter((t) => !t.selected_account).length
+        })}
       </button>
     </div>
 
@@ -209,10 +216,10 @@
       <button
         class="button is-small {groupByMerchant ? 'is-info' : 'is-light'}"
         onclick={() => (groupByMerchant = !groupByMerchant)}
-        title="Group transactions by merchant name"
+        title={$t("components.stagingTable.groupByMerchantTitle")}
       >
         <span class="icon is-small"><i class="fas fa-layer-group"></i></span>
-        <span>Group by Merchant</span>
+        <span>{$t("components.stagingTable.groupByMerchant")}</span>
       </button>
       {#if transactions.some((t) => !t.is_duplicate && !t.selected_account && !!t.suggested_account)}
         <button
@@ -228,14 +235,14 @@
           }}
         >
           <span class="icon is-small"><i class="fas fa-check-double"></i></span>
-          <span>Accept All Suggestions</span>
+          <span>{$t("components.stagingTable.acceptAllSuggestions")}</span>
         </button>
       {/if}
       <button class="button is-white is-small" onclick={() => selectAllFiltered(true)}>
-        Select Filtered
+        {$t("components.stagingTable.selectFiltered")}
       </button>
       <button class="button is-white is-small" onclick={() => selectAllFiltered(false)}>
-        Deselect Filtered
+        {$t("components.stagingTable.deselectFiltered")}
       </button>
     </div>
   </div>
@@ -246,7 +253,9 @@
     >
       <div class="is-flex is-align-items-center is-flex-wrap-wrap" style="gap: 0.5rem">
         <span class="tag is-primary is-light is-medium">
-          <strong>{selectedFilteredCount}</strong>&nbsp;selected
+          {@html $t("components.stagingTable.selectedCount", {
+            count: selectedFilteredCount
+          })}
         </span>
         <div class="field has-addons mb-0">
           <div class="control" style="min-width: 240px">
@@ -254,7 +263,7 @@
               class="input is-small"
               type="text"
               list="staging-all-accounts"
-              placeholder="Assign offset account..."
+              placeholder={$t("components.stagingTable.assignOffsetPlaceholder")}
               bind:value={bulkSelectedAccount}
               onkeydown={(e) => {
                 if (e.key === "Enter" && bulkSelectedAccount) {
@@ -270,25 +279,25 @@
               onclick={() => applyBulkAccount(bulkSelectedAccount)}
             >
               <span class="icon is-small"><i class="fas fa-check"></i></span>
-              <span>Apply</span>
+              <span>{$t("components.stagingTable.apply")}</span>
             </button>
           </div>
           <div class="control">
             <button
               class="button is-small is-success"
               disabled={!bulkSelectedAccount}
-              title="Apply account and save rule for future imports"
+              title={$t("components.stagingTable.applyAndSaveRuleTitle")}
               onclick={() => applyBulkRule(bulkSelectedAccount)}
             >
               <span class="icon is-small"><i class="fas fa-bookmark"></i></span>
-              <span>Apply &amp; Save Rule</span>
+              <span>{$t("components.stagingTable.applyAndSaveRule")}</span>
             </button>
           </div>
         </div>
       </div>
       <div>
         <button class="button is-small is-ghost" onclick={() => selectAllFiltered(false)}>
-          Clear selection
+          {$t("components.stagingTable.clearSelection")}
         </button>
       </div>
     </div>
@@ -308,12 +317,12 @@
               }}
             />
           </th>
-          <th style="width: 90px">Date</th>
-          <th>Payee &amp; Narration</th>
-          <th style="width: 115px; text-align: right">Amount</th>
-          <th style="width: 220px">Target Offset Account</th>
-          <th style="width: 140px">Status / Rule</th>
-          <th style="width: 45px">Action</th>
+          <th style="width: 90px">{$t("ledger.table.date")}</th>
+          <th>{$t("components.stagingTable.headerPayeeNarration")}</th>
+          <th style="width: 115px; text-align: right">{$t("ledger.table.amount")}</th>
+          <th style="width: 220px">{$t("components.stagingTable.headerTargetAccount")}</th>
+          <th style="width: 140px">{$t("components.stagingTable.headerStatusRule")}</th>
+          <th style="width: 45px">{$t("components.stagingTable.headerAction")}</th>
         </tr>
       </thead>
       <tbody>
@@ -346,18 +355,26 @@
                   </span>
                   <span class="has-text-weight-bold is-capitalized">{group.clusterName}</span>
                   <span class="tag is-rounded is-small ml-2">
-                    {group.indices.length}
-                    {group.indices.length === 1 ? "txn" : "txns"}
+                    {$t("components.stagingTable.clusterCount", {
+                      count: group.indices.length
+                    })}
                   </span>
                   {#if group.assignedCount === group.indices.length}
                     <span class="tag is-success is-light is-rounded is-small ml-1">
-                      <i class="fas fa-check mr-1"></i>All categorized
+                      <i class="fas fa-check mr-1"></i>{$t(
+                        "components.stagingTable.allCategorized"
+                      )}
                     </span>
                   {:else if group.assignedCount === 0}
-                    <span class="tag is-danger is-light is-rounded is-small ml-1">Unassigned</span>
+                    <span class="tag is-danger is-light is-rounded is-small ml-1"
+                      >{$t("components.stagingTable.unassigned")}</span
+                    >
                   {:else}
                     <span class="tag is-warning is-light is-rounded is-small ml-1">
-                      {group.assignedCount}/{group.indices.length} categorized
+                      {$t("components.stagingTable.categorizedCount", {
+                        assigned: group.assignedCount,
+                        total: group.indices.length
+                      })}
                     </span>
                   {/if}
                 </div>
@@ -375,7 +392,7 @@
                     style="max-width: 220px"
                     type="text"
                     list="staging-all-accounts"
-                    placeholder="Assign all in cluster..."
+                    placeholder={$t("components.stagingTable.assignClusterPlaceholder")}
                     onchange={(e) => {
                       const val = (e.currentTarget as HTMLInputElement).value;
                       if (val) {
@@ -446,8 +463,8 @@
           list={tx.is_debit ? "staging-debit-accounts" : "staging-credit-accounts"}
           value={tx.selected_account}
           placeholder={tx.suggested_account
-            ? `Suggested: ${tx.suggested_account}`
-            : "Select account..."}
+            ? $t("components.stagingTable.suggestedAccount", { account: tx.suggested_account })
+            : $t("components.stagingTable.selectAccount")}
           onfocus={() => {
             editingRowIdx = idx;
           }}
@@ -481,7 +498,7 @@
             style="height: 20px; font-size: 0.7rem"
             onclick={() => acceptSuggestion(tx, idx)}
           >
-            Accept
+            {$t("components.stagingTable.accept")}
           </button>
         </div>
       {/if}
@@ -489,7 +506,8 @@
     <td>
       {#if tx.is_duplicate}
         <span class="tag is-warning is-rounded is-small" title={tx.duplicate_reason}>
-          <i class="fas fa-copy mr-1"></i> Dup ({tx.duplicate_score}%)
+          <i class="fas fa-copy mr-1"></i>
+          {$t("components.stagingTable.duplicate", { score: tx.duplicate_score })}
         </span>
       {:else if tx.matched_rule_name}
         <span class="tag is-success is-light is-rounded is-small" title={tx.matched_rule_name}>
@@ -499,40 +517,59 @@
       {:else if tx.confidence === "historical"}
         <span
           class="tag is-link is-light is-rounded is-small"
-          title="Matched from previous transactions in your ledger"
+          title={$t("components.stagingTable.pastPatternTitle")}
         >
-          <i class="fas fa-history mr-1"></i> Past Pattern
+          <i class="fas fa-history mr-1"></i>
+          {$t("components.stagingTable.pastPattern")}
         </span>
       {:else if tx.confidence === "taxonomy"}
         <span
           class="tag is-info is-light is-rounded is-small"
-          title="Matched from built-in merchant dictionary"
+          title={$t("components.stagingTable.merchantTitle")}
         >
-          <i class="fas fa-store mr-1"></i> Merchant
+          <i class="fas fa-store mr-1"></i>
+          {$t("components.stagingTable.merchant")}
         </span>
       {:else if tx.confidence === "heuristic"}
         <span
           class="tag is-info is-light is-rounded is-small"
-          title="Matched using amount & type heuristics"
+          title={$t("components.stagingTable.heuristicTitle")}
         >
-          <i class="fas fa-calculator mr-1"></i> Heuristic
+          <i class="fas fa-calculator mr-1"></i>
+          {$t("components.stagingTable.heuristic")}
         </span>
       {:else if tx.confidence === "accepted"}
-        <span class="tag is-success is-light is-rounded is-small" title="Accepted recommendation">
-          <i class="fas fa-check mr-1"></i> Accepted
+        <span
+          class="tag is-success is-light is-rounded is-small"
+          title={$t("components.stagingTable.acceptedTitle")}
+        >
+          <i class="fas fa-check mr-1"></i>
+          {$t("components.stagingTable.accepted")}
         </span>
       {:else if tx.confidence === "manual"}
-        <span class="tag is-info is-light is-rounded is-small" title="Manually entered account">
-          <i class="fas fa-user-pen mr-1"></i> Manual
+        <span
+          class="tag is-info is-light is-rounded is-small"
+          title={$t("components.stagingTable.manualTitle")}
+        >
+          <i class="fas fa-user-pen mr-1"></i>
+          {$t("components.stagingTable.manual")}
         </span>
       {:else if tx.selected_account}
-        <span class="tag is-info is-light is-rounded is-small">Assigned</span>
+        <span class="tag is-info is-light is-rounded is-small"
+          >{$t("components.stagingTable.assigned")}</span
+        >
       {:else}
-        <span class="tag is-danger is-light is-rounded is-small">Needs Account</span>
+        <span class="tag is-danger is-light is-rounded is-small"
+          >{$t("components.stagingTable.needsAccount")}</span
+        >
       {/if}
       {#if tx.flag_for_review}
-        <span class="tag is-danger is-light is-rounded is-small ml-1" title="Flagged for review">
-          <i class="fas fa-flag mr-1"></i> Review
+        <span
+          class="tag is-danger is-light is-rounded is-small ml-1"
+          title={$t("components.stagingTable.reviewTitle")}
+        >
+          <i class="fas fa-flag mr-1"></i>
+          {$t("components.stagingTable.review")}
         </span>
       {/if}
     </td>
@@ -541,7 +578,7 @@
         {#if tx.selected_account && !tx.matched_rule_name}
           <button
             class="button is-small is-ghost p-1 mr-1"
-            title="Quick Save: Remember as rule for future imports"
+            title={$t("components.stagingTable.quickSaveTitle")}
             onclick={() => onquicksave(tx)}
           >
             <span class="icon is-small has-text-success">
@@ -551,7 +588,7 @@
         {/if}
         <button
           class="button is-small is-ghost p-1"
-          title="Customize rule in Rule Studio"
+          title={$t("components.stagingTable.customizeRuleTitle")}
           onclick={() => oneditrule(tx)}
         >
           <span class="icon is-small has-text-primary">

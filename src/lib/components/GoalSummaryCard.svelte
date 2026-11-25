@@ -1,5 +1,6 @@
 <script lang="ts">
   import { iconGlyph } from "$lib/icon";
+  import { t } from "$lib/i18n";
   import { formatCurrency, formatPercentage, type GoalSummary } from "$lib/utils";
   import { analyzeGoal, goalDelayLabel, goalStatusShortLabel } from "$lib/goals";
   import _ from "lodash";
@@ -60,7 +61,7 @@
     <LevelItem
       {small}
       narrow
-      title="Current"
+      title={$t("assets.current")}
       color={COLORS.gainText}
       value={formatCurrency(goal.current)}
     />
@@ -68,7 +69,7 @@
     <LevelItem
       {small}
       narrow
-      title="Target"
+      title={$t("assets.target")}
       color={COLORS.primary}
       value={formatCurrency(goal.target)}
     />
@@ -82,12 +83,18 @@
     <div class="flex justify-between">
       <span>{status}</span>
       {#if required !== undefined}
-        <span>{formatCurrency(required)}/mo needed</span>
+        <span
+          >{$t("components.goalSummary.monthlyNeeded", { amount: formatCurrency(required) })}</span
+        >
       {/if}
     </div>
     {#if projection}
       <div class="flex justify-between">
-        <span>Projected {projection.format("DD MMM YYYY")}</span>
+        <span
+          >{$t("components.goalSummary.projected", {
+            date: projection.format("DD MMM YYYY")
+          })}</span
+        >
         {#if delay}
           <span>{delay}</span>
         {/if}

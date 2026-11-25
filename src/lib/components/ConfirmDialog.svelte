@@ -5,6 +5,7 @@
 <script lang="ts">
   import { onDestroy, tick } from "svelte";
   import Modal from "$lib/components/Modal.svelte";
+  import { t } from "$lib/i18n";
 
   interface Props {
     open?: boolean;
@@ -21,8 +22,8 @@
     open = $bindable(false),
     title,
     description = undefined,
-    confirmLabel = "Confirm",
-    cancelLabel = "Cancel",
+    confirmLabel = $t("dialog.confirm"),
+    cancelLabel = $t("common.cancel"),
     variant = "default",
     onconfirm = () => {},
     oncancel = undefined
@@ -150,7 +151,8 @@
 >
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title" id={titleId}>{title}</p>
-    <button class="delete" aria-label="close" type="button" onclick={close}></button>
+    <button class="delete" aria-label={$t("dialog.closeModal")} type="button" onclick={close}
+    ></button>
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#if description}

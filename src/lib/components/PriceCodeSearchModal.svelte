@@ -1,6 +1,7 @@
 <script lang="ts">
   import Select from "svelte-select";
   import Modal from "$lib/components/Modal.svelte";
+  import { t } from "$lib/i18n";
   import _ from "lodash";
   import { onMount } from "svelte";
   import { ajax, type AutoCompleteItem, type PriceProvider } from "$lib/utils";
@@ -12,7 +13,7 @@
 
   let { open = $bindable(false), onselect }: Props = $props();
 
-  let label = "Choose Price Provider";
+  let label = $derived($t("components.priceCodeSearch.chooseProvider"));
   let code = $state("");
 
   let providers = $state<PriceProvider[]>([]);
@@ -85,12 +86,12 @@
 <Modal bind:active={open} footerClass="is-justify-content-space-between">
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">{label}</p>
-    <button class="delete" aria-label="close" onclick={(e) => close(e)}></button>
+    <button class="delete" aria-label={$t("dialog.closeModal")} onclick={(e) => close(e)}></button>
   </svelte:fragment>
   <div style="min-height: 500px;" slot="body">
     {#if selectedProvider}
       <div class="field">
-        <label class="label" for="">Provider</label>
+        <label class="label" for="">{$t("components.priceCodeSearch.provider")}</label>
         <div class="control">
           <div class="select">
             <select bind:value={selectedProvider} required onchange={() => reset()}>
@@ -158,16 +159,16 @@
           onselect?.({ code: code, provider: selectedProvider.code });
           reset();
           close(e);
-        }}>Select</button
+        }}>{$t("components.priceCodeSearch.select")}</button
       >
-      <button class="button" onclick={(e) => close(e)}>Cancel</button>
+      <button class="button" onclick={(e) => close(e)}>{$t("common.cancel")}</button>
     </div>
 
     <div>
       <button
         onclick={() => clearProviderCache()}
         class="button is-danger {isLoading && 'is-loading'}"
-        disabled={!selectedProvider}>Clear Provider Cache</button
+        disabled={!selectedProvider}>{$t("components.priceCodeSearch.clearCache")}</button
       >
     </div>
   </svelte:fragment>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from "$lib/components/Modal.svelte";
+  import { t } from "$lib/i18n";
   import _ from "lodash";
 
   interface Props {
@@ -11,9 +12,9 @@
   }
 
   let {
-    label = "Save As",
-    help = "Create or overwrite existing file",
-    placeholder = "expense.ledger",
+    label = $t("components.fileModal.title"),
+    help = $t("components.fileModal.help"),
+    placeholder = $t("components.fileModal.placeholder"),
     open = $bindable(false),
     onsave
   }: Props = $props();
@@ -23,10 +24,10 @@
 <Modal bind:active={open}>
   <svelte:fragment slot="head" let:close>
     <p class="modal-card-title">{label}</p>
-    <button class="delete" aria-label="close" onclick={(e) => close(e)}></button>
+    <button class="delete" aria-label={$t("dialog.closeModal")} onclick={(e) => close(e)}></button>
   </svelte:fragment>
   <div class="field" slot="body">
-    <label class="label" for="save-filename">File Name</label>
+    <label class="label" for="save-filename">{$t("components.fileModal.fileName")}</label>
     <div class="control" id="save-filename">
       <input class="input" type="text" {placeholder} bind:value={destinationFile} />
       <p class="help">{help}</p>
@@ -41,6 +42,6 @@
         close(e);
       }}>{label}</button
     >
-    <button class="button" onclick={(e) => close(e)}>Cancel</button>
+    <button class="button" onclick={(e) => close(e)}>{$t("common.cancel")}</button>
   </svelte:fragment>
 </Modal>

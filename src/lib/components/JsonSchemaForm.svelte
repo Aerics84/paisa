@@ -6,6 +6,7 @@
   import JsonSchemaForm from "./JsonSchemaForm.svelte";
   import { iconGlyph, loadIcons } from "$lib/icon";
   import AccountSelect from "./AccountsSelect.svelte";
+  import { t } from "$lib/i18n";
   import { hashPassword } from "$lib/utils";
   import { beginPasswordHash, endPasswordHash } from "$lib/password_hash";
 
@@ -130,7 +131,7 @@
         .catch((error) => {
           icons = null;
           iconsPromise = null;
-          iconsError = "Could not load the icon list.";
+          iconsError = $t("components.jsonSchema.iconsLoadFailed");
           console.warn("Could not load icon list", error);
           throw error;
         })
@@ -204,7 +205,7 @@
   <button
     onclick={() => deletable()}
     class="config-delete"
-    aria-label={`Delete ${title}`}
+    aria-label={$t("components.jsonSchema.deleteAria", { title })}
     type="button"
   >
     <span class="icon is-small">
@@ -245,7 +246,7 @@
               } catch {
                 // Keep the previously stored hash when hashing fails; the user
                 // can retry without saving a plaintext or undefined value.
-                passwordError = "Could not hash password; previous value kept";
+                passwordError = $t("components.jsonSchema.passwordHashFailed");
               } finally {
                 endPasswordHash();
               }
@@ -292,7 +293,9 @@
         {#if iconsError}
           <p class="help is-danger">
             {iconsError}
-            <button type="button" class="is-link" onclick={() => openIconPicker()}>Retry</button>
+            <button type="button" class="is-link" onclick={() => openIconPicker()}
+              >{$t("components.jsonSchema.retry")}</button
+            >
           </p>
         {/if}
       </div>
@@ -308,11 +311,11 @@
         <div class="control">
           <label class="radio">
             <input value="yes" bind:group={value} type="radio" name="yes" />
-            Yes
+            {$t("components.jsonSchema.yes")}
           </label>
           <label class="radio">
             <input value="no" bind:group={value} type="radio" name="no" />
-            No
+            {$t("components.jsonSchema.no")}
           </label>
         </div>
       </div>
@@ -409,7 +412,7 @@
     <button
       onclick={() => (modalOpen = true)}
       class="is-link"
-      aria-label={`Edit ${title}`}
+      aria-label={$t("components.jsonSchema.editAria", { title })}
       type="button"
     >
       <span class="icon is-small">
@@ -487,7 +490,7 @@
       <button
         onclick={() => (value = [newItem(schema), ...(value ?? [])])}
         class="config-add"
-        aria-label={`Add ${title}`}
+        aria-label={$t("components.jsonSchema.addAria", { title })}
         type="button"
       >
         <span class="icon is-small">

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Directory, LedgerFile } from "$lib/utils";
+  import { t } from "$lib/i18n";
   import _ from "lodash";
   import FileTree from "./FileTree.svelte";
 
@@ -42,7 +43,7 @@
           </span>
           <span title={fileName(file.name)} class="truncate">{fileName(file.name)}</span>
           {#if file.name == selectedFileName && hasUnsavedChanges}
-            <span class="ml-1 tag is-danger">unsaved</span>
+            <span class="ml-1 tag is-danger">{$t("components.fileTree.unsaved")}</span>
           {/if}
         </button>
       </li>
