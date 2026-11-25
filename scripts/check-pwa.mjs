@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 const root = "web/static";
 const pngSignature = "89504e470d0a1a0a";
+const immutableAssetPattern = /(?:src|href)="(\/_app\/immutable\/[^"]+)"/g;
 const errors = [];
 
 function fail(message) {
@@ -113,6 +114,28 @@ if (!existsSync(join(root, "sw.js"))) {
   fail(`missing ${join(root, "sw.js")}`);
 }
 
+// The service worker precaches the entry/chunk/CSS URLs referenced by
+// index.html. A build without them yields a blank first offline reload.
+const indexHtmlPath = join(root, "index.html");
+let immutableAssets = [];
+if (!existsSync(indexHtmlPath)) {
+  fail(`missing ${indexHtmlPath}`);
+} else {
+  const html = readFileSync(indexHtmlPath, "utf8");
+  immutableAssets = [
+    ...new Set([...html.matchAll(immutableAssetPattern)].map((match) => match[1]))
+  ];
+  if (immutableAssets.length === 0) {
+    fail(`${indexHtmlPath} references no /_app/immutable/ entry assets`);
+  }
+  for (const asset of immutableAssets) {
+    const assetPath = join(root, ...asset.replace(/^\/+/, "").split("/"));
+    if (!existsSync(assetPath)) {
+      fail(`${indexHtmlPath} references missing asset ${assetPath}`);
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error("PWA check failed:");
   for (const error of errors) {
@@ -123,8 +146,18 @@ if (errors.length > 0) {
 
 console.log(`PWA manifest: ${manifestPath}`);
 for (const icon of manifest.icons) {
-  const dimensions = pngSize(icon.src);
-  console.log(`  ${icon.src} ${dimensions.width}x${dimensions.height} (${icon.sizes})`);
+  const label = typeof icon.src === "string" ? icon.src : "(missing src)";
+  const dimensions = typeof icon.src === "string" ? pngSize(icon.src) : null;
+  if (dimensions) {
+    console.log(`  ${label} ${dimensions.width}x${dimensions.height} (${icon.sizes})`);
+  } else {
+    console.log(`  ${label} (missing or unreadable)`);
+  }
 }
-console.log(`  /apple-touch-icon.png ${appleIcon.width}x${appleIcon.height}`);
+if (appleIcon) {
+  console.log(`  /apple-touch-icon.png ${appleIcon.width}x${appleIcon.height}`);
+} else {
+  console.log("  /apple-touch-icon.png (missing or unreadable)");
+}
+console.log(`  index.html entry assets: ${immutableAssets.length}`);
 console.log("pwa OK");

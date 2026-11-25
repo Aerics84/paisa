@@ -9,25 +9,59 @@ const UPDATE_RELOAD_KEY = "pwa.reload";
 
 let registrationStarted = false;
 let updatePrompted = false;
+let promptedWaiting: ServiceWorker | null = null;
 
 /** Return whether a pathname belongs to the cacheable application shell. */
 export function isCacheable(pathname: string): boolean {
   if (pathname === "/api" || pathname.startsWith("/api/")) {
     return false;
   }
-  if (pathname === "/" || pathname === "/index.html" || pathname === "/manifest.webmanifest") {
+  if (
+    pathname === "/" ||
+    pathname === "/index.html" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/apple-touch-icon.png"
+  ) {
     return true;
   }
   return pathname.startsWith("/_app/immutable/") || pathname.startsWith("/icons/");
 }
 
-/** Ask the waiting service worker to activate immediately. */
-export async function applyUpdate(): Promise<void> {
+async function skipWaiting(): Promise<boolean> {
   if (typeof navigator === "undefined" || !navigator.serviceWorker) {
-    return;
+    return false;
   }
   const registration = await navigator.serviceWorker.getRegistration();
-  registration?.waiting?.postMessage({ type: "SKIP_WAITING" });
+  const waiting = registration?.waiting;
+  if (!waiting) {
+    return false;
+  }
+  waiting.postMessage({ type: "SKIP_WAITING" });
+  return true;
+}
+
+/** Ask the waiting service worker to activate immediately. */
+export async function applyUpdate(): Promise<void> {
+  await skipWaiting();
+}
+
+/**
+ * Show the update toast once per waiting worker. A new waiting worker re-arms
+ * the prompt; if the waiter disappears, the next call re-arms it again.
+ */
+function maybePromptUpdate(registration: ServiceWorkerRegistration): void {
+  const waiting = registration.waiting ?? null;
+  if (!waiting) {
+    promptedWaiting = null;
+    updatePrompted = false;
+    return;
+  }
+  if (waiting === promptedWaiting) {
+    return;
+  }
+  promptedWaiting = waiting;
+  updatePrompted = false;
+  void showUpdatePrompt();
 }
 
 async function showUpdatePrompt(): Promise<void> {
@@ -56,7 +90,13 @@ async function showUpdatePrompt(): Promise<void> {
     button.textContent = translate(UPDATE_RELOAD_KEY);
     button.addEventListener("click", () => {
       button.disabled = true;
-      void applyUpdate();
+      void skipWaiting().then((applied) => {
+        // The waiting worker can activate or disappear between the toast and
+        // the click. Reload rather than leaving a dead button.
+        if (!applied) {
+          window.location.reload();
+        }
+      });
     });
 
     message.append(text, button);
@@ -108,8 +148,8 @@ export function registerServiceWorker(): void {
   void container
     .register("/sw.js")
     .then((registration) => {
-      if (registration.waiting && hadController) {
-        void showUpdatePrompt();
+      if (hadController) {
+        maybePromptUpdate(registration);
       }
 
       registration.addEventListener("updatefound", () => {
@@ -119,7 +159,7 @@ export function registerServiceWorker(): void {
         }
         installing.addEventListener("statechange", () => {
           if (installing.state === "installed" && container.controller) {
-            void showUpdatePrompt();
+            maybePromptUpdate(registration);
           }
         });
       });
