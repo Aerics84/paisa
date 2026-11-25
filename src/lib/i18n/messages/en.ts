@@ -381,8 +381,7 @@ export const en = {
   "assets.withdrawalAmount": "Withdrawal Amount",
   "assets.investmentAmount": "Investment Amount",
   "assets.investmentChange": "Investment Change",
-  "assets.investmentChangeTooltip":
-    "Gain on investments only. Excludes cash (checking) accounts.",
+  "assets.investmentChangeTooltip": "Gain on investments only. Excludes cash (checking) accounts.",
   "assets.cash": "Cash",
   "assets.cashTooltip": "Checking balance included in Market Value. Cash has no gain or XIRR.",
   "assets.target": "Target",
@@ -523,10 +522,10 @@ export const en = {
   "components.allocationTargets.doneSelecting": "Done Selecting",
   "components.allocationTargets.selectAccounts": "+ Select Accounts",
   "components.allocationTargets.noAccounts":
-    "No accounts mapped yet. Click \"+ Select Accounts\" to map.",
+    'No accounts mapped yet. Click "+ Select Accounts" to map.',
   "components.allocationTargets.searchPlaceholder":
     "Search accounts or type glob (e.g. Assets:Equity:*)...",
-  "components.allocationTargets.addPattern": "Add \"{pattern}\"",
+  "components.allocationTargets.addPattern": 'Add "{pattern}"',
   "components.allocationTargets.noMatchingAccounts":
     "No matching asset accounts found. You can add a custom glob pattern above.",
   "components.allocationTargets.addTarget": "Add Target Asset Class",
@@ -723,7 +722,10 @@ export const en = {
   "more.goal.forecastUnavailable":
     "Paisa could not estimate when this retirement goal will be reached from the current savings history.",
   "more.sheets.createFirst": "Create your first sheet",
-  "more.sheets.filenameHelp": "Filename without any extension"
+  "more.sheets.filenameHelp": "Filename without any extension",
+
+  "pwa.updateAvailable": "A new version of Paisa is available.",
+  "pwa.reload": "Reload"
 } satisfies Record<string, string>;
 
 export type EnMessageKey = keyof typeof en;

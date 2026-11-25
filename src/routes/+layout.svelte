@@ -4,8 +4,10 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { getOnboardingStatus } from "$lib/api/onboarding";
+  import { registerServiceWorker } from "$lib/pwa";
 
   onMount(async () => {
+    registerServiceWorker();
     try {
       const status = await getOnboardingStatus();
       if (status.needed && page.url.pathname !== "/onboarding") {

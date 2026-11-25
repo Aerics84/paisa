@@ -548,8 +548,7 @@ export const de: Record<EnMessageKey, string> = {
   "components.allocationTargets.addTarget": "Anlageklasse hinzufügen",
   "components.allocationTargets.saveTargets": "Ziele speichern",
   "components.allocationTargets.saved": "Allokationsziele erfolgreich gespeichert!",
-  "components.allocationTargets.saveFailed":
-    "Allokationsziele konnten nicht gespeichert werden",
+  "components.allocationTargets.saveFailed": "Allokationsziele konnten nicht gespeichert werden",
 
   "common.create": "Erstellen",
   "common.close": "Schließen",
@@ -744,5 +743,8 @@ export const de: Record<EnMessageKey, string> = {
   "more.goal.forecastUnavailable":
     "Paisa konnte anhand der bisherigen Ersparnisse nicht schätzen, wann dieses Rentenziel erreicht wird.",
   "more.sheets.createFirst": "Erstelle dein erstes Blatt",
-  "more.sheets.filenameHelp": "Dateiname ohne Erweiterung"
+  "more.sheets.filenameHelp": "Dateiname ohne Erweiterung",
+
+  "pwa.updateAvailable": "Eine neue Version von Paisa ist verfügbar.",
+  "pwa.reload": "Neu laden"
 };

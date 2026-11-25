@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
+	"mime"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -559,6 +562,25 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.NoRoute(func(c *gin.Context) {
+		// SvelteKit writes non-hashed assets (manifest, service worker, icons) to
+		// the root of web/static. Serve those before falling back to the SPA shell.
+		requestPath := strings.TrimPrefix(c.Request.URL.Path, "/")
+		if requestPath != "" {
+			if data, err := fs.ReadFile(web.Static, "static/"+requestPath); err == nil {
+				contentType := mime.TypeByExtension(path.Ext(requestPath))
+				if strings.HasSuffix(requestPath, ".webmanifest") {
+					contentType = "application/manifest+json"
+				}
+				if contentType == "" {
+					contentType = "application/octet-stream"
+				}
+				if requestPath == "sw.js" || requestPath == "manifest.webmanifest" {
+					c.Header("Cache-Control", "no-cache")
+				}
+				c.Data(http.StatusOK, contentType, data)
+				return
+			}
+		}
 		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(web.Index))
 	})
 
