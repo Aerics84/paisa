@@ -78,6 +78,16 @@ fallback when `Origin` is absent. Paisa sends no CORS headers and expects the
 API to be used from the same origin as the user interface. Requests without
 either header, such as CLI clients, are allowed.
 
+### Security headers
+
+Every response, including API responses, carries a Content-Security-Policy that
+allows only same-origin scripts plus the hashes of Paisa's inline bootstrap
+scripts, and forbids framing (`frame-ancestors 'none'`). Paisa also sends
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Referrer-Policy: no-referrer` and a `Permissions-Policy` that disables camera,
+microphone and geolocation. These headers are set by the server and are not
+configurable.
+
 ### Legacy `X-Auth` header
 
 While an account still stores a legacy `sha256:` hash, API clients can

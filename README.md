@@ -37,7 +37,7 @@ Deductible expense candidates grouped by return section, with coverage checks, r
 
 ![Germany tax overview with deductible expense sections](docs/images/readme/tax-overview.png)
 
-Both screenshots are taken from this fork with the `germany-eu` starter profile. The tax page labels are German because they mirror the official form sections; navigation and configuration stay English.
+Both screenshots are taken from this fork with the `germany-eu` starter profile. The UI language follows `config.locale` (German or English); German tax page labels still mirror the official form sections.
 
 ## Features
 
@@ -49,6 +49,9 @@ Both screenshots are taken from this fork with the `germany-eu` starter profile.
 - **Import:** CSV, XLSX and PDF statements, password-protected files, reusable templates, CAMT.053, MT940 and broker exports.
 - **Tax:** Germany capital income reporting and annual tax overview; India tax harvesting, capital gains and Schedule AL.
 - **Editing:** built-in journal editor with format/save shortcuts, bulk edit, and account renaming across the journal.
+- **Localization:** German and English UI driven by `config.locale`, with DACH-first onboarding for new installations while existing configurations keep their defaults.
+- **Installable app:** PWA manifest and installable app shell with an offline fallback for navigations; API responses are never cached.
+- **Hardened access:** Argon2id password hashing with transparent `sha256:` upgrades, in-memory sessions in `HttpOnly` cookies, CSRF and origin checks, security headers, and per-IP login throttling.
 - **Access:** web UI, desktop app, optional user accounts, and read-only mode for demos.
 
 ## Quick start
