@@ -18,6 +18,7 @@ afterEach(() => {
   (globalThis as any).USER_CONFIG = previousConfig;
   setLocale("en");
   dayjs.locale("en");
+  document.documentElement.lang = "en";
   // configUpdated mutates the loaded locale definitions; restore their
   // defaults so this file cannot leak a week start into other suites.
   dayjs.updateLocale("en", { weekStart: 0 });
@@ -44,6 +45,7 @@ describe("applying the configured locale", () => {
     expect(get(locale)).toBe("de");
     expect(get(t)("login.submit")).toBe("Anmelden");
     expect(dayjs.locale()).toBe("de");
+    expect(document.documentElement.lang).toBe("de");
     expect(dayjs("2026-03-15").format("MMMM")).toBe("März");
 
     useConfig({ locale: "en-IN" });
@@ -51,6 +53,7 @@ describe("applying the configured locale", () => {
     expect(get(locale)).toBe("en");
     expect(get(t)("login.submit")).toBe("Sign in");
     expect(dayjs.locale()).toBe("en");
+    expect(document.documentElement.lang).toBe("en");
     expect(dayjs("2026-03-15").format("MMMM")).toBe("March");
   });
 

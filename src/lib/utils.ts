@@ -460,6 +460,9 @@ function normalize(value: number) {
 export function applyLocale(configLocale: string): Locale {
   const active = setLocale(configLocale);
   dayjs.locale(active);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = active;
+  }
   return active;
 }
 
@@ -479,9 +482,11 @@ function formattingLocale(config: UserConfig): string {
 export function configUpdated() {
   const config = getUserConfig();
   const activeLocale = applyLocale(config.locale);
-  dayjs.updateLocale(activeLocale, {
-    weekStart: config.week_starting_day
-  });
+  if (config.week_starting_day != null) {
+    dayjs.updateLocale(activeLocale, {
+      weekStart: config.week_starting_day
+    });
+  }
   // A config change can introduce a lazy icon font; load it so the existing
   // refresh/remount path renders the glyph instead of the replacement glyph.
   void preloadConfiguredIconFonts(config);
