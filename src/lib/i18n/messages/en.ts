@@ -116,6 +116,8 @@ export const en = {
   "onboarding.submit": "Start setup",
   "onboarding.running": "Setting up…",
   "onboarding.error": "Setup failed: {error}",
+  "onboarding.remoteLocked":
+    "Paisa is not initialized yet. Run `paisa init` in the Paisa directory, start Paisa with PAISA_ALLOW_REMOTE_ONBOARDING=1, or open this page from localhost to finish setup. The environment variable allows anyone who can reach this server to configure it, so only use it deliberately.",
 
   "common.oops": "Oops!",
   "common.hurray": "Hurray!",

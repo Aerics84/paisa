@@ -12,6 +12,7 @@ export interface OnboardingProfile {
 
 export interface OnboardingStatus {
   needed: boolean;
+  can_setup: boolean;
   profiles: OnboardingProfile[];
 }
 
@@ -31,7 +32,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatus> {
   });
 
   if (response.status === 401 || response.status === 403) {
-    return { needed: false, profiles: [] };
+    return { needed: false, can_setup: false, profiles: [] };
   }
 
   if (!response.ok) {

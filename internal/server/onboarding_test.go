@@ -75,7 +75,14 @@ func newOnboardingRouter(t *testing.T, db *gorm.DB, store *config.Store) *gin.En
 func getOnboarding(t *testing.T, router *gin.Engine) (*httptest.ResponseRecorder, map[string]any) {
 	t.Helper()
 
+	return getOnboardingFrom(t, router, onboardingLoopback)
+}
+
+func getOnboardingFrom(t *testing.T, router *gin.Engine, remoteAddr string) (*httptest.ResponseRecorder, map[string]any) {
+	t.Helper()
+
 	request := httptest.NewRequest(http.MethodGet, "/api/onboarding", nil)
+	request.RemoteAddr = remoteAddr
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, request)
 
@@ -140,6 +147,7 @@ func TestOnboardingAutoCreatedConfigNeedsOnboarding(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, true, body["needed"])
+	assert.Equal(t, true, body["can_setup"])
 
 	profiles, ok := body["profiles"].([]any)
 	require.True(t, ok)
@@ -155,10 +163,58 @@ func TestOnboardingAutoCreatedConfigNeedsOnboarding(t *testing.T) {
 	assert.Equal(t, "en-IN", second["locale"])
 }
 
+func TestOnboardingRemoteClientCannotSetup(t *testing.T) {
+	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder, body := getOnboardingFrom(t, router, "203.0.113.7:54321")
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, true, body["needed"])
+	assert.Equal(t, false, body["can_setup"], "remote first-run must not advertise a setup that POST rejects")
+
+	// The POST guard is unchanged: a remote client still gets 403 unless the
+	// operator opts in explicitly.
+	post := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, "203.0.113.7:54321", nil)
+	require.Equal(t, http.StatusForbidden, post.Code)
+	assert.False(t, store.Initialized())
+}
+
+func TestOnboardingRemoteOptInAllowsEmptySetup(t *testing.T) {
+	t.Setenv("PAISA_ALLOW_REMOTE_ONBOARDING", "1")
+
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder, body := getOnboardingFrom(t, router, "203.0.113.7:54321")
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, true, body["needed"])
+	assert.Equal(t, true, body["can_setup"])
+
+	// Empty setup must not need a ledger parser, so this runs the real sync
+	// seam rather than a stub.
+	post := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, "203.0.113.7:54321", nil)
+	require.Equal(t, http.StatusOK, post.Code)
+
+	result := map[string]any{}
+	require.NoError(t, json.Unmarshal(post.Body.Bytes(), &result))
+	assert.Equal(t, true, result["success"])
+	assert.True(t, store.Initialized())
+	assert.False(t, store.AutoCreated())
+
+	content, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "regional_profile: germany-eu")
+}
+
 func TestOnboardingConcurrentOnlyOneSucceeds(t *testing.T) {
 	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
-	stubOnboardingSync(t, gin.H{"success": true})
 
 	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 
@@ -247,7 +303,6 @@ func TestOnboardingRejectsNonLoopbackWithoutAuth(t *testing.T) {
 func TestOnboardingEmptyCreatesGermanyConfig(t *testing.T) {
 	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
-	stubOnboardingSync(t, gin.H{"success": true})
 
 	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 	recorder := postOnboarding(t, router,
@@ -314,7 +369,6 @@ func TestOnboardingPostIsReachableWithoutSession(t *testing.T) {
 	t.Run("same origin", func(t *testing.T) {
 		store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
-		stubOnboardingSync(t, gin.H{"success": true})
 
 		router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 		recorder := postOnboarding(t, router,

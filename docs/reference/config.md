@@ -23,6 +23,12 @@ the individual fields afterwards. Existing configuration files are never
 migrated implicitly: a configuration without `regional_profile` keeps the
 India-compatible defaults.
 
+The first-run setup endpoint only accepts requests from localhost. For Docker
+or LAN deployments, run `paisa init` in the configuration directory or set
+`PAISA_ALLOW_REMOTE_ONBOARDING=1` deliberately; the latter lets anyone who can
+reach the server configure the installation, so remove it after setup and
+configure a user account first.
+
 ### Accounts
 
 In many places, paisa expects you to specify a list of accounts. You

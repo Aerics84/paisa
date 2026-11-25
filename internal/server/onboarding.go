@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
@@ -62,10 +63,15 @@ func HandleOnboarding(deps Deps) gin.HandlerFunc {
 func handleOnboardingStatus(c *gin.Context, deps Deps) {
 	cfg := deps.Config.Get()
 	needed := deps.Config.AutoCreated() && !deps.Config.Initialized() && !cfg.Readonly
+	// can_setup mirrors the POST guard so a remote client can tell whether
+	// finishing onboarding is actually possible instead of being redirected
+	// into a loopback-only endpoint that will reject it.
+	canSetup := !cfg.Readonly && (isLoopbackOnboardingRequest(c) || remoteOnboardingAllowed())
 
 	c.JSON(http.StatusOK, gin.H{
-		"needed":   needed,
-		"profiles": onboardingProfiles,
+		"needed":    needed,
+		"can_setup": canSetup,
+		"profiles":  onboardingProfiles,
 	})
 }
 
@@ -93,8 +99,12 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 	}
 
 	// Without user accounts the API is unauthenticated. Restrict onboarding to
-	// loopback so an open network cannot configure the installation.
-	if len(deps.Config.Get().UserAccounts) == 0 && !isLoopbackOnboardingRequest(c) {
+	// loopback so an open network cannot configure the installation. The
+	// PAISA_ALLOW_REMOTE_ONBOARDING opt-in makes the same guard reachable from
+	// Docker/LAN clients that can never appear as loopback to the server.
+	if len(deps.Config.Get().UserAccounts) == 0 &&
+		!isLoopbackOnboardingRequest(c) &&
+		!remoteOnboardingAllowed() {
 		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "onboarding must be initiated from localhost"})
 		return
 	}
@@ -162,22 +172,22 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 		return
 	}
 
-	// Journal sync is required: without a parsed journal there is nothing to
-	// show. Price and portfolio enrichment is best-effort and must not undo a
-	// successful onboarding (an offline India demo still produces a journal even
-	// when commodity price fetches fail).
-	journalOutcome := onboardingSync(deps, SyncRequest{Journal: true})
-	if success, _ := journalOutcome["success"].(bool); !success {
-		message, _ := journalOutcome["message"].(string)
-		if message == "" {
-			message = "sync failed"
-		}
-		rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": message})
-		return
-	}
-
+	// Demo data is generated into the journal and must be parsed: without a
+	// parsed journal there is nothing to show, so a missing ledger parser rolls
+	// the attempt back. Empty setup only writes an empty journal, so it must not
+	// require a ledger parser at all.
 	if request.Mode == "demo" {
+		journalOutcome := onboardingSync(deps, SyncRequest{Journal: true})
+		if success, _ := journalOutcome["success"].(bool); !success {
+			message, _ := journalOutcome["message"].(string)
+			if message == "" {
+				message = "sync failed"
+			}
+			rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": message})
+			return
+		}
+
 		var count int64
 		if err := deps.DB.Model(&posting.Posting{}).Count(&count).Error; err != nil {
 			rollback()
@@ -231,6 +241,16 @@ func reloadOnboardingConfig(deps Deps, configPath string) {
 func isLoopbackOnboardingRequest(c *gin.Context) bool {
 	ip := net.ParseIP(c.ClientIP())
 	return ip != nil && ip.IsLoopback()
+}
+
+// remoteOnboardingAllowed reports whether the operator deliberately opened
+// onboarding to non-loopback clients. This is intended for Docker/LAN installs
+// where the browser can never reach the server through loopback; enabling it
+// lets anyone who can reach the port configure the installation, so it must be
+// an explicit opt-in.
+func remoteOnboardingAllowed() bool {
+	value := strings.TrimSpace(os.Getenv("PAISA_ALLOW_REMOTE_ONBOARDING"))
+	return value == "1" || strings.EqualFold(value, "true")
 }
 
 // backupOnboardingFiles copies the existing files next to their originals as

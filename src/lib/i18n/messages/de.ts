@@ -119,6 +119,8 @@ export const de: Record<EnMessageKey, string> = {
   "onboarding.submit": "Einrichtung starten",
   "onboarding.running": "Wird eingerichtet …",
   "onboarding.error": "Einrichtung fehlgeschlagen: {error}",
+  "onboarding.remoteLocked":
+    "Paisa ist noch nicht eingerichtet. Führe `paisa init` im Paisa-Verzeichnis aus, starte Paisa mit PAISA_ALLOW_REMOTE_ONBOARDING=1 oder öffne diese Seite über localhost, um die Einrichtung abzuschließen. Die Umgebungsvariable erlaubt jedem, der diesen Server erreicht, die Konfiguration – nutze sie daher nur bewusst.",
 
   "common.oops": "Hoppla!",
   "common.hurray": "Hurra!",

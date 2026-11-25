@@ -153,6 +153,26 @@ can be used if you want to use paisa with others.
     # docker run -p 7500:7500 -v /Users/john/Documents/paisa/:/root/Documents/paisa/ ghcr.io/aerics84/paisa:latest
     ```
 
+On the first run Paisa offers a short setup wizard. The setup request is
+accepted only from localhost by default, which a browser reaching the container
+over a published port cannot satisfy (the server sees the Docker bridge
+address, not loopback). Choose one of these options:
+
+- Generate the starter content in the mounted volume before serving:
+
+  ```console
+  # docker run --rm -w /root/Documents/paisa -v /home/john/Documents/paisa/:/root/Documents/paisa/ ghcr.io/aerics84/paisa:latest init --regional-profile germany-eu
+  ```
+
+  Replace the volume path and profile as needed, then start the container as
+  usual.
+
+- Deliberately allow remote setup by adding
+  `-e PAISA_ALLOW_REMOTE_ONBOARDING=1` to the `docker run` command. This lets
+  anyone who can reach the published port configure the installation, so only
+  use it on a trusted network or behind authentication, and remove it once
+  setup is complete.
+
 ## Nix Flake
 
 Paisa CLI is available as a nix flake.
