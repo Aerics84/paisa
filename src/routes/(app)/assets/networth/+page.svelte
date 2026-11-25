@@ -18,6 +18,7 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import { selectedCurrency } from "../../../../persisted_store";
+  import { t } from "$lib/i18n";
 
   let defaultPoints = $state<Networth[]>([]);
   let currencyNetworths = $state<CurrencyNetworth[]>([]);
@@ -75,18 +76,27 @@
   <div class="container is-fluid">
     <nav class="level {isMobile() && 'grid-2'}">
       {#if showKpis}
-        <LevelItem title="Net worth" color={COLORS.primary} value={fmt(stats.networth)} />
-        <LevelItem title="Net Investment" color={COLORS.secondary} value={fmt(stats.investment)} />
         <LevelItem
-          title="Gain / Loss"
+          title={$t("dashboard.netWorth")}
+          color={COLORS.primary}
+          value={fmt(stats.networth)}
+        />
+        <LevelItem
+          title={$t("dashboard.netInvestment")}
+          color={COLORS.secondary}
+          value={fmt(stats.investment)}
+        />
+        <LevelItem
+          title={$t("dashboard.gainLoss")}
           color={stats.gain >= 0 ? COLORS.gainText : COLORS.lossText}
           value={fmt(stats.gain)}
         />
         <LevelItem title="XIRR" value={formatFloat(stats.xirr)} />
       {:else}
         <p class="is-size-6 has-text-grey">
-          No FX rates are available for {selected?.name || "the selected currency"}. Net worth KPIs
-          are hidden until rates exist.
+          {$t("assets.noFxRates", {
+            currency: selected?.name || $t("assets.selectedCurrency")
+          })}
         </p>
       {/if}
     </nav>
@@ -99,11 +109,11 @@
       <div class="column is-12">
         <div class="box overflow-x-auto">
           <ZeroState item={points}>
-            <strong>Oops!</strong>
+            <strong>{$t("common.oops")}</strong>
             {#if selected}
-              No prices found for commodity {selected.commodity}.
+              {$t("assets.noPricesForCommodity", { commodity: selected.commodity })}
             {:else}
-              You have no transactions.
+              {$t("assets.noTransactions")}
             {/if}
           </ZeroState>
 
@@ -112,6 +122,10 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Networth Timeline ({selected?.name || USER_CONFIG.default_currency})" />
+    <BoxLabel
+      text={$t("assets.networthTimelineWithCurrency", {
+        currency: selected?.name || USER_CONFIG.default_currency
+      })}
+    />
   </div>
 </section>

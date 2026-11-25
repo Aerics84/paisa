@@ -24,28 +24,30 @@
   import { getAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount, tick } from "svelte";
-  import type { ColumnDefinition, ProgressBarParams } from "tabulator-tables";
+  import type { ColumnDefinition } from "tabulator-tables";
+  import { t } from "$lib/i18n";
 
-  let showAllocation = false;
-  let depth = 2;
-  let allocationTimelineLegends: Legend[] = [];
-  let aggregateLeafNodes: Aggregate[] = [];
-  let total = 0;
-  let allocationTargets: AllocationTarget[] = [];
-  let rebalancePlan: RebalancePlan | null = null;
-  let availableAccounts: string[] = [];
-  let showTargetModal = false;
+  let showAllocation = $state(false);
+  let depth = $state(2);
+  let allocationTimelineLegends = $state<Legend[]>([]);
+  let aggregateLeafNodes = $state<Aggregate[]>([]);
+  let total = $state(0);
+  let allocationTargets = $state<AllocationTarget[]>([]);
+  let rebalancePlan = $state<RebalancePlan | null>(null);
+  let availableAccounts = $state<string[]>([]);
+  let showTargetModal = $state(false);
+  let maxPercent = $state(100);
 
-  const columns: ColumnDefinition[] = [
-    { title: "Account", field: "account", formatter: accountName },
+  let columns = $derived<ColumnDefinition[]>([
+    { title: $t("assets.account"), field: "account", formatter: accountName },
     {
-      title: "Market Value",
+      title: $t("assets.marketValue"),
       field: "market_amount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Percent",
+      title: $t("assets.percent"),
       field: "percent",
       hozAlign: "right",
       formatter: (cell) => formatPercentage(cell.getValue() / 100, 2)
@@ -59,10 +61,11 @@
       minWidth: rem(250),
       formatterParams: {
         color: COLORS.assets,
-        min: 0
+        min: 0,
+        max: maxPercent
       }
     }
-  ];
+  ]);
 
   async function loadData() {
     const [allocationResult, configResult] = await Promise.all([
@@ -88,7 +91,7 @@
       return a;
     });
     const max = _.max(_.map(aggregateLeafNodes, (a) => a.percent)) || 100;
-    (_.last(columns).formatterParams as ProgressBarParams).max = max;
+    maxPercent = max;
     const color = generateColorScheme(accounts);
     depth = _.max(_.map(accounts, (account) => account.split(":").length));
 
@@ -113,9 +116,11 @@
           <div class="flex items-center justify-between pb-3 border-b border-base-200 mb-4">
             <div>
               <h2 class="text-base font-bold flex items-center gap-2">
-                <span>🎯 Target Asset Allocation</span>
+                <span>🎯 {$t("assets.targetAssetAllocation")}</span>
                 {#if showAllocation}
-                  <span class="badge badge-sm badge-ghost">{allocationTargets.length} Targets</span>
+                  <span class="badge badge-sm badge-ghost"
+                    >{$t("assets.targets", { count: allocationTargets.length })}</span
+                  >
                 {/if}
               </h2>
             </div>
@@ -126,7 +131,7 @@
                 onclick={() => (showTargetModal = true)}
               >
                 <span>⚙</span>
-                {showAllocation ? "Manage Targets" : "Set Up Targets"}
+                {showAllocation ? $t("assets.manageTargets") : $t("assets.setUpTargets")}
               </button>
             </div>
           </div>
@@ -140,27 +145,27 @@
                     <span class="font-bold text-sm truncate">{target.name}</span>
                     {#if target.status === "overweight"}
                       <span class="badge badge-xs badge-warning font-semibold text-[10px] py-1 px-2"
-                        >Overweight</span
+                        >{$t("assets.overweight")}</span
                       >
                     {:else if target.status === "underweight"}
                       <span class="badge badge-xs badge-info font-semibold text-[10px] py-1 px-2"
-                        >Underweight</span
+                        >{$t("assets.underweight")}</span
                       >
                     {:else}
                       <span
                         class="badge badge-xs badge-success font-semibold text-white text-[10px] py-1 px-2"
-                        >In Band</span
+                        >{$t("assets.inBand")}</span
                       >
                     {/if}
                   </div>
                   <div class="flex items-baseline justify-between text-xs mt-1">
                     <span class="text-base-content/70"
-                      >Current: <strong class="font-mono text-base-content"
+                      >{$t("assets.currentLabel")} <strong class="font-mono text-base-content"
                         >{formatPercentage(Number(target.current) / 100, 1)}</strong
                       ></span
                     >
                     <span class="text-base-content/70"
-                      >Target: <span class="font-mono text-base-content/90"
+                      >{$t("assets.targetLabel")} <span class="font-mono text-base-content/90"
                         >{formatPercentage(Number(target.target) / 100, 1)}</span
                       ></span
                     >
@@ -180,7 +185,7 @@
                       {Number(target.drift) > 0 ? "+" : ""}{formatPercentage(
                         Number(target.drift || 0) / 100,
                         1
-                      )} drift
+                      )} {$t("assets.drift")}
                     </span>
                   </div>
                 </div>
@@ -198,25 +203,23 @@
             <!-- Zero State: Prompt to configure targets -->
             <div class="has-text-centered p-6 bg-base-200/30 rounded-xl my-2">
               <div class="text-4xl mb-2">🎯</div>
-              <h3 class="text-base font-bold mb-1">Target Asset Allocation Not Configured</h3>
+              <h3 class="text-base font-bold mb-1">{$t("assets.targetAllocationNotConfigured")}</h3>
               <p class="text-sm text-base-content/70 max-w-md mx-auto mb-4">
-                Define your desired asset allocation weights (e.g. 60% Equity, 40% Debt) to monitor
-                portfolio drift and get automated buy/sell rebalancing recommendations without
-                editing config files.
+                {$t("assets.targetAllocationHint")}
               </p>
               <button
                 type="button"
                 class="btn btn-primary btn-sm gap-2"
                 onclick={() => (showTargetModal = true)}
               >
-                <span>＋</span> Set Up Asset Targets
+                <span>＋</span> {$t("assets.setUpAssetTargets")}
               </button>
             </div>
           {/if}
         </div>
       </div>
     </div>
-    <BoxLabel text="Allocation Targets" />
+    <BoxLabel text={$t("assets.allocationTargets")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -226,7 +229,7 @@
         <div id="d3-allocation-category" style="width: 100%; height: {depth * 100}px"></div>
       </div>
     </div>
-    <BoxLabel text="Allocation by category" />
+    <BoxLabel text={$t("assets.allocationByCategory")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -236,7 +239,7 @@
         <div id="d3-allocation-value" style="width: 100%; height: 300px"></div>
       </div>
     </div>
-    <BoxLabel text="Allocation by value" />
+    <BoxLabel text={$t("assets.allocationByValue")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -249,7 +252,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Allocation Timeline" />
+    <BoxLabel text={$t("assets.allocationTimeline")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -259,7 +262,7 @@
         <Table data={aggregateLeafNodes} tree {columns} />
       </div>
     </div>
-    <BoxLabel text="Allocation Table" />
+    <BoxLabel text={$t("assets.allocationTable")} />
   </div>
 </section>
 

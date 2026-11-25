@@ -13,24 +13,26 @@
   import { getAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount, tick } from "svelte";
-  import type { ColumnDefinition, ProgressBarParams } from "tabulator-tables";
+  import type { ColumnDefinition } from "tabulator-tables";
+  import { t } from "$lib/i18n";
 
-  let showAllocation = false;
-  let depth = 2;
-  let allocationTimelineLegends: Legend[] = [];
-  let aggregateLeafNodes: Aggregate[] = [];
-  let total = 0;
+  let showAllocation = $state(false);
+  let depth = $state(2);
+  let allocationTimelineLegends = $state<Legend[]>([]);
+  let aggregateLeafNodes = $state<Aggregate[]>([]);
+  let total = $state(0);
+  let maxPercent = $state(100);
 
-  const columns: ColumnDefinition[] = [
-    { title: "Account", field: "account", formatter: accountName },
+  let columns = $derived<ColumnDefinition[]>([
+    { title: $t("assets.account"), field: "account", formatter: accountName },
     {
-      title: "Market Value",
+      title: $t("assets.marketValue"),
       field: "market_amount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Percent",
+      title: $t("assets.percent"),
       field: "percent",
       hozAlign: "right",
       formatter: (cell) => formatPercentage(cell.getValue() / 100, 2)
@@ -44,10 +46,11 @@
       minWidth: rem(250),
       formatterParams: {
         color: COLORS.assets,
-        min: 0
+        min: 0,
+        max: maxPercent
       }
     }
-  ];
+  ]);
 
   onMount(async () => {
     const {
@@ -63,7 +66,7 @@
       return a;
     });
     const max = _.max(_.map(aggregateLeafNodes, (a) => a.percent)) || 100;
-    (_.last(columns).formatterParams as ProgressBarParams).max = max;
+    maxPercent = max;
     const color = generateColorScheme(accounts);
     depth = _.max(_.map(accounts, (account) => account.split(":").length));
 
@@ -88,7 +91,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Allocation Targets" />
+    <BoxLabel text={$t("assets.allocationTargets")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -98,7 +101,7 @@
         <div id="d3-allocation-category" style="width: 100%; height: {depth * 100}px"></div>
       </div>
     </div>
-    <BoxLabel text="Allocation by category" />
+    <BoxLabel text={$t("assets.allocationByCategory")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -108,7 +111,7 @@
         <div id="d3-allocation-value" style="width: 100%; height: 300px"></div>
       </div>
     </div>
-    <BoxLabel text="Allocation by value" />
+    <BoxLabel text={$t("assets.allocationByValue")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -121,7 +124,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Allocation Timeline" />
+    <BoxLabel text={$t("assets.allocationTimeline")} />
   </div>
 </section>
 <section class="section tab-allocation">
@@ -131,6 +134,6 @@
         <Table data={aggregateLeafNodes} tree {columns} />
       </div>
     </div>
-    <BoxLabel text="Allocation Table" />
+    <BoxLabel text={$t("assets.allocationTable")} />
   </div>
 </section>

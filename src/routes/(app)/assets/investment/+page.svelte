@@ -10,6 +10,7 @@
   import { getInvestment } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let monthlyInvestmentTimelineLegends: Legend[] = [];
   let yearlyInvestmentTimelineLegends: Legend[] = [];
@@ -32,7 +33,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Monthly Investment Timeline" />
+    <BoxLabel text={$t("assets.monthlyInvestmentTimeline")} />
   </div>
 </section>
 <section class="section tab-investment">
@@ -43,7 +44,7 @@
           <LegendCard legends={yearlyInvestmentTimelineLegends} clazz="ml-4" />
           <svg id="d3-yearly-investment-timeline" width="100%"></svg>
         </div>
-        <BoxLabel text="Financial Year Investment Timeline" />
+        <BoxLabel text={$t("assets.financialYearInvestmentTimeline")} />
       </div>
       <div class="column is-full-tablet is-half-fullhd">
         <div class="columns is-flex-wrap-wrap" id="d3-yearly-investment-cards"></div>

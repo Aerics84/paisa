@@ -7,6 +7,7 @@
   import { getPortfolioAllocation } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let commodities = $state<string[]>([]);
   let selectedCommodities = $state<string[]>([]);
@@ -62,10 +63,10 @@
       <div class="column is-4 has-text-centered">
         <article class="message">
           <div class="message-body">
-            <strong>Oops!</strong> Looks like mutual fund portfolio data is not available<br /><br
+            <strong>{$t("common.oops")}</strong> {$t("assets.portfolioUnavailable")}<br /><br
             />
-            Use the <strong>Update Mutual Fund Portfolios</strong> menu option at the right corner to
-            update the data.
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html $t("assets.portfolioUpdateHint", { action: $t("actions.updatePortfolios") })}
           </div>
         </article>
       </div>
@@ -104,7 +105,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Security Type" />
+    <BoxLabel text={$t("assets.securityType")} />
 
     <div class="columns">
       <div class="column is-12 has-text-centered">
@@ -117,7 +118,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Security Rating" />
+    <BoxLabel text={$t("assets.securityRating")} />
 
     <div class="columns">
       <div class="column is-12 has-text-centered">
@@ -130,7 +131,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Industry" />
+    <BoxLabel text={$t("assets.industry")} />
 
     <div class="columns">
       <div class="column is-12 has-text-centered">
@@ -143,7 +144,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Security" />
+    <BoxLabel text={$t("assets.security")} />
   </div>
 </section>
 

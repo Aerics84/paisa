@@ -6,6 +6,7 @@
   import { getGain } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let legends: Legend[] = [];
 
@@ -27,7 +28,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Gain Overview" />
+    <BoxLabel text={$t("assets.gainOverview")} />
   </div>
 </section>
 <section class="section tab-gain">

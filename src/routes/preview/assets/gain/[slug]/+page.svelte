@@ -22,6 +22,7 @@
   import { iconify } from "$lib/icon";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { t } from "$lib/i18n";
 
   let commodities = $state<string[]>([]);
   let selectedCommodities = $state<string[]>([]);
@@ -127,13 +128,13 @@
                 <nav class="level grid-2">
                   <LevelItem
                     narrow
-                    title="Balance"
+                    title={$t("nav.balance")}
                     color={COLORS.primary}
                     value={formatCurrency(overview.balanceAmount)}
                   />
                   <LevelItem
                     narrow
-                    title="Net Investment"
+                    title={$t("dashboard.netInvestment")}
                     color={COLORS.secondary}
                     value={formatCurrency(overview.netInvestmentAmount)}
                   />
@@ -145,7 +146,7 @@
                 <nav class="level grid-2">
                   <LevelItem
                     narrow
-                    title="Gain / Loss"
+                    title={$t("dashboard.gainLoss")}
                     color={overview.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
                     value={formatCurrency(overview.gainAmount)}
                   />
@@ -154,7 +155,9 @@
                     narrow
                     title="XIRR"
                     value={formatFloat(gain.xirr)}
-                    subtitle="{formatPercentage(assetBreakdown.absoluteReturn, 2)} absolute return"
+                    subtitle={$t("assets.absoluteReturn", {
+                      percentage: formatPercentage(assetBreakdown.absoluteReturn, 2)
+                    })}
                   />
                 </nav>
               </div>
@@ -162,7 +165,7 @@
           {/if}
 
           <div class="column is-full">
-            Postings
+            {$t("nav.postings")}
             {#each postings as posting}
               <PostingCard
                 {posting}
@@ -186,18 +189,18 @@
                 <span>{iconify(data.name)}</span>
               </div>
               <div class="ml-3">
-                <span class="mr-1 is-size-7 has-text-grey">Investment</span>
+                <span class="mr-1 is-size-7 has-text-grey">{$t("nav.investment")}</span>
                 <span class="has-text-weight-bold">{formatCurrency(overview.investmentAmount)}</span
                 >
               </div>
               <div class="ml-3">
-                <span class="mr-1 is-size-7 has-text-grey">Withdrawal</span>
+                <span class="mr-1 is-size-7 has-text-grey">{$t("assets.withdrawal")}</span>
                 <span class="has-text-weight-bold">{formatCurrency(overview.withdrawalAmount)}</span
                 >
               </div>
               {#if overview.balanceUnits > 0}
                 <div class="ml-3">
-                  <span class="mr-1 is-size-7 has-text-grey">Balance Units</span>
+                  <span class="mr-1 is-size-7 has-text-grey">{$t("assets.balanceUnits")}</span>
                   <span class="has-text-weight-bold"
                     >{formatFloatUptoPrecision(overview.balanceUnits, 4)}</span
                   >
@@ -210,7 +213,7 @@
         <div class="box">
           <svg id="d3-account-timeline-breakdown" width="100%" height="450" />
         </div>
-        <BoxLabel text="Timeline" />
+        <BoxLabel text={$t("assets.timeline")} />
 
         <div class="columns">
           <div class="column is-6">
@@ -222,7 +225,7 @@
                 ></div>
                 <svg id="d3-portfolio-security-type" width="100%"></svg>
               </div>
-              <BoxLabel text="Security Type" />
+              <BoxLabel text={$t("assets.securityType")} />
             </div>
 
             <div class="mt-5" class:is-hidden={ratingEmpty}>
@@ -233,7 +236,7 @@
                 ></div>
                 <svg id="d3-portfolio-security-rating" width="100%"></svg>
               </div>
-              <BoxLabel text="Security Rating" />
+              <BoxLabel text={$t("assets.securityRating")} />
             </div>
 
             <div class="mt-5" class:is-hidden={industryEmpty}>
@@ -244,7 +247,7 @@
                 ></div>
                 <svg id="d3-portfolio-security-industry" width="100%"></svg>
               </div>
-              <BoxLabel text="Industry" />
+              <BoxLabel text={$t("assets.industry")} />
             </div>
           </div>
           <div class="column is-6 mt-5">
@@ -253,7 +256,7 @@
                 <div id="d3-portfolio-treemap" style="width: 100%; position: relative"></div>
                 <svg id="d3-portfolio" width="100%"></svg>
               </div>
-              <BoxLabel text="Security" />
+              <BoxLabel text={$t("assets.security")} />
             </div>
           </div>
         </div>

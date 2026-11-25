@@ -6,6 +6,7 @@
   import { getGain } from "$lib/api/assets";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let legends: Legend[] = [];
 
@@ -27,14 +28,14 @@
           class="box overflow-x-auto"
           tabindex="0"
           role="region"
-          aria-label="Gain overview chart"
+          aria-label={$t("assets.gainOverviewChart")}
         >
           <LegendCard {legends} clazz="ml-4" />
           <svg id="d3-gain-overview" />
         </div>
       </div>
     </div>
-    <BoxLabel text="Gain Overview" />
+    <BoxLabel text={$t("assets.gainOverview")} />
   </div>
 </section>
 <section class="section tab-gain">
