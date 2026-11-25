@@ -909,6 +909,9 @@ export interface CurrencyNetworth {
 }
 
 //////////
+// source: onboarding.go
+
+//////////
 // source: portfolio.go
 
 export interface CommodityBreakdown {
