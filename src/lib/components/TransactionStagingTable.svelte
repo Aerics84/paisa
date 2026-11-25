@@ -253,6 +253,7 @@
     >
       <div class="is-flex is-align-items-center is-flex-wrap-wrap" style="gap: 0.5rem">
         <span class="tag is-primary is-light is-medium">
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -- static catalog sentence with a numeric count -->
           {@html $t("components.stagingTable.selectedCount", {
             count: selectedFilteredCount
           })}

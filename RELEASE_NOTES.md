@@ -52,7 +52,6 @@ styles, so review the upgrade notes before deploying.
 - When rolling back, clear the PWA cache and unregister the service worker so
   the browser does not keep serving the 0.8.6.7 shell.
 
-Known limitation: some copy in the advanced editor and statement-import modals
-is still English. Read-only mode is enforced by the API, but the UI still
-displays write controls. The maskable PWA icon is a copy of the standard icon
-without a dedicated safe zone, so some Android launchers may crop it.
+Known limitation: read-only mode is enforced by the API and disables the main
+write actions, but a few secondary controls may still be visible. Advanced
+rule/account examples and backend diagnostics remain technical English.

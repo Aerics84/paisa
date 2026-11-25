@@ -80,6 +80,7 @@
     <div class="field has-addons mt-3 mr-3">
       {#if changedOldFiles.length > 0}
         <div class="mr-3 mt-2">
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -- static catalog sentence with a numeric count -->
           {@html $t("components.diffView.transactionsChanged", {
             count: updatedTransactionsCount
           })}
@@ -117,6 +118,7 @@
       <div class="diff-editor" bind:this={editorDom}></div>
       {#if changedOldFiles.length === 0}
         <div class="has-text-centered mt-6">
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -- static catalog sentence with translated emphasis -->
           {@html $t("components.diffView.noChangesHint", { oops: $t("common.oops") })}
         </div>
       {/if}
