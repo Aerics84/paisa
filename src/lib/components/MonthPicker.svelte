@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/prefer-writable-derived -- picker year/month state is mutable by design. */
   import { now } from "$lib/utils";
   import dayjs from "dayjs";
   import _ from "lodash";

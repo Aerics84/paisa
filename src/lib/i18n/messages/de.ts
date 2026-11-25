@@ -691,6 +691,9 @@ export const de: Record<EnMessageKey, string> = {
   "settings.hashing": "Hashen…",
   "settings.resetToDefaults": "Auf Standard zurücksetzen",
 
+  "settings.readonlyNotice":
+    "Der schreibgeschützte Modus ist aktiv. Änderungen werden vom Server blockiert; die Bedienelemente sind deaktiviert.",
+
   "more.about.version": "Version",
   "more.about.forkOf": "Fork von",
   "more.about.maintainedBy": ", gepflegt von",

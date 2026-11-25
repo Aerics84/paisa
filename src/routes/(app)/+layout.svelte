@@ -6,6 +6,8 @@
   import Spinner from "$lib/components/Spinner.svelte";
   import Navbar from "$lib/components/Navbar.svelte";
   import GlobalConfirmDialog from "$lib/components/GlobalConfirmDialog.svelte";
+  import { readonly } from "../../persisted_store";
+  import { t } from "$lib/i18n";
   import { willClearTippy, willRefresh } from "../../store";
   import { checkPriceUpdate, stopPriceUpdateWatcher } from "$lib/price_update";
 
@@ -62,6 +64,10 @@
     setupTippy();
   });
 </script>
+
+{#if $readonly}
+  <div class="notification is-warning m-3">{$t("settings.readonlyNotice")}</div>
+{/if}
 
 {#key $willRefresh}
   <Navbar bind:isBurger />

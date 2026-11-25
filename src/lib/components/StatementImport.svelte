@@ -15,6 +15,7 @@
   import { defaultIncludedTransactions, mergeIngestedTransactions } from "$lib/import_staging";
   import { buildStatementRequest, type IngestionColumnMapping } from "$lib/import_provenance";
   import Papa from "papaparse";
+  import { readonly } from "../../persisted_store";
   import { importStagingDirty } from "../../store";
 
   let accountsList: string[] = $state([]);
@@ -484,6 +485,7 @@
   }
 
   async function commitImport() {
+    if ($readonly) return;
     if (!selectedAccount.trim()) {
       toast.toast({
         message: "Please select your Source / Bank Account first.",
@@ -729,7 +731,7 @@
       <button
         class="button is-success is-fullwidth"
         class:is-loading={importSaving}
-        disabled={selectedCount() === 0 || importSaving}
+        disabled={$readonly || selectedCount() === 0 || importSaving}
         onclick={commitImport}
       >
         <span class="icon is-small"><i class="fas fa-check-double"></i></span>

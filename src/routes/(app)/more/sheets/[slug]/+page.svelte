@@ -22,6 +22,7 @@
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
   import FileModal from "$lib/components/FileModal.svelte";
+  import { readonly } from "../../../../../persisted_store";
   import { page } from "$app/state";
   import { t } from "$lib/i18n";
 
@@ -158,6 +159,7 @@
   }
 
   async function save() {
+    if ($readonly) return;
     const doc = editor.state.doc;
     const { saved, file, message } = await saveSheetFile(
       { name: selectedFile.name, content: doc.toString() },
@@ -220,6 +222,7 @@
   }
 
   async function createFile(destinationFile: string) {
+    if ($readonly) return;
     destinationFile = destinationFile.trim() + ".paisa";
     const { saved, message } = await saveSheetFile(
       { name: destinationFile, content: "", operation: "create" },
@@ -267,7 +270,7 @@
             <p class="control">
               <button
                 class="button is-small is-link invertable is-light"
-                disabled={$sheetEditorState.hasUnsavedChanges}
+                disabled={$readonly || $sheetEditorState.hasUnsavedChanges}
                 onclick={(_e) => openCreateModal()}
               >
                 <span class="icon is-small">
@@ -282,7 +285,7 @@
             <p class="control">
               <button
                 class="button is-small"
-                disabled={$sheetEditorState.hasUnsavedChanges == false}
+                disabled={$readonly || $sheetEditorState.hasUnsavedChanges == false}
                 onclick={(_e) => save()}
               >
                 <span class="icon is-small">

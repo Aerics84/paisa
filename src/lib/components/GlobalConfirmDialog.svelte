@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/prefer-writable-derived -- open is bound to the dialog. */
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
   import { t } from "$lib/i18n";
   import { confirmRequest, resolveConfirm } from "$lib/confirm";

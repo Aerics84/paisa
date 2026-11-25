@@ -2,6 +2,7 @@
   import Modal from "$lib/components/Modal.svelte";
   import { type AllocationTarget } from "$lib/utils";
   import { saveAllocationTargets } from "$lib/api/assets";
+  import { readonly } from "../../persisted_store";
   import {
     allocationTargetsToEntries,
     validateAllocationTargetEntries,
@@ -88,6 +89,7 @@
   }
 
   async function handleSave() {
+    if ($readonly) return;
     const validationError = validateAllocationTargetEntries(localTargets);
     if (validationError) {
       toast.toast({ message: validationError, type: "is-warning" });
@@ -364,7 +366,7 @@
       <button
         type="button"
         class="btn btn-sm btn-primary"
-        disabled={saving || localTargets.length === 0}
+        disabled={$readonly || saving || localTargets.length === 0}
         onclick={handleSave}
       >
         {#if saving}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/prefer-writable-derived -- currentPath is updated by afterNavigate. */
   import { page } from "$app/state";
   import { afterNavigate } from "$app/navigation";
   import Actions from "$lib/components/Actions.svelte";

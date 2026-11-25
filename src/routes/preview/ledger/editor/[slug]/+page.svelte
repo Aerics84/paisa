@@ -28,6 +28,7 @@
   import type { PageData } from "./$types";
   import FileTree from "$lib/components/FileTree.svelte";
   import FileModal from "$lib/components/FileModal.svelte";
+  import { readonly } from "../../../../../persisted_store";
   import { page } from "$app/state";
   import { t } from "$lib/i18n";
 
@@ -175,6 +176,7 @@
   }
 
   async function save() {
+    if ($readonly) return;
     const doc = editor.state.doc;
     const { errors, saved, file, message } = await saveEditorFile(
       { name: selectedFile.name, content: doc.toString() },
@@ -223,6 +225,7 @@
         editor = createEditor(file.content, dom, {
           name: file.name,
           keybindings,
+          readonly: $readonly,
           autocompletions
         });
         editorFileName = file.name;
@@ -303,7 +306,7 @@
             <p class="control">
               <button
                 class="button is-small"
-                disabled={$editorState.hasUnsavedChanges == false}
+                disabled={$readonly || $editorState.hasUnsavedChanges == false}
                 onclick={(_e) => save()}
               >
                 <span class="icon is-small">

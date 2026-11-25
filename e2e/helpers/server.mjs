@@ -1,4 +1,4 @@
-import { spawn, execFileSync } from "node:child_process";
+﻿import { spawn, execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import { dirname, join, resolve } from "node:path";
@@ -260,7 +260,8 @@ export async function startServer({
     await stop();
     throw new Error(
       `failed to start e2e server "${name}" on port ${port}: ${error.message}\n` +
-        `--- server log ---\n${logs.join("")}`
+        `--- server log ---\n${logs.join("")}`,
+      { cause: error }
     );
   }
 

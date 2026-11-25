@@ -671,6 +671,9 @@ export const en = {
   "settings.hashing": "Hashing…",
   "settings.resetToDefaults": "Reset to Defaults",
 
+  "settings.readonlyNotice":
+    "Read-only mode is enabled. Changes are blocked by the server; the controls below are inactive.",
+
   "more.about.version": "Version",
   "more.about.forkOf": "Fork of",
   "more.about.maintainedBy": ", maintained by",

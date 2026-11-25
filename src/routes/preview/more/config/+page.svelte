@@ -9,6 +9,7 @@
   import { askConfirm } from "$lib/confirm";
   import { sync } from "$lib/sync";
   import { pendingPasswordHashes } from "$lib/password_hash";
+  import { readonly } from "../../../../persisted_store";
   import { t } from "$lib/i18n";
 
   let lastConfig = $state<UserConfig>();
@@ -64,6 +65,7 @@
   }
 
   async function save(newConfig: UserConfig) {
+    if ($readonly) return;
     if ($pendingPasswordHashes > 0) {
       return;
     }
@@ -133,7 +135,8 @@
                 <button
                   onclick={(_e) => save(config)}
                   class="button is-success {isLoading && 'is-loading'}"
-                  disabled={!hasChanges || $pendingPasswordHashes > 0}>{$t("common.save")}</button
+                  disabled={$readonly || !hasChanges || $pendingPasswordHashes > 0}
+                  >{$t("common.save")}</button
                 >
                 {#if $pendingPasswordHashes > 0}
                   <span class="help has-text-grey">{$t("settings.hashing")}</span>
@@ -145,8 +148,10 @@
                 >
               </div>
               <div class="control">
-                <button onclick={(_e) => resetToDefault()} class="button is-danger"
-                  >{$t("settings.resetToDefaults")}</button
+                <button
+                  onclick={(_e) => resetToDefault()}
+                  class="button is-danger"
+                  disabled={$readonly}>{$t("settings.resetToDefaults")}</button
                 >
               </div>
             </div>

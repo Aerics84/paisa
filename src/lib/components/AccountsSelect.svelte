@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/prefer-writable-derived -- Select state is mutable by design (create/remove entries). */
   import { iconify } from "$lib/icon";
   import _ from "lodash";
   import Select from "svelte-select";

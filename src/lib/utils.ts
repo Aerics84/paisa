@@ -6,7 +6,7 @@ import _ from "lodash";
 import * as d3 from "d3";
 import type { JSONSchema7 } from "json-schema";
 import { get } from "svelte/store";
-import { obscure } from "../persisted_store";
+import { obscure, readonly } from "../persisted_store";
 import chroma from "chroma-js";
 import { iconGlyph, preloadConfiguredIconFonts } from "./icon";
 import { resolveLocale, setLocale, type Locale } from "./i18n";
@@ -481,6 +481,7 @@ function formattingLocale(config: UserConfig): string {
 
 export function configUpdated() {
   const config = getUserConfig();
+  readonly.set(!!config.readonly);
   const activeLocale = applyLocale(config.locale);
   if (config.week_starting_day != null) {
     dayjs.updateLocale(activeLocale, {

@@ -27,6 +27,7 @@
   import FileModal from "$lib/components/FileModal.svelte";
   import Modal from "$lib/components/Modal.svelte";
   import StatementImport from "$lib/components/StatementImport.svelte";
+  import { readonly } from "../../../../persisted_store";
   import { t } from "$lib/i18n";
 
   // The template/preset flow is the default; statement staging is additive.
@@ -79,6 +80,7 @@
   );
 
   async function save() {
+    if ($readonly) return;
     const { template, saved, message } = await upsertTemplate(
       {
         name: saveAsName,
@@ -229,6 +231,7 @@
   }
 
   async function saveToFile(destinationFile: string) {
+    if ($readonly) return;
     const { saved, message } = await saveEditorFile(
       { name: destinationFile, content: preview, operation: "overwrite" },
       { background: true }

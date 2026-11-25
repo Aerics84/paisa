@@ -10,6 +10,7 @@
   import * as toast from "bulma-toast";
   import { writable } from "svelte/store";
   import type { Action } from "svelte/action";
+  import { readonly } from "../../../../persisted_store";
   import { t } from "$lib/i18n";
 
   let isEmpty = false;
@@ -37,6 +38,7 @@
   }
 
   async function save(newConfig: UserConfig) {
+    if ($readonly) return;
     const { success, error } = await ajax("/api/config", {
       method: "POST",
       body: JSON.stringify(newConfig),
@@ -69,6 +71,7 @@
 
   const dragHandle: Action<HTMLElement, {}> = (node: HTMLElement) => {
     function startDrag(e: Event) {
+      if ($readonly) return;
       e.preventDefault();
       dragDisabled.set(false);
     }

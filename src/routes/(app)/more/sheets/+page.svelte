@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import FileModal from "$lib/components/FileModal.svelte";
   import { saveSheetFile } from "$lib/api/sheets";
+  import { readonly } from "../../../../persisted_store";
   import * as toast from "bulma-toast";
   import _ from "lodash";
   import { t } from "$lib/i18n";
@@ -12,6 +13,7 @@
   }
 
   async function createFile(destinationFile: string) {
+    if ($readonly) return;
     destinationFile = destinationFile.trim() + ".paisa";
     const { saved, message } = await saveSheetFile(
       { name: destinationFile, content: "", operation: "create" },
@@ -54,7 +56,11 @@
         <div class="flex items-center justify-center mt-5">
           <div class="field">
             <p class="control">
-              <button class="button is-medium is-link" onclick={(_e) => openCreateModal()}>
+              <button
+                class="button is-medium is-link"
+                disabled={$readonly}
+                onclick={(_e) => openCreateModal()}
+              >
                 <span class="icon is-small">
                   <i class="fas fa-file-circle-plus"></i>
                 </span>

@@ -25,6 +25,7 @@
   import _ from "lodash";
   import { onMount, tick } from "svelte";
   import type { ColumnDefinition } from "tabulator-tables";
+  import { readonly } from "../../../../persisted_store";
   import { t } from "$lib/i18n";
 
   let showAllocation = $state(false);
@@ -128,6 +129,7 @@
               <button
                 type="button"
                 class="btn btn-sm btn-primary gap-1"
+                disabled={$readonly}
                 onclick={() => (showTargetModal = true)}
               >
                 <span>⚙</span>
@@ -213,6 +215,7 @@
               <button
                 type="button"
                 class="btn btn-primary btn-sm gap-2"
+                disabled={$readonly}
                 onclick={() => (showTargetModal = true)}
               >
                 <span>＋</span>

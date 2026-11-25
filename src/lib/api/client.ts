@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+﻿import dayjs from "dayjs";
 import { error } from "@sveltejs/kit";
 import { loading } from "../../store";
 
@@ -71,7 +71,7 @@ export async function rawRequest(
   params?: Record<string, string>
 ): Promise<RawResponse> {
   const { background = false, ...init } = options ?? {};
-  let path = substituteParams(route, params);
+  const path = substituteParams(route, params);
 
   if (!background) {
     loading.set(true);
@@ -137,7 +137,7 @@ export async function requestApi<T>(
   try {
     return await request<T>(route, options, params);
   } catch (error) {
-    throw new Error(apiErrorMessage(error));
+    throw new Error(apiErrorMessage(error), { cause: error });
   }
 }
 
