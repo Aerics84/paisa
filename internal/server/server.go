@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"io/fs"
 	"mime"
@@ -22,7 +20,6 @@ import (
 	"github.com/ananthakumaran/paisa/internal/auth"
 	"github.com/ananthakumaran/paisa/internal/cache"
 	"github.com/ananthakumaran/paisa/internal/config"
-	"github.com/ananthakumaran/paisa/internal/generator"
 	"github.com/ananthakumaran/paisa/internal/model/template"
 	"github.com/ananthakumaran/paisa/internal/prediction"
 	"github.com/ananthakumaran/paisa/internal/pricesync"
@@ -157,48 +154,8 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 		c.JSON(200, gin.H{"success": true})
 	})
 
-	router.POST("/api/init", func(c *gin.Context) {
-		if deps.Config.Get().Readonly {
-			c.JSON(200, gin.H{"success": true})
-			return
-		}
-
-		type initRequest struct {
-			RegionalProfile config.RegionalProfileType `json:"regional_profile"`
-		}
-
-		profile := config.NormalizeRegionalProfile(deps.Config.Get().RegionalProfile)
-		body, err := io.ReadAll(c.Request.Body)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
-			return
-		}
-		if len(strings.TrimSpace(string(body))) > 0 {
-			var request initRequest
-			if err := json.Unmarshal(body, &request); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
-				return
-			}
-			if request.RegionalProfile != "" {
-				if !config.IsSupportedRegionalProfile(request.RegionalProfile) {
-					c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": fmt.Sprintf("unsupported regional profile: %s", request.RegionalProfile)})
-					return
-				}
-				profile = request.RegionalProfile
-			}
-		}
-
-		if err := generator.DemoForProfile(deps.Config.ConfigDir(), profile); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
-			return
-		}
-		if err := deps.Config.LoadFile(deps.Config.Path()); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
-			return
-		}
-		Sync(deps, SyncRequest{Journal: true, Prices: true, Portfolios: true})
-		c.JSON(200, gin.H{"success": true})
-	})
+	router.GET("/api/init", HandleInit(deps))
+	router.POST("/api/init", HandleInit(deps))
 
 	router.POST("/api/sync", func(c *gin.Context) {
 		if deps.Config.Get().Readonly {

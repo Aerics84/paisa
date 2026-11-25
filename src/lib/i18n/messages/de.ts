@@ -148,6 +148,10 @@ export const de: Record<EnMessageKey, string> = {
   "dashboard.onboarding.demoReset":
     "Gehe zur Seite {link} und klicke auf die Schaltfläche zum Zurücksetzen auf die Standardwerte.",
   "dashboard.onboarding.setupDemo": "Demo einrichten",
+  "dashboard.onboarding.setupDemoConfirm":
+    "Demo-Journal und Startkonfiguration laden? Vorhandene Journaldaten werden nie \u00fcberschrieben, und die Einrichtung wird abgelehnt, wenn das Journal bereits Daten enth\u00e4lt.",
+  "dashboard.onboarding.setupDemoUnavailable": "Demo-Einrichtung nicht m\u00f6glich: {reason}",
+  "dashboard.onboarding.setupDemoFailed": "Die Demo-Einrichtung konnte nicht geladen werden.",
   "dashboard.netWorth": "Nettovermögen",
   "dashboard.netInvestment": "Nettoinvestition",
   "dashboard.gainLoss": "Gewinn / Verlust",

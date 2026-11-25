@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
@@ -23,6 +24,15 @@ var initCmd = &cobra.Command{
 		profile := config.RegionalProfileType(initRegionalProfile)
 		if !config.IsSupportedRegionalProfile(profile) {
 			log.Fatalf("Unsupported regional profile: %s", initRegionalProfile)
+		}
+
+		journalPath := filepath.Join(cwd, "main.ledger")
+		if info, err := os.Stat(journalPath); err == nil {
+			if info.Size() > 0 {
+				log.Fatalf("%s already contains data; refusing to overwrite it. Delete or move the file first if you really want to regenerate the demo.", journalPath)
+			}
+		} else if !os.IsNotExist(err) {
+			log.Fatal(err)
 		}
 
 		if err := generator.DemoForProfile(cwd, profile); err != nil {

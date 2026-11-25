@@ -144,6 +144,10 @@ export const en = {
     "Once you are done playing around, you can go to the {link} page and select all the content and delete them.",
   "dashboard.onboarding.demoReset": "Go to the {link} page and click the reset to defaults button.",
   "dashboard.onboarding.setupDemo": "Setup Demo",
+  "dashboard.onboarding.setupDemoConfirm":
+    "Load the demo journal and starter configuration? Existing journal data is never overwritten, and setup is refused when the journal already contains data.",
+  "dashboard.onboarding.setupDemoUnavailable": "Demo setup is unavailable: {reason}",
+  "dashboard.onboarding.setupDemoFailed": "Could not load the demo setup.",
   "dashboard.netWorth": "Net worth",
   "dashboard.netInvestment": "Net Investment",
   "dashboard.gainLoss": "Gain / Loss",

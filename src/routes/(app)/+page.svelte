@@ -61,6 +61,9 @@
   let selectedExpenses = $state<Posting[]>([]);
   let isEmpty = $state(false);
   let checkingBalances = $state<Record<string, AssetBreakdown>>({});
+  let canInit = $state(false);
+  let initReason = $state("");
+  let initError = $state("");
   let destroyed = false;
 
   const NO_EXPENSES: Posting[] = [];
@@ -79,16 +82,36 @@
   });
 
   async function initDemo() {
-    await ajax("/api/init", {
+    if (!window.confirm($t("dashboard.onboarding.setupDemoConfirm"))) {
+      return;
+    }
+
+    initError = "";
+    const response = await ajax("/api/init", {
       method: "POST",
       body: JSON.stringify({
         regional_profile: USER_CONFIG?.regional_profile || "india"
       })
     });
+
+    if (!response?.success) {
+      initError = response?.error || $t("dashboard.onboarding.setupDemoFailed");
+      return;
+    }
+
     await refresh();
   }
 
   onMount(async () => {
+    try {
+      const status = await ajax<{ can_init: boolean; reason: string }>("/api/init");
+      canInit = status.can_init;
+      initReason = status.reason;
+    } catch {
+      canInit = false;
+      initReason = "";
+    }
+
     const dashboard = await getDashboard();
     if (destroyed) {
       return;
@@ -182,9 +205,22 @@
                   </li>
                 </ol>
 
-                <button type="button" onclick={(_e) => initDemo()} class="button is-link">
+                <button
+                  type="button"
+                  onclick={(_e) => initDemo()}
+                  class="button is-link"
+                  disabled={!canInit}
+                >
                   {$t("dashboard.onboarding.setupDemo")}
                 </button>
+                {#if !canInit && initReason}
+                  <p class="help is-danger mt-2">
+                    {$t("dashboard.onboarding.setupDemoUnavailable", { reason: initReason })}
+                  </p>
+                {/if}
+                {#if initError}
+                  <p class="help is-danger mt-2">{initError}</p>
+                {/if}
               </div>
             </div>
           </ZeroState>

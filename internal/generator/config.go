@@ -64,13 +64,20 @@ default_currency: %s
 		return fmt.Errorf("failed to write config file %s: %w", configFilePath, err)
 	}
 
-	log.Info("Generating journal file: ", journalFilePath)
-	journalFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to create journal file %s: %w", journalFilePath, err)
-	}
-	if err := journalFile.Close(); err != nil {
-		return fmt.Errorf("failed to close journal file %s: %w", journalFilePath, err)
+	// First-run auto-creation runs before the configuration exists, so it must
+	// never truncate a journal the user already has. O_TRUNC is deliberately
+	// absent: an absent journal is created, an existing one is left untouched.
+	if _, err := os.Stat(journalFilePath); os.IsNotExist(err) {
+		log.Info("Creating journal file: ", journalFilePath)
+		journalFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to create journal file %s: %w", journalFilePath, err)
+		}
+		if err := journalFile.Close(); err != nil {
+			return fmt.Errorf("failed to close journal file %s: %w", journalFilePath, err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to inspect journal file %s: %w", journalFilePath, err)
 	}
 
 	return nil

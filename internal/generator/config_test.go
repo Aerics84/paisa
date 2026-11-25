@@ -41,6 +41,30 @@ func TestMinimalConfigForGermanyEUWritesRegionalProfile(t *testing.T) {
 	assert.Contains(t, string(configContent), "regional_profile: germany-eu")
 }
 
+func TestMinimalConfigForProfilePreservesExistingJournal(t *testing.T) {
+	dir := t.TempDir()
+	journalPath := filepath.Join(dir, "main.ledger")
+	existing := []byte("2024/01/01 Opening balance\n    Assets:Checking:ING    100,00 EUR\n    Equity:Opening\n")
+	require.NoError(t, os.WriteFile(journalPath, existing, 0o644))
+
+	require.NoError(t, MinimalConfigForProfile(dir, config.RegionalProfileGermanyEU))
+
+	journalContent, err := os.ReadFile(journalPath)
+	require.NoError(t, err)
+	assert.Equal(t, existing, journalContent, "auto-created config must not truncate an existing journal")
+}
+
+func TestMinimalConfigForProfileCreatesMissingJournal(t *testing.T) {
+	dir := t.TempDir()
+	journalPath := filepath.Join(dir, "main.ledger")
+
+	require.NoError(t, MinimalConfigForProfile(dir, config.RegionalProfileGermanyEU))
+
+	info, err := os.Stat(journalPath)
+	require.NoError(t, err)
+	assert.Zero(t, info.Size())
+}
+
 func TestGermanyEUDemoUsesEuropeanStarterContent(t *testing.T) {
 	dir := t.TempDir()
 	legacySheet := filepath.Join(dir, "Schedule AL.paisa")
