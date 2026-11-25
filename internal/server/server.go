@@ -185,7 +185,10 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			}
 		}
 
-		generator.DemoForProfile(deps.Config.ConfigDir(), profile)
+		if err := generator.DemoForProfile(deps.Config.ConfigDir(), profile); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+			return
+		}
 		if err := deps.Config.LoadFile(deps.Config.Path()); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 			return

@@ -142,7 +142,9 @@ func createFirstRunConfig(xdgDocumentDir string, xdgDocumentPath string) error {
 		return err
 	}
 
-	generator.MinimalConfigForProfile(xdgDocumentDir, config.RegionalProfileGermanyEU)
+	if err := generator.MinimalConfigForProfile(xdgDocumentDir, config.RegionalProfileGermanyEU); err != nil {
+		return err
+	}
 	config.LoadConfigFile(xdgDocumentPath)
 	config.DefaultStore().MarkAutoCreated()
 

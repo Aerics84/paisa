@@ -14,7 +14,7 @@ import (
 func TestMinimalConfigDefaultsToGermany(t *testing.T) {
 	dir := t.TempDir()
 
-	MinimalConfig(dir)
+	require.NoError(t, MinimalConfig(dir))
 
 	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
 	require.NoError(t, err)
@@ -24,7 +24,7 @@ func TestMinimalConfigDefaultsToGermany(t *testing.T) {
 func TestMinimalConfigForProfileIndiaWritesIndia(t *testing.T) {
 	dir := t.TempDir()
 
-	MinimalConfigForProfile(dir, config.RegionalProfileIndia)
+	require.NoError(t, MinimalConfigForProfile(dir, config.RegionalProfileIndia))
 
 	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
 	require.NoError(t, err)
@@ -34,7 +34,7 @@ func TestMinimalConfigForProfileIndiaWritesIndia(t *testing.T) {
 func TestMinimalConfigForGermanyEUWritesRegionalProfile(t *testing.T) {
 	dir := t.TempDir()
 
-	MinimalConfigForProfile(dir, config.RegionalProfileGermanyEU)
+	require.NoError(t, MinimalConfigForProfile(dir, config.RegionalProfileGermanyEU))
 
 	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
 	require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestGermanyEUDemoUsesEuropeanStarterContent(t *testing.T) {
 	legacySheet := filepath.Join(dir, "Schedule AL.paisa")
 	require.NoError(t, os.WriteFile(legacySheet, []byte("legacy"), 0644))
 
-	DemoForProfile(dir, config.RegionalProfileGermanyEU)
+	require.NoError(t, DemoForProfile(dir, config.RegionalProfileGermanyEU))
 
 	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
 	require.NoError(t, err)

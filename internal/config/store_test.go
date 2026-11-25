@@ -350,6 +350,42 @@ func TestTryBeginOnboardingSucceedsOnce(t *testing.T) {
 	require.False(t, store.TryBeginOnboarding(), "an initialized config must never start onboarding again")
 }
 
+// TestAbortOnboardingResetsInitializedForAutoCreatedConfig covers a failed
+// first-run attempt: the generated configuration was loaded (initialized),
+// then rolled back. Aborting must make the installation look unconfigured
+// again so the user can retry with a different profile or mode.
+func TestAbortOnboardingResetsInitializedForAutoCreatedConfig(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	store.MarkAutoCreated()
+	require.True(t, store.TryBeginOnboarding())
+
+	// Simulate the failed attempt loading the generated file.
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+	require.True(t, store.Initialized())
+
+	store.AbortOnboarding()
+	require.False(t, store.Initialized())
+	require.True(t, store.AutoCreated())
+	require.True(t, store.TryBeginOnboarding(), "a retry must be possible")
+
+	store.MarkInitialized()
+	require.True(t, store.Initialized())
+	require.False(t, store.AutoCreated())
+}
+
+// TestAbortOnboardingKeepsInitializedForUserConfig ensures aborting does not
+// forget an already initialized configuration that was never auto-created.
+func TestAbortOnboardingKeepsInitializedForUserConfig(t *testing.T) {
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))
+
+	store.AbortOnboarding()
+
+	require.True(t, store.Initialized())
+	require.False(t, store.AutoCreated())
+}
+
 func TestConcurrentTryBeginOnboardingOnlyOneWinner(t *testing.T) {
 	store := NewStore()
 	require.NoError(t, store.Load([]byte(storeMinimalConfig), ""))

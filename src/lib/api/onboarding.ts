@@ -21,8 +21,24 @@ export interface OnboardingResult {
   mode: OnboardingMode;
 }
 
-export function getOnboardingStatus(): Promise<OnboardingStatus> {
-  return request<OnboardingStatus>("/api/onboarding");
+// getOnboardingStatus probes the optional first-run endpoint without going
+// through the redirecting client path. A 401/403 means onboarding is not
+// available for this session, not that the user must be logged out.
+export async function getOnboardingStatus(): Promise<OnboardingStatus> {
+  const response = await fetch("/api/onboarding", {
+    headers: { Accept: "application/json" },
+    credentials: "same-origin"
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    return { needed: false, profiles: [] };
+  }
+
+  if (!response.ok) {
+    throw new Error(`Onboarding status failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as OnboardingStatus;
 }
 
 export function runOnboarding(

@@ -327,11 +327,16 @@ func (s *Store) TryBeginOnboarding() bool {
 }
 
 // AbortOnboarding releases the onboarding lock after a failed attempt so the
-// user can retry.
+// user can retry. An auto-created configuration that had been loaded by the
+// failed attempt is marked uninitialized again, otherwise the retry would look
+// like an already-configured installation.
 func (s *Store) AbortOnboarding() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.autoCreated {
+		s.initialized = false
+	}
 	s.onboarding = false
 }
 

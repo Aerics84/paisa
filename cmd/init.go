@@ -25,7 +25,9 @@ var initCmd = &cobra.Command{
 			log.Fatalf("Unsupported regional profile: %s", initRegionalProfile)
 		}
 
-		generator.DemoForProfile(cwd, profile)
+		if err := generator.DemoForProfile(cwd, profile); err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

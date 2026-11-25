@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -98,6 +99,16 @@ func postOnboarding(t *testing.T, router *gin.Engine, body string, remoteAddr st
 	return recorder
 }
 
+// stubOnboardingSync replaces the sync step so tests that are not about ledger
+// parsing do not depend on an external ledger binary.
+func stubOnboardingSync(t *testing.T, result gin.H) {
+	t.Helper()
+
+	previous := onboardingSync
+	onboardingSync = func(Deps, SyncRequest) gin.H { return result }
+	t.Cleanup(func() { onboardingSync = previous })
+}
+
 func TestOnboardingExistingEmptyJournalDoesNotNeedOnboarding(t *testing.T) {
 	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, false)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
@@ -136,6 +147,7 @@ func TestOnboardingAutoCreatedConfigNeedsOnboarding(t *testing.T) {
 func TestOnboardingConcurrentOnlyOneSucceeds(t *testing.T) {
 	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+	stubOnboardingSync(t, gin.H{"success": true})
 
 	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 
@@ -224,6 +236,7 @@ func TestOnboardingRejectsNonLoopbackWithoutAuth(t *testing.T) {
 func TestOnboardingEmptyCreatesGermanyConfig(t *testing.T) {
 	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+	stubOnboardingSync(t, gin.H{"success": true})
 
 	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 	recorder := postOnboarding(t, router,
@@ -251,6 +264,26 @@ func TestOnboardingDemoSeedsPostings(t *testing.T) {
 	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
 
+	// Development checkouts embed a dummy ledger binary. When no real ledger is
+	// on PATH, run the generated demo journal through hledger instead. The test
+	// fails loudly when neither parser is available rather than silently
+	// skipping.
+	if _, err := exec.LookPath("ledger"); err != nil {
+		if _, err := exec.LookPath("hledger"); err != nil {
+			t.Fatal("onboarding demo test requires ledger or hledger on PATH")
+		}
+
+		previous := onboardingSync
+		onboardingSync = func(deps Deps, request SyncRequest) gin.H {
+			require.NoError(t, deps.Config.Update(func(next *config.Config) error {
+				next.LedgerCli = "hledger"
+				return nil
+			}))
+			return Sync(deps, request)
+		}
+		t.Cleanup(func() { onboardingSync = previous })
+	}
+
 	db := openOnboardingTestDB(t)
 	router := newOnboardingRouter(t, db, store)
 	recorder := postOnboarding(t, router,
@@ -260,23 +293,6 @@ func TestOnboardingDemoSeedsPostings(t *testing.T) {
 
 	var count int64
 	require.NoError(t, db.Model(&posting.Posting{}).Count(&count).Error)
-
-	if count == 0 {
-		// Development checkouts embed a dummy ledger binary. Exercise the
-		// generated demo journal through hledger when it is available, so the
-		// test still proves the demo content produces postings.
-		if _, err := exec.LookPath("hledger"); err != nil {
-			t.Skip("neither ledger nor hledger is available")
-		}
-		require.NoError(t, store.Update(func(next *config.Config) error {
-			next.LedgerCli = "hledger"
-			return nil
-		}))
-		outcome := Sync(Deps{DB: db, Config: store}, SyncRequest{Journal: true})
-		require.Equal(t, true, outcome["success"], outcome)
-		require.NoError(t, db.Model(&posting.Posting{}).Count(&count).Error)
-	}
-
 	assert.Positive(t, count)
 }
 
@@ -287,6 +303,7 @@ func TestOnboardingPostIsReachableWithoutSession(t *testing.T) {
 	t.Run("same origin", func(t *testing.T) {
 		store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+		stubOnboardingSync(t, gin.H{"success": true})
 
 		router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
 		recorder := postOnboarding(t, router,
@@ -308,4 +325,170 @@ func TestOnboardingPostIsReachableWithoutSession(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, recorder.Code)
 		assert.False(t, store.Initialized())
 	})
+}
+
+func TestOnboardingConflictWhenAlreadyInitialized(t *testing.T) {
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+	// An auto-created installation that already loaded a configuration must not
+	// start onboarding again.
+	require.NoError(t, store.Load([]byte(onboardingBaseConfig), configPath))
+	require.True(t, store.Initialized())
+	require.True(t, store.AutoCreated())
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusConflict, recorder.Code)
+}
+
+func TestOnboardingConflictWhenNotAutoCreated(t *testing.T) {
+	// A user-managed configuration is neither auto-created nor initialized in
+	// this fresh store; onboarding must still be refused.
+	store := config.NewStore()
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusConflict, recorder.Code)
+	assert.False(t, store.Initialized())
+}
+
+func TestOnboardingRejectsSpoofedForwardedFor(t *testing.T) {
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+
+	configBefore, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, "203.0.113.7:54321",
+		map[string]string{"X-Forwarded-For": "127.0.0.1"})
+
+	require.Equal(t, http.StatusForbidden, recorder.Code)
+
+	configAfter, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	assert.Equal(t, configBefore, configAfter)
+	assert.False(t, store.Initialized())
+}
+
+func TestOnboardingFailedSyncRestoresFilesAndAllowsRetry(t *testing.T) {
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	journalPath := filepath.Join(dir, "main.ledger")
+	require.NoError(t, os.WriteFile(journalPath, []byte{}, 0o640))
+
+	configBefore, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	journalBefore, err := os.ReadFile(journalPath)
+	require.NoError(t, err)
+
+	previous := onboardingSync
+	onboardingSync = func(Deps, SyncRequest) gin.H {
+		return gin.H{"success": false, "message": "ledger unavailable"}
+	}
+	t.Cleanup(func() { onboardingSync = previous })
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"india","mode":"demo"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusInternalServerError, recorder.Code)
+	body := map[string]any{}
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	assert.Equal(t, "ledger unavailable", body["error"])
+
+	configAfter, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	assert.Equal(t, configBefore, configAfter, "config must be restored")
+	journalAfter, err := os.ReadFile(journalPath)
+	require.NoError(t, err)
+	assert.Equal(t, journalBefore, journalAfter, "journal must be restored")
+
+	_, err = os.Stat(filepath.Join(dir, "Schedule AL.paisa"))
+	assert.ErrorIs(t, err, os.ErrNotExist, "generated sheet must be removed")
+	_, err = os.Stat(configPath + ".onboarding-backup")
+	assert.ErrorIs(t, err, os.ErrNotExist, "backup must be cleaned up after restore")
+	_, err = os.Stat(journalPath + ".onboarding-backup")
+	assert.ErrorIs(t, err, os.ErrNotExist, "backup must be cleaned up after restore")
+
+	assert.True(t, store.AutoCreated())
+	assert.False(t, store.Initialized(), "a failed attempt must remain retryable")
+
+	_, status := getOnboarding(t, router)
+	assert.Equal(t, true, status["needed"])
+
+	// A retry with a working sync must succeed on the restored files. Empty
+	// mode has no postings requirement, so the stub is enough.
+	onboardingSync = func(Deps, SyncRequest) gin.H { return gin.H{"success": true} }
+	recorder = postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, onboardingLoopback, nil)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.True(t, store.Initialized())
+	assert.False(t, store.AutoCreated())
+}
+
+func TestOnboardingDemoWithoutPostingsFails(t *testing.T) {
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	journalPath := filepath.Join(dir, "main.ledger")
+	require.NoError(t, os.WriteFile(journalPath, []byte{}, 0o644))
+
+	configBefore, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	stubOnboardingSync(t, gin.H{"success": true})
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"demo"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	configAfter, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	assert.Equal(t, configBefore, configAfter)
+	assert.False(t, store.Initialized())
+	assert.True(t, store.AutoCreated())
+}
+
+func TestRestoreOnboardingBackupsPreservesContentAndMode(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.ledger")
+	require.NoError(t, os.WriteFile(path, []byte("original"), 0o640))
+
+	backups, err := backupOnboardingFiles(path)
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(path, []byte("generated"), 0o600))
+	restoreOnboardingBackups(backups)
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Equal(t, "original", string(content))
+
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(path)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o640), info.Mode().Perm())
+	}
+
+	_, err = os.Stat(path + ".onboarding-backup")
+	assert.ErrorIs(t, err, os.ErrNotExist)
+}
+
+func TestRemoveOnboardingBackupsAfterSuccess(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+
+	backups, err := backupOnboardingFiles(path)
+	require.NoError(t, err)
+	require.FileExists(t, path+".onboarding-backup")
+
+	removeOnboardingBackups(backups)
+	_, err = os.Stat(path + ".onboarding-backup")
+	assert.ErrorIs(t, err, os.ErrNotExist)
 }

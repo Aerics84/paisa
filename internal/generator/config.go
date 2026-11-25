@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -38,11 +39,11 @@ type GeneratorState struct {
 
 var pricesTree map[string]*btree.BTree
 
-func MinimalConfig(cwd string) {
-	MinimalConfigForProfile(cwd, config.RegionalProfileGermanyEU)
+func MinimalConfig(cwd string) error {
+	return MinimalConfigForProfile(cwd, config.RegionalProfileGermanyEU)
 }
 
-func MinimalConfigForProfile(cwd string, profile config.RegionalProfileType) {
+func MinimalConfigForProfile(cwd string, profile config.RegionalProfileType) error {
 	configFilePath := filepath.Join(cwd, "paisa.yaml")
 	configTemplate := `
 journal_path: '%s'
@@ -60,39 +61,47 @@ default_currency: %s
 	}
 	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile, currency), 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write config file %s: %w", configFilePath, err)
 	}
 
 	log.Info("Generating journal file: ", journalFilePath)
 	journalFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to create journal file %s: %w", journalFilePath, err)
 	}
-	defer func() {
-		if err := journalFile.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	if err := journalFile.Close(); err != nil {
+		return fmt.Errorf("failed to close journal file %s: %w", journalFilePath, err)
+	}
+
+	return nil
 }
 
-func Demo(cwd string) {
-	DemoForProfile(cwd, config.RegionalProfileIndia)
+func Demo(cwd string) error {
+	return DemoForProfile(cwd, config.RegionalProfileIndia)
 }
 
-func DemoForProfile(cwd string, profile config.RegionalProfileType) {
+func DemoForProfile(cwd string, profile config.RegionalProfileType) error {
 	switch config.NormalizeRegionalProfile(profile) {
 	case config.RegionalProfileGermanyEU:
-		generateGermanyEUConfigFile(cwd)
-		generateGermanyEUJournalFile(cwd)
-		removeSheetFile(cwd)
+		if err := generateGermanyEUConfigFile(cwd); err != nil {
+			return err
+		}
+		if err := generateGermanyEUJournalFile(cwd); err != nil {
+			return err
+		}
+		return removeSheetFile(cwd)
 	default:
-		generateIndiaConfigFile(cwd)
-		generateIndiaJournalFile(cwd)
-		generateIndiaSheetFile(cwd)
+		if err := generateIndiaConfigFile(cwd); err != nil {
+			return err
+		}
+		if err := generateIndiaJournalFile(cwd); err != nil {
+			return err
+		}
+		return generateIndiaSheetFile(cwd)
 	}
 }
 
-func generateIndiaConfigFile(cwd string) {
+func generateIndiaConfigFile(cwd string) error {
 	configFilePath := filepath.Join(cwd, "paisa.yaml")
 	config := `
 journal_path: '%s'
@@ -201,11 +210,13 @@ credit_cards:
 	dbFilePath := filepath.Join(cwd, "paisa.db")
 	err := os.WriteFile(configFilePath, fmt.Appendf(nil, config, filepath.Base(journalFilePath), filepath.Base(dbFilePath)), 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write config file %s: %w", configFilePath, err)
 	}
+
+	return nil
 }
 
-func generateGermanyEUConfigFile(cwd string) {
+func generateGermanyEUConfigFile(cwd string) error {
 	configFilePath := filepath.Join(cwd, "paisa.yaml")
 	configContent := `
 journal_path: '%s'
@@ -273,11 +284,13 @@ credit_cards:
 	dbFilePath := filepath.Join(cwd, "paisa.db")
 	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configContent, filepath.Base(journalFilePath), filepath.Base(dbFilePath)), 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write config file %s: %w", configFilePath, err)
 	}
+
+	return nil
 }
 
-func emitTransaction(file *os.File, date time.Time, payee string, from string, to string, amount any) {
+func emitTransaction(file *os.File, date time.Time, payee string, from string, to string, amount any) error {
 	amountString := ""
 	switch amount.(type) {
 	case string:
@@ -292,12 +305,36 @@ func emitTransaction(file *os.File, date time.Time, payee string, from string, t
     %s
 `, date.Format("2006/01/02"), payee, to, amountString, from))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write transaction %q: %w", payee, err)
 	}
+
+	return nil
 }
 
-func emitCommodityBuy(file *os.File, date time.Time, commodity string, from string, to string, amount float64) float64 {
-	pc := utils.BTreeDescendFirstLessOrEqual(pricesTree[commodity], price.Price{Date: date})
+// commodityPrice returns the most recent known price for a commodity on or
+// before date. The second result is false when no price history is available,
+// which happens when the demo price download failed or was skipped offline.
+func commodityPrice(commodity string, date time.Time) (price.Price, bool) {
+	tree := pricesTree[commodity]
+	if tree == nil || tree.Len() == 0 {
+		return price.Price{}, false
+	}
+
+	pc := utils.BTreeDescendFirstLessOrEqual(tree, price.Price{Date: date})
+	if pc.Value.IsZero() {
+		return price.Price{}, false
+	}
+
+	return pc, true
+}
+
+func emitCommodityBuy(file *os.File, date time.Time, commodity string, from string, to string, amount float64) (float64, error) {
+	pc, ok := commodityPrice(commodity, date)
+	if !ok {
+		log.Warnf("Skipping %s transaction in demo journal: no price history available", commodity)
+		return 0, nil
+	}
+
 	units := amount / pc.Value.InexactFloat64()
 	_, err := file.WriteString(fmt.Sprintf(`
 %s Investment
@@ -305,17 +342,32 @@ func emitCommodityBuy(file *os.File, date time.Time, commodity string, from stri
     %s
 `, date.Format("2006/01/02"), to, formatFloat(units), commodity, formatFloat(pc.Value.InexactFloat64()), from))
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("failed to write %s investment transaction: %w", commodity, err)
 	}
-	return units
+
+	return units, nil
 }
 
-func emitCommoditySell(file *os.File, date time.Time, commodity string, from string, to string, amount float64, availableUnits float64) (float64, float64) {
-	pc := utils.BTreeDescendFirstLessOrEqual(pricesTree[commodity], price.Price{Date: date})
+func emitCommoditySell(file *os.File, date time.Time, commodity string, from string, to string, amount float64, availableUnits float64) (float64, float64, error) {
+	pc, ok := commodityPrice(commodity, date)
+	if !ok {
+		log.Warnf("Skipping %s sale in demo journal: no price history available", commodity)
+		return 0, 0, nil
+	}
+
 	requiredUnits := amount / pc.Value.InexactFloat64()
 	units := math.Min(availableUnits, requiredUnits)
-	return emitCommodityBuy(file, date, commodity, from, to, -units*pc.Value.InexactFloat64()), units * pc.Value.InexactFloat64()
+	bought, err := emitCommodityBuy(file, date, commodity, from, to, -units*pc.Value.InexactFloat64())
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return bought, units * pc.Value.InexactFloat64(), nil
 }
+
+// demoHTTPClient bounds the price-history download so an offline demo
+// generation cannot hang the server.
+var demoHTTPClient = &http.Client{Timeout: 10 * time.Second}
 
 func loadPrices(schemeCode string, commodityType config.CommodityType, commodityName string, pricesTree map[string]*btree.BTree) {
 	var prices []*price.Price
@@ -323,13 +375,16 @@ func loadPrices(schemeCode string, commodityType config.CommodityType, commodity
 
 	switch commodityType {
 	case config.MutualFund:
-		prices, err = mutualfund.GetNav(schemeCode, commodityName)
+		prices, err = mutualfund.GetNavWithClient(demoHTTPClient, schemeCode, commodityName)
 	case config.NPS:
-		prices, err = nps.GetNav(schemeCode, commodityName)
+		prices, err = nps.GetNavWithClient(demoHTTPClient, schemeCode, commodityName)
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		// Demo generation must still work offline. Commodity transactions that
+		// need a price are skipped, the rest of the demo journal is generated.
+		log.Warnf("Skipping %s price history for demo journal: %v", commodityName, err)
+		return
 	}
 
 	pricesTree[commodityName] = btree.New(2)
@@ -380,7 +435,7 @@ func taxRate(amount float64) float64 {
 	return 0.30
 }
 
-func emitChitFund(state *GeneratorState) {
+func emitChitFund(state *GeneratorState) error {
 	start, _ := time.Parse("02-01-2006", "01-01-2016")
 	end, _ := time.Parse("02-01-2006", "01-11-2016")
 
@@ -389,22 +444,32 @@ func emitChitFund(state *GeneratorState) {
 		amount := fmt.Sprintf("1 CHIT @ %d", price)
 
 		if start.Month() >= time.June {
-			emitTransaction(state.Ledger, start, "Chit installment", "Assets:Checking:SBI", "Liabilities:Chit", amount)
+			if err := emitTransaction(state.Ledger, start, "Chit installment", "Assets:Checking:SBI", "Liabilities:Chit", amount); err != nil {
+				return err
+			}
 		} else {
-			emitTransaction(state.Ledger, start, "Chit installment", "Assets:Checking:SBI", "Assets:Debt:Chit", amount)
+			if err := emitTransaction(state.Ledger, start, "Chit installment", "Assets:Checking:SBI", "Assets:Debt:Chit", amount); err != nil {
+				return err
+			}
 		}
 
 		if start.Month() == time.June {
 			amount = fmt.Sprintf("-5 CHIT @ %d", price)
-			emitTransaction(state.Ledger, start, "Chit withdraw", "Assets:Checking:SBI", "Assets:Debt:Chit", amount)
+			if err := emitTransaction(state.Ledger, start, "Chit withdraw", "Assets:Checking:SBI", "Assets:Debt:Chit", amount); err != nil {
+				return err
+			}
 			amount = fmt.Sprintf("-5 CHIT @ %d", price)
-			emitTransaction(state.Ledger, start, "Chit withdraw", "Assets:Checking:SBI", "Liabilities:Chit", amount)
+			if err := emitTransaction(state.Ledger, start, "Chit withdraw", "Assets:Checking:SBI", "Liabilities:Chit", amount); err != nil {
+				return err
+			}
 		}
 
 	}
+
+	return nil
 }
 
-func emitSalary(state *GeneratorState, start time.Time) {
+func emitSalary(state *GeneratorState, start time.Time) error {
 	if start.Month() == time.April {
 		state.YearlySalary = incrementByPercentRange(state.YearlySalary, 10, 15)
 	}
@@ -425,21 +490,34 @@ func emitSalary(state *GeneratorState, start time.Time) {
 	state.Balance += netSalary
 
 	salaryAccount := fmt.Sprintf("Income:Salary:%s", company)
-	emitTransaction(state.Ledger, start, "Salary", salaryAccount, "Assets:Checking:SBI", netSalary)
-	emitTransaction(state.Ledger, start, "Salary EPF", salaryAccount, "Assets:Debt:EPF", epf)
-	emitTransaction(state.Ledger, start, "Salary Tax", salaryAccount, "Expenses:Tax", tax)
-	emitCommodityBuy(state.Ledger, start, "NPS_HDFC_E", salaryAccount, "Assets:Debt:NPS:HDFC:E", nps*0.75)
-	emitCommodityBuy(state.Ledger, start, "NPS_HDFC_C", salaryAccount, "Assets:Equity:NPS:HDFC:C", nps*0.15)
-	emitCommodityBuy(state.Ledger, start, "NPS_HDFC_G", salaryAccount, "Assets:Equity:NPS:HDFC:G", nps*0.10)
+	if err := emitTransaction(state.Ledger, start, "Salary", salaryAccount, "Assets:Checking:SBI", netSalary); err != nil {
+		return err
+	}
+	if err := emitTransaction(state.Ledger, start, "Salary EPF", salaryAccount, "Assets:Debt:EPF", epf); err != nil {
+		return err
+	}
+	if err := emitTransaction(state.Ledger, start, "Salary Tax", salaryAccount, "Expenses:Tax", tax); err != nil {
+		return err
+	}
+	if _, err := emitCommodityBuy(state.Ledger, start, "NPS_HDFC_E", salaryAccount, "Assets:Debt:NPS:HDFC:E", nps*0.75); err != nil {
+		return err
+	}
+	if _, err := emitCommodityBuy(state.Ledger, start, "NPS_HDFC_C", salaryAccount, "Assets:Equity:NPS:HDFC:C", nps*0.15); err != nil {
+		return err
+	}
+	if _, err := emitCommodityBuy(state.Ledger, start, "NPS_HDFC_G", salaryAccount, "Assets:Equity:NPS:HDFC:G", nps*0.10); err != nil {
+		return err
+	}
 
+	return nil
 }
 
-func emitExpense(state *GeneratorState, start time.Time) {
+func emitExpense(state *GeneratorState, start time.Time) error {
 	if start.Month() == time.April {
 		state.Rent = incrementByPercentRange(state.Rent, 5, 10)
 	}
 
-	emit := func(payee string, account string, amount float64, fuzz float64) {
+	emit := func(payee string, account string, amount float64, fuzz float64) error {
 		var actualAmount float64
 		if fuzz == 1 {
 			actualAmount = amount
@@ -447,55 +525,87 @@ func emitExpense(state *GeneratorState, start time.Time) {
 			actualAmount = roundToK(percentRange(int(fuzz*100), 100) * amount)
 		}
 		start = start.AddDate(0, 0, 1)
-		emitTransaction(state.Ledger, start, payee, "Assets:Checking:SBI", account, actualAmount)
+		if err := emitTransaction(state.Ledger, start, payee, "Assets:Checking:SBI", account, actualAmount); err != nil {
+			return err
+		}
 		state.Balance -= actualAmount
+		return nil
 	}
 
-	emitExpense := func(payee string, account string, amount float64, fuzz float64) {
+	emitExpense := func(payee string, account string, amount float64, fuzz float64) error {
 		actualAmount := roundToK(percentRange(int(fuzz*100), 100) * amount)
 		start = start.AddDate(0, 0, 1)
-		emitTransaction(state.Ledger, start, payee, "Liabilities:CreditCard:Freedom", account, actualAmount)
+		if err := emitTransaction(state.Ledger, start, payee, "Liabilities:CreditCard:Freedom", account, actualAmount); err != nil {
+			return err
+		}
 		state.CreditBalance -= actualAmount
+		return nil
 	}
 
-	emitExpense("Rent", "Expenses:Rent", state.Rent, 1.0)
-	emitExpense("Internet", "Expenses:Utilities", 1500, 1.0)
-	emitExpense("Mobile", "Expenses:Utilities", 430, 1.0)
-	emitExpense("Shopping", "Expenses:Shopping", 3000, 0.5)
-	emitExpense("Eat out", "Expenses:Restaurants", 2500, 0.5)
-	emitExpense("Groceries", "Expenses:Food", 5000, 0.9)
+	expenses := []struct {
+		payee   string
+		account string
+		amount  float64
+		fuzz    float64
+	}{
+		{"Rent", "Expenses:Rent", state.Rent, 1.0},
+		{"Internet", "Expenses:Utilities", 1500, 1.0},
+		{"Mobile", "Expenses:Utilities", 430, 1.0},
+		{"Shopping", "Expenses:Shopping", 3000, 0.5},
+		{"Eat out", "Expenses:Restaurants", 2500, 0.5},
+		{"Groceries", "Expenses:Food", 5000, 0.9},
+	}
+	for _, expense := range expenses {
+		if err := emitExpense(expense.payee, expense.account, expense.amount, expense.fuzz); err != nil {
+			return err
+		}
+	}
 
 	if state.LoanBalance > 0 {
 		emi := math.Min(state.Balance-10000, 30000.0)
 		interest := (state.LoanBalance * 0.08 / 12)
 		principal := emi - interest
 		state.LoanBalance -= principal
-		emit("EMI", "Expenses:Interest:Homeloan", interest, 1.0)
-		emit("EMI", "Liabilities:Homeloan", principal, 1.0)
+		if err := emit("EMI", "Expenses:Interest:Homeloan", interest, 1.0); err != nil {
+			return err
+		}
+		if err := emit("EMI", "Liabilities:Homeloan", principal, 1.0); err != nil {
+			return err
+		}
 	}
 
 	if state.Balance < 10000 {
-		emit("Pay Credit Card Bill", "Liabilities:CreditCard:Freedom", -state.CreditBalance, 1.0)
+		if err := emit("Pay Credit Card Bill", "Liabilities:CreditCard:Freedom", -state.CreditBalance, 1.0); err != nil {
+			return err
+		}
 		state.CreditBalance = 0
-		return
+		return nil
 	}
 
 	if lo.Contains([]time.Month{time.January, time.April, time.November, time.December}, start.Month()) {
-		emit("Dress", "Expenses:Clothing", 5000, 0.5)
+		if err := emit("Dress", "Expenses:Clothing", 5000, 0.5); err != nil {
+			return err
+		}
 	}
 
-	emit("Pay Credit Card Bill", "Liabilities:CreditCard:Freedom", -state.CreditBalance, 1.0)
+	if err := emit("Pay Credit Card Bill", "Liabilities:CreditCard:Freedom", -state.CreditBalance, 1.0); err != nil {
+		return err
+	}
 	state.CreditBalance = 0
+
+	return nil
 }
-func emitInvestment(state *GeneratorState, start time.Time) {
+func emitInvestment(state *GeneratorState, start time.Time) error {
 	if start.Month() == time.April {
 		epfInterest := state.EPFBalance * 0.08
-		emitTransaction(state.Ledger, start, "EPF Interest", "Income:Interest:EPF", "Assets:Debt:EPF", epfInterest)
+		if err := emitTransaction(state.Ledger, start, "EPF Interest", "Income:Interest:EPF", "Assets:Debt:EPF", epfInterest); err != nil {
+			return err
+		}
 		state.EPFBalance += epfInterest
 	}
 
 	if state.Balance < 10000 {
-		return
+		return nil
 	}
 
 	equity1 := roundToK(state.Balance * 0.5)
@@ -503,38 +613,53 @@ func emitInvestment(state *GeneratorState, start time.Time) {
 	debt := roundToK(state.Balance * 0.3)
 
 	state.Balance -= equity1
-	state.NiftyBalance += emitCommodityBuy(state.Ledger, start, "NIFTY", "Assets:Checking:SBI", "Assets:Equity:NIFTY", equity1)
+	units, err := emitCommodityBuy(state.Ledger, start, "NIFTY", "Assets:Checking:SBI", "Assets:Equity:NIFTY", equity1)
+	if err != nil {
+		return err
+	}
+	state.NiftyBalance += units
 
 	state.Balance -= equity2
-	emitCommodityBuy(state.Ledger, start, "PPFAS", "Assets:Checking:SBI", "Assets:Equity:PPFAS", equity2)
+	if _, err := emitCommodityBuy(state.Ledger, start, "PPFAS", "Assets:Checking:SBI", "Assets:Equity:PPFAS", equity2); err != nil {
+		return err
+	}
 
 	state.Balance -= debt
-	emitCommodityBuy(state.Ledger, start, "ABCBF", "Assets:Checking:SBI", "Assets:Debt:ABCBF", debt)
+	if _, err := emitCommodityBuy(state.Ledger, start, "ABCBF", "Assets:Checking:SBI", "Assets:Debt:ABCBF", debt); err != nil {
+		return err
+	}
 
 	if start.Month() == time.March {
-		units, amount := emitCommoditySell(state.Ledger, start.AddDate(0, 0, 15), "NIFTY", "Assets:Checking:SBI", "Assets:Equity:NIFTY", 75000, state.NiftyBalance)
-		state.NiftyBalance += units
+		soldUnits, amount, err := emitCommoditySell(state.Ledger, start.AddDate(0, 0, 15), "NIFTY", "Assets:Checking:SBI", "Assets:Equity:NIFTY", 75000, state.NiftyBalance)
+		if err != nil {
+			return err
+		}
+		state.NiftyBalance += soldUnits
 		state.Balance += amount
 	}
+
+	return nil
 }
 
-func generateIndiaJournalFile(cwd string) {
+func generateIndiaJournalFile(cwd string) error {
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	log.Info("Generating journal file: ", journalFilePath)
 	ledgerFile, err := os.OpenFile(journalFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to create journal file %s: %w", journalFilePath, err)
 	}
-	defer func() {
-		if err := ledgerFile.Close(); err != nil {
-			log.Fatal(err)
+
+	writeJournal := func(content string) error {
+		if _, err := ledgerFile.WriteString(content); err != nil {
+			return fmt.Errorf("failed to write journal file %s: %w", journalFilePath, err)
 		}
-	}()
+		return nil
+	}
 
 	startMonth := utils.BeginningOfMonth(utils.EndOfToday())
 	endMonth := startMonth.AddDate(0, 2, 0)
 
-	_, err = ledgerFile.WriteString(`
+	if err := writeJournal(`
 = Expenses:Rent
     ; Recurring: Rent
     ; Period: 1 * ?
@@ -552,11 +677,17 @@ func generateIndiaJournalFile(cwd string) {
 = Expenses:Interest:Homeloan
     ; Recurring: EMI Interest
 
-~ Monthly from `)
+~ Monthly from `); err != nil {
+		_ = ledgerFile.Close()
+		return err
+	}
 
-	_, err = ledgerFile.WriteString(fmt.Sprintf("%s to %s", startMonth.Format("2006-01-02"), endMonth.Format("2006-01-02")))
+	if err := writeJournal(fmt.Sprintf("%s to %s", startMonth.Format("2006-01-02"), endMonth.Format("2006-01-02"))); err != nil {
+		_ = ledgerFile.Close()
+		return err
+	}
 
-	_, err = ledgerFile.WriteString(`
+	if err := writeJournal(`
     Expenses:Rent                              15000 INR
     Expenses:Interest:Homeloan                  6000 INR
     Expenses:Food                               5000 INR
@@ -565,15 +696,16 @@ func generateIndiaJournalFile(cwd string) {
     Expenses:Clothing                           1000 INR
     Assets:Checking:SBI
 
-`)
-	if err != nil {
-		log.Fatal(err)
+`); err != nil {
+		_ = ledgerFile.Close()
+		return err
 	}
 
 	end := utils.EndOfToday()
 	start, err := time.Parse("02-01-2006", fmt.Sprintf("01-01-%d", START_YEAR))
 	if err != nil {
-		log.Fatal(err)
+		_ = ledgerFile.Close()
+		return err
 	}
 
 	pricesTree = make(map[string]*btree.BTree)
@@ -586,15 +718,36 @@ func generateIndiaJournalFile(cwd string) {
 
 	state := GeneratorState{Balance: 0, Ledger: ledgerFile, YearlySalary: 1000000, Rent: 10000, LoanBalance: 2500000}
 
-	emitTransaction(state.Ledger, start, "Home purchase", "Liabilities:Homeloan", "Assets:House", "1 APT @ 2500000")
+	generate := func() error {
+		if err := emitTransaction(state.Ledger, start, "Home purchase", "Liabilities:Homeloan", "Assets:House", "1 APT @ 2500000"); err != nil {
+			return err
+		}
 
-	for ; start.Before(end); start = start.AddDate(0, 1, 0) {
-		emitSalary(&state, start)
-		emitExpense(&state, start)
-		emitInvestment(&state, start)
+		for ; start.Before(end); start = start.AddDate(0, 1, 0) {
+			if err := emitSalary(&state, start); err != nil {
+				return err
+			}
+			if err := emitExpense(&state, start); err != nil {
+				return err
+			}
+			if err := emitInvestment(&state, start); err != nil {
+				return err
+			}
+		}
+
+		return emitChitFund(&state)
 	}
 
-	emitChitFund(&state)
+	if err := generate(); err != nil {
+		_ = ledgerFile.Close()
+		return err
+	}
+
+	if err := ledgerFile.Close(); err != nil {
+		return fmt.Errorf("failed to close journal file %s: %w", journalFilePath, err)
+	}
+
+	return nil
 }
 
 func formatEuroAmount(amount float64) string {
@@ -619,26 +772,28 @@ func formatEuroAmount(amount float64) string {
 	return sign + strings.Join(chunks, ".") + "," + fraction
 }
 
-func emitGermanyEUTransaction(writer io.StringWriter, date time.Time, payee string, lines ...string) {
+func emitGermanyEUTransaction(writer io.StringWriter, date time.Time, payee string, lines ...string) error {
 	_, err := writer.WriteString(fmt.Sprintf("%s %s\n", date.Format("2006/01/02"), payee))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write transaction %q: %w", payee, err)
 	}
 
 	for _, line := range lines {
 		_, err = writer.WriteString("    " + line + "\n")
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("failed to write transaction %q: %w", payee, err)
 		}
 	}
 
 	_, err = writer.WriteString("\n")
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write transaction %q: %w", payee, err)
 	}
+
+	return nil
 }
 
-func generateGermanyEUJournalFile(cwd string) {
+func generateGermanyEUJournalFile(cwd string) error {
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	log.Info("Generating journal file: ", journalFilePath)
 
@@ -661,6 +816,14 @@ func generateGermanyEUJournalFile(cwd string) {
 	}
 	journal.WriteString("\n")
 
+	var emitErr error
+	emit := func(date time.Time, payee string, lines ...string) {
+		if emitErr != nil {
+			return
+		}
+		emitErr = emitGermanyEUTransaction(&journal, date, payee, lines...)
+	}
+
 	for offset := range 3 {
 		month := startMonth.AddDate(0, offset, 0)
 
@@ -676,51 +839,57 @@ func generateGermanyEUJournalFile(cwd string) {
 		etfPrice := 118.0 + float64(offset)*1.5
 		etfAmount := float64(etfUnits) * etfPrice
 
-		emitGermanyEUTransaction(&journal, month, "Salary",
+		emit(month, "Salary",
 			fmt.Sprintf("Income:Salary:Acme GmbH                -%s EUR", formatEuroAmount(salary)),
 			fmt.Sprintf("Assets:Checking:ING                      %s EUR", formatEuroAmount(salary)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 1), "Transfer to Tagesgeld",
+		emit(month.AddDate(0, 0, 1), "Transfer to Tagesgeld",
 			fmt.Sprintf("Assets:Savings:Tagesgeld                  %s EUR", formatEuroAmount(tagesgeld)),
 			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(tagesgeld)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 3), "Rent",
+		emit(month.AddDate(0, 0, 3), "Rent",
 			fmt.Sprintf("Expenses:Rent                             %s EUR", formatEuroAmount(rent)),
 			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(rent)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 5), "Utilities",
+		emit(month.AddDate(0, 0, 5), "Utilities",
 			fmt.Sprintf("Expenses:Utilities                        %s EUR", formatEuroAmount(utilities)),
 			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(utilities)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 10), "ETF Purchase",
+		emit(month.AddDate(0, 0, 10), "ETF Purchase",
 			fmt.Sprintf("Assets:Equity:VWCE                        %d VWCE @ %s EUR", etfUnits, formatEuroAmount(etfPrice)),
 			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(etfAmount)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 12), "Groceries",
+		emit(month.AddDate(0, 0, 12), "Groceries",
 			fmt.Sprintf("Expenses:Food                             %s EUR", formatEuroAmount(groceries)),
 			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(groceries)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 16), "Deutschlandticket",
+		emit(month.AddDate(0, 0, 16), "Deutschlandticket",
 			fmt.Sprintf("Expenses:Transport                        %s EUR", formatEuroAmount(transport)),
 			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(transport)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 20), "Weekend Trip",
+		emit(month.AddDate(0, 0, 20), "Weekend Trip",
 			fmt.Sprintf("Expenses:Leisure                          %s EUR", formatEuroAmount(leisure)),
 			fmt.Sprintf("Liabilities:CreditCard:Visa              -%s EUR", formatEuroAmount(leisure)),
 		)
-		emitGermanyEUTransaction(&journal, month.AddDate(0, 0, 27), "Pay Credit Card Bill",
+		emit(month.AddDate(0, 0, 27), "Pay Credit Card Bill",
 			fmt.Sprintf("Liabilities:CreditCard:Visa               %s EUR", formatEuroAmount(cardBill)),
 			fmt.Sprintf("Assets:Checking:ING                      -%s EUR", formatEuroAmount(cardBill)),
 		)
 	}
 
+	if emitErr != nil {
+		return emitErr
+	}
+
 	err := os.WriteFile(journalFilePath, []byte(journal.String()), 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write journal file %s: %w", journalFilePath, err)
 	}
+
+	return nil
 }
 
-func generateIndiaSheetFile(cwd string) {
+func generateIndiaSheetFile(cwd string) error {
 	sheetFilePath := filepath.Join(cwd, "Schedule AL.paisa")
 	sheet := `
 date_query = {date <= [2023-03-31]}
@@ -750,13 +919,17 @@ total = immovable + metal + art + vehicle + bank + share + insurance + loan + ca
 	log.Info("Generating sheet file: ", sheetFilePath)
 	err := os.WriteFile(sheetFilePath, []byte(sheet), 0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to write sheet file %s: %w", sheetFilePath, err)
 	}
+
+	return nil
 }
 
-func removeSheetFile(cwd string) {
+func removeSheetFile(cwd string) error {
 	sheetFilePath := filepath.Join(cwd, "Schedule AL.paisa")
 	if err := os.Remove(sheetFilePath); err != nil && !os.IsNotExist(err) {
-		log.Fatal(err)
+		return fmt.Errorf("failed to remove sheet file %s: %w", sheetFilePath, err)
 	}
+
+	return nil
 }

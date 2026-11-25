@@ -4,11 +4,18 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/ananthakumaran/paisa/internal/config"
 	"github.com/ananthakumaran/paisa/internal/generator"
+	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
+
+// onboardingSync is a test seam so rollback behaviour can be exercised without
+// a working ledger binary. Production code always uses Sync.
+var onboardingSync = Sync
 
 type onboardingProfile struct {
 	ID       string `json:"id"`
@@ -30,6 +37,7 @@ type onboardingRequest struct {
 type onboardingBackup struct {
 	path       string
 	backupPath string
+	mode       os.FileMode
 	existed    bool
 }
 
@@ -120,29 +128,68 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 		return
 	}
 
-	backups, err := backupOnboardingFiles(configPath, journalPath)
+	configDir := deps.Config.ConfigDir()
+	sheetPath := filepath.Join(configDir, "Schedule AL.paisa")
+
+	backups, err := backupOnboardingFiles(configPath, journalPath, sheetPath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
-	cwd := deps.Config.ConfigDir()
+	// rollback restores the pre-onboarding files and reloads the previous
+	// configuration so a failed attempt leaves a retryable installation.
+	rollback := func() {
+		restoreOnboardingBackups(backups)
+		reloadOnboardingConfig(deps, configPath)
+	}
+
+	var generateErr error
 	if request.Mode == "demo" {
-		generator.DemoForProfile(cwd, profile)
+		generateErr = generator.DemoForProfile(configDir, profile)
 	} else {
-		generator.MinimalConfigForProfile(cwd, profile)
+		generateErr = generator.MinimalConfigForProfile(configDir, profile)
+	}
+	if generateErr != nil {
+		rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": generateErr.Error()})
+		return
 	}
 
 	if err := deps.Config.LoadFile(configPath); err != nil {
-		restoreOnboardingBackups(backups)
+		rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
+	outcome := onboardingSync(deps, SyncRequest{Journal: true, Prices: true, Portfolios: true})
+	if success, _ := outcome["success"].(bool); !success {
+		message, _ := outcome["message"].(string)
+		if message == "" {
+			message = "sync failed"
+		}
+		rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": message})
+		return
+	}
+
+	if request.Mode == "demo" {
+		var count int64
+		if err := deps.DB.Model(&posting.Posting{}).Count(&count).Error; err != nil {
+			rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+			return
+		}
+		if count == 0 {
+			rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "demo sync did not seed any postings"})
+			return
+		}
+	}
+
 	deps.Config.MarkInitialized()
 	committed = true
-
-	Sync(deps, SyncRequest{Journal: true, Prices: true, Portfolios: true})
+	removeOnboardingBackups(backups)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -151,14 +198,28 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 	})
 }
 
+// reloadOnboardingConfig restores the store snapshot from the configuration
+// file that was present before onboarding started. A missing file means the
+// installation had no configuration yet; the store is left as-is and the abort
+// path marks it uninitialized.
+func reloadOnboardingConfig(deps Deps, configPath string) {
+	if _, err := os.Stat(configPath); err != nil {
+		return
+	}
+
+	if err := deps.Config.LoadFile(configPath); err != nil {
+		log.Warnf("could not reload configuration after failed onboarding: %v", err)
+	}
+}
+
 func isLoopbackOnboardingRequest(c *gin.Context) bool {
 	ip := net.ParseIP(c.ClientIP())
 	return ip != nil && ip.IsLoopback()
 }
 
-// backupOnboardingFiles copies the existing configuration and journal next to
-// their originals as <name>.onboarding-backup. Missing files are recorded so a
-// rollback can remove anything the generator created.
+// backupOnboardingFiles copies the existing files next to their originals as
+// <name>.onboarding-backup. Missing files are recorded so a rollback can remove
+// anything the generator created.
 func backupOnboardingFiles(paths ...string) ([]onboardingBackup, error) {
 	backups := make([]onboardingBackup, 0, len(paths))
 
@@ -182,8 +243,9 @@ func backupOnboardingFiles(paths ...string) ([]onboardingBackup, error) {
 		}
 
 		backup.existed = true
+		backup.mode = info.Mode().Perm()
 		backup.backupPath = path + ".onboarding-backup"
-		if err := os.WriteFile(backup.backupPath, content, info.Mode().Perm()); err != nil {
+		if err := os.WriteFile(backup.backupPath, content, backup.mode); err != nil {
 			restoreOnboardingBackups(backups)
 			return nil, err
 		}
@@ -194,16 +256,48 @@ func backupOnboardingFiles(paths ...string) ([]onboardingBackup, error) {
 	return backups, nil
 }
 
+// restoreOnboardingBackups puts the original files back. A backup is only
+// deleted after its content has been written back successfully; otherwise the
+// safety copy is kept so the user can recover manually.
 func restoreOnboardingBackups(backups []onboardingBackup) {
 	for _, backup := range backups {
 		if backup.existed {
-			if content, err := os.ReadFile(backup.backupPath); err == nil {
-				_ = os.WriteFile(backup.path, content, 0o644)
+			content, err := os.ReadFile(backup.backupPath)
+			if err != nil {
+				log.Warnf("could not read onboarding backup %s: %v", backup.backupPath, err)
+				continue
 			}
-			_ = os.Remove(backup.backupPath)
+
+			if err := os.WriteFile(backup.path, content, backup.mode); err != nil {
+				log.Warnf("could not restore onboarding backup %s: %v", backup.path, err)
+				continue
+			}
+			if backup.mode != 0 {
+				if err := os.Chmod(backup.path, backup.mode); err != nil {
+					log.Warnf("could not restore permissions on %s: %v", backup.path, err)
+				}
+			}
+			if err := os.Remove(backup.backupPath); err != nil && !os.IsNotExist(err) {
+				log.Warnf("could not remove onboarding backup %s: %v", backup.backupPath, err)
+			}
 			continue
 		}
 
-		_ = os.Remove(backup.path)
+		if err := os.Remove(backup.path); err != nil && !os.IsNotExist(err) {
+			log.Warnf("could not remove generated onboarding file %s: %v", backup.path, err)
+		}
+	}
+}
+
+// removeOnboardingBackups discards the safety copies after a successful
+// onboarding run.
+func removeOnboardingBackups(backups []onboardingBackup) {
+	for _, backup := range backups {
+		if !backup.existed {
+			continue
+		}
+		if err := os.Remove(backup.backupPath); err != nil && !os.IsNotExist(err) {
+			log.Warnf("could not remove onboarding backup %s: %v", backup.backupPath, err)
+		}
 	}
 }

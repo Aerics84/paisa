@@ -15,9 +15,15 @@ import (
 )
 
 func GetNav(schemeCode string, commodityName string) ([]*price.Price, error) {
+	return GetNavWithClient(http.DefaultClient, schemeCode, commodityName)
+}
+
+// GetNavWithClient is GetNav with a caller-provided HTTP client so offline
+// callers can bound the time spent fetching price history.
+func GetNavWithClient(client *http.Client, schemeCode string, commodityName string) ([]*price.Price, error) {
 	log.Info("Fetching NPS Fund nav from FinBodhi")
 	url := fmt.Sprintf("https://nps.finbodhi.com/api/schemes/%s/nav.json", schemeCode)
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
