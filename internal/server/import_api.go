@@ -522,7 +522,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 				if offsetAcc == "" {
 					offsetAcc = tx.SelectedAccount
 				}
-				amtStr := formatCommitAmount(tx.Amount, dialect, store)
+				amtStr := formatCommitAmount(tx.Amount, k.currency, dialect, store)
 				total += tx.Amount
 				note := extractShortNote(tx.Payee, tx.Memo)
 				if note != "" {
@@ -531,7 +531,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 					sb.WriteString(fmt.Sprintf("  %-40s   %s %s\n", offsetAcc, amtStr, k.currency))
 				}
 			}
-			sb.WriteString(fmt.Sprintf("  %-40s  -%s %s\n\n", baseAcc, formatCommitAmount(total, dialect, store), k.currency))
+			sb.WriteString(fmt.Sprintf("  %-40s  -%s %s\n\n", baseAcc, formatCommitAmount(total, k.currency, dialect, store), k.currency))
 		}
 
 		for _, tx := range creditTxs {
@@ -563,20 +563,65 @@ func extractShortNote(payee, memo string) string {
 	return importer.CleanPayee(raw)
 }
 
-// formatCommitAmount writes amounts using the decimal separator expected by
+// formatCommitAmount writes amounts using the decimal separator declared by
 // the journal's commodity style. German/EU journals typically declare
 // `format 1.000,00 EUR`, where a dot is a thousands separator; writing 12.50
-// there changes the value to 1250.00. Beancount always uses a dot.
-func formatCommitAmount(amount float64, dialect string, store *config.Store) string {
+// there changes the value to 1250.00. Beancount always uses a dot. When the
+// journal has no explicit format (or the file is unreadable), fall back to the
+// regional profile/locale.
+func formatCommitAmount(amount float64, commodity string, dialect string, store *config.Store) string {
 	formatted := fmt.Sprintf("%.2f", amount)
 	if dialect == "beancount" {
 		return formatted
 	}
-	cfg := store.Get()
-	if cfg.RegionalProfile == config.RegionalProfileGermanyEU || strings.HasPrefix(strings.ToLower(cfg.Locale), "de") {
+	separator := journalDecimalSeparator(store, commodity)
+	if separator == "" {
+		cfg := store.Get()
+		if cfg.RegionalProfile == config.RegionalProfileGermanyEU || strings.HasPrefix(strings.ToLower(cfg.Locale), "de") {
+			separator = ","
+		} else {
+			separator = "."
+		}
+	}
+	if separator == "," {
 		return strings.Replace(formatted, ".", ",", 1)
 	}
 	return formatted
+}
+
+// journalDecimalSeparator finds the commodity's `format` directive in the
+// active journal and returns the last decimal separator in it. A journal can
+// use dots, commas or Indian grouping (`9,99,99,999.00`). It returns "" when
+// no unambiguous format is found.
+func journalDecimalSeparator(store *config.Store, commodity string) string {
+	path := store.Get().JournalPath
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) < 2 || fields[0] != "commodity" || strings.Trim(fields[1], `"'`) != commodity {
+			continue
+		}
+		for j := i + 1; j < len(lines) && j <= i+5; j++ {
+			formatFields := strings.Fields(lines[j])
+			if len(formatFields) < 2 || formatFields[0] != "format" {
+				continue
+			}
+			pattern := formatFields[1]
+			index := strings.LastIndexAny(pattern, ".,")
+			if index < 0 || index == len(pattern)-1 {
+				continue
+			}
+			if !strings.ContainsAny(pattern[index+1:], "0123456789") {
+				continue
+			}
+			return string(pattern[index])
+		}
+	}
+	return ""
 }
 
 func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx CommitCandidateTransaction, commodity string, dialect string, store *config.Store) {
@@ -589,7 +634,7 @@ func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx
 	if shortNote == "" {
 		shortNote = strings.TrimSpace(tx.Payee)
 	}
-	amtStr := formatCommitAmount(tx.Amount, dialect, store)
+	amtStr := formatCommitAmount(tx.Amount, commodity, dialect, store)
 	dateStr := strings.ReplaceAll(tx.Date, "/", "-")
 
 	if dialect == "beancount" {

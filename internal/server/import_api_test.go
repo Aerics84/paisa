@@ -721,6 +721,37 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 	assert.NotContains(t, beancountOut, "2026/10/11")
 }
 
+func TestFormatTransactionsForCommitUsesJournalCommodityStyle(t *testing.T) {
+	db := openImportTestDB(t)
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.ledger")
+
+	req := CommitImportRequest{
+		BaseAccount: "Assets:Checking",
+		Transactions: []CommitCandidateTransaction{{
+			Date:            "2026-10-11",
+			Payee:           "Coffee Shop",
+			Amount:          12.50,
+			Currency:        "EUR",
+			IsDebit:         true,
+			SelectedAccount: "Expenses:Food:Dining",
+		}},
+	}
+
+	// A dot-formatted journal must keep dots even when the regional profile is
+	// Germany/EU; the journal's commodity style wins over the locale heuristic.
+	require.NoError(t, os.WriteFile(journal, []byte("commodity EUR\n    format 1,000.00 EUR\n"), 0o644))
+	loadImportTestConfig(t, fmt.Sprintf("journal_path: '%s'\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n", strings.ReplaceAll(journal, `\`, "/")))
+	dotOut := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
+	assert.Contains(t, dotOut, "-12.50 EUR")
+
+	// A comma-formatted journal must use commas even without a German profile.
+	require.NoError(t, os.WriteFile(journal, []byte("commodity EUR\n    format 1.000,00 EUR\n"), 0o644))
+	loadImportTestConfig(t, fmt.Sprintf("journal_path: '%s'\ndb_path: paisa.db\ndefault_currency: EUR\nlocale: en\nledger_cli: hledger\n", strings.ReplaceAll(journal, `\`, "/")))
+	commaOut := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
+	assert.Contains(t, commaOut, "-12,50 EUR")
+}
+
 func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
 	db := openImportTestDB(t)
 
