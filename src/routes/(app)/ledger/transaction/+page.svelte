@@ -15,6 +15,7 @@
   import { editorState } from "$lib/search_query_editor";
   import { get } from "svelte/store";
   import { download } from "$lib/export";
+  import { t } from "$lib/i18n";
 
   let buldEditOpen = $state(false);
   let transactions = $state<T[]>(null);
@@ -88,13 +89,13 @@
 
       if (!saved) {
         toast.toast({
-          message: `Failed to save ${newFile.name}. reason: ${message}`,
+          message: $t("common.saveFailed", { name: newFile.name, reason: message }),
           type: "is-danger",
           duration: 10000
         });
       } else {
         toast.toast({
-          message: `Saved ${newFile.name}`,
+          message: $t("common.saved", { name: newFile.name }),
           type: "is-success"
         });
       }
@@ -142,7 +143,7 @@
                       class="button is-link is-light invertable"
                       onclick={(_e) => (buldEditOpen = !buldEditOpen)}
                     >
-                      <span>Bulk Edit</span>
+                      <span>{$t("ledger.bulkEdit")}</span>
                       <span class="icon is-small">
                         <i class="fas {buldEditOpen ? 'fa-angle-up' : 'fa-angle-down'}"></i>
                       </span>
@@ -153,7 +154,7 @@
             </div>
             <div class="level-right">
               <div class="level-item">
-                <p class="is-6"><b>{filtered.length}</b> transaction(s)</p>
+                <p class="is-6">{$t("ledger.transactionCount", { count: filtered.length })}</p>
               </div>
               <div class="level-item">
                 <button
@@ -164,7 +165,7 @@
                   <span class="icon is-small">
                     <i class="fa-solid fa-file-arrow-down"></i>
                   </span>
-                  download
+                  {$t("ledger.download")}
                 </button>
               </div>
             </div>

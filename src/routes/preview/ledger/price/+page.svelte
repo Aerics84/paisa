@@ -7,6 +7,7 @@
   import _ from "lodash";
   import { onMount } from "svelte";
   import VirtualList from "svelte-tiny-virtual-list";
+  import { t } from "$lib/i18n";
 
   let prices = $state<Record<string, Price[]>>({});
 
@@ -31,13 +32,13 @@
     const { success, message } = await ajax("/api/price/delete", { method: "POST" });
     if (!success) {
       toast({
-        message: `Failed to clear price cache. reason: ${message}`,
+        message: $t("ledger.price.clearFailed", { reason: message }),
         type: "is-danger",
         duration: 10000
       });
     } else {
       toast({
-        message: "Price cache cleared.",
+        message: $t("ledger.price.cleared"),
         type: "is-success"
       });
     }
@@ -68,7 +69,7 @@
                 <span class="icon is-small">
                   <i class="fas fa-trash-can"></i>
                 </span>
-                <span>Clear Price Cache</span>
+                <span>{$t("ledger.price.clearCache")}</span>
               </button>
             </p>
           </div>
@@ -80,17 +81,17 @@
             <thead>
               <tr>
                 <th></th>
-                <th>Commodity Name</th>
-                <th>Last Date</th>
-                <th class="has-text-right">Last Price</th>
-                <th class="has-text-right">1 Day</th>
-                <th class="has-text-right">1 Week</th>
-                <th class="has-text-right">4 Weeks</th>
-                <th class="has-text-right">1 Year</th>
-                <th class="has-text-right">3 Years</th>
-                <th class="has-text-right">5 Years</th>
-                <th>Commodity Type</th>
-                <th>Commodity ID</th>
+                <th>{$t("ledger.price.commodityName")}</th>
+                <th>{$t("ledger.price.lastDate")}</th>
+                <th class="has-text-right">{$t("ledger.price.lastPrice")}</th>
+                <th class="has-text-right">{$t("ledger.price.day")}</th>
+                <th class="has-text-right">{$t("ledger.price.week")}</th>
+                <th class="has-text-right">{$t("ledger.price.weeks4")}</th>
+                <th class="has-text-right">{$t("ledger.price.year")}</th>
+                <th class="has-text-right">{$t("ledger.price.years3")}</th>
+                <th class="has-text-right">{$t("ledger.price.years5")}</th>
+                <th>{$t("ledger.price.commodityType")}</th>
+                <th>{$t("ledger.price.commodityId")}</th>
               </tr>
             </thead>
             <tbody class="has-text-grey-dark">

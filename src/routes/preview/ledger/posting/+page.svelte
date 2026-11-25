@@ -22,6 +22,7 @@
   import _ from "lodash";
   import { onDestroy, onMount } from "svelte";
   import VirtualList from "svelte-tiny-virtual-list";
+  import { t } from "$lib/i18n";
 
   let files: LedgerFile[] = [];
   let accounts: string[] = [];
@@ -99,16 +100,16 @@
             <div
               class="px-3 pt-1 grid grid-cols-7x gap-1 posting-row items-baseline has-text-weight-bold"
             >
-              <div>Date</div>
-              <div>Description</div>
-              <div>Account</div>
-              <div class="has-text-right">Amount</div>
-              <div class="has-text-right">Balance</div>
-              <div class="has-text-right">Units</div>
-              <div class="has-text-right">Unit Price</div>
-              <div class="has-text-right">Market Value</div>
-              <div class="has-text-right">Change</div>
-              <div class="has-text-right">CAGR</div>
+              <div>{$t("ledger.table.date")}</div>
+              <div>{$t("ledger.table.description")}</div>
+              <div>{$t("ledger.table.account")}</div>
+              <div class="has-text-right">{$t("ledger.table.amount")}</div>
+              <div class="has-text-right">{$t("ledger.table.balance")}</div>
+              <div class="has-text-right">{$t("ledger.table.units")}</div>
+              <div class="has-text-right">{$t("ledger.table.unitPrice")}</div>
+              <div class="has-text-right">{$t("ledger.table.marketValue")}</div>
+              <div class="has-text-right">{$t("ledger.table.change")}</div>
+              <div class="has-text-right">{$t("ledger.table.cagr")}</div>
             </div>
             <VirtualList
               scrollDirection="vertical"

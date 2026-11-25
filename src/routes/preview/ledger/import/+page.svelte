@@ -26,6 +26,7 @@
   import FileModal from "$lib/components/FileModal.svelte";
   import Modal from "$lib/components/Modal.svelte";
   import StatementImport from "$lib/components/StatementImport.svelte";
+  import { t } from "$lib/i18n";
 
   // The template/preset flow is the default; statement staging is additive.
   let importMode = $state<"template" | "staging">("template");
@@ -80,7 +81,7 @@
 
     if (!saved) {
       toast.toast({
-        message: `Failed to save ${saveAsName}. reason: ${message}`,
+        message: $t("common.saveFailed", { name: saveAsName, reason: message }),
         type: "is-danger",
         duration: 10000
       });
@@ -91,7 +92,7 @@
     selectedTemplate = _.find(templates, { id: template.id });
     saveAsName = selectedTemplate.name;
     toast.toast({
-      message: `Saved ${saveAsName}`,
+      message: $t("common.saved", { name: saveAsName }),
       type: "is-success"
     });
 
@@ -101,10 +102,10 @@
   async function remove() {
     const oldName = selectedTemplate.name;
     const confirmed = await askConfirm({
-      title: "Delete template?",
-      description: `Are you sure you want to delete ${oldName} template?`,
-      confirmLabel: "Delete",
-      cancelLabel: "Cancel",
+      title: $t("ledger.import.deleteTemplateTitle"),
+      description: $t("ledger.import.deleteTemplateDescription", { name: oldName }),
+      confirmLabel: $t("common.delete"),
+      cancelLabel: $t("common.cancel"),
       variant: "danger"
     });
     if (!confirmed) {
@@ -116,7 +117,7 @@
 
     if (!success) {
       toast.toast({
-        message: `Failed to remove ${oldName}. reason: ${message}`,
+        message: $t("ledger.import.removeFailed", { name: oldName, reason: message }),
         type: "is-danger",
         duration: 10000
       });
@@ -127,7 +128,7 @@
     selectedTemplate = templates[0];
     saveAsName = selectedTemplate.name;
     toast.toast({
-      message: `Removed ${oldName}`,
+      message: $t("ledger.import.removed", { name: oldName }),
       type: "is-success"
     });
 
@@ -198,13 +199,13 @@
     try {
       await navigator.clipboard.writeText(preview);
       toast.toast({
-        message: "Copied to clipboard",
+        message: $t("common.copied"),
         type: "is-success"
       });
     } catch (e) {
       console.log(e);
       toast.toast({
-        message: "Failed to copy to clipboard",
+        message: $t("common.copyFailed"),
         type: "is-danger"
       });
     }
@@ -223,27 +224,34 @@
 
     if (saved) {
       toast.toast({
-        message: `Saved <b><a href="/ledger/editor/${encodeURIComponent(
-          destinationFile
-        )}">${destinationFile}</a></b>`,
+        message: $t("common.createdFile", {
+          url: `/ledger/editor/${encodeURIComponent(destinationFile)}`,
+          name: _.escape(destinationFile)
+        }),
         type: "is-success",
         duration: 5000
       });
     } else {
       toast.toast({
-        message: `Failed to save ${destinationFile}. reason: ${message}`,
+        message: $t("common.saveFailed", { name: destinationFile, reason: message }),
         type: "is-danger",
         duration: 10000
       });
     }
   }
 
-  function builtinNotAllowed(action: string, template: ImportTemplate) {
-    if (template?.template_type == "builtin") {
-      return `Not allowed to ${action.toLowerCase()} builtin template`;
-    }
-    return action;
-  }
+  let saveTooltip = $derived(
+    $templateEditorState.hasUnsavedChanges == false
+      ? $t("ledger.import.noUnsavedChanges")
+      : selectedTemplate?.template_type == "builtin"
+        ? $t("ledger.import.builtinSaveNotAllowed")
+        : $t("common.save")
+  );
+  let deleteTooltip = $derived(
+    selectedTemplate?.template_type == "builtin"
+      ? $t("ledger.import.builtinDeleteNotAllowed")
+      : $t("common.delete")
+  );
 
   let templateCreateModalOpen = $state(false);
   function openTemplateCreateModal() {
@@ -253,15 +261,15 @@
 
 <Modal bind:active={templateCreateModalOpen}>
   <svelte:fragment slot="head" let:close>
-    <p class="modal-card-title">Create Template</p>
-    <button class="delete" aria-label="close" onclick={(e) => close(e)}></button>
+    <p class="modal-card-title">{$t("ledger.import.createTemplate")}</p>
+    <button class="delete" aria-label={$t("common.close")} onclick={(e) => close(e)}></button>
   </svelte:fragment>
   <div class="field" slot="body">
-    <label class="label" for="save-filename">Template Name</label>
+    <label class="label" for="save-filename">{$t("ledger.import.templateName")}</label>
     <div class="control" id="save-filename">
       <input class="input" type="text" bind:value={saveAsName} />
       {#if saveAsNameDuplicate}
-        <p class="help is-danger">Template with the same name already exists</p>
+        <p class="help is-danger">{$t("ledger.import.templateExists")}</p>
       {/if}
     </div>
   </div>
@@ -269,9 +277,9 @@
     <button
       class="button is-success"
       disabled={_.isEmpty(saveAsName) || saveAsNameDuplicate}
-      onclick={(e) => save() && close(e)}>Create</button
+      onclick={(e) => save() && close(e)}>{$t("common.create")}</button
     >
-    <button class="button" onclick={(e) => close(e)}>Cancel</button>
+    <button class="button" onclick={(e) => close(e)}>{$t("common.cancel")}</button>
   </svelte:fragment>
 </Modal>
 
@@ -290,7 +298,7 @@
             }}
           >
             <span class="icon is-small"><i class="fas fa-code"></i></span>
-            <span>Template / Preset Import</span>
+            <span>{$t("ledger.import.templateTab")}</span>
           </a>
         </li>
         <li class:is-active={importMode === "staging"}>
@@ -302,7 +310,7 @@
             }}
           >
             <span class="icon is-small"><i class="fas fa-wand-magic-sparkles"></i></span>
-            <span>Statement Staging</span>
+            <span>{$t("ledger.import.stagingTab")}</span>
           </a>
         </li>
       </ul>
@@ -316,11 +324,11 @@
         <div class="box p-3 mb-3 overflow-x-auto">
           <div class="field is-grouped mb-0">
             <p class="control">
-              <span data-tippy-content="Create" data-tippy-followCursor="false">
+              <span data-tippy-content={$t("common.create")} data-tippy-followCursor="false">
                 <button
                   class="button"
                   onclick={(_e) => openTemplateCreateModal()}
-                  aria-label="Create template"
+                  aria-label={$t("ledger.import.createTemplateAria")}
                 >
                   <span class="icon">
                     <i class="fas fa-file-circle-plus"></i>
@@ -328,17 +336,11 @@
                 </button>
               </span>
 
-              <span
-                class="ml-4"
-                data-tippy-followCursor="false"
-                data-tippy-content={$templateEditorState.hasUnsavedChanges == false
-                  ? "No Unsaved Chagnes"
-                  : builtinNotAllowed("Save", selectedTemplate)}
-              >
+              <span class="ml-4" data-tippy-followCursor="false" data-tippy-content={saveTooltip}>
                 <button
                   class="button"
                   onclick={(_e) => save()}
-                  aria-label="Save template"
+                  aria-label={$t("ledger.import.saveTemplateAria")}
                   disabled={$templateEditorState.hasUnsavedChanges == false ||
                     selectedTemplate?.template_type == "builtin"}
                 >
@@ -348,14 +350,11 @@
                 </button>
               </span>
 
-              <span
-                data-tippy-followCursor="false"
-                data-tippy-content={builtinNotAllowed("Delete", selectedTemplate)}
-              >
+              <span data-tippy-followCursor="false" data-tippy-content={deleteTooltip}>
                 <button
                   class="button"
                   onclick={(_e) => remove()}
-                  aria-label="Delete template"
+                  aria-label={$t("ledger.import.deleteTemplateAria")}
                   disabled={selectedTemplate?.template_type == "builtin"}
                 >
                   <span class="icon">
@@ -411,9 +410,9 @@
             <div class="control">
               <button
                 data-tippy-followCursor="false"
-                data-tippy-content="Copy to Clipboard"
+                data-tippy-content={$t("common.copyToClipboard")}
                 class="button clipboard"
-                aria-label="Copy preview to clipboard"
+                aria-label={$t("ledger.import.copyPreviewAria")}
                 disabled={_.isEmpty(preview)}
                 onclick={copyToClipboard}
               >
@@ -423,9 +422,9 @@
               </button>
               <button
                 data-tippy-followCursor="false"
-                data-tippy-content="Save"
+                data-tippy-content={$t("common.save")}
                 class="button save"
-                aria-label="Save preview"
+                aria-label={$t("ledger.import.savePreviewAria")}
                 disabled={_.isEmpty(preview)}
                 onclick={openSaveModal}
               >
@@ -446,7 +445,7 @@
             accept=".csv,.txt,.sta,.mt940,.xlsx,.pdf,.xml,.CSV,.TXT,.STA,.MT940,.XLSX,.PDF,.XML"
             on:drop={handleFilesSelect}
           >
-            Drag 'n' drop CSV, TXT, STA, MT940, XLSX, PDF, XML file here or click to select
+            {$t("ledger.import.dropzone")}
           </Dropzone>
         </div>
         <div class="is-flex justify-end mb-3 gap-4">
@@ -457,7 +456,7 @@
               bind:checked={options.reverse}
               class="switch is-rounded is-small"
             />
-            <label for="import-reverse">Reverse</label>
+            <label for="import-reverse">{$t("ledger.import.reverse")}</label>
           </div>
           <div class="field color-switch">
             <input
@@ -466,12 +465,12 @@
               bind:checked={options.trim}
               class="switch is-rounded is-small"
             />
-            <label for="trim-reverse">Trim</label>
+            <label for="trim-reverse">{$t("ledger.import.trim")}</label>
           </div>
         </div>
         {#if parseErrorMessage}
           <div class="message invertable is-danger">
-            <div class="message-header">Failed to parse document</div>
+            <div class="message-header">{$t("ledger.import.parseFailed")}</div>
             <div class="message-body">{parseErrorMessage}</div>
           </div>
         {/if}
