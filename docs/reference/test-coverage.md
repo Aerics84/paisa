@@ -2,7 +2,7 @@
 
 This page records how the Svelte frontend test suite is run in CI and before a push, and what its coverage numbers mean.
 
-## Baseline (measured 2026-11-24)
+## Baseline (measured 2026-11-25)
 
 ```bash
 bun test --coverage --preload ./src/happydom.ts src
@@ -10,13 +10,13 @@ bun test --coverage --preload ./src/happydom.ts src
 
 | Metric     | Value |
 | ---------- | ----- |
-| Test files | 46    |
-| Tests      | 306   |
-| `% Funcs`  | 78.77 |
-| `% Lines`  | 76.98 |
-| `expect()` | 731   |
+| Test files | 66    |
+| Tests      | 421   |
+| `% Funcs`  | 83.04 |
+| `% Lines`  | 81.02 |
+| `expect()` | 1125  |
 
-The historical 43 files / 292 tests from the measurement baseline are superseded by these numbers; the counts above are what the suite reports on the current branch.
+The historical 43 files / 292 tests and the pre-migration 46 files / 306 tests / 78.77 % funcs / 76.98 % lines / 731 `expect()` calls are superseded by these numbers; the counts above are what the suite reports on the current branch.
 
 ## Commands
 
@@ -35,7 +35,7 @@ The thresholds default to 75 % for lines and functions and are a ratchet: they s
 
 ## Why the gate is a script and not `bunfig.toml`
 
-Bun's own `[test] coverageThreshold` is not an option here: Bun 1.4.4 applies it **per file**, not to the aggregate. With `coverageThreshold = { lines = 0.75, functions = 0.75 }` the full suite still reports `306 pass`, `All files 76.98 %`, and exits `1` without a message, because individual files such as `src/lib/networth.ts` (4 % lines) or `src/persisted_store.ts` (0 % funcs) are below the per-file threshold. A per-file ratchet would either fail permanently or have to be set to a value that checks nothing.
+Bun's own `[test] coverageThreshold` is not an option here: Bun 1.4.4 applies it **per file**, not to the aggregate. With `coverageThreshold = { lines = 0.75, functions = 0.75 }` the full suite still reports `421 pass`, `All files 81.02 %`, and exits `1` without a message, because individual files such as `src/lib/networth.ts` (4 % lines) or `src/persisted_store.ts` (0 % funcs) are below the per-file threshold. A per-file ratchet would either fail permanently or have to be set to a value that checks nothing.
 
 `bunfig.toml` therefore deliberately sets no threshold; it carries a comment pointing at `scripts/check-coverage.mjs`, which is the authoritative aggregate gate and the only coverage command wired into CI. `npm run test:coverage` stays available for humans who just want the table.
 

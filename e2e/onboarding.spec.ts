@@ -26,6 +26,7 @@ test("a fresh installation redirects to onboarding and offers both profiles", as
     expect(response.status()).toBe(200);
     const status = await response.json();
     expect(status.needed).toBe(true);
+    expect(status.can_setup).toBe(true);
     expect(status.profiles.map((profile: { id: string }) => profile.id)).toEqual([
       "germany-eu",
       "india"
@@ -46,8 +47,6 @@ test("a fresh installation redirects to onboarding and offers both profiles", as
 });
 
 test("Germany/EU empty setup writes the config and rejects a second submit", async ({ page }) => {
-  test.skip(!hasLedger(), needsLedger);
-
   const server = await startServer({ name: "onboarding-empty", port: 5767, firstRun: true });
   try {
     await page.goto(`${server.url}/`);
@@ -76,8 +75,6 @@ test("Germany/EU empty setup writes the config and rejects a second submit", asy
 test("concurrent setup attempts yield exactly one success and one conflict", async ({
   request
 }) => {
-  test.skip(!hasLedger(), needsLedger);
-
   const server = await startServer({ name: "onboarding-race", port: 5768, firstRun: true });
   try {
     const responses = await Promise.all([
