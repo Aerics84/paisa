@@ -93,7 +93,7 @@ jobs:
       - name: Install ledger
         run: |
           sudo apt-get update
-          sudo apt-get install -y ledger
+          sudo apt-get install -y ledger hledger
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build

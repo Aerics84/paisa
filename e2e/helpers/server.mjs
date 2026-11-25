@@ -7,6 +7,11 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const cacheRoot = join(root, ".cache");
 
+const builtIndex = join(root, "web", "static", "index.html");
+if (!existsSync(builtIndex)) {
+  throw new Error("web/static/index.html is missing. Run `npm run build` before `npm run e2e`.");
+}
+
 const STARTUP_TIMEOUT = 60_000;
 const STOP_TIMEOUT = 10_000;
 

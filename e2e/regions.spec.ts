@@ -1,12 +1,23 @@
+import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { startServer } from "./helpers/server.mjs";
 
 test.describe.configure({ mode: "serial" });
 
+function hasHledger() {
+  try {
+    execFileSync("hledger", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let germany: Awaited<ReturnType<typeof startServer>>;
 let india: Awaited<ReturnType<typeof startServer>>;
 
 test.beforeAll(async () => {
+  test.skip(!hasHledger(), "hledger is required to sync the region fixtures");
   [germany, india] = await Promise.all([
     startServer({
       name: "regions-germany",
