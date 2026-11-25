@@ -612,21 +612,31 @@ func emitInvestment(state *GeneratorState, start time.Time) error {
 	equity2 := roundToK(state.Balance * 0.2)
 	debt := roundToK(state.Balance * 0.3)
 
-	state.Balance -= equity1
 	units, err := emitCommodityBuy(state.Ledger, start, "NIFTY", "Assets:Checking:SBI", "Assets:Equity:NIFTY", equity1)
 	if err != nil {
 		return err
 	}
+	if units > 0 {
+		// A skipped commodity transaction (no price history) must not reduce
+		// the notional cash balance; otherwise the demo journal drifts.
+		state.Balance -= equity1
+	}
 	state.NiftyBalance += units
 
-	state.Balance -= equity2
-	if _, err := emitCommodityBuy(state.Ledger, start, "PPFAS", "Assets:Checking:SBI", "Assets:Equity:PPFAS", equity2); err != nil {
+	units, err = emitCommodityBuy(state.Ledger, start, "PPFAS", "Assets:Checking:SBI", "Assets:Equity:PPFAS", equity2)
+	if err != nil {
 		return err
 	}
+	if units > 0 {
+		state.Balance -= equity2
+	}
 
-	state.Balance -= debt
-	if _, err := emitCommodityBuy(state.Ledger, start, "ABCBF", "Assets:Checking:SBI", "Assets:Debt:ABCBF", debt); err != nil {
+	units, err = emitCommodityBuy(state.Ledger, start, "ABCBF", "Assets:Checking:SBI", "Assets:Debt:ABCBF", debt)
+	if err != nil {
 		return err
+	}
+	if units > 0 {
+		state.Balance -= debt
 	}
 
 	if start.Month() == time.March {

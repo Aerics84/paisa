@@ -19,6 +19,7 @@ import (
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/model/price"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -106,6 +107,16 @@ func stubOnboardingSync(t *testing.T, result gin.H) {
 
 	previous := onboardingSync
 	onboardingSync = func(Deps, SyncRequest) gin.H { return result }
+	t.Cleanup(func() { onboardingSync = previous })
+}
+
+// stubOnboardingSyncByRequest lets a test distinguish the required journal
+// phase from the best-effort price/portfolio enrichment phase.
+func stubOnboardingSyncByRequest(t *testing.T, result func(Deps, SyncRequest) gin.H) {
+	t.Helper()
+
+	previous := onboardingSync
+	onboardingSync = result
 	t.Cleanup(func() { onboardingSync = previous })
 }
 
@@ -386,17 +397,22 @@ func TestOnboardingFailedSyncRestoresFilesAndAllowsRetry(t *testing.T) {
 	journalBefore, err := os.ReadFile(journalPath)
 	require.NoError(t, err)
 
-	previous := onboardingSync
-	onboardingSync = func(Deps, SyncRequest) gin.H {
+	calls := []SyncRequest{}
+	stubOnboardingSyncByRequest(t, func(_ Deps, request SyncRequest) gin.H {
+		calls = append(calls, request)
 		return gin.H{"success": false, "message": "ledger unavailable"}
-	}
-	t.Cleanup(func() { onboardingSync = previous })
+	})
 
 	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	// Germany demo generation is fully offline, so only the injected journal
+	// sync failure is exercised here (no India NAV calls).
 	recorder := postOnboarding(t, router,
-		`{"profile":"india","mode":"demo"}`, onboardingLoopback, nil)
+		`{"profile":"germany-eu","mode":"demo"}`, onboardingLoopback, nil)
 
 	require.Equal(t, http.StatusInternalServerError, recorder.Code)
+	require.Len(t, calls, 1, "enrichment must not run after a required journal failure")
+	assert.True(t, calls[0].Journal)
+	assert.False(t, calls[0].Prices)
 	body := map[string]any{}
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 	assert.Equal(t, "ledger unavailable", body["error"])
@@ -452,6 +468,71 @@ func TestOnboardingDemoWithoutPostingsFails(t *testing.T) {
 	assert.Equal(t, configBefore, configAfter)
 	assert.False(t, store.Initialized())
 	assert.True(t, store.AutoCreated())
+}
+
+func TestOnboardingEnrichmentFailureKeepsEmptySuccess(t *testing.T) {
+	store, dir, configPath := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+
+	stubOnboardingSyncByRequest(t, func(_ Deps, request SyncRequest) gin.H {
+		if request.Prices {
+			return gin.H{"success": false, "message": "price sync failed: NIFTY"}
+		}
+		return gin.H{"success": true}
+	})
+
+	router := newOnboardingRouter(t, openOnboardingTestDB(t), store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"empty"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	body := map[string]any{}
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	assert.Equal(t, true, body["success"])
+	assert.Equal(t, "price sync failed: NIFTY", body["warning"])
+
+	content, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "regional_profile: germany-eu")
+	assert.True(t, store.Initialized(), "enrichment failure must not undo onboarding")
+	assert.False(t, store.AutoCreated())
+}
+
+func TestOnboardingDemoEnrichmentFailureKeepsSuccess(t *testing.T) {
+	store, dir, _ := newOnboardingEnv(t, onboardingBaseConfig, true)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "main.ledger"), []byte{}, 0o644))
+
+	db := openOnboardingTestDB(t)
+	stubOnboardingSyncByRequest(t, func(deps Deps, request SyncRequest) gin.H {
+		if request.Prices {
+			return gin.H{"success": false, "message": "price sync failed: NIFTY"}
+		}
+		// The required phase is responsible for seeding postings; insert one so
+		// the demo postings check passes without a real ledger binary.
+		require.NoError(t, deps.DB.Create(&posting.Posting{
+			Date:      time.Now(),
+			Payee:     "Seeded by test",
+			Account:   "Assets:Checking:SBI",
+			Commodity: "INR",
+			Quantity:  decimal.NewFromInt(1),
+			Amount:    decimal.NewFromInt(1),
+		}).Error)
+		return gin.H{"success": true}
+	})
+
+	router := newOnboardingRouter(t, db, store)
+	recorder := postOnboarding(t, router,
+		`{"profile":"germany-eu","mode":"demo"}`, onboardingLoopback, nil)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	body := map[string]any{}
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	assert.Equal(t, true, body["success"])
+	assert.Equal(t, "price sync failed: NIFTY", body["warning"])
+	assert.True(t, store.Initialized())
+	assert.False(t, store.AutoCreated())
 }
 
 func TestRestoreOnboardingBackupsPreservesContentAndMode(t *testing.T) {

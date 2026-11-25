@@ -162,9 +162,13 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 		return
 	}
 
-	outcome := onboardingSync(deps, SyncRequest{Journal: true, Prices: true, Portfolios: true})
-	if success, _ := outcome["success"].(bool); !success {
-		message, _ := outcome["message"].(string)
+	// Journal sync is required: without a parsed journal there is nothing to
+	// show. Price and portfolio enrichment is best-effort and must not undo a
+	// successful onboarding (an offline India demo still produces a journal even
+	// when commodity price fetches fail).
+	journalOutcome := onboardingSync(deps, SyncRequest{Journal: true})
+	if success, _ := journalOutcome["success"].(bool); !success {
+		message, _ := journalOutcome["message"].(string)
 		if message == "" {
 			message = "sync failed"
 		}
@@ -191,11 +195,23 @@ func handleOnboardingSubmit(c *gin.Context, deps Deps) {
 	committed = true
 	removeOnboardingBackups(backups)
 
-	c.JSON(http.StatusOK, gin.H{
+	warning := ""
+	enrichment := onboardingSync(deps, SyncRequest{Prices: true, Portfolios: true})
+	if success, _ := enrichment["success"].(bool); !success {
+		warning, _ = enrichment["message"].(string)
+	} else {
+		warning, _ = enrichment["warning"].(string)
+	}
+
+	response := gin.H{
 		"success": true,
 		"profile": string(profile),
 		"mode":    request.Mode,
-	})
+	}
+	if warning != "" {
+		response["warning"] = warning
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // reloadOnboardingConfig restores the store snapshot from the configuration
