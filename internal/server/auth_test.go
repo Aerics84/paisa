@@ -555,3 +555,35 @@ func TestAuthStatusRejectsSessionForRemovedUser(t *testing.T) {
 	assert.Equal(t, false, body["authenticated"])
 	assert.Equal(t, "", body["username"])
 }
+
+func TestValidSessionSurvivesInvalidRequestBurst(t *testing.T) {
+	router := testRouter(t, legacyAccountConfig("secret", false))
+	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
+
+	for attempt := 0; attempt < 10; attempt++ {
+		getWithCookie(router, "/api/version", nil)
+	}
+
+	assert.Equal(t, http.StatusOK, getWithCookie(router, "/api/version", cookie).Code)
+}
+
+func TestInvalidRequestsEventuallyRateLimit(t *testing.T) {
+	router := testRouter(t, legacyAccountConfig("secret", false))
+
+	var last *httptest.ResponseRecorder
+	for attempt := 0; attempt < 5; attempt++ {
+		last = getWithCookie(router, "/api/version", nil)
+	}
+
+	assert.Equal(t, http.StatusTooManyRequests, last.Code)
+}
+
+func TestOnboardingProbeDoesNotConsumeLimiter(t *testing.T) {
+	router := testRouter(t, legacyAccountConfig("secret", false))
+
+	for attempt := 0; attempt < 10; attempt++ {
+		assert.Equal(t, http.StatusOK, getWithCookie(router, "/api/onboarding", nil).Code)
+	}
+
+	assert.Equal(t, http.StatusUnauthorized, getWithCookie(router, "/api/version", nil).Code)
+}

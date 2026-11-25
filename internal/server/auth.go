@@ -344,12 +344,9 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 			return
 		}
 
-		_, detail, _ := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0)
-		if detail.Remaining <= 0 {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
-			return
-		}
-
+		// Authenticate before touching the limiter: a valid session or legacy
+		// header must never be locked out by a burst of unauthenticated
+		// requests from the same address.
 		if token, err := c.Cookie(sessionCookieName); err == nil && token != "" {
 			if session, ok := deps.Auth.Lookup(token); ok {
 				if _, found := findUserAccount(cfg.UserAccounts, session.Username); found {
@@ -372,6 +369,11 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 		}
 
 		// Only failed authentication consumes the limiter budget.
+		if _, detail, err := rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 0); err == nil && detail.Remaining <= 0 {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
+			return
+		}
+
 		rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 1)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 	}
@@ -379,7 +381,7 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 
 func isPublicAuthPath(path string) bool {
 	switch path {
-	case "/api/ping", "/api/auth/login", "/api/auth/logout", "/api/auth/status":
+	case "/api/ping", "/api/auth/login", "/api/auth/logout", "/api/auth/status", "/api/onboarding":
 		return true
 	default:
 		return false
