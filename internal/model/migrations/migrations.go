@@ -73,7 +73,7 @@ func Migrate(db *gorm.DB, dbPath string) error {
 	}
 
 	if current > latest {
-		return ErrDatabaseNewer
+		return fmt.Errorf("%w: database %s has user_version %d, latest supported is %d", ErrDatabaseNewer, dbPath, current, latest)
 	}
 
 	for _, migration := range migrations {
@@ -83,12 +83,12 @@ func Migrate(db *gorm.DB, dbPath string) error {
 
 		if migration.Destructive {
 			if err := backup(db, dbPath, migration.Version); err != nil {
-				return fmt.Errorf("backup database before migration %d (%s): %w", migration.Version, migration.Name, err)
+				return fmt.Errorf("backup database %s before migration %d (%s): %w", dbPath, migration.Version, migration.Name, err)
 			}
 		}
 
 		if err := apply(db, migration); err != nil {
-			return fmt.Errorf("migration %d (%s) failed: %w", migration.Version, migration.Name, err)
+			return fmt.Errorf("migrate database %s: migration %d (%s) failed: %w", dbPath, migration.Version, migration.Name, err)
 		}
 
 		current = migration.Version

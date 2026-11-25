@@ -15,9 +15,9 @@ restored from a backup.
 |---|---|---|
 | SQLite schema | Additive migration; `PRAGMA user_version` moves from `0` to `1`. Existing rows are preserved. | The old binary keeps reading the migrated database; it ignores the new `user_version` and any new columns. |
 | Authentication hashes | Legacy `sha256:` hashes still verify and are replaced with `argon2id$...` on the next successful login when the configuration file is writable. | 0.8.6.6 only verifies `sha256:` hashes. After a rehash, login with the stored `argon2id$` value fails; restore the configuration backup or recreate the user. |
-| Sessions | The `paisa_session` cookie is issued again at login. | Old sessions are invalid; log in again. Sessions are process-local in both versions. |
+| Sessions | 0.8.6.7 replaces the pre-0.8.6.7 `X-Auth`/localStorage authentication with an in-memory server session and an HttpOnly `paisa_session` cookie. Restarting the server invalidates the session, so users log in again. | 0.8.6.6 has no server-side session; it authenticates with the `X-Auth` header and a client-side token. A rollback therefore requires logging in again through the old UI/header mechanism, not invalidating a server session. |
 | Configuration defaults | Existing configuration files keep their values. Missing fields still fall back to the generic defaults (India). | No change; the configuration file is unchanged. |
-| daisyUI classes | The `du-*` classes were removed from the stylesheets. | Custom CSS or themes that still target `du-*` classes must be restored from a backup or adjusted. |
+| daisyUI classes | The `du-*` classes were removed from the stylesheets. | Custom CSS or themes that still target `du-*` classes must be adjusted or replaced; restoring only the custom overrides will not bring back the removed component rules. |
 | PWA | A service worker for the static app shell is registered in production builds. | Clear the site data in the browser or call `navigator.serviceWorker.getRegistrations()` followed by `registration.unregister()` for each registration. |
 
 The DACH-first profile applies to new installations only: `paisa init` defaults
@@ -37,10 +37,12 @@ application starts serving or syncing data.
 - Each migration and its `PRAGMA user_version` bump run in one transaction. A
   failed migration rolls back completely, so the database stays at the last
   successfully applied `user_version` and no partial schema change remains.
-- The error message names the failed migration version and name, for example
-  `migration 1 (baseline) failed: ...`. Backup creation failures include the
-  backup target path. The database path is not repeated in the error; it is the
-  `db_path` from the active `paisa.yaml` (or the `--config` file).
+- The error message names the database path, the failed migration version and
+  name, for example
+  `migrate database /path/paisa.db: migration 1 (baseline) failed: ...`.
+  A stale-database error names the database path and both the found and latest
+  user versions. Backup creation failures include the database path and the
+  backup target.
 - Automatic backups are created only for migrations marked destructive in the
   migration list. The current baseline migration is additive and creates no
   backup. A destructive backup is written next to the database as
@@ -55,6 +57,11 @@ application starts serving or syncing data.
 
 A real binary rollback is a manual release step. It is not automated by the
 migration test.
+
+**Before the first 0.8.6.7 start**, copy `paisa.yaml` (and the database plus its
+`-wal`/`-shm` files) to a safe location if you may need to roll back. The first
+successful login can replace a legacy `sha256:` hash with an `argon2id$` hash,
+and 0.8.6.6 cannot verify the latter.
 
 1. Stop `paisa serve` (and any `paisa update` run) so no process writes to the
    database.

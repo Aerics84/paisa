@@ -85,7 +85,10 @@ func TestMigrateRefusesNewerDatabase(t *testing.T) {
 	db, path := openTestDB(t)
 	require.NoError(t, db.Exec("PRAGMA user_version = 99").Error)
 
-	require.ErrorIs(t, Migrate(db, path), ErrDatabaseNewer)
+	err := Migrate(db, path)
+	require.ErrorIs(t, err, ErrDatabaseNewer)
+	require.Contains(t, err.Error(), path)
+	require.Contains(t, err.Error(), "99")
 	require.Equal(t, 99, userVersion(t, db))
 	require.False(t, db.Migrator().HasTable("postings"))
 }

@@ -27,6 +27,7 @@ nav:
       - reference/ledger-cli.md
       - reference/editor.md
       - reference/user-authentication.md
+      - reference/upgrade-0.8.6.7.md
       - reference/credit-cards.md
       - reference/investment.md
       - reference/analysis.md
