@@ -6,6 +6,7 @@
     type RebalancePlan
   } from "$lib/utils";
   import { rebalance } from "$lib/api/assets";
+  import { t } from "$lib/i18n";
 
   let {
     targets = [],
@@ -72,14 +73,13 @@
   >
     <div>
       <h3 class="text-lg font-bold flex items-center gap-2">
-        <span>⚖️ Portfolio Rebalancing Engine</span>
+        <span>⚖️ {$t("components.rebalance.title")}</span>
       </h3>
       <p class="text-sm text-base-content/70">
         {#if mode === "cash_injection"}
-          Calculates tax-free cash deployment targeting underweighted assets without selling
-          existing holdings.
+          {$t("components.rebalance.cashInjectionHint")}
         {:else}
-          Calculates buy and sell transactions required to restore exact target weights.
+          {$t("components.rebalance.fullRebalanceHint")}
         {/if}
       </p>
     </div>
@@ -92,7 +92,7 @@
         class:btn-primary={mode === "cash_injection"}
         onclick={() => handleModeChange("cash_injection")}
       >
-        💧 Cash Deployment (Buy Only)
+        💧 {$t("components.rebalance.cashDeployment")}
       </button>
       <button
         type="button"
@@ -100,7 +100,7 @@
         class:btn-primary={mode === "full_rebalance"}
         onclick={() => handleModeChange("full_rebalance")}
       >
-        🔄 Full Rebalance (Buy & Sell)
+        🔄 {$t("components.rebalance.fullRebalance")}
       </button>
     </div>
   </div>
@@ -109,7 +109,7 @@
     <div class="bg-base-200/50 rounded-lg p-4 mb-5">
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <label for="fresh-cash-input" class="text-sm font-semibold whitespace-nowrap">
-          Fresh Investable Cash:
+          {$t("components.rebalance.freshCash")}
         </label>
         <div class="flex items-center gap-2 flex-grow max-w-xs">
           <input
@@ -139,7 +139,7 @@
             onclick={() => {
               cashAmount = 0;
               updatePlan();
-            }}>Reset</button
+            }}>{$t("settings.reset")}</button
           >
         </div>
       </div>
@@ -151,12 +151,12 @@
       <table class="table table-sm w-full">
         <thead>
           <tr class="text-base-content/70 border-b border-base-200 text-xs uppercase">
-            <th>Asset Class</th>
-            <th class="text-right">Target</th>
-            <th class="text-right">Current %</th>
-            <th class="text-right">Current Value</th>
-            <th class="text-center">Action Required</th>
-            <th class="text-right">Projected %</th>
+            <th>{$t("components.rebalance.assetClass")}</th>
+            <th class="text-right">{$t("components.rebalance.target")}</th>
+            <th class="text-right">{$t("components.rebalance.currentPercent")}</th>
+            <th class="text-right">{$t("components.rebalance.currentValue")}</th>
+            <th class="text-center">{$t("components.rebalance.actionRequired")}</th>
+            <th class="text-right">{$t("components.rebalance.projectedPercent")}</th>
           </tr>
         </thead>
         <tbody>
@@ -172,16 +172,18 @@
                   <span
                     class="badge badge-success badge-sm font-semibold gap-1 text-white py-2.5 px-3"
                   >
-                    BUY {formatCurrency(Number(item.amount))}
+                    {$t("components.rebalance.buy")} {formatCurrency(Number(item.amount))}
                   </span>
                 {:else if item.action === "SELL"}
                   <span
                     class="badge badge-error badge-sm font-semibold gap-1 text-white py-2.5 px-3"
                   >
-                    SELL {formatCurrency(Number(item.amount))}
+                    {$t("components.rebalance.sell")} {formatCurrency(Number(item.amount))}
                   </span>
                 {:else}
-                  <span class="badge badge-ghost badge-sm text-base-content/60"> HOLD </span>
+                  <span class="badge badge-ghost badge-sm text-base-content/60">
+                    {$t("components.rebalance.hold")}
+                  </span>
                 {/if}
               </td>
               <td class="text-right font-mono font-semibold">
@@ -197,24 +199,27 @@
       class="flex items-center justify-between text-xs text-base-content/60 mt-4 pt-3 border-t border-base-200"
     >
       <div>
-        Portfolio Total: <span class="font-mono font-semibold text-base-content"
+        {$t("components.rebalance.portfolioTotal")}
+        <span class="font-mono font-semibold text-base-content"
           >{formatCurrency(Number(plan.total_before))}</span
         >
         {#if Number(plan.cash_amount) > 0}
-          &rarr; Projected: <span class="font-mono font-semibold text-base-content"
+          {$t("components.rebalance.projected")}
+          <span class="font-mono font-semibold text-base-content"
             >{formatCurrency(Number(plan.total_after))}</span
           >
         {/if}
       </div>
       <div>
         {#if loading}
-          <span class="loading loading-spinner loading-xs"></span> Calculating...
+          <span class="loading loading-spinner loading-xs"></span>
+          {$t("components.rebalance.calculating")}
         {/if}
       </div>
     </div>
   {:else}
     <div class="text-center py-6 text-sm text-base-content/60">
-      Configure allocation targets above to view rebalancing recommendations.
+      {$t("components.rebalance.empty")}
     </div>
   {/if}
 </div>

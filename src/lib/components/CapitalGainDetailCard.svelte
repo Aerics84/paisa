@@ -1,5 +1,6 @@
 <script lang="ts">
   import { formatCurrency, type FYCapitalGain } from "$lib/utils";
+  import { t } from "$lib/i18n";
   const DATE_FORMAT = "DD MMM YYYY";
 
   interface Props {
@@ -13,15 +14,15 @@
   <table class="table is-narrow is-fullwidth is-bordered">
     <thead>
       <tr>
-        <th>Purchase Date</th>
-        <th class="has-text-right">Purchase Price</th>
-        <th>Sell Date</th>
-        <th class="has-text-right">Sell Price</th>
-        <th class="has-text-right">Gain</th>
-        <th class="has-text-right">Taxable Gain</th>
-        <th class="has-text-right">Short Term Tax</th>
-        <th class="has-text-right">Long Term Tax</th>
-        <th class="has-text-right">Taxable at Slab Rate</th>
+        <th>{$t("tax.purchaseDate")}</th>
+        <th class="has-text-right">{$t("tax.purchasePrice")}</th>
+        <th>{$t("tax.sellDate")}</th>
+        <th class="has-text-right">{$t("tax.sellPrice")}</th>
+        <th class="has-text-right">{$t("tax.gain")}</th>
+        <th class="has-text-right">{$t("tax.taxableGain")}</th>
+        <th class="has-text-right">{$t("tax.shortTermTax")}</th>
+        <th class="has-text-right">{$t("tax.longTermTax")}</th>
+        <th class="has-text-right">{$t("tax.taxableAtSlabRate")}</th>
       </tr>
     </thead>
     <tbody>

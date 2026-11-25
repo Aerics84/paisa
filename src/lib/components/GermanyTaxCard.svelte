@@ -1,6 +1,7 @@
 <script lang="ts">
   import { downloadGermanyTaxYear } from "$lib/germany_tax_export";
   import { formatCurrency, formatFloat, type GermanyTaxYear } from "$lib/utils";
+  import { t } from "$lib/i18n";
 
   interface Props {
     taxYear: GermanyTaxYear;
@@ -15,7 +16,7 @@
       <p class="card-header-title">{taxYear.tax_year}</p>
       <div class="card-header-icon">
         <button class="button is-small" onclick={() => downloadGermanyTaxYear(taxYear)}>
-          Export CSV
+          {$t("tax.exportCsv")}
         </button>
       </div>
     </header>
@@ -27,85 +28,85 @@
             <table class="table is-narrow is-fullwidth is-hoverable">
               <tbody>
                 <tr>
-                  <td>Gross Realized Gain</td>
+                  <td>{$t("tax.grossRealizedGain")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.gross_realized_gain)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Realized Loss</td>
+                  <td>{$t("tax.realizedLoss")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.realized_loss)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Realized Gain</td>
+                  <td>{$t("tax.realizedGain")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.realized_gain)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Partial Exemption Adjustment</td>
+                  <td>{$t("tax.partialExemptionAdjustment")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.partial_exemption_amount)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Taxable Base Before Allowance</td>
+                  <td>{$t("tax.taxableBaseBeforeAllowance")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.taxable_amount_before_allowance)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Allowance Used</td>
+                  <td>{$t("tax.allowanceUsed")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.allowance_used)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Taxable Amount</td>
+                  <td>{$t("tax.taxableAmount")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.taxable_amount)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Capital Income Tax</td>
+                  <td>{$t("tax.capitalIncomeTax")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.capital_income_tax)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Solidarity Surcharge</td>
+                  <td>{$t("tax.solidaritySurcharge")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.solidarity_surcharge)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Church Tax</td>
+                  <td>{$t("tax.churchTax")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.church_tax)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Gross Total Tax</td>
+                  <td>{$t("tax.grossTotalTax")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.total_tax)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Withholding Tax Paid</td>
+                  <td>{$t("tax.withholdingTaxPaid")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.withholding_tax_paid)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Tax Credit Used</td>
+                  <td>{$t("tax.taxCreditUsed")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.tax_credit_used)}</td
                   >
                 </tr>
                 <tr>
-                  <td>Net Tax Due</td>
+                  <td>{$t("tax.netTaxDue")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(taxYear.summary.net_tax_due)}</td
                   >
@@ -114,10 +115,12 @@
             </table>
 
             <p class="is-size-7 has-text-grey">
-              Allowance {formatCurrency(taxYear.settings.annual_allowance)} | Capital income tax
-              {formatFloat(taxYear.settings.capital_income_tax_rate * 100)}% | Soli
-              {formatFloat(taxYear.settings.solidarity_surcharge_rate * 100)}% | Church tax
-              {formatFloat(taxYear.settings.church_tax_rate * 100)}%
+              {$t("tax.settingsSummary", {
+                allowance: formatCurrency(taxYear.settings.annual_allowance),
+                capitalTax: formatFloat(taxYear.settings.capital_income_tax_rate * 100),
+                soli: formatFloat(taxYear.settings.solidarity_surcharge_rate * 100),
+                churchTax: formatFloat(taxYear.settings.church_tax_rate * 100)
+              })}
             </p>
 
             {#if taxYear.diagnostics.length > 0}
@@ -136,14 +139,14 @@
             <table class="table is-narrow is-fullwidth is-hoverable">
               <thead>
                 <tr>
-                  <th>Account</th>
-                  <th class="has-text-right">Sold Units</th>
-                  <th class="has-text-right">Purchase Price</th>
-                  <th class="has-text-right">Sell Price</th>
-                  <th class="has-text-right">Realized Gain</th>
-                  <th class="has-text-right">Exemption Rate</th>
-                  <th class="has-text-right">Exemption Adjustment</th>
-                  <th class="has-text-right">Taxable Gain</th>
+                  <th>{$t("assets.account")}</th>
+                  <th class="has-text-right">{$t("tax.soldUnits")}</th>
+                  <th class="has-text-right">{$t("tax.purchasePrice")}</th>
+                  <th class="has-text-right">{$t("tax.sellPrice")}</th>
+                  <th class="has-text-right">{$t("tax.realizedGain")}</th>
+                  <th class="has-text-right">{$t("tax.exemptionRate")}</th>
+                  <th class="has-text-right">{$t("tax.exemptionAdjustment")}</th>
+                  <th class="has-text-right">{$t("tax.taxableGain")}</th>
                 </tr>
               </thead>
               <tbody>

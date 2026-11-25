@@ -8,6 +8,7 @@
     type AllocationTargetEntry
   } from "$lib/allocation_targets";
   import * as toast from "bulma-toast";
+  import { t } from "$lib/i18n";
   import _ from "lodash";
 
   let {
@@ -96,12 +97,15 @@
     saving = true;
     try {
       await saveAllocationTargets(localTargets);
-      toast.toast({ message: "Asset allocation targets saved successfully!", type: "is-success" });
+      toast.toast({ message: $t("components.allocationTargets.saved"), type: "is-success" });
       active = false;
       onSave();
     } catch (e: any) {
       console.error(e);
-      toast.toast({ message: e.message || "Failed to save allocation targets", type: "is-danger" });
+      toast.toast({
+        message: e.message || $t("components.allocationTargets.saveFailed"),
+        type: "is-danger"
+      });
     } finally {
       saving = false;
     }
@@ -113,7 +117,7 @@
     <div class="flex items-center justify-between w-full">
       <div class="flex items-center gap-2">
         <span class="text-xl">🎯</span>
-        <h3 class="text-lg font-bold">Manage Asset Allocation Targets</h3>
+        <h3 class="text-lg font-bold">{$t("components.allocationTargets.title")}</h3>
       </div>
       <button type="button" class="btn btn-sm btn-ghost btn-circle" onclick={close}>✕</button>
     </div>
@@ -124,7 +128,7 @@
       <!-- Target Balance Bar -->
       <div class="bg-base-200/60 rounded-xl p-4">
         <div class="flex items-center justify-between text-sm font-semibold mb-2">
-          <span>Total Allocation:</span>
+          <span>{$t("components.allocationTargets.totalAllocation")}</span>
           <span
             class="font-mono text-base font-bold"
             class:text-success={is100Percent}
@@ -133,14 +137,20 @@
           >
             {totalPercentage}%
             {#if is100Percent}
-              <span class="text-xs font-normal text-success ml-1">✓ Balanced</span>
+              <span class="text-xs font-normal text-success ml-1"
+                >{$t("components.allocationTargets.balanced")}</span
+              >
             {:else if totalPercentage < 100}
               <span class="text-xs font-normal text-warning ml-1"
-                >({100 - totalPercentage}% unallocated)</span
+                >{$t("components.allocationTargets.unallocated", {
+                  percent: 100 - totalPercentage
+                })}</span
               >
             {:else}
               <span class="text-xs font-normal text-error ml-1"
-                >(Exceeds 100% by {totalPercentage - 100}%)</span
+                >{$t("components.allocationTargets.exceeds", {
+                  percent: totalPercentage - 100
+                })}</span
               >
             {/if}
           </span>
@@ -167,13 +177,13 @@
                   for={"target-name-" + idx}
                   class="text-xs font-semibold text-base-content/70 block mb-1"
                 >
-                  Asset Class Name
+                  {$t("components.allocationTargets.assetClassName")}
                 </label>
                 <input
                   id={"target-name-" + idx}
                   type="text"
                   bind:value={target.name}
-                  placeholder="e.g. Equity, Debt, Gold"
+                  placeholder={$t("components.allocationTargets.namePlaceholder")}
                   class="input input-bordered input-sm w-full font-semibold"
                 />
               </div>
@@ -184,7 +194,7 @@
                   for={"target-pct-" + idx}
                   class="text-xs font-semibold text-base-content/70 block mb-1"
                 >
-                  Target %
+                  {$t("components.allocationTargets.targetPercent")}
                 </label>
                 <div class="join w-full">
                   <input
@@ -206,7 +216,7 @@
                   for={"target-drift-" + idx}
                   class="text-xs font-semibold text-base-content/70 block mb-1"
                 >
-                  Drift Band (±%)
+                  {$t("components.allocationTargets.driftBand")}
                 </label>
                 <div class="join w-full">
                   <input
@@ -228,7 +238,7 @@
                   type="button"
                   class="btn btn-sm btn-ghost btn-circle text-error"
                   onclick={() => removeTarget(idx)}
-                  title="Delete asset class"
+                  title={$t("components.allocationTargets.deleteAssetClass")}
                 >
                   ✕
                 </button>
@@ -239,7 +249,9 @@
             <div class="mt-3 pt-3 border-t border-base-200">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-semibold text-base-content/70">
-                  Assigned Accounts / Patterns ({target.accounts.length})
+                  {$t("components.allocationTargets.assignedAccounts", {
+                    count: target.accounts.length
+                  })}
                 </span>
                 <button
                   type="button"
@@ -249,7 +261,9 @@
                     accountSearch = "";
                   }}
                 >
-                  {activeAccountPickerIndex === idx ? "Done Selecting" : "+ Select Accounts"}
+                  {activeAccountPickerIndex === idx
+                    ? $t("components.allocationTargets.doneSelecting")
+                    : $t("components.allocationTargets.selectAccounts")}
                 </button>
               </div>
 
@@ -257,7 +271,7 @@
               <div class="flex flex-wrap gap-1.5 min-h-[32px] items-center">
                 {#if target.accounts.length === 0}
                   <span class="text-xs text-base-content/40 italic">
-                    No accounts mapped yet. Click "+ Select Accounts" to map.
+                    {$t("components.allocationTargets.noAccounts")}
                   </span>
                 {:else}
                   {#each target.accounts as acc}
@@ -284,7 +298,7 @@
                     <input
                       type="text"
                       bind:value={accountSearch}
-                      placeholder="Search accounts or type glob (e.g. Assets:Equity:*)..."
+                      placeholder={$t("components.allocationTargets.searchPlaceholder")}
                       class="input input-bordered input-xs flex-grow"
                     />
                     {#if accountSearch.trim()}
@@ -293,7 +307,9 @@
                         class="btn btn-xs btn-primary whitespace-nowrap"
                         onclick={() => addCustomPattern(idx, accountSearch)}
                       >
-                        Add "{accountSearch.trim()}"
+                        {$t("components.allocationTargets.addPattern", {
+                          pattern: accountSearch.trim()
+                        })}
                       </button>
                     {/if}
                   </div>
@@ -301,7 +317,7 @@
                   <div class="max-h-40 overflow-y-auto space-y-1 pr-1 text-xs">
                     {#if filteredAccounts.length === 0}
                       <div class="text-base-content/60 py-2 text-center">
-                        No matching asset accounts found. You can add a custom glob pattern above.
+                        {$t("components.allocationTargets.noMatchingAccounts")}
                       </div>
                     {:else}
                       {#each filteredAccounts as acc}
@@ -333,7 +349,7 @@
           class="btn btn-sm btn-outline btn-block gap-2 border-dashed"
           onclick={addTarget}
         >
-          <span>＋</span> Add Target Asset Class
+          <span>＋</span> {$t("components.allocationTargets.addTarget")}
         </button>
       </div>
     </div>
@@ -341,7 +357,9 @@
 
   <svelte:fragment slot="foot" let:close>
     <div class="flex items-center justify-between w-full">
-      <button type="button" class="btn btn-sm btn-ghost" onclick={close}> Cancel </button>
+      <button type="button" class="btn btn-sm btn-ghost" onclick={close}>
+        {$t("common.cancel")}
+      </button>
       <button
         type="button"
         class="btn btn-sm btn-primary"
@@ -351,7 +369,7 @@
         {#if saving}
           <span class="loading loading-spinner loading-xs"></span>
         {/if}
-        Save Targets
+        {$t("components.allocationTargets.saveTargets")}
       </button>
     </div>
   </svelte:fragment>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { shouldShowNoDues } from "$lib/due_date";
   import { dueDateIcon } from "$lib/utils";
+  import { t } from "$lib/i18n";
   import dayjs from "dayjs";
 
   interface Props {
@@ -15,16 +16,16 @@
 </script>
 
 {#if shouldShowNoDues(paidDate, amountDue)}
-  <span>No dues</span>
+  <span>{$t("liabilities.noDues")}</span>
 {:else}
-  <span title="due on {dueDate.format('DD MMM YYYY')}">
+  <span title={$t("liabilities.dueOn", { date: dueDate.format("DD MMM YYYY") })}>
     <span class="icon is-small {icon.color}">
       <i class="fas {icon.icon}"></i>
     </span>
     {#if paidDate}
-      <span>paid on {paidDate.format("DD MMM YYYY")}</span>
+      <span>{$t("liabilities.paidOn", { date: paidDate.format("DD MMM YYYY") })}</span>
     {:else}
-      <span>due {dueDate.fromNow()}</span>
+      <span>{$t("liabilities.due", { relative: dueDate.fromNow() })}</span>
     {/if}
   </span>
 {/if}

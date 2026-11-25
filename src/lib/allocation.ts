@@ -18,11 +18,14 @@ import {
 } from "./utils";
 import COLORS, { generateColorScheme } from "./colors";
 import chroma from "chroma-js";
+import { get } from "svelte/store";
+import { t } from "./i18n";
 
 export function renderAllocationTarget(
   allocationTargets: AllocationTarget[],
   color: d3.ScaleOrdinal<string, string>
 ) {
+  const i18n = get(t);
   const id = "#d3-allocation-target";
   const svg = d3.select(id);
   svg.selectAll("*").remove();
@@ -86,7 +89,7 @@ export function renderAllocationTarget(
 
   g.append("text")
     .classed("svg-text-grey", true)
-    .text("Target")
+    .text(i18n("assets.target"))
     .attr("text-anchor", "end")
 
     .attr("x", textGroupZero + (textGroupWidth * 1) / 3)
@@ -94,14 +97,14 @@ export function renderAllocationTarget(
 
   g.append("text")
     .classed("svg-text-grey", true)
-    .text("Current")
+    .text(i18n("assets.current"))
     .attr("text-anchor", "end")
     .attr("x", textGroupZero + (textGroupWidth * 2) / 3)
     .attr("y", -5);
 
   g.append("text")
     .classed("svg-text-grey", true)
-    .text("Diff")
+    .text(i18n("assets.diff"))
     .attr("text-anchor", "end")
     .attr("x", textGroupZero + textGroupWidth)
     .attr("y", -5);
@@ -245,6 +248,7 @@ function renderPartition(
   color: d3.ScaleOrdinal<string, string>,
   options = { margin: { top: 0, right: 20, bottom: 0, left: 0 } }
 ) {
+  const i18n = get(t);
   d3.select(element).selectAll("*").remove();
 
   if (_.isEmpty(aggregates)) {
@@ -283,9 +287,12 @@ function renderPartition(
     .attr("class", "node")
     .attr("data-tippy-content", (d) => {
       return tooltip([
-        ["Account", [d.id, "has-text-right"]],
-        ["Market Value", [formatCurrency(d.value), "has-text-weight-bold has-text-right"]],
-        ["Percentage", [percent(d), "has-text-weight-bold has-text-right"]]
+        [i18n("assets.account"), [d.id, "has-text-right"]],
+        [
+          i18n("assets.marketValue"),
+          [formatCurrency(d.value), "has-text-weight-bold has-text-right"]
+        ],
+        [i18n("assets.percent"), [percent(d), "has-text-weight-bold has-text-right"]]
       ]);
     })
     .style("top", (d: any) => d.y0 + "px")

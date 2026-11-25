@@ -12,6 +12,8 @@
     nonZeroPercentageChange
   } from "$lib/table_formatters";
   import { iconText } from "$lib/icon";
+  import { t } from "$lib/i18n";
+  import { get } from "svelte/store";
 
   interface Props {
     breakdowns: Record<string, AssetBreakdown>;
@@ -21,6 +23,7 @@
   let { breakdowns, indent = true }: Props = $props();
 
   const mobile = typeof window !== "undefined" && isMobile();
+  const i18n = get(t);
 
   function mobileAccountName(account: string, shorten: boolean) {
     const name = shorten ? lastName(account) : account;
@@ -29,7 +32,7 @@
 
   function accountColumn(): ColumnDefinition {
     return {
-      title: "Account",
+      title: i18n("assets.account"),
       field: "group",
       formatter: mobile
         ? (cell) => mobileAccountName(cell.getValue(), indent)
@@ -48,42 +51,47 @@
   const columns: ColumnDefinition[] = [
     accountColumn(),
     {
-      title: "Investment Amount",
+      title: i18n("assets.investmentAmount"),
       field: "investmentAmount",
       hozAlign: "right",
       vertAlign: "middle",
       formatter: nonZeroCurrency
     },
     {
-      title: "Withdrawal Amount",
+      title: i18n("assets.withdrawalAmount"),
       field: "withdrawalAmount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Balance Units",
+      title: i18n("assets.balanceUnits"),
       field: "balanceUnits",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
-    { title: "Market Value", field: "marketAmount", hozAlign: "right", formatter: nonZeroCurrency },
     {
-      title: "Cash",
-      field: "cashAmount",
-      headerTooltip: "Checking balance included in Market Value. Cash has no gain or XIRR.",
+      title: i18n("assets.marketValue"),
+      field: "marketAmount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Investment Change",
+      title: i18n("assets.cash"),
+      field: "cashAmount",
+      headerTooltip: i18n("assets.cashTooltip"),
+      hozAlign: "right",
+      formatter: nonZeroCurrency
+    },
+    {
+      title: i18n("assets.investmentChange"),
       field: "gainAmount",
-      headerTooltip: "Gain on investments only. Excludes cash (checking) accounts.",
+      headerTooltip: i18n("assets.investmentChangeTooltip"),
       hozAlign: "right",
       formatter: formatCurrencyChange
     },
     { title: "XIRR", field: "xirr", hozAlign: "right", formatter: nonZeroFloatChange },
     {
-      title: "Absolute Return",
+      title: i18n("assets.absoluteReturnColumn"),
       field: "absoluteReturn",
       hozAlign: "right",
       formatter: nonZeroPercentageChange

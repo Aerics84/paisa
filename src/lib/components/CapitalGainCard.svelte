@@ -3,6 +3,7 @@
   import _ from "lodash";
   import CapitalGainDetailCard from "./CapitalGainDetailCard.svelte";
   import Toggleable from "./Toggleable.svelte";
+  import { t } from "$lib/i18n";
 
   interface Props {
     financialYear: string;
@@ -51,37 +52,37 @@
             <table class="table is-narrow is-fullwidth is-hoverable">
               <tbody>
                 <tr>
-                  <td>Withdrawn</td>
+                  <td>{$t("tax.withdrawn")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["withdrawn"])}</td
                   >
                 </tr>
                 <tr>
-                  <td>Gain</td>
+                  <td>{$t("tax.gain")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["gain"])}</td
                   >
                 </tr>
                 <tr>
-                  <td>Taxable Gain</td>
+                  <td>{$t("tax.taxableGain")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["taxableGain"])}</td
                   >
                 </tr>
                 <tr>
-                  <td>Short Term Tax</td>
+                  <td>{$t("tax.shortTermTax")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["shortTermTax"])}</td
                   >
                 </tr>
                 <tr>
-                  <td>Long Term Tax</td>
+                  <td>{$t("tax.longTermTax")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["longTermTax"])}</td
                   >
                 </tr>
                 <tr>
-                  <td>Taxable at Slab Rate</td>
+                  <td>{$t("tax.taxableAtSlabRate")}</td>
                   <td class="has-text-right has-text-weight-bold"
                     >{formatCurrency(total["slab"])}</td
                   >
@@ -94,18 +95,18 @@
               <thead>
                 <tr>
                   <th></th>
-                  <th>Account</th>
-                  <th>Tax Category</th>
-                  <th class="has-text-right">Sold Units</th>
-                  <th class="has-text-right">Purchase Price</th>
-                  <th class="has-text-right">Average Purchase Unit Price</th>
-                  <th class="has-text-right">Sell Price</th>
-                  <th class="has-text-right">Average Sell Unit Price</th>
-                  <th class="has-text-right">Gain</th>
-                  <th class="has-text-right">Taxable Gain</th>
-                  <th class="has-text-right">Short Term Tax</th>
-                  <th class="has-text-right">Long Term Tax</th>
-                  <th class="has-text-right">Taxable at Slat Rate</th>
+                  <th>{$t("assets.account")}</th>
+                  <th>{$t("tax.taxCategory")}</th>
+                  <th class="has-text-right">{$t("tax.soldUnits")}</th>
+                  <th class="has-text-right">{$t("tax.purchasePrice")}</th>
+                  <th class="has-text-right">{$t("tax.averagePurchaseUnitPrice")}</th>
+                  <th class="has-text-right">{$t("tax.sellPrice")}</th>
+                  <th class="has-text-right">{$t("tax.averageSellUnitPrice")}</th>
+                  <th class="has-text-right">{$t("tax.gain")}</th>
+                  <th class="has-text-right">{$t("tax.taxableGain")}</th>
+                  <th class="has-text-right">{$t("tax.shortTermTax")}</th>
+                  <th class="has-text-right">{$t("tax.longTermTax")}</th>
+                  <th class="has-text-right">{$t("tax.taxableAtSlabRate")}</th>
                 </tr>
               </thead>
               <tbody>

@@ -1,11 +1,14 @@
 import * as d3 from "d3";
 import dayjs from "dayjs";
 import _, { round } from "lodash";
+import { get } from "svelte/store";
 import COLORS from "./colors";
+import { t } from "./i18n";
 import { formatCurrency, formatFloat, restName, tooltip, type Harvestable } from "./utils";
 
 export function renderHarvestables(harvestables: Harvestable[]) {
   const id = "#d3-harvestables";
+  const i18n = get(t);
   const root = d3.select(id);
   const currencyCode = USER_CONFIG.default_currency || "";
 
@@ -34,9 +37,9 @@ export function renderHarvestables(harvestables: Harvestable[]) {
     .each(function (h) {
       const self = d3.select(this);
       const [units, amount, taxableGain] = unitsRequiredFromGain(h, 100000);
-      self.append("span").html("If you redeem&nbsp;");
+      self.append("span").html(`${i18n("tax.harvest.redeemPrefix")}&nbsp;`);
       const unitsSpan = self.append("span").text(formatFloat(units));
-      self.append("span").html("&nbsp;units you will get&nbsp;");
+      self.append("span").html(`&nbsp;${i18n("tax.harvest.redeemUnits")}&nbsp;`);
       const amountInput = self
         .append("input")
         .attr("class", "input is-small adjustable-input")
@@ -58,7 +61,7 @@ export function renderHarvestables(harvestables: Harvestable[]) {
         self.append("span").html(`&nbsp;${currencyCode}`);
       }
 
-      self.append("span").html("&nbsp; and your <b>taxable</b> gain would be&nbsp;");
+      self.append("span").html(`&nbsp; ${i18n("tax.harvest.redeemSuffix")}&nbsp;`);
       const taxableGainInput = self
         .append("input")
         .attr("class", "input is-small adjustable-input")
@@ -83,8 +86,10 @@ export function renderHarvestables(harvestables: Harvestable[]) {
   header
     .append("span")
     .attr("class", "card-header-icon")
-    .text(
-      (harvestable) => "price as on " + dayjs(harvestable.current_unit_date).format("DD MMM YYYY")
+    .text((harvestable) =>
+      i18n("tax.harvest.priceAsOn", {
+        date: dayjs(harvestable.current_unit_date).format("DD MMM YYYY")
+      })
     );
 
   const content = card
@@ -104,29 +109,29 @@ export function renderHarvestables(harvestables: Harvestable[]) {
 <table class="table is-narrow is-fullwidth is-hoverable">
   <tbody>
     <tr>
-      <td>Balance Units</td>
+      <td>${i18n("assets.balanceUnits")}</td>
       <td class='has-text-right has-text-weight-bold'>${formatFloat(h.total_units)}</td>
     </tr>
     <tr>
-      <td>Harvestable Units</td>
+      <td>${i18n("tax.harvest.harvestableUnits")}</td>
       <td class='has-text-right has-text-weight-bold has-text-success'>${formatFloat(
         h.harvestable_units
       )}</td>
     </tr>
     <tr>
-      <td>Tax Category</td>
+      <td>${i18n("tax.taxCategory")}</td>
       <td class='has-text-right is-uppercase'>${h.tax_category}</td>
     </tr>
     <tr>
-      <td>Current Unit Price</td>
+      <td>${i18n("tax.harvest.currentUnitPrice")}</td>
       <td class='has-text-right has-text-weight-bold'>${formatFloat(h.current_unit_price)}</td>
     </tr>
     <tr>
-      <td>Unrealized Gain / Loss</td>
+      <td>${i18n("tax.harvest.unrealizedGain")}</td>
       <td class='has-text-right has-text-weight-bold'>${formatCurrency(h.unrealized_gain)}</td>
     </tr>
     <tr>
-      <td>Taxable Unrealized Gain / Loss</td>
+      <td>${i18n("tax.harvest.taxableUnrealizedGain")}</td>
       <td class='has-text-right has-text-weight-bold'>${formatCurrency(
         h.taxable_unrealized_gain
       )}</td>
@@ -148,16 +153,16 @@ export function renderHarvestables(harvestables: Harvestable[]) {
 
   table.append("thead").html(`
 <tr>
-  <th>Purchase Date</th>
-  <th class='has-text-right'>Units</th>
-  <th class='has-text-right'>Purchase Price</th>
-  <th class='has-text-right'>Purchase Unit Price</th>
-  <th class='has-text-right'>Current Price</th>
-  <th class='has-text-right'>Gain</th>
-  <th class='has-text-right'>Taxable Gain</th>
-  <th class='has-text-right'>Short Term Tax</th>
-  <th class='has-text-right'>Long Term Tax</th>
-  <th class='has-text-right'>Taxable at Slab Rate</th>
+  <th>${i18n("tax.purchaseDate")}</th>
+  <th class='has-text-right'>${i18n("ledger.table.units")}</th>
+  <th class='has-text-right'>${i18n("tax.purchasePrice")}</th>
+  <th class='has-text-right'>${i18n("tax.purchaseUnitPrice")}</th>
+  <th class='has-text-right'>${i18n("tax.harvest.currentPrice")}</th>
+  <th class='has-text-right'>${i18n("tax.gain")}</th>
+  <th class='has-text-right'>${i18n("tax.taxableGain")}</th>
+  <th class='has-text-right'>${i18n("tax.shortTermTax")}</th>
+  <th class='has-text-right'>${i18n("tax.longTermTax")}</th>
+  <th class='has-text-right'>${i18n("tax.taxableAtSlabRate")}</th>
 </tr>
 `);
 
@@ -236,6 +241,7 @@ function unitsRequiredFromAmount(
 }
 
 function renderSingleBar(harvestable: Harvestable) {
+  const i18n = get(t);
   const selection = d3.select(this);
   const svg = selection.append("svg");
 
@@ -255,12 +261,12 @@ function renderSingleBar(harvestable: Harvestable) {
   g.attr("data-tippy-content", () => {
     return tooltip([
       [
-        ["Type", "has-text-weight-bold"],
-        ["Units", "has-text-weight-bold has-text-right"],
-        ["Percentage", "has-text-weight-bold has-text-right"]
+        [i18n("tax.harvest.type"), "has-text-weight-bold"],
+        [i18n("ledger.table.units"), "has-text-weight-bold has-text-right"],
+        [i18n("assets.percent"), "has-text-weight-bold has-text-right"]
       ],
       [
-        "Harvestable",
+        i18n("tax.harvest.harvestable"),
         [formatFloat(harvestable.harvestable_units), "has-text-right"],
         [
           formatFloat((harvestable.harvestable_units / harvestable.total_units) * 100),
@@ -268,7 +274,7 @@ function renderSingleBar(harvestable: Harvestable) {
         ]
       ],
       [
-        "Non Harvestable",
+        i18n("tax.harvest.nonHarvestable"),
         [formatFloat(non_harvestable_units), "has-text-right"],
         [formatFloat((non_harvestable_units / harvestable.total_units) * 100), "has-text-right"]
       ]

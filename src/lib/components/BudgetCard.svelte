@@ -3,6 +3,7 @@
   import { iconify } from "$lib/icon";
   import type { Action } from "svelte/action";
   import { firstName, formatCurrency, restName, type AccountBudget, tooltip } from "$lib/utils";
+  import { t } from "$lib/i18n";
   import _ from "lodash";
 
   interface Props {
@@ -61,23 +62,25 @@
     >
       {#if !compact}
         <div class="mr-3">
-          <span class="budget-label mr-1">Budget</span>
+          <span class="budget-label mr-1">{$t("components.budget.budget")}</span>
           <span class="budget-amount">{formatCurrency(accountBudget.forecast)}</span>
         </div>
         <div class="mr-3">
-          <span class="budget-label mr-1">Spent</span>
+          <span class="budget-label mr-1">{$t("components.budget.spent")}</span>
           <span class="budget-amount">{formatCurrency(accountBudget.actual)}</span>
         </div>
       {/if}
       {#if !compact && accountBudget.rollover != 0}
         <div class="mr-3">
-          <span class="budget-label mr-1">Rollover</span>
+          <span class="budget-label mr-1">{$t("components.budget.rollover")}</span>
           <span class="budget-amount warn">{formatCurrency(accountBudget.rollover)}</span>
         </div>
       {/if}
       <div>
         <span class="budget-label mr-1"
-          >{accountBudget.available >= 0 ? "Available" : "Overspent"}</span
+          >{accountBudget.available >= 0
+            ? $t("components.budget.available")
+            : $t("components.budget.overspent")}</span
         >
         <span class="budget-amount {color(accountBudget)}"
           >{formatCurrency(Math.abs(accountBudget.available))}</span
