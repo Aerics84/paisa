@@ -46,6 +46,15 @@ func loadImportTestConfig(t *testing.T, content string) {
 	})
 }
 
+func loadImportTestConfigAt(t *testing.T, configPath string, content string) {
+	t.Helper()
+
+	require.NoError(t, config.LoadConfig([]byte(content), configPath))
+	t.Cleanup(func() {
+		_ = config.LoadConfig([]byte("journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"), "")
+	})
+}
+
 func buildImportTestRouter(db *gorm.DB) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
@@ -725,6 +734,7 @@ func TestFormatTransactionsForCommitUsesJournalCommodityStyle(t *testing.T) {
 	db := openImportTestDB(t)
 	dir := t.TempDir()
 	journal := filepath.Join(dir, "main.ledger")
+	configPath := filepath.Join(dir, "paisa.yaml")
 
 	req := CommitImportRequest{
 		BaseAccount: "Assets:Checking",
@@ -738,16 +748,17 @@ func TestFormatTransactionsForCommitUsesJournalCommodityStyle(t *testing.T) {
 		}},
 	}
 
-	// A dot-formatted journal must keep dots even when the regional profile is
-	// Germany/EU; the journal's commodity style wins over the locale heuristic.
+	// Relative journal_path must be resolved against the config directory, not
+	// the process cwd. A dot-formatted journal keeps dots even when the
+	// regional profile is Germany/EU; the journal style wins over the locale.
 	require.NoError(t, os.WriteFile(journal, []byte("commodity EUR\n    format 1,000.00 EUR\n"), 0o644))
-	loadImportTestConfig(t, fmt.Sprintf("journal_path: '%s'\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n", strings.ReplaceAll(journal, `\`, "/")))
+	loadImportTestConfigAt(t, configPath, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n")
 	dotOut := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
 	assert.Contains(t, dotOut, "-12.50 EUR")
 
 	// A comma-formatted journal must use commas even without a German profile.
 	require.NoError(t, os.WriteFile(journal, []byte("commodity EUR\n    format 1.000,00 EUR\n"), 0o644))
-	loadImportTestConfig(t, fmt.Sprintf("journal_path: '%s'\ndb_path: paisa.db\ndefault_currency: EUR\nlocale: en\nledger_cli: hledger\n", strings.ReplaceAll(journal, `\`, "/")))
+	loadImportTestConfigAt(t, configPath, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: EUR\nlocale: en\nledger_cli: hledger\n")
 	commaOut := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
 	assert.Contains(t, commaOut, "-12,50 EUR")
 }

@@ -594,7 +594,7 @@ func formatCommitAmount(amount float64, commodity string, dialect string, store 
 // use dots, commas or Indian grouping (`9,99,99,999.00`). It returns "" when
 // no unambiguous format is found.
 func journalDecimalSeparator(store *config.Store, commodity string) string {
-	path := store.Get().JournalPath
+	path := store.JournalPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return ""
