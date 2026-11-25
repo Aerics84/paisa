@@ -1,4 +1,7 @@
 import dayjs from "dayjs";
+import "dayjs/locale/de";
+import updateLocale from "dayjs/plugin/updateLocale";
+dayjs.extend(updateLocale);
 import _ from "lodash";
 import * as d3 from "d3";
 import type { JSONSchema7 } from "json-schema";
@@ -6,6 +9,7 @@ import { get } from "svelte/store";
 import { obscure } from "../persisted_store";
 import chroma from "chroma-js";
 import { iconGlyph, preloadConfiguredIconFonts } from "./icon";
+import { resolveLocale, setLocale, type Locale } from "./i18n";
 import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
 import type { BalancedPosting, Posting, Transaction } from "./api/ledger";
 import type {
@@ -445,10 +449,36 @@ function normalize(value: number) {
   return value;
 }
 
+/**
+ * Apply the UI locale derived from `config.locale` to the message store and
+ * dayjs, returning the active locale.
+ *
+ * Only `config.locale` is consulted: a Germany tax profile may still use an
+ * English UI, so regional profile and tax regime never pick the language.
+ */
+export function applyLocale(configLocale: string): Locale {
+  const active = setLocale(configLocale);
+  dayjs.locale(active);
+  return active;
+}
+
+/**
+ * Locale for `Intl` number/currency/percentage formatting.
+ *
+ * The configured BCP-47 tag is used as-is so regional conventions such as
+ * Indian digit grouping (`en-IN`) survive. Only a missing or blank locale falls
+ * back to the resolved UI locale, which also keeps `Intl` from throwing on an
+ * empty language tag.
+ */
+function formattingLocale(config: UserConfig): string {
+  const configured = typeof config.locale === "string" ? config.locale.trim() : "";
+  return configured || resolveLocale(config.locale);
+}
+
 export function configUpdated() {
   const config = getUserConfig();
-  dayjs.locale("en");
-  dayjs.updateLocale("en", {
+  const activeLocale = applyLocale(config.locale);
+  dayjs.updateLocale(activeLocale, {
     weekStart: config.week_starting_day
   });
   // A config change can introduce a lazy icon font; load it so the existing
@@ -502,7 +532,7 @@ export function formatCurrency(value: number, precision: number = null, locale: 
   }
 
   return unicodeMinus(
-    value.toLocaleString(locale ?? config.locale, {
+    value.toLocaleString(locale ?? formattingLocale(config), {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -536,7 +566,7 @@ export function formatCurrencyCrudeWithPrecision(
     options.minimumFractionDigits = precision;
   }
 
-  return unicodeMinus(value.toLocaleString(locale ?? config.locale, options));
+  return unicodeMinus(value.toLocaleString(locale ?? formattingLocale(config), options));
 }
 
 export function formatCurrencyWithSymbol(value: number, precision: number = null) {
@@ -553,7 +583,7 @@ export function formatCurrencyWithSymbol(value: number, precision: number = null
 
   try {
     return unicodeMinus(
-      value.toLocaleString(config.locale, {
+      value.toLocaleString(formattingLocale(config), {
         style: "currency",
         currency: config.default_currency,
         minimumFractionDigits: precision,
@@ -587,7 +617,7 @@ export function formatCurrencyCrudeWithSymbol(value: number, precision: number =
   }
 
   try {
-    return unicodeMinus(value.toLocaleString(config.locale, options));
+    return unicodeMinus(value.toLocaleString(formattingLocale(config), options));
   } catch {
     return formatCurrencyCrudeWithPrecision(value, precision);
   }
@@ -598,7 +628,7 @@ export function formatFloat(value: number, precision = 2) {
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(formattingLocale(config), {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
@@ -610,7 +640,7 @@ export function formatFloatUptoPrecision(value: number, precision = 2) {
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(formattingLocale(config), {
       maximumFractionDigits: precision
     })
   );
@@ -621,7 +651,7 @@ export function formatPercentage(value: number, precision = 0) {
   value = normalize(value);
 
   return unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(formattingLocale(config), {
       style: "percent",
       minimumFractionDigits: precision
     })
@@ -633,7 +663,7 @@ export function formatFixedWidthFloat(value: number, width: number, precision = 
   value = normalize(value);
 
   const formatted = unicodeMinus(
-    value.toLocaleString(config.locale, {
+    value.toLocaleString(formattingLocale(config), {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision
     })
