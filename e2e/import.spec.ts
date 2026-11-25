@@ -62,6 +62,10 @@ test("CSV statement is staged, committed and visible in the ledger", async ({ pa
   const content = readFileSync(journal, "utf8");
   expect(content).toContain("Coffee Shop");
   expect(content).toContain("Book Store");
+  // The germany-eu journal declares `format 1.000,00 EUR`; a dot here would
+  // make hledger read 12.50 as 1250.
+  expect(content).toContain("-12,50 EUR");
+  expect(content).toContain("-30,00 EUR");
 
   await page.goto(`${server.url}/ledger/posting`);
   await expect(page.getByText(/Coffee Shop/).first()).toBeVisible();

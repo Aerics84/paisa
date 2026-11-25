@@ -510,7 +510,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 			txs := debitGroups[k]
 			dateStr := strings.ReplaceAll(k.date, "/", "-")
 			if len(txs) == 1 {
-				writeSingleLedgerEntry(&sb, db, baseAcc, txs[0], k.currency, dialect)
+				writeSingleLedgerEntry(&sb, db, baseAcc, txs[0], k.currency, dialect, store)
 				continue
 			}
 
@@ -522,7 +522,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 				if offsetAcc == "" {
 					offsetAcc = tx.SelectedAccount
 				}
-				amtStr := fmt.Sprintf("%.2f", tx.Amount)
+				amtStr := formatCommitAmount(tx.Amount, dialect, store)
 				total += tx.Amount
 				note := extractShortNote(tx.Payee, tx.Memo)
 				if note != "" {
@@ -531,11 +531,11 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 					sb.WriteString(fmt.Sprintf("  %-40s   %s %s\n", offsetAcc, amtStr, k.currency))
 				}
 			}
-			sb.WriteString(fmt.Sprintf("  %-40s  -%.2f %s\n\n", baseAcc, total, k.currency))
+			sb.WriteString(fmt.Sprintf("  %-40s  -%s %s\n\n", baseAcc, formatCommitAmount(total, dialect, store), k.currency))
 		}
 
 		for _, tx := range creditTxs {
-			writeSingleLedgerEntry(&sb, db, baseAcc, tx, tx.Currency, dialect)
+			writeSingleLedgerEntry(&sb, db, baseAcc, tx, tx.Currency, dialect, store)
 		}
 		return sb.String()
 	}
@@ -545,7 +545,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 		if curr == "" {
 			curr = defaultCommodity
 		}
-		writeSingleLedgerEntry(&sb, db, baseAcc, tx, curr, dialect)
+		writeSingleLedgerEntry(&sb, db, baseAcc, tx, curr, dialect, store)
 	}
 
 	return sb.String()
@@ -563,7 +563,23 @@ func extractShortNote(payee, memo string) string {
 	return importer.CleanPayee(raw)
 }
 
-func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx CommitCandidateTransaction, commodity string, dialect string) {
+// formatCommitAmount writes amounts using the decimal separator expected by
+// the journal's commodity style. German/EU journals typically declare
+// `format 1.000,00 EUR`, where a dot is a thousands separator; writing 12.50
+// there changes the value to 1250.00. Beancount always uses a dot.
+func formatCommitAmount(amount float64, dialect string, store *config.Store) string {
+	formatted := fmt.Sprintf("%.2f", amount)
+	if dialect == "beancount" {
+		return formatted
+	}
+	cfg := store.Get()
+	if cfg.RegionalProfile == config.RegionalProfileGermanyEU || strings.HasPrefix(strings.ToLower(cfg.Locale), "de") {
+		return strings.Replace(formatted, ".", ",", 1)
+	}
+	return formatted
+}
+
+func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx CommitCandidateTransaction, commodity string, dialect string, store *config.Store) {
 	offsetAcc := matchImportAccount(db, tx.SelectedAccount)
 	if offsetAcc == "" {
 		offsetAcc = tx.SelectedAccount
@@ -573,7 +589,7 @@ func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx
 	if shortNote == "" {
 		shortNote = strings.TrimSpace(tx.Payee)
 	}
-	amtStr := fmt.Sprintf("%.2f", tx.Amount)
+	amtStr := formatCommitAmount(tx.Amount, dialect, store)
 	dateStr := strings.ReplaceAll(tx.Date, "/", "-")
 
 	if dialect == "beancount" {

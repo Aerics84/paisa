@@ -695,6 +695,25 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 	assert.Contains(t, hledgerOut, "-45.20 INR")
 	assert.NotContains(t, hledgerOut, "2026/10/11")
 
+	// German/EU journals declare `format 1.000,00 EUR`, so the decimal
+	// separator must be a comma or hledger reads 45.20 as 4520.
+	reqEUR := req
+	reqEUR.Transactions = []CommitCandidateTransaction{{
+		Date:            "2026-10-11",
+		Payee:           "Coffee Shop",
+		Amount:          45.20,
+		Currency:        "EUR",
+		IsDebit:         true,
+		SelectedAccount: "Expenses:Food:Dining",
+	}}
+	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n")
+	germanOut := formatTransactionsForCommit(db, reqEUR, "EUR", config.DefaultStore())
+	assert.Contains(t, germanOut, "-45,20 EUR")
+
+	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: beancount\n")
+	beancountGermanOut := formatTransactionsForCommit(db, reqEUR, "EUR", config.DefaultStore())
+	assert.Contains(t, beancountGermanOut, "-45.20 EUR")
+
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: beancount\n")
 	beancountOut := formatTransactionsForCommit(db, req, "INR", config.DefaultStore())
 	assert.Contains(t, beancountOut, "2026-10-11 * \"Coffee Shop\"")
