@@ -3,9 +3,9 @@
   import { renderAccountOverview, buildLegends } from "$lib/gain";
   import { filterCommodityBreakdowns, renderPortfolioBreakdown } from "$lib/portfolio";
   import {
+    type Posting,
     formatCurrency,
     formatFloat,
-    type Posting,
     type AccountGain,
     type Networth,
     type PortfolioAggregate,
@@ -22,7 +22,6 @@
   import { iconify } from "$lib/icon";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
-  import { selectedCurrency } from "../../../../../persisted_store";
 
   let commodities = $state<string[]>([]);
   let selectedCommodities = $state<string[]>([]);
@@ -39,59 +38,17 @@
 
   let { data }: { data: PageData } = $props();
   let gain = $state<AccountGain>();
+  let overview = $state<Networth>();
   let assetBreakdown = $state<AssetBreakdown>();
   let legends = buildLegends();
 
   let destroyCallback = () => {};
+  let postings = $state<Posting[]>([]);
 
   let securityTypeR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
   let portfolioR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
   let industryR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
   let ratingR = $state<ReturnType<typeof renderPortfolioBreakdown>["renderer"]>();
-
-  const timelineId = "d3-account-timeline-breakdown";
-
-  let current = $derived(
-    gain ? _.find(gain.currencies, (c) => c.name === $selectedCurrency) : null
-  );
-  let symbol = $derived(current ? current.symbol : "");
-  let timeline = $derived(current ? current.networthTimeline : gain?.networthTimeline);
-  let xirr = $derived(current ? current.xirr : gain?.xirr);
-  let overview = $derived(_.last(timeline));
-  let absoluteReturn = $derived(
-    current
-      ? overview && overview.investmentAmount !== 0
-        ? overview.gainAmount / overview.investmentAmount
-        : 0
-      : assetBreakdown?.absoluteReturn
-  );
-  function formatGain(v: number) {
-    return symbol ? symbol + formatCurrency(v, 2, "en-US") : formatCurrency(v);
-  }
-  const fmt = formatGain;
-  let postings = $derived(
-    _.chain(current ? current.postings : gain?.postings || [])
-      .sortBy((p) => p.date)
-      .reverse()
-      .take(100)
-      .value()
-  );
-
-  // re-render the timeline when the data or the selected currency changes
-  $effect(() => {
-    if (gain) {
-      destroyCallback();
-      const element = document.getElementById(timelineId);
-      if (element) {
-        element.innerHTML = "";
-      }
-      destroyCallback = overview
-        ? renderAccountOverview(timeline, current ? current.postings : gain.postings, timelineId, {
-            currencySymbol: symbol
-          })
-        : () => {};
-    }
-  });
 
   onDestroy(async () => {
     destroyCallback();
@@ -103,6 +60,18 @@
       asset_breakdown: assetBreakdown,
       portfolio_allocation: { name_and_security_type, security_type, rating, industry, commodities }
     } = await getAccountGain(data.name));
+
+    overview = _.last(gain.networthTimeline);
+    postings = _.chain(gain.postings)
+      .sortBy((p) => p.date)
+      .reverse()
+      .take(100)
+      .value();
+    destroyCallback = renderAccountOverview(
+      gain.networthTimeline,
+      gain.postings,
+      "d3-account-timeline-breakdown"
+    );
 
     selectedCommodities = [...commodities];
     ({ renderer: securityTypeR } = renderPortfolioBreakdown(
@@ -160,13 +129,13 @@
                     narrow
                     title="Balance"
                     color={COLORS.primary}
-                    value={fmt(overview.balanceAmount)}
+                    value={formatCurrency(overview.balanceAmount)}
                   />
                   <LevelItem
                     narrow
                     title="Net Investment"
                     color={COLORS.secondary}
-                    value={fmt(overview.netInvestmentAmount)}
+                    value={formatCurrency(overview.netInvestmentAmount)}
                   />
                 </nav>
               </div>
@@ -178,14 +147,14 @@
                     narrow
                     title="Gain / Loss"
                     color={overview.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
-                    value={fmt(overview.gainAmount)}
+                    value={formatCurrency(overview.gainAmount)}
                   />
 
                   <LevelItem
                     narrow
                     title="XIRR"
-                    value={formatFloat(xirr)}
-                    subtitle="{formatPercentage(absoluteReturn, 2)} absolute return"
+                    value={formatFloat(gain.xirr)}
+                    subtitle="{formatPercentage(assetBreakdown.absoluteReturn, 2)} absolute return"
                   />
                 </nav>
               </div>
@@ -197,7 +166,6 @@
             {#each postings as posting}
               <PostingCard
                 {posting}
-                currencySymbol={symbol}
                 color={posting.amount >= 0
                   ? posting.account.startsWith("Income:CapitalGains")
                     ? COLORS.loss
@@ -219,11 +187,13 @@
               </div>
               <div class="ml-3">
                 <span class="mr-1 is-size-7 has-text-grey">Investment</span>
-                <span class="has-text-weight-bold">{fmt(overview.investmentAmount)}</span>
+                <span class="has-text-weight-bold">{formatCurrency(overview.investmentAmount)}</span
+                >
               </div>
               <div class="ml-3">
                 <span class="mr-1 is-size-7 has-text-grey">Withdrawal</span>
-                <span class="has-text-weight-bold">{fmt(overview.withdrawalAmount)}</span>
+                <span class="has-text-weight-bold">{formatCurrency(overview.withdrawalAmount)}</span
+                >
               </div>
               {#if overview.balanceUnits > 0}
                 <div class="ml-3">
@@ -238,9 +208,6 @@
         {/if}
         <LegendCard {legends} clazz="mb-2" />
         <div class="box">
-          {#if current && !overview}
-            <p>No prices found for commodity {current.commodity}.</p>
-          {/if}
           <svg id="d3-account-timeline-breakdown" width="100%" height="450" />
         </div>
         <BoxLabel text="Timeline" />
