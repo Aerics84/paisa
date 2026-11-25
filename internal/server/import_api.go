@@ -473,6 +473,8 @@ func combineJournalContent(existing string, appendContent string) string {
 func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCommodity string, store *config.Store) string {
 	var sb strings.Builder
 	dialect := store.Get().LedgerCli
+	// Read the journal once per commit; every transaction reuses this map.
+	separators := journalDecimalSeparators(store, dialect)
 	baseAcc := matchImportAccount(db, req.BaseAccount)
 	if baseAcc == "" {
 		baseAcc = req.BaseAccount
@@ -510,7 +512,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 			txs := debitGroups[k]
 			dateStr := strings.ReplaceAll(k.date, "/", "-")
 			if len(txs) == 1 {
-				writeSingleLedgerEntry(&sb, db, baseAcc, txs[0], k.currency, dialect, store)
+				writeSingleLedgerEntry(&sb, db, baseAcc, txs[0], k.currency, dialect, separators)
 				continue
 			}
 
@@ -522,7 +524,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 				if offsetAcc == "" {
 					offsetAcc = tx.SelectedAccount
 				}
-				amtStr := formatCommitAmount(tx.Amount, k.currency, dialect, store)
+				amtStr := formatCommitAmount(tx.Amount, k.currency, separators)
 				total += tx.Amount
 				note := extractShortNote(tx.Payee, tx.Memo)
 				if note != "" {
@@ -531,11 +533,11 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 					sb.WriteString(fmt.Sprintf("  %-40s   %s %s\n", offsetAcc, amtStr, k.currency))
 				}
 			}
-			sb.WriteString(fmt.Sprintf("  %-40s  -%s %s\n\n", baseAcc, formatCommitAmount(total, k.currency, dialect, store), k.currency))
+			sb.WriteString(fmt.Sprintf("  %-40s  -%s %s\n\n", baseAcc, formatCommitAmount(total, k.currency, separators), k.currency))
 		}
 
 		for _, tx := range creditTxs {
-			writeSingleLedgerEntry(&sb, db, baseAcc, tx, tx.Currency, dialect, store)
+			writeSingleLedgerEntry(&sb, db, baseAcc, tx, tx.Currency, dialect, separators)
 		}
 		return sb.String()
 	}
@@ -545,7 +547,7 @@ func formatTransactionsForCommit(db *gorm.DB, req CommitImportRequest, defaultCo
 		if curr == "" {
 			curr = defaultCommodity
 		}
-		writeSingleLedgerEntry(&sb, db, baseAcc, tx, curr, dialect, store)
+		writeSingleLedgerEntry(&sb, db, baseAcc, tx, curr, dialect, separators)
 	}
 
 	return sb.String()
@@ -567,64 +569,72 @@ func extractShortNote(payee, memo string) string {
 // the journal's commodity style. German/EU journals typically declare
 // `format 1.000,00 EUR`, where a dot is a thousands separator; writing 12.50
 // there changes the value to 1250.00. Beancount always uses a dot. When the
-// journal has no explicit format (or the file is unreadable), fall back to the
-// regional profile/locale.
-func formatCommitAmount(amount float64, commodity string, dialect string, store *config.Store) string {
+// journal has no explicit format, Ledger's standard dot is used: the journal is
+// the source of truth, so the UI locale must not override it.
+func formatCommitAmount(amount float64, commodity string, separators map[string]string) string {
 	formatted := fmt.Sprintf("%.2f", amount)
-	if dialect == "beancount" {
-		return formatted
-	}
-	separator := journalDecimalSeparator(store, commodity)
-	if separator == "" {
-		cfg := store.Get()
-		if cfg.RegionalProfile == config.RegionalProfileGermanyEU || strings.HasPrefix(strings.ToLower(cfg.Locale), "de") {
-			separator = ","
-		} else {
-			separator = "."
-		}
-	}
-	if separator == "," {
+	if separators[commodity] == "," {
 		return strings.Replace(formatted, ".", ",", 1)
 	}
 	return formatted
 }
 
-// journalDecimalSeparator finds the commodity's `format` directive in the
-// active journal and returns the last decimal separator in it. A journal can
-// use dots, commas or Indian grouping (`9,99,99,999.00`). It returns "" when
-// no unambiguous format is found.
-func journalDecimalSeparator(store *config.Store, commodity string) string {
-	path := store.JournalPath()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
+// journalDecimalSeparators reads the active journal once and maps every
+// commodity that declares a `format` directive to its decimal separator. A
+// journal can use dots, commas or Indian grouping (`9,99,99,999.00`). Beancount
+// always uses dots, so no journal read is needed there.
+func journalDecimalSeparators(store *config.Store, dialect string) map[string]string {
+	if dialect == "beancount" {
+		return nil
 	}
+
+	data, err := os.ReadFile(store.JournalPath())
+	if err != nil {
+		return nil
+	}
+
 	lines := strings.Split(string(data), "\n")
+	separators := make(map[string]string)
 	for i, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) < 2 || fields[0] != "commodity" || strings.Trim(fields[1], `"'`) != commodity {
+		if len(fields) < 2 || fields[0] != "commodity" {
 			continue
 		}
-		for j := i + 1; j < len(lines) && j <= i+5; j++ {
-			formatFields := strings.Fields(lines[j])
-			if len(formatFields) < 2 || formatFields[0] != "format" {
-				continue
-			}
-			pattern := formatFields[1]
-			index := strings.LastIndexAny(pattern, ".,")
-			if index < 0 || index == len(pattern)-1 {
-				continue
-			}
-			if !strings.ContainsAny(pattern[index+1:], "0123456789") {
-				continue
-			}
-			return string(pattern[index])
+
+		commodity := strings.Trim(fields[1], `"'`)
+		separator, ok := formatDirectiveSeparator(lines, i)
+		if ok {
+			separators[commodity] = separator
 		}
 	}
-	return ""
+
+	return separators
 }
 
-func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx CommitCandidateTransaction, commodity string, dialect string, store *config.Store) {
+// formatDirectiveSeparator returns the last decimal separator of the commodity
+// block that starts at index. It returns false when no unambiguous format is
+// found.
+func formatDirectiveSeparator(lines []string, index int) (string, bool) {
+	for j := index + 1; j < len(lines) && j <= index+5; j++ {
+		formatFields := strings.Fields(lines[j])
+		if len(formatFields) < 2 || formatFields[0] != "format" {
+			continue
+		}
+		pattern := formatFields[1]
+		position := strings.LastIndexAny(pattern, ".,")
+		if position < 0 || position == len(pattern)-1 {
+			continue
+		}
+		if !strings.ContainsAny(pattern[position+1:], "0123456789") {
+			continue
+		}
+		return string(pattern[position]), true
+	}
+
+	return "", false
+}
+
+func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx CommitCandidateTransaction, commodity string, dialect string, separators map[string]string) {
 	offsetAcc := matchImportAccount(db, tx.SelectedAccount)
 	if offsetAcc == "" {
 		offsetAcc = tx.SelectedAccount
@@ -634,7 +644,7 @@ func writeSingleLedgerEntry(sb *strings.Builder, db *gorm.DB, baseAcc string, tx
 	if shortNote == "" {
 		shortNote = strings.TrimSpace(tx.Payee)
 	}
-	amtStr := formatCommitAmount(tx.Amount, commodity, dialect, store)
+	amtStr := formatCommitAmount(tx.Amount, commodity, separators)
 	dateStr := strings.ReplaceAll(tx.Date, "/", "-")
 
 	if dialect == "beancount" {

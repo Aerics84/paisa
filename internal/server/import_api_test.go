@@ -704,8 +704,8 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 	assert.Contains(t, hledgerOut, "-45.20 INR")
 	assert.NotContains(t, hledgerOut, "2026/10/11")
 
-	// German/EU journals declare `format 1.000,00 EUR`, so the decimal
-	// separator must be a comma or hledger reads 45.20 as 4520.
+	// A German/EU profile without a journal format directive must not imply a
+	// comma: Ledger's standard dot applies unless the journal says otherwise.
 	reqEUR := req
 	reqEUR.Transactions = []CommitCandidateTransaction{{
 		Date:            "2026-10-11",
@@ -715,9 +715,11 @@ func TestFormatTransactionsForCommitDialects(t *testing.T) {
 		IsDebit:         true,
 		SelectedAccount: "Expenses:Food:Dining",
 	}}
+	// Without a journal format directive, Ledger's standard dot is used even
+	// for a German/EU profile: the journal owns the amount style.
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n")
 	germanOut := formatTransactionsForCommit(db, reqEUR, "EUR", config.DefaultStore())
-	assert.Contains(t, germanOut, "-45,20 EUR")
+	assert.Contains(t, germanOut, "-45.20 EUR")
 
 	loadImportTestConfig(t, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: beancount\n")
 	beancountGermanOut := formatTransactionsForCommit(db, reqEUR, "EUR", config.DefaultStore())
@@ -761,6 +763,71 @@ func TestFormatTransactionsForCommitUsesJournalCommodityStyle(t *testing.T) {
 	loadImportTestConfigAt(t, configPath, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: EUR\nlocale: en\nledger_cli: hledger\n")
 	commaOut := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
 	assert.Contains(t, commaOut, "-12,50 EUR")
+}
+
+func TestFormatTransactionsForCommitDefaultsToDotWithoutDirective(t *testing.T) {
+	db := openImportTestDB(t)
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.ledger")
+	configPath := filepath.Join(dir, "paisa.yaml")
+	// The journal exists but has no commodity format directive.
+	require.NoError(t, os.WriteFile(journal, []byte("; plain ledger journal\n"), 0o644))
+	loadImportTestConfigAt(t, configPath, "journal_path: main.ledger\ndb_path: paisa.db\nregional_profile: germany-eu\ndefault_currency: EUR\nlocale: de-DE\nledger_cli: hledger\n")
+
+	req := CommitImportRequest{
+		BaseAccount: "Assets:Checking",
+		Transactions: []CommitCandidateTransaction{{
+			Date:            "2026-10-11",
+			Payee:           "Coffee Shop",
+			Amount:          12.50,
+			Currency:        "EUR",
+			IsDebit:         true,
+			SelectedAccount: "Expenses:Food:Dining",
+		}},
+	}
+
+	out := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
+	assert.Contains(t, out, "-12.50 EUR")
+	assert.NotContains(t, out, "12,50")
+}
+
+func TestFormatTransactionsForCommitGroupedDebitsUseJournalSeparator(t *testing.T) {
+	db := openImportTestDB(t)
+	dir := t.TempDir()
+	journal := filepath.Join(dir, "main.ledger")
+	configPath := filepath.Join(dir, "paisa.yaml")
+	require.NoError(t, os.WriteFile(journal, []byte("commodity EUR\n    format 1.000,00 EUR\n"), 0o644))
+	loadImportTestConfigAt(t, configPath, "journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: EUR\nlocale: en\nledger_cli: hledger\n")
+
+	req := CommitImportRequest{
+		BaseAccount: "Assets:Checking",
+		GroupByDate: true,
+		Transactions: []CommitCandidateTransaction{
+			{
+				Date:            "2026/10/11",
+				Payee:           "Coffee Shop",
+				Amount:          12.50,
+				Currency:        "EUR",
+				IsDebit:         true,
+				SelectedAccount: "Expenses:Food:Dining",
+			},
+			{
+				Date:            "2026/10/11",
+				Payee:           "Bakery",
+				Amount:          17.50,
+				Currency:        "EUR",
+				IsDebit:         true,
+				SelectedAccount: "Expenses:Food:Groceries",
+			},
+		},
+	}
+
+	out := formatTransactionsForCommit(db, req, "EUR", config.DefaultStore())
+	assert.Contains(t, out, `2026-10-11 * "Consolidated Debits (2 items)"`)
+	assert.Contains(t, out, "12,50 EUR")
+	assert.Contains(t, out, "17,50 EUR")
+	assert.Contains(t, out, "-30,00 EUR")
+	assert.NotContains(t, out, "12.50 EUR")
 }
 
 func TestFormatTransactionsForCommitQuotesGroupedDebits(t *testing.T) {
