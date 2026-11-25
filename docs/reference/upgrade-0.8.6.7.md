@@ -15,7 +15,7 @@ restored from a backup.
 |---|---|---|
 | SQLite schema | Additive migration; `PRAGMA user_version` moves from `0` to `1`. Existing rows are preserved. | The old binary keeps reading the migrated database; it ignores the new `user_version` and any new columns. |
 | Authentication hashes | Legacy `sha256:` hashes still verify and are replaced with `argon2id$...` on the next successful login when the configuration file is writable. | 0.8.6.6 only verifies `sha256:` hashes. After a rehash, login with the stored `argon2id$` value fails; restore the configuration backup or recreate the user. |
-| Sessions | 0.8.6.7 replaces the pre-0.8.6.7 `X-Auth`/localStorage authentication with an in-memory server session and an HttpOnly `paisa_session` cookie. Restarting the server invalidates the session, so users log in again. | 0.8.6.6 has no server-side session; it authenticates with the `X-Auth` header and a client-side token. A rollback therefore requires logging in again through the old UI/header mechanism, not invalidating a server session. |
+| Sessions | 0.8.6.7 adds an in-memory server session and an HttpOnly `paisa_session` cookie, and deprecates the `X-Auth`/localStorage flow (still accepted while a legacy `sha256:` hash remains). Restarting the server invalidates the session, so users log in again. | 0.8.6.6 has no server-side session; it authenticates with the `X-Auth` header and a client-side token. A rollback therefore requires logging in again through the old UI/header mechanism, not invalidating a server session. |
 | Configuration defaults | Existing configuration files keep their values. Missing fields still fall back to the generic defaults (India). | No change; the configuration file is unchanged. |
 | daisyUI classes | The `du-*` classes were removed from the stylesheets. | Custom CSS or themes that still target `du-*` classes must be adjusted or replaced; restoring only the custom overrides will not bring back the removed component rules. |
 | PWA | A service worker for the static app shell is registered in production builds. | Clear the site data in the browser or call `navigator.serviceWorker.getRegistrations()` followed by `registration.unregister()` for each registration. |
@@ -58,10 +58,10 @@ application starts serving or syncing data.
 A real binary rollback is a manual release step. It is not automated by the
 migration test.
 
-**Before the first 0.8.6.7 start**, copy `paisa.yaml` (and the database plus its
-`-wal`/`-shm` files) to a safe location if you may need to roll back. The first
-successful login can replace a legacy `sha256:` hash with an `argon2id$` hash,
-and 0.8.6.6 cannot verify the latter.
+**Before the first 0.8.6.7 start**, with `paisa serve` stopped, copy `paisa.yaml`
+(and the database plus its `-wal`/`-shm` files) to a safe location if you may
+need to roll back. The first successful login can replace a legacy `sha256:`
+hash with an `argon2id$` hash, and 0.8.6.6 cannot verify the latter.
 
 1. Stop `paisa serve` (and any `paisa update` run) so no process writes to the
    database.
