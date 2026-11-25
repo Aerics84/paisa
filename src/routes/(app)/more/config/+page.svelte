@@ -9,6 +9,7 @@
   import { askConfirm } from "$lib/confirm";
   import { sync } from "$lib/sync";
   import { pendingPasswordHashes } from "$lib/password_hash";
+  import { t } from "$lib/i18n";
 
   let lastConfig = $state<UserConfig>();
   let config = $state<UserConfig>();
@@ -47,11 +48,10 @@
 
   async function resetToDefault() {
     const confirmed = await askConfirm({
-      title: "Reset configuration?",
-      description:
-        "Are you sure you want to reset the config to defaults? This action is not reversible.",
-      confirmLabel: "Reset",
-      cancelLabel: "Cancel",
+      title: $t("settings.resetTitle"),
+      description: $t("settings.resetDescription"),
+      confirmLabel: $t("settings.reset"),
+      cancelLabel: $t("common.cancel"),
       variant: "danger"
     });
     if (confirmed) {
@@ -84,7 +84,7 @@
         configUpdated();
         await refresh();
         toast.toast({
-          message: `Saved config`,
+          message: $t("settings.saved"),
           type: "is-success"
         });
 
@@ -116,9 +116,8 @@
           <div class="box px-3" style="max-width: 1024px;">
             <article class="message">
               <div class="message-body">
-                Prices are <b>not</b> automatically updated after config change. Use the menu at the top
-                right corner to update prices. If the journal failed to sync due to any issues, fix the
-                issues and use the menu to sync again.
+                {$t("settings.priceNoticeBefore")} <b>{$t("settings.priceNoticeNot")}</b>
+                {$t("settings.priceNoticeAfter")}
               </div>
             </article>
 
@@ -134,20 +133,20 @@
                 <button
                   onclick={(_e) => save(config)}
                   class="button is-success {isLoading && 'is-loading'}"
-                  disabled={!hasChanges || $pendingPasswordHashes > 0}>Save</button
+                  disabled={!hasChanges || $pendingPasswordHashes > 0}>{$t("common.save")}</button
                 >
                 {#if $pendingPasswordHashes > 0}
-                  <span class="help has-text-grey">Hashing…</span>
+                  <span class="help has-text-grey">{$t("settings.hashing")}</span>
                 {/if}
               </div>
               <div class="control">
                 <button onclick={(_e) => (config = _.cloneDeep(lastConfig))} class="button is-light"
-                  >Cancel</button
+                  >{$t("common.cancel")}</button
                 >
               </div>
               <div class="control">
                 <button onclick={(_e) => resetToDefault()} class="button is-danger"
-                  >Reset to Defaults</button
+                  >{$t("settings.resetToDefaults")}</button
                 >
               </div>
             </div>

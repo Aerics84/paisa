@@ -2,33 +2,42 @@
   import Logo from "$lib/components/Logo.svelte";
   import { ajax } from "$lib/utils";
   import { onMount } from "svelte";
+  import { t, type MessageKey } from "$lib/i18n";
 
-  const links = [
-    { name: "Chat", href: "https://matrix.to/#/#paisa:matrix.org", icon: "fa-solid fa-headset" },
-    { name: "Issue", href: "https://github.com/Aerics84/paisa/issues", icon: "fas fa-bug" },
+  const links: Array<{ name: MessageKey; href: string; icon: string }> = [
     {
-      name: "Discussions",
+      name: "more.about.chat",
+      href: "https://matrix.to/#/#paisa:matrix.org",
+      icon: "fa-solid fa-headset"
+    },
+    {
+      name: "more.about.issue",
+      href: "https://github.com/Aerics84/paisa/issues",
+      icon: "fas fa-bug"
+    },
+    {
+      name: "more.about.discussions",
       href: "https://github.com/ananthakumaran/paisa/discussions",
       icon: "fa-regular fa-comments"
     },
     {
-      name: "Source Code",
+      name: "more.about.sourceCode",
       href: "https://github.com/Aerics84/paisa",
       icon: "fa-solid fa-code"
     },
-    { name: "Documentation", href: "https://paisa.fyi", icon: "fa-solid fa-book" },
+    { name: "more.about.documentation", href: "https://paisa.fyi", icon: "fa-solid fa-book" },
     {
-      name: "Releases",
+      name: "more.about.releases",
       href: "https://github.com/Aerics84/paisa/releases",
       icon: "fa-solid fa-download"
     },
     {
-      name: "Demo (upstream)",
+      name: "more.about.demoUpstream",
       href: "https://demo.paisa.fyi",
       icon: "fa-solid fa-video"
     },
     {
-      name: "Upstream project",
+      name: "more.about.upstreamProject",
       href: "https://github.com/ananthakumaran/paisa",
       icon: "fa-solid fa-code-branch"
     }
@@ -57,16 +66,17 @@
           <div><Logo size={128} /></div>
           <div class="is-size-3 is-primary-color">Paisa</div>
           <div>
-            Version: <b>{version}</b>
+            {$t("more.about.version")}: <b>{version}</b>
           </div>
           <div class="is-size-7 mt-2">
-            Fork of <a
+            {$t("more.about.forkOf")}
+            <a
               href="https://github.com/ananthakumaran/paisa"
               onclick={(event) => {
                 event.preventDefault();
                 externalLink("https://github.com/ananthakumaran/paisa");
               }}>ananthakumaran/paisa</a
-            >, maintained by
+            >{$t("more.about.maintainedBy")}
             <a
               href="https://github.com/Aerics84/paisa"
               onclick={(event) => {
@@ -78,7 +88,7 @@
         </div>
 
         <div class="box px-3 mx-auto" style="max-width: 400px;">
-          <h3 class="is-size-5 mb-1">Links</h3>
+          <h3 class="is-size-5 mb-1">{$t("more.about.links")}</h3>
           <ul>
             {#each links as link}
               <li>
@@ -92,7 +102,7 @@
                   <span class="icon is-small">
                     <i class={link.icon}></i>
                   </span>
-                  <span>{link.name}</span>
+                  <span>{$t(link.name)}</span>
                 </a>
               </li>
             {/each}

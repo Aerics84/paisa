@@ -32,6 +32,7 @@
   import ProgressWithBreakpoints from "$lib/components/ProgressWithBreakpoints.svelte";
   import AssetsBalance from "$lib/components/AssetsBalance.svelte";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
+  import { t } from "$lib/i18n";
 
   let { data }: { data: PageData } = $props();
 
@@ -150,40 +151,41 @@
     <nav class="level custom-icon {isMobile() && 'grid-2'}">
       <LevelItem title={name} value={iconGlyph(icon)} />
       <LevelItem
-        title="Net Investment"
+        title={$t("dashboard.netInvestment")}
         value={formatCurrency(investmentTotal)}
         color={COLORS.secondary}
-        subtitle={`<b>${formatCurrency(gainTotal)}</b> ${
-          gainTotal >= 0 ? "gain" : "loss"
-        } at <b>${formatFloat(xirr)}</b> XIRR`}
+        subtitle={$t(gainTotal >= 0 ? "more.goal.gainAtXirr" : "more.goal.lossAtXirr", {
+          amount: formatCurrency(gainTotal),
+          xirr: formatFloat(xirr)
+        })}
       />
 
       <LevelItem
-        title="Current Savings"
+        title={$t("more.goal.currentSavings")}
         value={formatCurrency(savingsTotal)}
         color={COLORS.gainText}
-        subtitle={`${formatFloat(savingsX, 0)}× Yearly Expenses`}
+        subtitle={$t("more.goal.yearlyExpensesMultiple", { value: formatFloat(savingsX, 0) })}
       />
       <LevelItem
-        title="Yearly Expenses"
+        title={$t("more.goal.yearlyExpenses")}
         color={COLORS.lossText}
         value={formatCurrency(yearlyExpense)}
       />
 
       <LevelItem
-        title="Target Savings"
+        title={$t("more.goal.targetSavings")}
         value={formatCurrency(targetSavings)}
         color={COLORS.primary}
-        subtitle={`${formatFloat(targetX, 0)}× Yearly Expenses${
+        subtitle={`${$t("more.goal.yearlyExpensesMultiple", { value: formatFloat(targetX, 0) })}${
           predictedTargetDate
-            ? `<br/>Projected <b>${predictedTargetDate}</b>`
+            ? `<br/>${$t("more.goal.projected", { date: predictedTargetDate })}`
             : savingsTotal >= targetSavings
-              ? "<br/>Target achieved"
+              ? `<br/>${$t("more.goal.targetAchieved")}`
               : ""
         }`}
       />
       <LevelItem
-        title="Goal Status"
+        title={$t("more.goal.goalStatus")}
         value={statusLabel}
         color={intelligence?.attention === "critical"
           ? COLORS.lossText
@@ -192,7 +194,7 @@
             : COLORS.gainText}
         subtitle={delayLabel || null}
       />
-      <LevelItem title="SWR" value={formatFloat(swr)} />
+      <LevelItem title={$t("more.goal.swr")} value={formatFloat(swr)} />
     </nav>
   </div>
 </section>
@@ -202,8 +204,7 @@
     <ProgressWithBreakpoints {progressPercent} {breakPoints} />
     {#if forecastUnavailable}
       <div class="notification is-light mt-4 has-text-grey">
-        Paisa could not estimate when this retirement goal will be reached from the current savings
-        history.
+        {$t("more.goal.forecastUnavailable")}
       </div>
     {/if}
   </div>
@@ -220,7 +221,7 @@
             </div>
           </div>
         </div>
-        <BoxLabel text="{iconGlyph(icon)} {name} progress" />
+        <BoxLabel text={`${iconGlyph(icon)} ${$t("more.goal.progress", { name })}`} />
         <div class="columns">
           <div class="column is-12">
             <div class="box overflow-x-auto">
@@ -228,13 +229,13 @@
             </div>
           </div>
         </div>
-        <BoxLabel text="Monthly Investment" />
+        <BoxLabel text={$t("more.goal.monthlyInvestment")} />
         <div class="columns">
           <div class="column is-12 has-text-grey">
             <AssetsBalance breakdowns={balances} indent={false} />
           </div>
         </div>
-        <BoxLabel text="Current Balance" />
+        <BoxLabel text={$t("more.goal.currentBalance")} />
       </div>
       <div class="column is-3">
         <PostingGroup postings={latestPostings} groupFormat="MMM YYYY" let:groupedPostings>

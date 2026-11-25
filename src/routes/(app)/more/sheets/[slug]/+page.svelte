@@ -23,6 +23,7 @@
   import FileTree from "$lib/components/FileTree.svelte";
   import FileModal from "$lib/components/FileModal.svelte";
   import { page } from "$app/state";
+  import { t } from "$lib/i18n";
 
   let ledgerFiles = $state<LedgerFile[]>([]);
   let accounts = $state<string[]>([]);
@@ -56,10 +57,10 @@
 
   function askLeaveUnsavedChanges(): Promise<boolean> {
     return askConfirm({
-      title: "Unsaved changes",
-      description: "You have unsaved changes. Are you sure you want to leave?",
-      confirmLabel: "Leave",
-      cancelLabel: "Stay",
+      title: $t("ledger.unsavedTitle"),
+      description: $t("ledger.unsavedDescription"),
+      confirmLabel: $t("ledger.leave"),
+      cancelLabel: $t("ledger.stay"),
       variant: "danger"
     });
   }
@@ -165,13 +166,13 @@
 
     if (!saved) {
       toast.toast({
-        message: `Failed to save ${selectedFile.name}. reason: ${message}`,
+        message: $t("common.saveFailed", { name: selectedFile.name, reason: message }),
         type: "is-danger",
         duration: 10000
       });
     } else {
       toast.toast({
-        message: `Saved ${selectedFile.name}`,
+        message: $t("common.saved", { name: selectedFile.name }),
         type: "is-success"
       });
       filesMap[file.name] = file;
@@ -227,9 +228,10 @@
 
     if (saved) {
       toast.toast({
-        message: `Created <b><a href="/more/sheets/${encodeURIComponent(
-          destinationFile
-        )}">${destinationFile}</a></b>`,
+        message: $t("common.createdFile", {
+          url: `/more/sheets/${encodeURIComponent(destinationFile)}`,
+          name: _.escape(destinationFile)
+        }),
         type: "is-success",
         duration: 5000
       });
@@ -240,7 +242,7 @@
       }
     } else {
       toast.toast({
-        message: `Failed to create ${destinationFile}. reason: ${message}`,
+        message: $t("common.createFailed", { name: destinationFile, reason: message }),
         type: "is-danger",
         duration: 10000
       });
@@ -251,9 +253,9 @@
 <FileModal
   bind:open={modalOpen}
   onsave={(detail) => createFile(detail)}
-  label="Create"
+  label={$t("common.create")}
   placeholder="scratch"
-  help="Filename without any extension"
+  help={$t("more.sheets.filenameHelp")}
 />
 
 <section class="section tab-editor max-h-screen" style="padding-bottom: 0 !important">
@@ -271,7 +273,7 @@
                 <span class="icon is-small">
                   <i class="fas fa-file-circle-plus"></i>
                 </span>
-                <span>Create</span>
+                <span>{$t("common.create")}</span>
               </button>
             </p>
           </div>
@@ -286,7 +288,7 @@
                 <span class="icon is-small">
                   <i class="fas fa-floppy-disk"></i>
                 </span>
-                <span>Save</span>
+                <span>{$t("common.save")}</span>
               </button>
             </p>
             <p class="control">
@@ -298,7 +300,7 @@
                 <span class="icon is-small">
                   <i class="fas fa-arrow-left"></i>
                 </span>
-                <span>Undo</span>
+                <span>{$t("common.undo")}</span>
               </button>
             </p>
             <p class="control">
@@ -307,7 +309,7 @@
                 disabled={$sheetEditorState.redoDepth == 0}
                 onclick={(_e) => redo(editor)}
               >
-                <span>Redo</span>
+                <span>{$t("common.redo")}</span>
                 <span class="icon is-small">
                   <i class="fas fa-arrow-right"></i>
                 </span>
@@ -326,7 +328,7 @@
                   <span class="icon is-small">
                     <i class="fas fa-clock-rotate-left"></i>
                   </span>
-                  <span>Revert</span>
+                  <span>{$t("common.revert")}</span>
                 </button>
               </p>
 
@@ -345,7 +347,7 @@
                   class="button is-small"
                   onclick={(_e) => deleteBackups()}
                   type="button"
-                  aria-label="Delete backups"
+                  aria-label={$t("ledger.deleteBackups")}
                 >
                   <span class="icon is-small">
                     <i class="fas fa-trash-can"></i>
@@ -363,7 +365,7 @@
                 type="button"
               >
                 <span class="ml-1 tag invertable is-danger is-light"
-                  >{$sheetEditorState.errors.length} error(s) found</span
+                  >{$t("ledger.errorsFound", { count: $sheetEditorState.errors.length })}</span
                 >
               </button>
             </div>

@@ -35,6 +35,7 @@
   import ProgressWithBreakpoints from "$lib/components/ProgressWithBreakpoints.svelte";
   import AssetsBalance from "$lib/components/AssetsBalance.svelte";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
+  import { t } from "$lib/i18n";
 
   let { data }: { data: PageData } = $props();
 
@@ -145,21 +146,23 @@
     <nav class="level custom-icon {isMobile() && 'grid-2'}">
       <LevelItem title={name} value={iconGlyph(icon)} />
       <LevelItem
-        title="Net Investment"
+        title={$t("dashboard.netInvestment")}
         value={formatCurrency(investmentTotal)}
         color={COLORS.secondary}
-        subtitle={`<b>${formatCurrency(gainTotal)}</b> ${gainTotal >= 0 ? "gain" : "loss"}`}
+        subtitle={$t(gainTotal >= 0 ? "more.goal.gain" : "more.goal.loss", {
+          amount: formatCurrency(gainTotal)
+        })}
       />
 
       <LevelItem
-        title="Current Savings"
+        title={$t("more.goal.currentSavings")}
         value={formatCurrency(savingsTotal)}
         color={COLORS.gainText}
-        subtitle={`<b>${formatFloat(xirr)}</b> XIRR`}
+        subtitle={$t("more.goal.xirr", { xirr: formatFloat(xirr) })}
       />
 
       <LevelItem
-        title="Target Savings"
+        title={$t("more.goal.targetSavings")}
         value={formatCurrency(targetSavings)}
         color={COLORS.primary}
         subtitle={targetDateObject?.isValid() ? targetDateObject.format("DD MMM YYYY") : null}
@@ -167,14 +170,16 @@
 
       {#if intelligence?.requiredMonthlyContribution !== undefined}
         <LevelItem
-          title="Monthly Investment needed"
+          title={$t("more.goal.monthlyInvestmentNeeded")}
           value={formatCurrency(intelligence.requiredMonthlyContribution)}
           color={COLORS.secondary}
-          subtitle={rate > 0 ? `Expected <b>${formatFloat(rate, 2)}</b> rate of return` : null}
+          subtitle={rate > 0
+            ? $t("more.goal.expectedReturn", { rate: formatFloat(rate, 2) })
+            : null}
         />
       {/if}
       <LevelItem
-        title="Goal Status"
+        title={$t("more.goal.goalStatus")}
         value={statusLabel}
         color={intelligence?.attention === "critical"
           ? COLORS.lossText
@@ -185,7 +190,7 @@
       />
       {#if projectionDate}
         <LevelItem
-          title="Projection"
+          title={$t("more.goal.projection")}
           value={projectionDate}
           color={COLORS.primary}
           subtitle={delayLabel || null}
@@ -212,7 +217,7 @@
             </div>
           </div>
         </div>
-        <BoxLabel text="{iconGlyph(icon)} {name} progress" />
+        <BoxLabel text={`${iconGlyph(icon)} ${$t("more.goal.progress", { name })}`} />
         <div class="columns">
           <div class="column is-12">
             <div class="box overflow-x-auto">
@@ -220,13 +225,13 @@
             </div>
           </div>
         </div>
-        <BoxLabel text="Monthly Investment" />
+        <BoxLabel text={$t("more.goal.monthlyInvestment")} />
         <div class="columns">
           <div class="column is-12 has-text-grey">
             <AssetsBalance breakdowns={balances} indent={false} />
           </div>
         </div>
-        <BoxLabel text="Current Balance" />
+        <BoxLabel text={$t("more.goal.currentBalance")} />
       </div>
       <div class="column is-3">
         <PostingGroup postings={latestPostings} groupFormat="MMM YYYY" let:groupedPostings>

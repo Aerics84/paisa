@@ -3,6 +3,8 @@
   import FileModal from "$lib/components/FileModal.svelte";
   import { saveSheetFile } from "$lib/api/sheets";
   import * as toast from "bulma-toast";
+  import _ from "lodash";
+  import { t } from "$lib/i18n";
 
   let modalOpen = $state(false);
   function openCreateModal() {
@@ -18,9 +20,10 @@
 
     if (saved) {
       toast.toast({
-        message: `Created <b><a href="/more/sheets/${encodeURIComponent(
-          destinationFile
-        )}">${destinationFile}</a></b>`,
+        message: $t("common.createdFile", {
+          url: `/more/sheets/${encodeURIComponent(destinationFile)}`,
+          name: _.escape(destinationFile)
+        }),
         type: "is-success",
         duration: 5000
       });
@@ -28,7 +31,7 @@
       await goto(`/more/sheets/${encodeURIComponent(destinationFile)}`);
     } else {
       toast.toast({
-        message: `Failed to create ${destinationFile}. reason: ${message}`,
+        message: $t("common.createFailed", { name: destinationFile, reason: message }),
         type: "is-danger",
         duration: 10000
       });
@@ -39,9 +42,9 @@
 <FileModal
   bind:open={modalOpen}
   onsave={(detail) => createFile(detail)}
-  label="Create"
+  label={$t("common.create")}
   placeholder="scratch"
-  help="Filename without any extension"
+  help={$t("more.sheets.filenameHelp")}
 />
 
 <section class="section">
@@ -55,10 +58,10 @@
                 <span class="icon is-small">
                   <i class="fas fa-file-circle-plus"></i>
                 </span>
-                <span>Create</span>
+                <span>{$t("common.create")}</span>
               </button>
             </p>
-            <p class="mt-2 has-text-grey has-text-bold">Create your first sheet</p>
+            <p class="mt-2 has-text-grey has-text-bold">{$t("more.sheets.createFirst")}</p>
           </div>
         </div>
       </div>

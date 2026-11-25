@@ -3,6 +3,7 @@
   import COLORS from "$lib/colors";
   import { ajax } from "$lib/utils";
   import { renderIssues } from "$lib/doctor";
+  import { t } from "$lib/i18n";
 
   let issues = [];
   onMount(async () => {
@@ -20,7 +21,8 @@
             class="p-1 has-text-white"
             style="background-color: {issues.length > 0 ? COLORS.lossText : COLORS.gainText}"
             >{issues.length}</b
-          > potential issue(s) found.
+          >
+          {$t("more.doctor.issueFound", { count: issues.length })}
         </div>
       </div>
     </div>

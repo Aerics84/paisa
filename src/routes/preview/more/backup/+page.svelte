@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   let includeSecrets = $state(false);
   let downloading = $state(false);
   let errorMessage = $state("");
@@ -16,7 +17,9 @@
 
       const response = await fetch(route, { credentials: "same-origin" });
       if (!response.ok) {
-        throw new Error(`Failed to download backup: ${response.statusText}`);
+        throw new Error(
+          $t("more.backup.downloadFailedWithStatus", { status: response.statusText })
+        );
       }
 
       const contentDisposition = response.headers.get("Content-Disposition");
@@ -38,7 +41,7 @@
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      errorMessage = err instanceof Error ? err.message : "Failed to download backup";
+      errorMessage = err instanceof Error ? err.message : $t("more.backup.downloadFailed");
     } finally {
       downloading = false;
     }
@@ -52,34 +55,30 @@
         <div class="box">
           <h1 class="title is-5">
             <span class="icon"><i class="fas fa-file-zipper"></i></span>
-            <span>Backup &amp; Export</span>
+            <span>{$t("more.backup.title")}</span>
           </h1>
 
           <div class="content is-size-7">
-            <p>
-              Generate a single ZIP archive containing your ledger journals, sheets, and the
-              configuration file.
-            </p>
+            <p>{$t("more.backup.description")}</p>
             <ul>
-              <li>Includes all ledger journal files, including included files</li>
-              <li>Includes <code>paisa.yaml</code></li>
-              <li>Includes sheet templates and data files</li>
-              <li>Excludes the SQLite cache database, which is rebuilt automatically on sync</li>
+              <li>{$t("more.backup.includesJournals")}</li>
+              <li><code>paisa.yaml</code> {$t("more.backup.isIncluded")}</li>
+              <li>{$t("more.backup.includesSheets")}</li>
+              <li>{$t("more.backup.excludesCache")}</li>
             </ul>
           </div>
 
           <div class="field">
             <label class="checkbox">
               <input type="checkbox" bind:checked={includeSecrets} />
-              Include password hashes in <code>paisa.yaml</code>
+              <code>paisa.yaml</code>: {$t("more.backup.includeHashes")}
             </label>
-            <p class="help">Password values are redacted by default.</p>
+            <p class="help">{$t("more.backup.hashesRedacted")}</p>
           </div>
 
           {#if includeSecrets}
             <div class="notification is-warning is-light is-size-7 py-3">
-              The exported configuration will contain the password hashes in plain text. Keep the
-              archive in a safe place.
+              {$t("more.backup.warningPlaintext")}
             </div>
           {/if}
 
@@ -94,7 +93,7 @@
             onclick={downloadBackup}
           >
             <span class="icon"><i class="fas fa-download"></i></span>
-            <span>Download Backup (.zip)</span>
+            <span>{$t("more.backup.download")}</span>
           </button>
         </div>
       </div>
