@@ -195,10 +195,12 @@ sequence in which it looks for the file is described below
 1. `paisa/paisa.yaml` file inside User Documents folder.
 
 If it can't find the configuration file, it will create a default
-configuration file named `paisa/paisa.yaml` inside User Documents
-folder. The default configuration is tuned for Indians, users from
-other countries can switch the `regional_profile` and then fine tune
-`default_currency`, `locale`, and calendar settings. Check the
+configuration file named `paisa/paisa.yaml` inside the User Documents
+folder. New installations use the `germany-eu` profile (EUR, `de-DE`,
+Europe/Berlin). To start with the India profile instead, run
+`paisa init --regional-profile india`. Existing configurations are left
+unchanged; a configuration without `regional_profile` keeps the
+India-compatible defaults. Check the
 [configuration](../reference/config.md) reference for details.
 
 ## Update
