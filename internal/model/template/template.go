@@ -30,8 +30,8 @@ type Template struct {
 	TemplateType TemplateType `json:"template_type"`
 }
 
-func All() []Template {
-	return all(config.GetConfig().ImportTemplates, BuiltinTemplates)
+func All(store *config.Store) []Template {
+	return all(store.Get().ImportTemplates, BuiltinTemplates)
 }
 
 func all(custom []config.ImportTemplate, builtins fs.FS) []Template {
@@ -69,19 +69,20 @@ func all(custom []config.ImportTemplate, builtins fs.FS) []Template {
 	return templates
 }
 
-func Upsert(name string, content string) (Template, error) {
+func Upsert(store *config.Store, name string, content string) (Template, error) {
 	template := Template{ID: buildID(name, Custom), Name: name, Content: content, TemplateType: Custom}
 
-	if config.GetConfig().Readonly {
+	if store.Get().Readonly {
 		return template, nil
 	}
 
-	if err := Delete(name); err != nil {
-		return template, err
-	}
-	cfg := config.GetConfig()
-	cfg.ImportTemplates = append(cfg.ImportTemplates, config.ImportTemplate{Name: name, Content: content})
-	err := config.SaveConfigObject(cfg)
+	err := store.Update(func(cfg *config.Config) error {
+		cfg.ImportTemplates = lo.Filter(cfg.ImportTemplates, func(t config.ImportTemplate, _ int) bool {
+			return t.Name != name
+		})
+		cfg.ImportTemplates = append(cfg.ImportTemplates, config.ImportTemplate{Name: name, Content: content})
+		return nil
+	})
 	if err != nil {
 		return template, err
 	}
@@ -89,13 +90,13 @@ func Upsert(name string, content string) (Template, error) {
 	return template, nil
 }
 
-func Delete(name string) error {
-	cfg := config.GetConfig()
-	cfg.ImportTemplates = lo.Filter(cfg.ImportTemplates, func(t config.ImportTemplate, _ int) bool {
-		return t.Name != name
+func Delete(store *config.Store, name string) error {
+	return store.Update(func(cfg *config.Config) error {
+		cfg.ImportTemplates = lo.Filter(cfg.ImportTemplates, func(t config.ImportTemplate, _ int) bool {
+			return t.Name != name
+		})
+		return nil
 	})
-
-	return config.SaveConfigObject(cfg)
 }
 
 func buildID(name string, templateType TemplateType) string {

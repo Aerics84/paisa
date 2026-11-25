@@ -111,16 +111,14 @@ func TestRulesJSONContract(t *testing.T) {
 func TestTemplatesJSONContract(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "paisa.yaml")
-	require.NoError(t, config.LoadConfig([]byte(
+	store := config.NewStore()
+	require.NoError(t, store.Load([]byte(
 		"journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"+
 			"import_templates:\n  - name: Existing\n    content: \"{{date}}\"\n",
 	), configPath))
-	t.Cleanup(func() {
-		_ = config.LoadConfig([]byte("journal_path: main.ledger\ndb_path: paisa.db\ndefault_currency: INR\nledger_cli: ledger\n"), "")
-	})
 
 	db := openImportTestDB(t)
-	router := Build(Deps{DB: db, Config: config.NewStore()}, false)
+	router := Build(Deps{DB: db, Config: store}, false)
 
 	payload := `{"name": "Fixture Custom", "content": "{{payee}}"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/templates/upsert", bytes.NewBufferString(payload))

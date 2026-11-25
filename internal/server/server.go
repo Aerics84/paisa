@@ -466,7 +466,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.GET("/api/templates", func(c *gin.Context) {
-		c.JSON(200, TemplatesResponse{Templates: template.All()})
+		c.JSON(200, TemplatesResponse{Templates: template.All(deps.Config)})
 	})
 
 	router.POST("/api/templates/upsert", func(c *gin.Context) {
@@ -481,7 +481,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		saved, err := template.Upsert(t.Name, t.Content)
+		saved, err := template.Upsert(deps.Config, t.Name, t.Content)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{"saved": false, "message": err.Error()})
 			return
@@ -502,7 +502,7 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
-		if err := template.Delete(t.Name); err != nil {
+		if err := template.Delete(deps.Config, t.Name); err != nil {
 			c.JSON(http.StatusOK, gin.H{"success": false, "message": err.Error()})
 			return
 		}
