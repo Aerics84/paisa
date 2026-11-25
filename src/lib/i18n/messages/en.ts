@@ -98,6 +98,25 @@ export const en = {
   "login.tooManyAttempts": "Too many login attempts. Try again later.",
   "login.invalidRequest": "Invalid request",
 
+  "onboarding.title": "Welcome to Paisa",
+  "onboarding.intro":
+    "Paisa is not set up yet. Choose your regional profile and how you want to start.",
+  "onboarding.profileTitle": "Regional profile",
+  "onboarding.profile.germanyEu": "Germany/EU",
+  "onboarding.profile.germanyEuHint":
+    "Euro, German taxes and a calendar financial year. This profile covers Germany and the EU, not all of DACH (Austria and Switzerland will follow later).",
+  "onboarding.profile.india": "India",
+  "onboarding.profile.indiaHint":
+    "Indian rupee, Indian taxes and a financial year starting in April.",
+  "onboarding.modeTitle": "Start",
+  "onboarding.mode.empty": "Start empty",
+  "onboarding.mode.emptyHint": "Just the configuration and an empty journal.",
+  "onboarding.mode.demo": "Demo data",
+  "onboarding.mode.demoHint": "Sample transactions and accounts to explore.",
+  "onboarding.submit": "Start setup",
+  "onboarding.running": "Setting up…",
+  "onboarding.error": "Setup failed: {error}",
+
   "common.oops": "Oops!",
   "common.hurray": "Hurray!",
   "common.notAvailable": "Not available",

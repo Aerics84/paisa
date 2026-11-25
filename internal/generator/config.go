@@ -48,12 +48,17 @@ func MinimalConfigForProfile(cwd string, profile config.RegionalProfileType) {
 journal_path: '%s'
 db_path: '%s'
 regional_profile: %s
+default_currency: %s
 `
 	log.Info("Generating config file: ", configFilePath)
 	journalFilePath := filepath.Join(cwd, "main.ledger")
 	dbFilePath := filepath.Join(cwd, "paisa.db")
 	profile = config.NormalizeRegionalProfile(profile)
-	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile), 0644)
+	currency := "INR"
+	if profile == config.RegionalProfileGermanyEU {
+		currency = "EUR"
+	}
+	err := os.WriteFile(configFilePath, fmt.Appendf(nil, configTemplate, filepath.Base(journalFilePath), filepath.Base(dbFilePath), profile, currency), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

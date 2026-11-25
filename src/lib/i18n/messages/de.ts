@@ -101,6 +101,25 @@ export const de: Record<EnMessageKey, string> = {
   "login.invalidRequest": "Ungültige Anfrage",
   "login.invalidCredentials": "Benutzername oder Passwort ist ungültig",
 
+  "onboarding.title": "Willkommen bei Paisa",
+  "onboarding.intro":
+    "Paisa ist noch nicht eingerichtet. Wähle dein regionales Profil und wie du starten möchtest.",
+  "onboarding.profileTitle": "Regionales Profil",
+  "onboarding.profile.germanyEu": "Deutschland/EU",
+  "onboarding.profile.germanyEuHint":
+    "Euro, deutsche Steuern und ein Kalenderjahr als Geschäftsjahr. Das Profil gilt für Deutschland und die EU, nicht für ganz DACH (Österreich und die Schweiz folgen später).",
+  "onboarding.profile.india": "Indien",
+  "onboarding.profile.indiaHint":
+    "Indische Rupie, indische Steuern und ein Geschäftsjahr ab April.",
+  "onboarding.modeTitle": "Start",
+  "onboarding.mode.empty": "Leer starten",
+  "onboarding.mode.emptyHint": "Nur die Konfiguration und ein leeres Journal.",
+  "onboarding.mode.demo": "Demo-Daten",
+  "onboarding.mode.demoHint": "Beispielbuchungen und Konten zum Ausprobieren.",
+  "onboarding.submit": "Einrichtung starten",
+  "onboarding.running": "Wird eingerichtet …",
+  "onboarding.error": "Einrichtung fehlgeschlagen: {error}",
+
   "common.oops": "Hoppla!",
   "common.hurray": "Hurra!",
   "common.notAvailable": "Nicht verfügbar",

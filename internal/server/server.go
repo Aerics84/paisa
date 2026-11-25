@@ -107,6 +107,12 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	router.GET("/api/auth/status", HandleAuthStatus(deps))
 	router.POST("/api/auth/hash", HandleHash(deps))
 
+	// First-run onboarding must be reachable before a session exists. With no
+	// user accounts configured the auth middleware is a no-op, and the handler
+	// additionally requires a loopback request for the state-changing POST.
+	router.GET("/api/onboarding", HandleOnboarding(deps))
+	router.POST("/api/onboarding", HandleOnboarding(deps))
+
 	router.GET("/api/config", func(c *gin.Context) {
 		var now *time.Time
 		if utils.IsNowDefined() {
