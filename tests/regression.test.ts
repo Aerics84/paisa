@@ -21,28 +21,46 @@ function isUnavailableLedgerTooling(message: string | undefined) {
   );
 }
 
+function normalizeLineEndings(value: unknown): any {
+  if (typeof value === "string") {
+    return value.replaceAll("\r\n", "\n");
+  }
+  if (Array.isArray(value)) {
+    return value.map(normalizeLineEndings);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, normalizeLineEndings(entry)])
+    );
+  }
+  return value;
+}
+
 async function recordAndVerify(dir: string, route: string, name: string) {
-  const { data: data } = await axios.get(route);
+  const response = await axios.get(route);
+  const data = normalizeLineEndings(response.data);
 
   const filename = path.join(dir, name + ".json");
-  if (fs.existsSync(filename) && process.env["REGENERATE"] !== "true") {
-    const current = JSON.parse(fs.readFileSync(filename).toString());
-    const diff = diffString(data, current, {
-      excludeKeys: [
-        "id",
-        "transaction_id",
-        "endLine",
-        "transaction_end_line",
-        "tax_category",
-        "tax_category_legacy"
-      ]
-    });
-
-    if (diff != "") {
-      expect().fail(diff);
-    }
+  if (!fs.existsSync(filename) || process.env["REGENERATE"] === "true") {
+    fs.writeFileSync(filename, JSON.stringify(data, null, 2) + "\n");
+    return;
   }
-  fs.writeFileSync(filename, JSON.stringify(data, null, 2) + "\n");
+
+  const current = JSON.parse(fs.readFileSync(filename).toString());
+  const diff = diffString(data, current, {
+    excludeKeys: [
+      "id",
+      "transaction_id",
+      "endLine",
+      "transaction_end_line",
+      "tax_category",
+      "tax_category_legacy"
+    ]
+  });
+
+  if (diff != "") {
+    expect().fail(diff);
+  }
 }
 
 async function verifyApi(dir: string) {

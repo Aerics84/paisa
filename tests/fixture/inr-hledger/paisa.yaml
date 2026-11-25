@@ -1,3 +1,4 @@
 journal_path: main.ledger
 db_path: paisa.db
 ledger_cli: hledger
+time_zone: UTC
