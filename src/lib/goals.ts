@@ -3,7 +3,9 @@ import * as d3 from "d3";
 import { Delaunay } from "d3";
 import _, { first, isEmpty, last, takeRight } from "lodash";
 import tippy from "tippy.js";
+import { get } from "svelte/store";
 import COLORS from "./colors";
+import { t } from "./i18n";
 import type { GoalIntelligenceData, GoalSummary } from "./api/goals";
 import type { Forecast, Point, Posting } from "./utils";
 import {
@@ -56,7 +58,7 @@ const UNAVAILABLE_GOAL_INTELLIGENCE: GoalIntelligenceData = {
   scheduleStatus: "no-deadline",
   attention: "none",
   deadlineSource: "none",
-  reasons: ["Goal analysis is unavailable"]
+  reasons: []
 };
 
 function goalDate(value: string | undefined): dayjs.Dayjs | undefined {
@@ -67,8 +69,12 @@ function goalDate(value: string | undefined): dayjs.Dayjs | undefined {
 
 export function analyzeGoal(goal: GoalSummary): GoalIntelligence {
   const { annualReturn, ...data } = goal.intelligence ?? UNAVAILABLE_GOAL_INTELLIGENCE;
+  const reasons = goal.intelligence
+    ? data.reasons
+    : [get(t)("components.goals.analysisUnavailable")];
   return {
     ...data,
+    reasons,
     projectedCompletionDate: goalDate(data.projectedCompletionDate),
     configuredCompletionDate: goalDate(data.configuredCompletionDate),
     targetDate: goalDate(data.targetDate),
@@ -77,36 +83,42 @@ export function analyzeGoal(goal: GoalSummary): GoalIntelligence {
 }
 
 export function goalStatusLabel(goal: GoalSummary, analysis: GoalIntelligence): string {
-  if (!analysis.validTarget) return "Target unavailable";
+  const i18n = get(t);
+  if (!analysis.validTarget) return i18n("components.goals.targetUnavailable");
   if (analysis.state === "completed") {
-    return goal.type === "retirement" ? "Target funded" : "Goal reached";
+    return goal.type === "retirement"
+      ? i18n("components.goals.targetFunded")
+      : i18n("components.goals.goalReached");
   }
-  if (analysis.state === "overdue") return "Target date has passed";
-  if (goal.type === "retirement") return "Tracking";
+  if (analysis.state === "overdue") return i18n("components.goals.targetDatePassed");
+  if (goal.type === "retirement") return i18n("components.goals.tracking");
   return {
-    "on-track": "On track",
-    behind: "Behind plan",
-    "at-risk": "At risk",
-    "insufficient-data": "More contribution history needed",
-    "no-deadline": "No deadline configured"
+    "on-track": i18n("components.goals.onTrack"),
+    behind: i18n("components.goals.behindPlan"),
+    "at-risk": i18n("components.goals.atRisk"),
+    "insufficient-data": i18n("components.goals.moreContributionHistory"),
+    "no-deadline": i18n("components.goals.noDeadlineConfigured")
   }[analysis.scheduleStatus];
 }
 
 export function goalStatusShortLabel(goal: GoalSummary, analysis: GoalIntelligence): string {
-  if (!analysis.validTarget) return "Unavailable";
-  if (analysis.state === "overdue") return "Overdue";
+  const i18n = get(t);
+  if (!analysis.validTarget) return i18n("components.goals.unavailable");
+  if (analysis.state === "overdue") return i18n("components.goals.overdue");
   if (analysis.state === "active" && goal.type === "savings") {
-    if (analysis.scheduleStatus === "insufficient-data") return "More history";
-    if (analysis.scheduleStatus === "no-deadline") return "No deadline";
+    if (analysis.scheduleStatus === "insufficient-data")
+      return i18n("components.goals.moreHistory");
+    if (analysis.scheduleStatus === "no-deadline") return i18n("components.goals.noDeadline");
   }
   return goalStatusLabel(goal, analysis);
 }
 
 export function goalDelayLabel(analysis: GoalIntelligence): string {
+  const i18n = get(t);
   if (analysis.state === "completed") return "";
-  if (analysis.delayMonths === 0) return "On schedule";
+  if (analysis.delayMonths === 0) return i18n("components.goals.onSchedule");
   if (analysis.delayMonths && analysis.delayMonths > 0) {
-    return `${analysis.delayMonths} month${analysis.delayMonths === 1 ? "" : "s"} late`;
+    return i18n("components.goals.monthsLate", { count: analysis.delayMonths });
   }
   return "";
 }
@@ -438,7 +450,8 @@ export function renderProgress(
   ]);
   const voronoi = Delaunay.from(voronoiPoints).voronoi([0, 0, width, height]);
   const hoverCircle = g.append("circle").attr("r", "3").attr("fill", "none");
-  const t = tippy(hoverCircle.node(), { theme: "light", delay: 0, allowHTML: true });
+  const i18n = get(t);
+  const tip = tippy(hoverCircle.node(), { theme: "light", delay: 0, allowHTML: true });
 
   g.append("g")
     .selectAll("path")
@@ -453,11 +466,14 @@ export function renderProgress(
     .on("mouseover", (_, d) => {
       hoverCircle.attr("cx", x(d.date)).attr("cy", y(d.value)).attr("fill", COLORS.tertiary);
 
-      t.setProps({
+      tip.setProps({
         placement: "top",
         content: tooltip([
-          ["Date", d.date.format("DD MMM YYYY")],
-          ["Savings", [formatCurrency(d.value), "has-text-weight-bold has-text-right"]],
+          [i18n("components.chart.date"), d.date.format("DD MMM YYYY")],
+          [
+            i18n("components.chart.savings"),
+            [formatCurrency(d.value), "has-text-weight-bold has-text-right"]
+          ],
           [
             "",
             [
@@ -467,15 +483,15 @@ export function renderProgress(
           ]
         ])
       });
-      t.show();
+      tip.show();
     })
     .on("mouseout", () => {
-      t.hide();
+      tip.hide();
       hoverCircle.attr("fill", "none");
     });
 
   return () => {
-    t.destroy();
+    tip.destroy();
   };
 }
 

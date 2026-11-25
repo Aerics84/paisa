@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import _ from "lodash";
+import { get } from "svelte/store";
 import { findCommodityInfo } from "./commodity";
+import { t } from "./i18n";
 import {
   formatCurrency,
   formatFloat,
@@ -54,6 +56,7 @@ export function renderPortfolioBreakdown(
   renderer: (portfolioAggregates: PortfolioAggregate[], color: any) => void;
 } {
   const { small } = options;
+  const i18n = get(t);
   const BAR_HEIGHT = rem(25);
   const svg = d3.select(id),
     margin = { top: rem(20), right: 0, bottom: rem(10), left: rem(20) },
@@ -100,7 +103,7 @@ export function renderPortfolioBreakdown(
 
   g.append("text")
     .classed("svg-text-grey", true)
-    .text("Amount")
+    .text(i18n("components.chart.amount"))
     .attr("text-anchor", "end")
     .attr("x", textGroupZero + textGroupWidth)
     .attr("y", -5);
@@ -297,6 +300,7 @@ function renderPartition(
     return;
   }
 
+  const i18n = get(t);
   const rootBreakdown: CommodityBreakdown = {
     parent_commodity_id: "",
     security_id: "",
@@ -349,18 +353,30 @@ function renderPartition(
       const breakdown = byName[d.id];
       const info = findCommodityInfo(breakdown.commodity_name);
       const rows: Array<Array<string | string[]>> = [
-        ["Commodity", [_.escape(info.displayName || breakdown.commodity_name), "has-text-right"]]
+        [
+          i18n("components.chart.commodity"),
+          [_.escape(info.displayName || breakdown.commodity_name), "has-text-right"]
+        ]
       ];
       if (info.displayName && info.displayName !== breakdown.commodity_name) {
-        rows.push(["Ledger Name", [_.escape(breakdown.commodity_name), "has-text-right"]]);
+        rows.push([
+          i18n("components.chart.ledgerName"),
+          [_.escape(breakdown.commodity_name), "has-text-right"]
+        ]);
       }
       if (info.code) {
-        rows.push(["Symbol", [_.escape(info.code), "has-text-right"]]);
+        rows.push([i18n("components.chart.symbol"), [_.escape(info.code), "has-text-right"]]);
       }
       rows.push(
-        ["Security Count", [breakdown.security_id.split(",").length.toString(), "has-text-right"]],
-        ["Amount", [formatCurrency(breakdown.amount), "has-text-weight-bold has-text-right"]],
-        ["Percentage", [percent(d), "has-text-weight-bold has-text-right"]]
+        [
+          i18n("components.chart.securityCount"),
+          [breakdown.security_id.split(",").length.toString(), "has-text-right"]
+        ],
+        [
+          i18n("components.chart.amount"),
+          [formatCurrency(breakdown.amount), "has-text-weight-bold has-text-right"]
+        ],
+        [i18n("components.chart.percentage"), [percent(d), "has-text-weight-bold has-text-right"]]
       );
       return tooltip(rows);
     })

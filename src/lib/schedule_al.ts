@@ -1,13 +1,16 @@
 import * as d3 from "d3";
 import _ from "lodash";
+import { get } from "svelte/store";
+import { t } from "./i18n";
 import { formatCurrency, type ScheduleALEntry } from "./utils";
 
 export function renderBreakdowns(scheduleALEntries: ScheduleALEntry[]) {
+  const i18n = get(t);
   const tbody = d3.select(".d3-schedule-al");
   const trs = tbody.selectAll("tr").data(
     scheduleALEntries.concat([
       {
-        section: { code: "", section: "", details: "Total" },
+        section: { code: "", section: "", details: i18n("components.scheduleAL.total") },
         amount: _.sumBy(scheduleALEntries, (s) => s.amount)
       }
     ])

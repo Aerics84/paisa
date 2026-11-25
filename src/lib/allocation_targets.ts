@@ -1,3 +1,5 @@
+import { get } from "svelte/store";
+import { t } from "./i18n";
 import type { AllocationTarget } from "./utils";
 
 export interface AllocationTargetEntry {
@@ -30,25 +32,28 @@ export function allocationTargetsToEntries(targets: AllocationTarget[]): Allocat
 }
 
 export function validateAllocationTargetEntries(entries: AllocationTargetEntry[]): string | null {
+  const i18n = get(t);
   let total = 0;
   for (const entry of entries) {
     if (!entry.name.trim()) {
-      return "All asset class names must be filled.";
+      return i18n("components.allocationTargets.validation.namesRequired");
     }
     if (entry.target < 0 || entry.target > 100) {
-      return `Target percentage for ${entry.name} must be between 0 and 100.`;
+      return i18n("components.allocationTargets.validation.targetRange", { name: entry.name });
     }
     if (entry.drift < 0 || entry.drift > 100) {
-      return `Drift tolerance for ${entry.name} must be between 0 and 100.`;
+      return i18n("components.allocationTargets.validation.driftRange", { name: entry.name });
     }
     if (entry.accounts.length === 0) {
-      return `Please assign at least one account to "${entry.name}".`;
+      return i18n("components.allocationTargets.validation.accountsRequired", {
+        name: entry.name
+      });
     }
     total += Number(entry.target) || 0;
   }
 
   if (entries.length > 0 && Math.abs(total - 100) > 0.01) {
-    return `Target percentages must sum to 100 (currently ${total}%).`;
+    return i18n("components.allocationTargets.validation.sum", { total });
   }
 
   return null;

@@ -16,7 +16,8 @@ import * as chrono from "chrono-node";
 import { EditorView, minimalSetup } from "codemirror";
 import dayjs from "dayjs";
 import _ from "lodash";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
+import { t } from "./i18n";
 import * as Terms from "./search/parser/parser.terms";
 import { queryExtension } from "./search/parser/query";
 
@@ -111,7 +112,7 @@ class DateValueAST extends AST {
           from: this.node.from,
           to: this.node.to,
           severity: "error",
-          message: `Invalid date`
+          message: get(t)("components.search.invalidDate")
         }
       ];
     }
@@ -180,7 +181,11 @@ class ConditionAST extends AST {
         from: this.node.from,
         to: this.node.to,
         severity: "error",
-        message: `${this.property.value} cannot be used with ${this.operator.value} and ${this.value.value.type}`
+        message: get(t)("components.search.incompatible", {
+          property: this.property.value,
+          operator: this.operator.value,
+          valueType: this.value.value.type
+        })
       });
     }
 
@@ -424,7 +429,7 @@ function lint(editor: EditorView): Diagnostic[] {
         from: node.from,
         to: node.to,
         severity: "error",
-        message: "Invalid syntax"
+        message: get(t)("components.search.invalidSyntax")
       });
     }
   });
@@ -672,7 +677,7 @@ export function createEditor(
       }),
       EditorView.contentAttributes.of({
         "data-enable-grammarly": "false",
-        "aria-label": "Search query"
+        "aria-label": get(t)("components.search.queryAria")
       }),
       queryExtension(),
       linter(lint),

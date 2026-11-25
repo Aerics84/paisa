@@ -2,7 +2,9 @@ import chroma from "chroma-js";
 import * as d3 from "d3";
 import type dayjs from "dayjs";
 import _ from "lodash";
+import { get } from "svelte/store";
 import COLORS from "$lib/colors";
+import { t } from "$lib/i18n";
 import {
   formatCurrency,
   formatCurrencyCrude,
@@ -26,34 +28,35 @@ const lineScale = d3
   .range([COLORS.primary, COLORS.secondary, COLORS.tertiary]);
 
 function renderTable(interest: Interest) {
+  const i18n = get(t);
   const tbody = d3.select(this);
   const current = _.last(interest.overview_timeline);
   tbody.html(function () {
     return `
 <tr>
-  <td>Account</td>
+  <td>${i18n("liabilities.account")}</td>
   <td class='has-text-right has-text-weight-bold'>${restName(interest.account)}</td>
 </tr>
 <tr>
-  <td>Loan Drawn</td>
+  <td>${i18n("liabilities.drawnAmount")}</td>
   <td class='has-text-right'>${formatCurrency(current.drawn_amount)}</td>
 </tr>
 <tr>
-  <td>Loan Repaid</td>
+  <td>${i18n("liabilities.repaidAmount")}</td>
   <td class='has-text-right'>${formatCurrency(current.repaid_amount)}</td>
 </tr>
 <tr>
-  <td>Interest</td>
+  <td>${i18n("liabilities.interestAmount")}</td>
   <td class='has-text-right'>${formatCurrency(current.interest_amount)}</td>
 </tr>
 <tr>
-  <td>Balance</td>
+  <td>${i18n("liabilities.balanceAmount")}</td>
   <td class='has-text-right'>${formatCurrency(
     current.drawn_amount + current.interest_amount - current.repaid_amount
   )}</td>
 </tr>
 <tr>
-  <td>APR</td>
+  <td>${i18n("liabilities.apr")}</td>
   <td class='has-text-right'>${formatFloat(interest.apr)}</td>
 </tr>
 `;
@@ -62,6 +65,7 @@ function renderTable(interest: Interest) {
 
 export function renderOverview(gains: Interest[]) {
   gains = _.sortBy(gains, (g) => g.account);
+  const i18n = get(t);
   const BAR_HEIGHT = rem(15);
   const id = "#d3-interest-overview";
   const svg = d3.select(id),
@@ -142,7 +146,7 @@ export function renderOverview(gains: Interest[]) {
 
   g.append("text")
     .classed("svg-text-grey", true)
-    .text("APR")
+    .text(i18n("liabilities.apr"))
     .attr("text-anchor", "middle")
     .attr("x", aprWidth / 2)
     .attr("y", height + 30);
@@ -321,27 +325,27 @@ export function renderOverview(gains: Interest[]) {
     .attr("data-tippy-content", (g: Interest) => {
       const current = _.last(g.overview_timeline);
       return tooltip([
-        ["Account", [g.account, "has-text-weight-bold has-text-right"]],
+        [i18n("liabilities.account"), [g.account, "has-text-weight-bold has-text-right"]],
         [
-          "Loan Drawn",
+          i18n("liabilities.drawnAmount"),
           [formatCurrency(current.drawn_amount), "has-text-weight-bold has-text-right"]
         ],
         [
-          "Loan Repaid",
+          i18n("liabilities.repaidAmount"),
           [formatCurrency(current.repaid_amount), "has-text-weight-bold has-text-right"]
         ],
         [
-          "Interest",
+          i18n("liabilities.interestAmount"),
           [formatCurrency(current.interest_amount), "has-text-weight-bold has-text-right"]
         ],
         [
-          "Balance",
+          i18n("liabilities.balanceAmount"),
           [
             formatCurrency(current.drawn_amount + current.interest_amount - current.repaid_amount),
             "has-text-weight-bold has-text-right"
           ]
         ],
-        ["APR", [formatFloat(g.apr), "has-text-weight-bold has-text-right"]]
+        [i18n("liabilities.apr"), [formatFloat(g.apr), "has-text-weight-bold has-text-right"]]
       ]);
     })
     .attr("x", 0)

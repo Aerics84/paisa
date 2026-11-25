@@ -11,8 +11,10 @@ import { lintGutter, linter, type Diagnostic } from "@codemirror/lint";
 import { keymap, type KeyBinding } from "@codemirror/view";
 import { EditorView } from "codemirror";
 import _ from "lodash";
+import { get } from "svelte/store";
 import { initialSheetEditorState, sheetEditorState } from "../store";
 import { basicSetup } from "./editor/base";
+import { t } from "./i18n";
 import { sheetExtension, sheetLanguage } from "./sheet/language";
 import { schedulePlugin } from "./transaction_tag";
 export { sheetEditorState } from "../store";
@@ -42,7 +44,7 @@ function lint(env: Environment) {
           from: node.from,
           to: node.to,
           severity: "error",
-          message: "Invalid syntax"
+          message: get(t)("components.search.invalidSyntax")
         });
       }
     });

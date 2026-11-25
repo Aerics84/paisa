@@ -1,3 +1,6 @@
+import { get } from "svelte/store";
+import { t } from "./i18n";
+
 const ROW_HEIGHT = 24;
 const VERTICAL_SPACING = 32;
 const MIN_ROWS = 5;
@@ -39,6 +42,7 @@ export function tooltip(
     total?: string;
   } = {}
 ) {
+  const i18n = get(t);
   // Work on a copy: callers reuse their row arrays for charts.
   const body = rows.map((row) => [...row]);
   const maxRows = viewportRows();
@@ -52,7 +56,7 @@ export function tooltip(
   const headerRow: Cell[] = [];
 
   if (options.total) {
-    totalRow.push(["Total", "has-text-weight-bold"]);
+    totalRow.push([i18n("components.tooltip.total"), "has-text-weight-bold"]);
     totalRow.push([options.total, "has-text-weight-bold has-text-right"]);
     for (let i = 2; i < columnCount; i++) {
       totalRow.unshift("");
@@ -84,7 +88,13 @@ export function tooltip(
     finalRows.push(headerRow);
   }
   if (omitted > 0) {
-    finalRows.push([[`${omitted} earlier rows omitted`, "", columnCount.toString()]]);
+    finalRows.push([
+      [
+        i18n("components.tooltip.earlierRowsOmitted", { count: omitted }),
+        "",
+        columnCount.toString()
+      ]
+    ]);
   }
   finalRows.push(...visible);
   if (totalRow.length > 0) {

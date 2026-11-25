@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 
+import { setLocale } from "./i18n";
 import {
   allocationTargetsToEntries,
   allocationTargetToEntry,
@@ -35,6 +36,8 @@ function entry(overrides: Partial<AllocationTargetEntry> = {}): AllocationTarget
 }
 
 describe("allocation target editing", () => {
+  beforeEach(() => setLocale("en"));
+
   test("uses drift_tolerance as the drift band instead of actual drift", () => {
     const result = allocationTargetToEntry(target({ drift: 10, drift_tolerance: 3 }));
 
