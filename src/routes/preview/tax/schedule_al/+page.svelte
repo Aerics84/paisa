@@ -32,8 +32,8 @@
       <div class="columns">
         <div class="column is-12">
           <p class="subtitle is-12">
-            {$t("tax.scheduleAlAsOn")} <span class="has-text-weight-bold"
-              >{selectedScheduleAl.date.format("DD MMM YYYY")}</span
+            {$t("tax.scheduleAlAsOn")}
+            <span class="has-text-weight-bold">{selectedScheduleAl.date.format("DD MMM YYYY")}</span
             >
           </p>
         </div>

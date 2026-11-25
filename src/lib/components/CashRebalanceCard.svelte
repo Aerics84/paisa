@@ -172,13 +172,15 @@
                   <span
                     class="badge badge-success badge-sm font-semibold gap-1 text-white py-2.5 px-3"
                   >
-                    {$t("components.rebalance.buy")} {formatCurrency(Number(item.amount))}
+                    {$t("components.rebalance.buy")}
+                    {formatCurrency(Number(item.amount))}
                   </span>
                 {:else if item.action === "SELL"}
                   <span
                     class="badge badge-error badge-sm font-semibold gap-1 text-white py-2.5 px-3"
                   >
-                    {$t("components.rebalance.sell")} {formatCurrency(Number(item.amount))}
+                    {$t("components.rebalance.sell")}
+                    {formatCurrency(Number(item.amount))}
                   </span>
                 {:else}
                   <span class="badge badge-ghost badge-sm text-base-content/60">

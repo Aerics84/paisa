@@ -120,5 +120,10 @@ export async function saveEditorFile(
   if (!response.file) {
     throw new Error("Save succeeded without a file");
   }
-  return { saved: true, errors, file: ledgerFileFromWire(response.file), message: response.message };
+  return {
+    saved: true,
+    errors,
+    file: ledgerFileFromWire(response.file),
+    message: response.message
+  };
 }

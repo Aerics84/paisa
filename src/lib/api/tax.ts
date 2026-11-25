@@ -42,10 +42,7 @@ export type HarvestBreakdown = Omit<WireHarvestBreakdown, "purchase_date"> & {
 };
 
 /** Harvestable position with the price date and every breakdown date converted. */
-export type Harvestable = Omit<
-  WireHarvestable,
-  "current_unit_date" | "harvest_breakdown"
-> & {
+export type Harvestable = Omit<WireHarvestable, "current_unit_date" | "harvest_breakdown"> & {
   current_unit_date: Dayjs;
   harvest_breakdown: HarvestBreakdown[];
 };
@@ -114,21 +111,14 @@ export type TaxOverviewIncomeTaxPayment = Omit<WireTaxOverviewIncomeTaxPayment, 
   date: Dayjs;
 };
 
-export type TaxOverviewIncomeTaxPayments = Omit<
-  WireTaxOverviewIncomeTaxPayments,
-  "postings"
-> & {
+export type TaxOverviewIncomeTaxPayments = Omit<WireTaxOverviewIncomeTaxPayments, "postings"> & {
   postings: TaxOverviewIncomeTaxPayment[];
 };
 
 /** Tax overview with every date converted and every list normalized. */
 export type TaxOverview = Omit<
   WireTaxOverview,
-  | "sections"
-  | "coverage"
-  | "capital_income"
-  | "income_tax_payments"
-  | "diagnostics"
+  "sections" | "coverage" | "capital_income" | "income_tax_payments" | "diagnostics"
 > & {
   sections: TaxOverviewSection[];
   coverage: TaxOverviewCoverage;
@@ -184,9 +174,7 @@ function capitalGainFromWire(wire: WireCapitalGain): CapitalGain {
   };
 }
 
-function germanyTaxPostingPairFromWire(
-  wire: WireGermanyTaxPostingPair
-): GermanyTaxPostingPair {
+function germanyTaxPostingPairFromWire(wire: WireGermanyTaxPostingPair): GermanyTaxPostingPair {
   return {
     ...wire,
     purchase: postingFromWire(wire.purchase),
@@ -246,9 +234,7 @@ function taxOverviewFromWire(wire: WireTaxOverview): TaxOverview {
     capital_income: { ...wire.capital_income, accounts: wire.capital_income?.accounts ?? [] },
     income_tax_payments: {
       ...wire.income_tax_payments,
-      postings: (wire.income_tax_payments?.postings ?? []).map(
-        taxOverviewIncomeTaxPaymentFromWire
-      )
+      postings: (wire.income_tax_payments?.postings ?? []).map(taxOverviewIncomeTaxPaymentFromWire)
     },
     diagnostics: wire.diagnostics ?? []
   };
@@ -307,9 +293,7 @@ export async function getCapitalIncomeTax(): Promise<{
 }
 
 export async function getTaxOverview(year?: string): Promise<TaxOverview> {
-  const route = year
-    ? `/api/tax_overview?year=${encodeURIComponent(year)}`
-    : "/api/tax_overview";
+  const route = year ? `/api/tax_overview?year=${encodeURIComponent(year)}` : "/api/tax_overview";
   const wire = await request<WireTaxOverview>(route);
   return taxOverviewFromWire(wire);
 }

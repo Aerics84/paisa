@@ -1,1 +1,50 @@
-{"postings":[{"id":1,"transaction_id":"fixture-transaction","date":"2026-11-22T00:00:00Z","payee":"Fixture Payee","account":"Assets:Checking:Fixture","commodity":"INR","quantity":100,"amount":100,"status":"cleared","tag_recurring":"","tag_period":"","tax_category":"","tax_category_legacy":"","transaction_begin_line":1,"transaction_end_line":3,"file_name":"fixture.ledger","forecast":false,"note":"fixture note","transaction_note":"fixture transaction note","market_amount":100,"balance":100},{"id":2,"transaction_id":"fixture-transaction","date":"2026-11-22T00:00:00Z","payee":"Fixture Payee","account":"Income:Salary","commodity":"INR","quantity":-100,"amount":-100,"status":"cleared","tag_recurring":"","tag_period":"","tax_category":"","tax_category_legacy":"","transaction_begin_line":1,"transaction_end_line":3,"file_name":"fixture.ledger","forecast":false,"note":"","transaction_note":"fixture transaction note","market_amount":-100,"balance":-100}]}
+{
+  "postings": [
+    {
+      "id": 1,
+      "transaction_id": "fixture-transaction",
+      "date": "2026-11-22T00:00:00Z",
+      "payee": "Fixture Payee",
+      "account": "Assets:Checking:Fixture",
+      "commodity": "INR",
+      "quantity": 100,
+      "amount": 100,
+      "status": "cleared",
+      "tag_recurring": "",
+      "tag_period": "",
+      "tax_category": "",
+      "tax_category_legacy": "",
+      "transaction_begin_line": 1,
+      "transaction_end_line": 3,
+      "file_name": "fixture.ledger",
+      "forecast": false,
+      "note": "fixture note",
+      "transaction_note": "fixture transaction note",
+      "market_amount": 100,
+      "balance": 100
+    },
+    {
+      "id": 2,
+      "transaction_id": "fixture-transaction",
+      "date": "2026-11-22T00:00:00Z",
+      "payee": "Fixture Payee",
+      "account": "Income:Salary",
+      "commodity": "INR",
+      "quantity": -100,
+      "amount": -100,
+      "status": "cleared",
+      "tag_recurring": "",
+      "tag_period": "",
+      "tax_category": "",
+      "tax_category_legacy": "",
+      "transaction_begin_line": 1,
+      "transaction_end_line": 3,
+      "file_name": "fixture.ledger",
+      "forecast": false,
+      "note": "",
+      "transaction_note": "fixture transaction note",
+      "market_amount": -100,
+      "balance": -100
+    }
+  ]
+}

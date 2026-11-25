@@ -87,7 +87,8 @@
       <div class="column is-12">
         <div class="box overflow-x-auto">
           <ZeroState item={points}>
-            <strong>{$t("common.oops")}</strong> {$t("assets.noTransactions")}
+            <strong>{$t("common.oops")}</strong>
+            {$t("assets.noTransactions")}
           </ZeroState>
 
           <LegendCard {legends} clazz="ml-4" />

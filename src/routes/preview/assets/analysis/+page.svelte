@@ -63,8 +63,8 @@
       <div class="column is-4 has-text-centered">
         <article class="message">
           <div class="message-body">
-            <strong>{$t("common.oops")}</strong> {$t("assets.portfolioUnavailable")}<br /><br
-            />
+            <strong>{$t("common.oops")}</strong>
+            {$t("assets.portfolioUnavailable")}<br /><br />
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html $t("assets.portfolioUpdateHint", { action: $t("actions.updatePortfolios") })}
           </div>

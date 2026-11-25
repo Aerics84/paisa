@@ -15,7 +15,9 @@ afterEach(() => {
 });
 
 function mockJSON(body: unknown) {
-  globalThis.fetch = mock(async () => new Response(JSON.stringify(body))) as unknown as typeof fetch;
+  globalThis.fetch = mock(
+    async () => new Response(JSON.stringify(body))
+  ) as unknown as typeof fetch;
 }
 
 const posting = (date: string, amount: number) => ({

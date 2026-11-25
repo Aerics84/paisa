@@ -1,1 +1,54 @@
-{"goals":[{"type":"retirement","name":"Fire","id":"retirement-Fire","icon":"retirement","current":20000,"target":1000000,"targetDate":"","priority":1,"intelligence":{"progressRatio":0.02,"remainingAmount":980000,"validTarget":true,"contributionMonthsObserved":0,"activeContributionMonths":0,"state":"active","scheduleStatus":"no-deadline","attention":"none","deadlineSource":"none","reasons":[]}},{"type":"savings","name":"Vacation","id":"savings-Vacation","icon":"vacation","current":4000,"target":10000,"targetDate":"2027-06-30","priority":2,"intelligence":{"progressRatio":0.4,"remainingAmount":6000,"validTarget":true,"requiredMonthlyContribution":856.8333521813872,"actualMonthlyContribution":4000,"contributionMonthsObserved":1,"activeContributionMonths":1,"paceCoverage":4.668352357919444,"paceGap":0,"state":"active","scheduleStatus":"insufficient-data","attention":"none","deadlineSource":"configured","targetDate":"2027-06-30","annualReturn":0.05,"reasons":["More contribution history needed"]}}]}
+{
+  "goals": [
+    {
+      "type": "retirement",
+      "name": "Fire",
+      "id": "retirement-Fire",
+      "icon": "retirement",
+      "current": 20000,
+      "target": 1000000,
+      "targetDate": "",
+      "priority": 1,
+      "intelligence": {
+        "progressRatio": 0.02,
+        "remainingAmount": 980000,
+        "validTarget": true,
+        "contributionMonthsObserved": 0,
+        "activeContributionMonths": 0,
+        "state": "active",
+        "scheduleStatus": "no-deadline",
+        "attention": "none",
+        "deadlineSource": "none",
+        "reasons": []
+      }
+    },
+    {
+      "type": "savings",
+      "name": "Vacation",
+      "id": "savings-Vacation",
+      "icon": "vacation",
+      "current": 4000,
+      "target": 10000,
+      "targetDate": "2027-06-30",
+      "priority": 2,
+      "intelligence": {
+        "progressRatio": 0.4,
+        "remainingAmount": 6000,
+        "validTarget": true,
+        "requiredMonthlyContribution": 856.8333521813872,
+        "actualMonthlyContribution": 4000,
+        "contributionMonthsObserved": 1,
+        "activeContributionMonths": 1,
+        "paceCoverage": 4.668352357919444,
+        "paceGap": 0,
+        "state": "active",
+        "scheduleStatus": "insufficient-data",
+        "attention": "none",
+        "deadlineSource": "configured",
+        "targetDate": "2027-06-30",
+        "annualReturn": 0.05,
+        "reasons": ["More contribution history needed"]
+      }
+    }
+  ]
+}

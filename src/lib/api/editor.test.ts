@@ -88,7 +88,9 @@ test("deleteEditorBackups returns the refreshed file", async () => {
 
 test("validateEditorFile defaults null errors and keeps diagnostics", async () => {
   mockJSON({
-    errors: [{ file_name: "main.ledger", line_from: 1, line_to: 2, error: "", message: "Bad entry" }],
+    errors: [
+      { file_name: "main.ledger", line_from: 1, line_to: 2, error: "", message: "Bad entry" }
+    ],
     output: "validation output"
   });
 

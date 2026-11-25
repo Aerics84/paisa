@@ -349,7 +349,8 @@
           class="btn btn-sm btn-outline btn-block gap-2 border-dashed"
           onclick={addTarget}
         >
-          <span>＋</span> {$t("components.allocationTargets.addTarget")}
+          <span>＋</span>
+          {$t("components.allocationTargets.addTarget")}
         </button>
       </div>
     </div>

@@ -12,14 +12,7 @@
     onselect?: (file: LedgerFile) => void;
   }
 
-  let {
-    files,
-    path,
-    selectedFileName,
-    hasUnsavedChanges,
-    root = true,
-    onselect
-  }: Props = $props();
+  let { files, path, selectedFileName, hasUnsavedChanges, root = true, onselect }: Props = $props();
 
   function fileName(path: string) {
     return _.last(path.split("/"));

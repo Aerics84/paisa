@@ -160,12 +160,14 @@
                   </div>
                   <div class="flex items-baseline justify-between text-xs mt-1">
                     <span class="text-base-content/70"
-                      >{$t("assets.currentLabel")} <strong class="font-mono text-base-content"
+                      >{$t("assets.currentLabel")}
+                      <strong class="font-mono text-base-content"
                         >{formatPercentage(Number(target.current) / 100, 1)}</strong
                       ></span
                     >
                     <span class="text-base-content/70"
-                      >{$t("assets.targetLabel")} <span class="font-mono text-base-content/90"
+                      >{$t("assets.targetLabel")}
+                      <span class="font-mono text-base-content/90"
                         >{formatPercentage(Number(target.target) / 100, 1)}</span
                       ></span
                     >
@@ -185,7 +187,8 @@
                       {Number(target.drift) > 0 ? "+" : ""}{formatPercentage(
                         Number(target.drift || 0) / 100,
                         1
-                      )} {$t("assets.drift")}
+                      )}
+                      {$t("assets.drift")}
                     </span>
                   </div>
                 </div>
@@ -212,7 +215,8 @@
                 class="btn btn-primary btn-sm gap-2"
                 onclick={() => (showTargetModal = true)}
               >
-                <span>＋</span> {$t("assets.setUpAssetTargets")}
+                <span>＋</span>
+                {$t("assets.setUpAssetTargets")}
               </button>
             </div>
           {/if}

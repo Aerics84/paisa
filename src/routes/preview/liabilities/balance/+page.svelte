@@ -67,7 +67,8 @@
       <div class="column is-4 has-text-centered">
         <article class="message">
           <div class="message-body">
-            <strong>{$t("common.hurray")}</strong> {$t("liabilities.noLiabilities")}
+            <strong>{$t("common.hurray")}</strong>
+            {$t("liabilities.noLiabilities")}
           </div>
         </article>
       </div>
