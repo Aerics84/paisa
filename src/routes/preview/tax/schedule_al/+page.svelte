@@ -6,6 +6,7 @@
   import { onMount } from "svelte";
   import { setAllowedDateRange, year } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
+  import { t } from "$lib/i18n";
 
   let scheduleAls = $state<Record<string, ScheduleAL>>();
   let selectedScheduleAl = $derived(scheduleAls ? scheduleAls[$year] : undefined);
@@ -31,7 +32,7 @@
       <div class="columns">
         <div class="column is-12">
           <p class="subtitle is-12">
-            Schedule AL as on <span class="has-text-weight-bold"
+            {$t("tax.scheduleAlAsOn")} <span class="has-text-weight-bold"
               >{selectedScheduleAl.date.format("DD MMM YYYY")}</span
             >
           </p>
@@ -44,8 +45,8 @@
         <div class="column is-12">
           <div class="box" style="max-width: 1024px;">
             <ZeroState item={false}>
-              <strong>No Schedule AL data for this year.</strong>
-              There are no Schedule AL entries for the selected financial year.
+              <strong>{$t("tax.noScheduleAlData")}</strong>
+              {$t("tax.noScheduleAlEntries")}
             </ZeroState>
           </div>
         </div>
@@ -58,10 +59,10 @@
           <table class="table is-narrow is-fullwidth is-hoverable">
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Section</th>
-                <th>Details</th>
-                <th class="has-text-right">Amount</th>
+                <th>{$t("tax.code")}</th>
+                <th>{$t("tax.section")}</th>
+                <th>{$t("tax.details")}</th>
+                <th class="has-text-right">{$t("tax.amount")}</th>
               </tr>
             </thead>
             <tbody class="d3-schedule-al has-text-grey-dark"></tbody>

@@ -6,6 +6,7 @@
   import { type Legend } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let isEmpty = false;
   let legends: Legend[] = [];
@@ -25,7 +26,7 @@
     <div class="columns is-centered">
       <div class="column is-4 has-text-centered">
         <article class="message">
-          <div class="message-body">You haven't repaid any liabilities.</div>
+          <div class="message-body">{$t("liabilities.noRepayments")}</div>
         </article>
       </div>
     </div>
@@ -42,6 +43,6 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Monthly Repayment Timeline" />
+    <BoxLabel text={$t("liabilities.monthlyRepaymentTimeline")} />
   </div>
 </section>

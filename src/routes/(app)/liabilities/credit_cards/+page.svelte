@@ -5,6 +5,7 @@
   import { helpUrl, type CreditCardSummary } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let isEmpty = false;
   let creditCards: CreditCardSummary[] = [];
@@ -31,8 +32,11 @@
     <div class="columns flex-wrap">
       <div class="column is-12">
         <ZeroState item={!isEmpty}>
-          <strong>Oops!</strong> You haven't configured any credit cards yet. Checkout the
-          <a href={helpUrl("credit-card")}>docs</a> page to get started.
+          <strong>{$t("common.oops")}</strong>
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          {@html $t("liabilities.noCreditCards", {
+            link: `<a href="${helpUrl("credit-card")}">${$t("common.docs")}</a>`
+          })}
         </ZeroState>
       </div>
     </div>

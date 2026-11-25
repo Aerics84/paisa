@@ -19,6 +19,7 @@
   import _, { now } from "lodash";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
+  import { t } from "$lib/i18n";
 
   let { data }: { data: PageData } = $props();
   let svg = $state<SVGElement>();
@@ -65,7 +66,7 @@
             <LevelItem
               narrow
               small
-              title="Available Credit"
+              title={$t("liabilities.availableCredit")}
               color={COLORS.neutral}
               value={formatCurrency(Math.max(creditCard.creditLimit - creditCard.balance, 0))}
             />
@@ -73,7 +74,7 @@
             <LevelItem
               narrow
               small
-              title="Credit Usage"
+              title={$t("liabilities.creditUsage")}
               color={COLORS.neutral}
               value={formatPercentage(creditCard.balance / creditCard.creditLimit, 2)}
             />
@@ -83,14 +84,14 @@
             <LevelItem
               narrow
               small
-              title="Statement Count"
+              title={$t("liabilities.statementCount")}
               color={COLORS.neutral}
               value={creditCard.bills.length.toString()}
             />
             <LevelItem
               narrow
               small
-              title="Transaction Count"
+              title={$t("liabilities.transactionCount")}
               color={COLORS.neutral}
               value={_.sumBy(creditCard.bills, (b) => b.transactions.length).toString()}
             />
@@ -99,7 +100,7 @@
           <div class="box px-3 py-0">
             <svg bind:this={svg} width="100%" />
           </div>
-          <BoxLabel text="Year wise spends" />
+          <BoxLabel text={$t("liabilities.yearWiseSpends")} />
         {/if}
       </div>
       <div class="column is-9-widescreen is-8">
@@ -114,7 +115,7 @@
                   <span>{iconify(creditCard.account)}</span>
                 </div>
                 <div class="ml-3 whitespace-nowrap">
-                  <span class="mr-1 is-size-7 has-text-grey">Payment</span>
+                  <span class="mr-1 is-size-7 has-text-grey">{$t("liabilities.payment")}</span>
                   <span>
                     <DueDate
                       dueDate={currentBill.dueDate}
@@ -143,7 +144,7 @@
             <LevelItem
               {small}
               narrow
-              title="Opening Balance"
+              title={$t("liabilities.openingBalance")}
               color={COLORS.neutral}
               value={formatCurrency(currentBill.openingBalance)}
             />
@@ -155,7 +156,7 @@
             <LevelItem
               {small}
               narrow
-              title="Debits"
+              title={$t("liabilities.debits")}
               color={COLORS.expenses}
               value={formatCurrency(currentBill.debits)}
             />
@@ -167,7 +168,7 @@
             <LevelItem
               {small}
               narrow
-              title="Credits"
+              title={$t("liabilities.credits")}
               color={COLORS.income}
               value={formatCurrency(currentBill.credits)}
             />
@@ -179,7 +180,7 @@
             <LevelItem
               {small}
               narrow
-              title="Amount Due"
+              title={$t("liabilities.amountDue")}
               color={COLORS.liabilities}
               value={formatCurrency(currentBill.closingBalance)}
             />
@@ -187,9 +188,9 @@
 
           <div>
             <MasonryGrid gap={10} maxStretchColumnSize={500} align="stretch">
-              {#each currentBill.transactions as t}
+              {#each currentBill.transactions as transaction}
                 <div class="mr-3 is-flex-grow-1">
-                  <TransactionCard {t} />
+                  <TransactionCard t={transaction} />
                 </div>
               {/each}
             </MasonryGrid>

@@ -10,6 +10,7 @@
   import _ from "lodash";
   import { onMount } from "svelte";
   import type { ColumnDefinition } from "tabulator-tables";
+  import { t } from "$lib/i18n";
 
   let breakdowns = $state<Record<string, LiabilityBreakdown>>({});
   let isEmpty = $state(false);
@@ -22,40 +23,40 @@
     }
   });
 
-  const columns: ColumnDefinition[] = [
+  let columns = $derived<ColumnDefinition[]>([
     {
-      title: "Account",
+      title: $t("liabilities.account"),
       field: "group",
       formatter: indendedLiabilityAccountName,
       frozen: true
     },
     {
-      title: "Drawn Amount",
+      title: $t("liabilities.drawnAmount"),
       field: "drawn_amount",
       hozAlign: "right",
       vertAlign: "middle",
       formatter: nonZeroCurrency
     },
     {
-      title: "Repaid Amount",
+      title: $t("liabilities.repaidAmount"),
       field: "repaid_amount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Balance Amount",
+      title: $t("liabilities.balanceAmount"),
       field: "balance_amount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
     {
-      title: "Interest",
+      title: $t("liabilities.interestAmount"),
       field: "interest_amount",
       hozAlign: "right",
       formatter: nonZeroCurrency
     },
-    { title: "APR", field: "apr", hozAlign: "right", formatter: nonZeroFloatChange }
-  ];
+    { title: $t("liabilities.apr"), field: "apr", hozAlign: "right", formatter: nonZeroFloatChange }
+  ]);
 
   let tree = $derived(buildTree(Object.values(breakdowns), (i) => i.group));
 </script>
@@ -66,7 +67,7 @@
       <div class="column is-4 has-text-centered">
         <article class="message">
           <div class="message-body">
-            <strong>Hurray!</strong> You have no liabilities.
+            <strong>{$t("common.hurray")}</strong> {$t("liabilities.noLiabilities")}
           </div>
         </article>
       </div>
