@@ -49,4 +49,5 @@ styles, so review the upgrade notes before deploying.
 
 Known limitation: some copy in the advanced editor and statement-import modals
 is still English. Read-only mode is enforced by the API, but the UI still
-displays write controls.
+displays write controls. The maskable PWA icon is a copy of the standard icon
+without a dedicated safe zone, so some Android launchers may crop it.

@@ -55,6 +55,9 @@ func SecurityHeaders(scriptHashes []string) gin.HandlerFunc {
 		header.Set("X-Frame-Options", "DENY")
 		header.Set("Referrer-Policy", "no-referrer")
 		header.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			header.Set("Cache-Control", "no-store")
+		}
 		c.Next()
 	}
 }

@@ -26,6 +26,7 @@ func TestSecurityHeaders(t *testing.T) {
 	require.Equal(t, "DENY", rec.Header().Get("X-Frame-Options"))
 	require.Equal(t, "no-referrer", rec.Header().Get("Referrer-Policy"))
 	require.Equal(t, "camera=(), microphone=(), geolocation=()", rec.Header().Get("Permissions-Policy"))
+	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
 	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "default-src 'self'")
 	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "frame-ancestors 'none'")
 	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "script-src 'self' 'sha256-")
