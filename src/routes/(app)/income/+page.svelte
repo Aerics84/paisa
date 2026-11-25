@@ -12,6 +12,7 @@
   import { formatCurrency, type Legend } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let grossIncome = 0;
   let netTax = 0;
@@ -30,13 +31,13 @@
     monthlyInvestmentTimelineLegends = renderMonthlyInvestmentTimeline(incomes);
     yearlyIncomeTimelineLegends = renderYearlyIncomeTimeline(yearlyCards);
     yearlyNetIncomeTimelineLegends = renderYearlyTimelineOf(
-      "Net Income",
+      $t("income.netIncome"),
       "net_income",
       COLORS.gain,
       yearlyCards
     );
     yearlyNetTaxTimelineLegends = renderYearlyTimelineOf(
-      "Net Tax",
+      $t("income.netTax"),
       "net_tax",
       COLORS.loss,
       yearlyCards
@@ -50,8 +51,16 @@
 <section class="section tab-income">
   <div class="container">
     <nav class="level">
-      <LevelItem title="Gross Income" value={formatCurrency(grossIncome)} color={COLORS.gainText} />
-      <LevelItem title="Net Tax" value={formatCurrency(netTax)} color={COLORS.lossText} />
+      <LevelItem
+        title={$t("income.grossIncome")}
+        value={formatCurrency(grossIncome)}
+        color={COLORS.gainText}
+      />
+      <LevelItem
+        title={$t("income.netTax")}
+        value={formatCurrency(netTax)}
+        color={COLORS.lossText}
+      />
     </nav>
   </div>
 </section>
@@ -65,7 +74,7 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Monthly Income Timeline" />
+    <BoxLabel text={$t("income.monthlyTimeline")} />
   </div>
 </section>
 <section class="section">
@@ -90,6 +99,6 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Financial Year Income Timeline" />
+    <BoxLabel text={$t("income.financialYearTimeline")} />
   </div>
 </section>

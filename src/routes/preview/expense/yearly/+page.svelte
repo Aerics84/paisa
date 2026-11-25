@@ -16,6 +16,7 @@
   import ZeroState from "$lib/components/ZeroState.svelte";
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { t } from "$lib/i18n";
 
   let groups = writable([]);
   let z = $state<d3.ScaleOrdinal<string, string, never>>();
@@ -61,12 +62,18 @@
         savingRate = "";
         netIncome = "";
       } else {
-        netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
-        taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " of income";
-        expenseRate =
-          formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
-        savingRate =
-          formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+        netIncome = $t("expense.netIncome", {
+          amount: formatCurrency(sum(incomes, -1) - sum(taxes))
+        });
+        taxRate = $t("expense.taxRateYearly", {
+          percentage: formatPercentage(sum(taxes) / sum(incomes, -1))
+        });
+        expenseRate = $t("expense.ofNetIncome", {
+          percentage: formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes)))
+        });
+        savingRate = $t("expense.ofNetIncome", {
+          percentage: formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes)))
+        });
       }
 
       renderer(expenses);
@@ -113,12 +120,17 @@
             <div>
               <nav class="level grid-2">
                 <LevelItem
-                  title="Gross Income"
+                  title={$t("expense.grossIncome")}
                   value={income}
                   color={COLORS.gainText}
                   subtitle={netIncome}
                 />
-                <LevelItem title="Tax" value={tax} color={COLORS.lossText} subtitle={taxRate} />
+                <LevelItem
+                  title={$t("expense.tax")}
+                  value={tax}
+                  color={COLORS.lossText}
+                  subtitle={taxRate}
+                />
               </nav>
             </div>
           </div>
@@ -126,14 +138,14 @@
             <div>
               <nav class="level grid-2">
                 <LevelItem
-                  title="Net Investment"
+                  title={$t("expense.netInvestment")}
                   value={investment}
                   color={COLORS.secondary}
                   subtitle={savingRate}
                 />
 
                 <LevelItem
-                  title="Expenses"
+                  title={$t("expense.expenses")}
                   value={expense}
                   color={COLORS.lossText}
                   subtitle={expenseRate}
@@ -153,7 +165,8 @@
       <div class="column is-full-tablet is-half-fullhd">
         <div class="px-3 box" style="height: 100%">
           <ZeroState item={currentYearExpenses}>
-            <strong>Hurray!</strong> You have no expenses this year.
+            <strong>{$t("common.hurray")}</strong>
+            {$t("expense.noExpensesThisYear")}
           </ZeroState>
           <svg id="d3-current-year-breakdown" width="100%" />
         </div>
@@ -161,7 +174,8 @@
       <div class="column is-12">
         <div class="box">
           <ZeroState item={expenses}>
-            <strong>Oops!</strong> You have no expenses.
+            <strong>{$t("common.oops")}</strong>
+            {$t("expense.noExpenses")}
           </ZeroState>
 
           <LegendCard {legends} clazz="ml-4" />
@@ -169,6 +183,6 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Yearly Expenses" />
+    <BoxLabel text={$t("expense.yearlyExpenses")} />
   </div>
 </section>

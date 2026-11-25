@@ -12,6 +12,7 @@
   } from "../../../../persisted_store";
   import ZeroState from "$lib/components/ZeroState.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { t } from "$lib/i18n";
 
   let legends = $state<Legend[]>([]);
   let graph = $state<Record<string, Graph>>();
@@ -76,8 +77,8 @@
       <div class="column is-12">
         <div class="box overflow-x-auto">
           <ZeroState item={!isEmpty}
-            ><strong>No cash flow data for this year.</strong> You have not made any transactions for
-            the selected year.</ZeroState
+            ><strong>{$t("cashflow.emptyYearTitle")}</strong>
+            {$t("cashflow.emptyYearText")}</ZeroState
           >
 
           <LegendCard {legends} clazz="ml-5 mb-2" />

@@ -44,6 +44,7 @@
     now
   } from "$lib/utils";
   import { dateMax, dateMin, month, refresh } from "../../store";
+  import { t } from "$lib/i18n";
 
   type CheckingBalancePoint = {
     month: string;
@@ -359,16 +360,19 @@
   let surplusInsightItem: InsightItem = $derived(
     !reviewHasActivity || !activeMonthlyReview
       ? {
-          title: "No recorded activity",
-          description: `There are no postings for ${selectedMonthLabel}. This does not prove the ledger history is complete.`,
+          title: $t("dashboard.noRecordedActivity"),
+          description: $t("dashboard.noPostingsForMonth", { month: selectedMonthLabel }),
           tone: "neutral",
-          deltaLabel: "No activity recorded",
+          deltaLabel: $t("dashboard.insight.noActivityDelta"),
           state: "insufficient-data"
         }
       : reviewSurplusState === "ready"
         ? {
-            title: activeMonthlyReview.surplus >= 0 ? "Surplus recorded" : "Deficit recorded",
-            description: "Net income after tax minus non-tax expenses.",
+            title:
+              activeMonthlyReview.surplus >= 0
+                ? $t("dashboard.insight.surplusRecorded")
+                : $t("dashboard.insight.deficitRecorded"),
+            description: $t("dashboard.insight.surplusDefinition"),
             tone: activeMonthlyReview.surplus >= 0 ? "positive" : "negative",
             deltaLabel: formatCurrencyWithSymbol(activeMonthlyReview.surplus),
             state: "ready"
@@ -376,13 +380,13 @@
         : {
             title:
               reviewSurplusState === "income-missing"
-                ? "Income not recorded"
+                ? $t("dashboard.insight.incomeNotRecorded")
                 : reviewSurplusState === "expense-missing"
-                  ? "Expenses not recorded"
-                  : "No income or expenses recorded",
-            description: "Surplus is not calculated from incomplete postings for this month.",
+                  ? $t("dashboard.insight.expensesNotRecorded")
+                  : $t("dashboard.insight.noIncomeOrExpenses"),
+            description: $t("dashboard.insight.surplusIncomplete"),
             tone: "neutral",
-            deltaLabel: "Surplus not calculated",
+            deltaLabel: $t("dashboard.insight.surplusNotCalculated"),
             state: "insufficient-data"
           }
   );
@@ -390,19 +394,19 @@
   let expenseInsightItem: InsightItem = $derived(
     reviewHasActivity && topExpense
       ? {
-          title: `${topExpense.label} was the largest expense group`,
-          description: `Based on actual postings in ${selectedMonthLabel}.`,
+          title: $t("dashboard.insight.largestExpense", { group: topExpense.label }),
+          description: $t("dashboard.insight.basedOnPostings", { month: selectedMonthLabel }),
           tone: "neutral",
           deltaLabel: formatCurrencyWithSymbol(topExpense.value),
           state: "ready"
         }
       : {
-          title: "No expense groups recorded",
+          title: $t("dashboard.insight.noExpenseGroups"),
           description: reviewHasActivity
-            ? `No non-tax expenses were posted in ${selectedMonthLabel}.`
-            : `There are no postings for ${selectedMonthLabel}.`,
+            ? $t("dashboard.insight.noNonTaxExpenses", { month: selectedMonthLabel })
+            : $t("dashboard.noPostingsForMonth", { month: selectedMonthLabel }),
           tone: "neutral",
-          deltaLabel: "No expenses posted",
+          deltaLabel: $t("dashboard.insight.noExpensesPosted"),
           state: "insufficient-data"
         }
   );
@@ -410,12 +414,15 @@
   let investmentInsightItem: InsightItem = $derived(
     activeMonthlyReview?.performance_state === "ready" && reviewPerformance.best.length
       ? {
-          title: `${positionLabel(reviewPerformance.best[0].account)} led the month`,
+          title: $t("dashboard.insight.positionLedMonth", {
+            position: positionLabel(reviewPerformance.best[0].account)
+          }),
           description: reviewPerformance.weakest.length
-            ? `Strongest ${positionLabel(reviewPerformance.best[0].account)} · weakest ${positionLabel(
-                reviewPerformance.weakest[0].account
-              )}. Ranked on flow-adjusted total return.`
-            : "Ranked on flow-adjusted total return.",
+            ? $t("dashboard.insight.strongestWeakest", {
+                best: positionLabel(reviewPerformance.best[0].account),
+                weakest: positionLabel(reviewPerformance.weakest[0].account)
+              })
+            : $t("dashboard.insight.rankedOnReturn"),
           tone:
             reviewPerformance.best[0].total_return_percent >= 0 &&
             (reviewPerformance.weakest[0]?.total_return_percent ?? 0) >= 0
@@ -423,17 +430,16 @@
               : reviewPerformance.best[0].total_return_percent < 0
                 ? "negative"
                 : "warning",
-          deltaLabel: `Market movement ${formatCurrencyWithSymbol(
-            activeMonthlyReview.investment_market_movement
-          )}`,
+          deltaLabel: $t("dashboard.insight.marketMovementAmount", {
+            amount: formatCurrencyWithSymbol(activeMonthlyReview.investment_market_movement)
+          }),
           state: "ready"
         }
       : {
-          title: "Investment performance unavailable",
-          description:
-            "Historical prices or flow coverage are insufficient for a comparable monthly ranking.",
+          title: $t("dashboard.insight.performanceUnavailable"),
+          description: $t("dashboard.insight.insufficientRanking"),
           tone: "neutral",
-          deltaLabel: "Not available",
+          deltaLabel: $t("common.notAvailable"),
           state: "insufficient-data"
         }
   );
@@ -600,38 +606,47 @@
   <section class="section">
     <div class="paisa-empty-state">
       <div class="paisa-empty-state__copy">
-        <p class="paisa-kicker">Overview</p>
+        <p class="paisa-kicker">{$t("nav.overview")}</p>
         <h2>
           {loadError
-            ? "Start the local Paisa server to preview the dashboard."
-            : "Start with your first journal or load a guided demo."}
+            ? $t("dashboard.preview.serverErrorTitle")
+            : $t("dashboard.preview.firstJournalTitle")}
         </h2>
         <p>
           {#if loadError}
-            The Vite frontend is running, but the local API server is not reachable on
-            <code>http://localhost:7500</code>.
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html $t("dashboard.preview.apiUnreachable", { url: "http://localhost:7500" })}
           {:else}
-            Paisa will turn your ledger into a financial cockpit once transactions, prices, and
-            budgets are available.
+            {$t("dashboard.preview.cockpit")}
           {/if}
         </p>
         <ol>
           {#if loadError}
-            <li>Start the backend with <code>.\paisa.exe serve</code>.</li>
-            <li>Keep <code>npm run dev</code> running in a second terminal.</li>
-            <li>Reload this page once the API responds.</li>
+            <li>
+              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+              {@html $t("dashboard.preview.startBackend", { command: ".\\paisa.exe serve" })}
+            </li>
+            <li>
+              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+              {@html $t("dashboard.preview.keepDev", { command: "npm run dev" })}
+            </li>
+            <li>{$t("dashboard.preview.reload")}</li>
           {:else}
-            <li>Set your regional profile, locale, and default currency in Configuration.</li>
-            <li>Add your first journal entries in the Ledger editor.</li>
-            <li>Or load the demo dataset to preview the redesigned dashboard immediately.</li>
+            <li>{$t("dashboard.preview.configure")}</li>
+            <li>{$t("dashboard.preview.addEntries")}</li>
+            <li>{$t("dashboard.preview.loadDemo")}</li>
           {/if}
         </ol>
         <div class="buttons">
-          <a href="/more/config" class="button is-light">Open Configuration</a>
-          <a href="/ledger/editor" class="button is-light">Open Ledger Editor</a>
+          <a href="/more/config" class="button is-light"
+            >{$t("dashboard.preview.openConfiguration")}</a
+          >
+          <a href="/ledger/editor" class="button is-light"
+            >{$t("dashboard.preview.openLedgerEditor")}</a
+          >
           {#if !loadError}
             <button onclick={(_event) => initDemo()} class="button is-link" type="button">
-              Load Demo
+              {$t("dashboard.preview.loadDemoButton")}
             </button>
           {/if}
         </div>
@@ -645,7 +660,7 @@
         <div class="paisa-dashboard__hero-top">
           <div class="paisa-dashboard__hero-summary">
             <div>
-              <div class="paisa-dashboard__label">Total Net Worth</div>
+              <div class="paisa-dashboard__label">{$t("dashboard.totalNetWorth")}</div>
               <div class="paisa-dashboard__amount">
                 {formatCurrencyWithSymbol(currentNetworthValue)}
               </div>
@@ -656,14 +671,14 @@
             <div class="paisa-spark-card paisa-spark-card--hero">
               <div class="paisa-spark-card__meta">
                 <div>
-                  <span>Net Worth</span>
+                  <span>{$t("dashboard.netWorth")}</span>
                   <strong>{formatCurrencyWithSymbol(currentNetworthValue)}</strong>
                 </div>
                 <div class="paisa-spark-card__change">
                   {#if networthHasHistory}
-                    {networthHistoryMonths} months
+                    {$t("dashboard.months", { count: networthHistoryMonths })}
                   {:else}
-                    Need more history
+                    {$t("common.needMoreHistory")}
                   {/if}
                 </div>
               </div>
@@ -709,7 +724,7 @@
                 </div>
               {:else}
                 <div class="paisa-spark-card__empty">
-                  Need at least two monthly net worth snapshots to plot this trend.
+                  {$t("dashboard.networthTrendInsufficient")}
                 </div>
               {/if}
             </div>
@@ -717,14 +732,14 @@
             <div class="paisa-spark-card paisa-spark-card--hero">
               <div class="paisa-spark-card__meta">
                 <div>
-                  <span>Checking</span>
+                  <span>{$t("dashboard.checking")}</span>
                   <strong>{formatCurrencyWithSymbol(checkingTotal)}</strong>
                 </div>
                 <div class="paisa-spark-card__change">
                   {#if checkingHasHistory}
-                    {checkingAccounts.length} account{checkingAccounts.length === 1 ? "" : "s"}
+                    {$t("dashboard.accounts", { count: checkingAccounts.length })}
                   {:else}
-                    Need more history
+                    {$t("common.needMoreHistory")}
                   {/if}
                 </div>
               </div>
@@ -779,7 +794,7 @@
                 </div>
               {:else}
                 <div class="paisa-spark-card__empty">
-                  Need at least two recorded checking months to plot this trend.
+                  {$t("dashboard.checkingTrendInsufficient")}
                 </div>
               {/if}
             </div>
@@ -791,82 +806,86 @@
         <div class="paisa-review">
           <div class="paisa-review__header">
             <div>
-              <div class="paisa-zone__title">Monthly Review</div>
+              <div class="paisa-zone__title">{$t("dashboard.monthlyReview")}</div>
               <div class="paisa-zone__subtle">
                 {selectedMonthLabel}{activeMonthlyReview && !activeMonthlyReview.period_complete
-                  ? " · in progress"
+                  ? ` · ${$t("dashboard.inProgress")}`
                   : ""}
               </div>
             </div>
             {#if activeMonthlyReview}
               <div class="paisa-review__status">
-                {activeMonthlyReview.period_complete ? "Complete calendar month" : "Month to date"}
+                {activeMonthlyReview.period_complete
+                  ? $t("dashboard.periodComplete")
+                  : $t("dashboard.monthToDate")}
               </div>
             {/if}
           </div>
 
           {#if reviewLoading}
             <div class="paisa-zone__empty">
-              <strong>Loading {selectedMonthLabel}…</strong>
+              <strong>{$t("dashboard.loadingMonth", { month: selectedMonthLabel })}</strong>
             </div>
           {:else if monthlyReviewError}
             <div class="paisa-zone__empty">
-              <strong>Monthly review could not be loaded.</strong>
-              <p>Select another month or reload the page.</p>
+              <strong>{$t("dashboard.reviewLoadError")}</strong>
+              <p>{$t("dashboard.reviewLoadErrorHint")}</p>
             </div>
           {:else if !activeMonthlyReview}
             <div class="paisa-zone__empty">
-              <strong>Monthly review is not available yet.</strong>
+              <strong>{$t("dashboard.reviewUnavailable")}</strong>
             </div>
           {:else}
             {#if reviewHasActivity}
               <div class="paisa-review__metrics">
                 <div class="paisa-review__metric">
-                  <span>Net income after tax</span>
+                  <span>{$t("dashboard.netIncomeAfterTax")}</span>
                   <strong
                     >{formatCurrencyWithSymbol(activeMonthlyReview.net_income_after_tax)}</strong
                   >
                   <small>
                     {activeMonthlyReview.has_income_postings
-                      ? `Tax ${formatCurrencyWithSymbol(activeMonthlyReview.net_tax)}`
-                      : "No recorded income"}
+                      ? $t("dashboard.taxAmount", {
+                          amount: formatCurrencyWithSymbol(activeMonthlyReview.net_tax)
+                        })
+                      : $t("dashboard.noRecordedIncome")}
                   </small>
                 </div>
                 <div class="paisa-review__metric">
-                  <span>Surplus / Deficit</span>
+                  <span>{$t("dashboard.surplusDeficit")}</span>
                   {#if reviewSurplusState === "ready"}
                     <strong class:is-negative={activeMonthlyReview.surplus < 0}
                       >{formatCurrencyWithSymbol(activeMonthlyReview.surplus)}</strong
                     >
-                    <small>net income − expenses</small>
+                    <small>{$t("dashboard.netIncomeMinusExpenses")}</small>
                   {:else}
-                    <strong class="is-muted">Not available</strong>
+                    <strong class="is-muted">{$t("common.notAvailable")}</strong>
                     <small>
                       {reviewSurplusState === "income-missing"
-                        ? "No recorded income this month."
+                        ? $t("dashboard.noIncomeThisMonth")
                         : reviewSurplusState === "expense-missing"
-                          ? "No recorded expenses this month."
-                          : "No recorded income or expenses this month."}
+                          ? $t("dashboard.noExpensesThisMonth")
+                          : $t("dashboard.noIncomeOrExpensesThisMonth")}
                     </small>
                   {/if}
                 </div>
                 <div class="paisa-review__metric">
-                  <span>Net expense</span>
+                  <span>{$t("dashboard.netExpense")}</span>
                   <strong
                     >{activeMonthlyReview.has_expense_postings
                       ? formatCurrencyWithSymbol(activeMonthlyReview.net_expense)
-                      : "Not available"}</strong
+                      : $t("common.notAvailable")}</strong
                   >
                   <small
                     >{activeMonthlyReview.has_expense_postings
-                      ? "Excludes tax"
-                      : "No recorded expenses"}</small
+                      ? $t("dashboard.excludesTax")
+                      : $t("dashboard.noRecordedExpenses")}</small
                   >
                 </div>
               </div>
 
               <div class="paisa-review__trend">
-                <div class="paisa-zone__subtle">Net income · last three months</div>
+                <div class="paisa-zone__subtle">{$t("dashboard.netIncomeLastThreeMonths")}</div>
                 <div class="paisa-review__trend-values">
                   {#each reviewTrend as point, index}
                     {@const previous = index > 0 ? reviewTrend[index - 1] : null}
@@ -875,10 +894,10 @@
                       <strong
                         >{point.value != null
                           ? formatCurrencyWithSymbol(point.value)
-                          : "Not available"}</strong
+                          : $t("common.notAvailable")}</strong
                       >
                       {#if point.isMonthToDate}
-                        <small>Month to date</small>
+                        <small>{$t("dashboard.monthToDate")}</small>
                       {:else if point.value != null && previous?.value != null}
                         <small
                           class:is-positive={point.value >= previous.value}
@@ -888,7 +907,7 @@
                           {formatCurrencyWithSymbol(Math.abs(point.value - previous.value))}
                         </small>
                       {:else}
-                        <small>No comparable month</small>
+                        <small>{$t("dashboard.noComparableMonth")}</small>
                       {/if}
                     </div>
                   {/each}
@@ -897,15 +916,15 @@
 
               <div class="paisa-review__flow">
                 <div class="paisa-review__performance-header">
-                  <div class="paisa-zone__subtle">Posted money flow</div>
+                  <div class="paisa-zone__subtle">{$t("dashboard.postedMoneyFlow")}</div>
                   <a href="/cash_flow/yearly" class="secondary-link paisa-link-with-arrow"
-                    >Open yearly flow <i class="fas fa-arrow-right"></i></a
+                    >{$t("dashboard.openYearlyFlow")} <i class="fas fa-arrow-right"></i></a
                   >
                 </div>
                 {#if sankeyEmpty}
                   <div class="paisa-zone__empty">
-                    <strong>No posted flows to chart.</strong>
-                    <p>The selected month contains no postings to connect.</p>
+                    <strong>{$t("dashboard.noPostedFlows")}</strong>
+                    <p>{$t("dashboard.noPostingsToConnect")}</p>
                   </div>
                 {:else}
                   <div class="paisa-review__flow-canvas">
@@ -919,50 +938,51 @@
               </div>
             {:else}
               <div class="paisa-review__no-activity">
-                <strong>No recorded activity</strong>
+                <strong>{$t("dashboard.noRecordedActivity")}</strong>
                 <p>
-                  There are no postings for {selectedMonthLabel}. This does not prove the ledger
-                  history is complete.
+                  {$t("dashboard.noPostingsForMonth", { month: selectedMonthLabel })}
                 </p>
               </div>
             {/if}
 
             <div class="paisa-review__performance">
               <div class="paisa-review__performance-header">
-                <div class="paisa-zone__subtle">Investments</div>
+                <div class="paisa-zone__subtle">{$t("nav.investments")}</div>
                 {#if reviewPerformance.asOf}
                   <div class="paisa-zone__subtle">
-                    Prices as of {dayjs(reviewPerformance.asOf).format("MMM D, YYYY")}
+                    {$t("dashboard.pricesAsOf", {
+                      date: dayjs(reviewPerformance.asOf).format("MMM D, YYYY")
+                    })}
                   </div>
                 {/if}
               </div>
 
               <div class="paisa-review__investment-drivers">
                 <div>
-                  <span>Net contributions</span><strong
+                  <span>{$t("dashboard.netContributions")}</span><strong
                     >{formatCurrencyWithSymbol(
                       activeMonthlyReview.investment_contributions
                     )}</strong
-                  ><small>Non-checking assets</small>
+                  ><small>{$t("dashboard.nonCheckingAssets")}</small>
                 </div>
                 <div>
-                  <span>Market movement</span><strong
+                  <span>{$t("dashboard.marketMovement")}</span><strong
                     >{activeMonthlyReview.performance_state === "ready"
                       ? formatCurrencyWithSymbol(activeMonthlyReview.investment_market_movement)
-                      : "Not available"}</strong
-                  ><small>Ranked positions</small>
+                      : $t("common.notAvailable")}</strong
+                  ><small>{$t("dashboard.rankedPositions")}</small>
                 </div>
                 <div>
-                  <span>Dividends</span><strong
+                  <span>{$t("dashboard.dividends")}</span><strong
                     >{formatCurrencyWithSymbol(activeMonthlyReview.dividend_income)}</strong
-                  ><small>Total return component</small>
+                  ><small>{$t("dashboard.totalReturnComponent")}</small>
                 </div>
               </div>
 
               {#if activeMonthlyReview.performance_state === "ready" && reviewPerformance.best.length}
                 <div class="paisa-review__performers">
                   <div class="paisa-review__performer-group">
-                    <div class="paisa-zone__subtle">Best</div>
+                    <div class="paisa-zone__subtle">{$t("dashboard.best")}</div>
                     {#each reviewPerformance.best as performer}
                       <div class="paisa-review__performer">
                         <span>{positionLabel(performer.account)}</span>
@@ -974,14 +994,16 @@
                         </strong>
                         {#if performer.dividend_income}
                           <small
-                            >Dividends {formatCurrencyWithSymbol(performer.dividend_income)}</small
+                            >{$t("dashboard.dividendsAmount", {
+                              amount: formatCurrencyWithSymbol(performer.dividend_income)
+                            })}</small
                           >
                         {/if}
                       </div>
                     {/each}
                   </div>
                   <div class="paisa-review__performer-group">
-                    <div class="paisa-zone__subtle">Weakest</div>
+                    <div class="paisa-zone__subtle">{$t("dashboard.weakest")}</div>
                     {#each reviewPerformance.weakest as performer}
                       <div class="paisa-review__performer">
                         <span>{positionLabel(performer.account)}</span>
@@ -993,7 +1015,9 @@
                         </strong>
                         {#if performer.dividend_income}
                           <small
-                            >Dividends {formatCurrencyWithSymbol(performer.dividend_income)}</small
+                            >{$t("dashboard.dividendsAmount", {
+                              amount: formatCurrencyWithSymbol(performer.dividend_income)
+                            })}</small
                           >
                         {/if}
                       </div>
@@ -1002,9 +1026,13 @@
                 </div>
               {:else}
                 <div class="paisa-zone__empty">
-                  <strong>Investment performance is not available for {selectedMonthLabel}.</strong>
+                  <strong
+                    >{$t("dashboard.investmentPerformanceUnavailable", {
+                      month: selectedMonthLabel
+                    })}</strong
+                  >
                   <p>
-                    Historical prices or flow coverage are insufficient for a comparable ranking.
+                    {$t("dashboard.insufficientPrices")}
                   </p>
                 </div>
               {/if}
@@ -1016,17 +1044,17 @@
       <div class="paisa-dashboard__section">
         <div class="paisa-dashboard__band paisa-dashboard__band--review">
           <div class="paisa-zone paisa-zone--insights">
-            <DashboardSectionHeader title="Insights" subtle={selectedMonthLabel}>
+            <DashboardSectionHeader title={$t("nav.insights")} subtle={selectedMonthLabel}>
               {#snippet right()}
                 <a href="/expense/monthly" class="secondary-link paisa-link-with-arrow"
-                  >View all insights <i class="fas fa-arrow-right"></i></a
+                  >{$t("dashboard.viewAllInsights")} <i class="fas fa-arrow-right"></i></a
                 >
               {/snippet}
             </DashboardSectionHeader>
 
             {#if reviewLoading}
               <div class="paisa-zone__empty">
-                <strong>Loading {selectedMonthLabel}…</strong>
+                <strong>{$t("dashboard.loadingMonth", { month: selectedMonthLabel })}</strong>
               </div>
             {:else}
               <div class="paisa-insights">
@@ -1058,10 +1086,13 @@
           </div>
 
           <div class="paisa-zone paisa-zone--goals">
-            <DashboardSectionHeader title="Goal Progress" subtle="Current status">
+            <DashboardSectionHeader
+              title={$t("dashboard.goalProgress")}
+              subtle={$t("dashboard.currentStatus")}
+            >
               {#snippet right()}
                 <a href="/more/goals" class="secondary-link paisa-link-with-arrow"
-                  >View all goals <i class="fas fa-arrow-right"></i></a
+                  >{$t("dashboard.viewAllGoals")} <i class="fas fa-arrow-right"></i></a
                 >
               {/snippet}
             </DashboardSectionHeader>
@@ -1087,13 +1118,13 @@
               </div>
             {:else if goalState === "not-configured"}
               <div class="paisa-support__empty">
-                <strong>No goals configured.</strong>
-                <p>Create savings or retirement goals to track progress here.</p>
+                <strong>{$t("dashboard.noGoalsConfigured")}</strong>
+                <p>{$t("dashboard.createGoals")}</p>
               </div>
             {:else}
               <div class="paisa-support__empty">
-                <strong>Goal progress is not ready yet.</strong>
-                <p>Goal targets exist, but Paisa needs more qualifying data to chart progress.</p>
+                <strong>{$t("dashboard.goalProgressNotReady")}</strong>
+                <p>{$t("dashboard.goalNeedsData")}</p>
               </div>
             {/if}
           </div>
@@ -1104,12 +1135,17 @@
         <div class="paisa-dashboard__band paisa-dashboard__band--support paisa-surface-split">
           <div class="paisa-support">
             <div class="paisa-support__header">
-              <div class="paisa-zone__title">Cash Reserve</div>
-              <div class="paisa-zone__subtle">Current</div>
+              <div class="paisa-zone__title">{$t("dashboard.cashReserve")}</div>
+              <div class="paisa-zone__subtle">{$t("dashboard.current")}</div>
             </div>
             <div class="paisa-support__value">{formatCurrencyWithSymbol(checkingTotal)}</div>
             {#if reserveState === "ready"}
-              <div class="paisa-support__text">{formatFloat(reserveMonths)} months of expenses</div>
+              <div class="paisa-support__text">
+                {$t("dashboard.reserveMonths", {
+                  count: reserveMonths,
+                  value: formatFloat(reserveMonths)
+                })}
+              </div>
               <div class="paisa-progress">
                 <div
                   class="paisa-progress__fill"
@@ -1118,21 +1154,21 @@
               </div>
               <div class="paisa-progress__ticks">
                 <span>0</span>
-                <span>3 mo</span>
-                <span>6 mo</span>
-                <span>9+ mo</span>
+                <span>{$t("dashboard.months3")}</span>
+                <span>{$t("dashboard.months6")}</span>
+                <span>{$t("dashboard.months9plus")}</span>
               </div>
             {:else}
               <div class="paisa-support__empty">
-                <strong>Need expense history.</strong>
-                <p>Post expenses in at least one recent month to estimate your reserve runway.</p>
+                <strong>{$t("dashboard.needExpenseHistory")}</strong>
+                <p>{$t("dashboard.needExpenseHistoryHint")}</p>
               </div>
             {/if}
           </div>
 
           <div class="paisa-support">
             <div class="paisa-support__header">
-              <div class="paisa-zone__title">Budget Pressure</div>
+              <div class="paisa-zone__title">{$t("dashboard.budgetPressure")}</div>
               <div class="paisa-zone__subtle">{selectedMonthLabel}</div>
             </div>
             {#if budgetState === "ready"}
@@ -1161,30 +1197,30 @@
                 {/each}
               </div>
               <a href="/expense/budget" class="secondary-link paisa-mini-list__link"
-                >View all budgets</a
+                >{$t("dashboard.viewAllBudgets")}</a
               >
             {:else if budgetState === "not-configured"}
               <div class="paisa-support__empty">
-                <strong>No budget configured.</strong>
-                <p>Create budget lines to monitor category pressure here.</p>
+                <strong>{$t("dashboard.noBudgetConfigured")}</strong>
+                <p>{$t("dashboard.createBudgetLines")}</p>
                 <a
                   href="/expense/budget"
                   class="secondary-link paisa-mini-list__link paisa-zone__empty-link"
-                  >Set up budget</a
+                  >{$t("dashboard.setUpBudget")}</a
                 >
               </div>
             {:else}
               <div class="paisa-support__empty">
-                <strong>No budget data for {selectedMonthLabel}.</strong>
-                <p>Budget pressure appears for months with configured budget lines.</p>
+                <strong>{$t("dashboard.noBudgetData", { month: selectedMonthLabel })}</strong>
+                <p>{$t("dashboard.budgetPressureHint")}</p>
               </div>
             {/if}
           </div>
 
           <div class="paisa-support">
             <div class="paisa-support__header">
-              <div class="paisa-zone__title">Recurring Outlook</div>
-              <div class="paisa-zone__subtle">Next 7 days</div>
+              <div class="paisa-zone__title">{$t("dashboard.recurringOutlook")}</div>
+              <div class="paisa-zone__subtle">{$t("dashboard.next7Days")}</div>
             </div>
             {#if recurringState === "ready"}
               <div class="paisa-mini-list">
@@ -1204,12 +1240,12 @@
                 {/each}
               </div>
               <a href="/cash_flow/recurring" class="secondary-link paisa-mini-list__link"
-                >View all recurring</a
+                >{$t("dashboard.viewAllRecurring")}</a
               >
             {:else}
               <div class="paisa-support__empty">
-                <strong>No recurring outlook yet.</strong>
-                <p>Recurring items appear after Paisa can detect repeating transactions.</p>
+                <strong>{$t("dashboard.noRecurringOutlook")}</strong>
+                <p>{$t("dashboard.recurringHint")}</p>
               </div>
             {/if}
           </div>
@@ -1217,8 +1253,8 @@
       </div>
 
       <div class="paisa-dashboard__section paisa-dashboard__footer">
-        <span>Live snapshot stays independent of the selected review month.</span>
-        <span>Last updated: Today, {now().format("HH:mm")}</span>
+        <span>{$t("dashboard.liveSnapshot")}</span>
+        <span>{$t("dashboard.lastUpdated", { time: now().format("HH:mm") })}</span>
       </div>
     </div>
   </section>

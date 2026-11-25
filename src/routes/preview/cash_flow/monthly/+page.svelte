@@ -7,6 +7,7 @@
   import { dateRange, setAllowedDateRange } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { t } from "$lib/i18n";
 
   let legends = $state<Legend[]>([]);
   let cashFlows = $state<CashFlow[]>([]);
@@ -39,7 +40,8 @@
       <div class="column is-12">
         <div class="box">
           <ZeroState item={cashFlows}>
-            <strong>Oops!</strong> You have not made any transactions.
+            <strong>{$t("common.oops")}</strong>
+            {$t("cashflow.emptyTransactions")}
           </ZeroState>
 
           <LegendCard {legends} clazz="ml-5 mb-2" />

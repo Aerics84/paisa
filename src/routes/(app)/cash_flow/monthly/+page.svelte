@@ -7,6 +7,7 @@
   import { dateRange, setAllowedDateRange } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import { t } from "$lib/i18n";
 
   let legends = $state<Legend[]>([]);
   let cashFlows = $state<CashFlow[]>([]);
@@ -33,9 +34,9 @@
           const expenses = _.sumBy(visibleCashFlows, "expenses");
           const tax = _.sumBy(visibleCashFlows, "tax");
           return [
-            { label: "Income", value: income },
-            { label: "Expenses", value: expenses + tax },
-            { label: "Net", value: income - expenses - tax }
+            { label: $t("cashflow.income"), value: income },
+            { label: $t("cashflow.expenses"), value: expenses + tax },
+            { label: $t("cashflow.net"), value: income - expenses - tax }
           ];
         })()
   );
@@ -56,11 +57,12 @@
       <div class="column is-12">
         <div class="box cash-flow-monthly">
           <ZeroState item={cashFlows}>
-            <strong>Oops!</strong> You have not made any transactions.
+            <strong>{$t("common.oops")}</strong>
+            {$t("cashflow.emptyTransactions")}
           </ZeroState>
 
           {#if !_.isEmpty(cashFlowSummary)}
-            <div class="cash-flow-monthly__summary" aria-label="Cash flow totals">
+            <div class="cash-flow-monthly__summary" aria-label={$t("cashflow.summaryLabel")}>
               {#each cashFlowSummary as item}
                 <div class="cash-flow-monthly__summary-card">
                   <span class="is-size-7 has-text-grey">{item.label}</span>

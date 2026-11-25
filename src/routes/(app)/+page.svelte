@@ -39,6 +39,7 @@
   import GoalSummaryCard from "$lib/components/GoalSummaryCard.svelte";
   import LegendCard from "$lib/components/LegendCard.svelte";
   import BalanceCard from "$lib/components/BalanceCard.svelte";
+  import { t } from "$lib/i18n";
 
   let cashflowLegends = $state<Legend[]>([]);
   let month = $state(now().format("YYYY-MM"));
@@ -143,40 +144,46 @@
           <ZeroState item={!isEmpty}>
             <div class="has-text-left" style="max-width: 640px;">
               <p class="mb-2">
-                Looks like you are new here, you can either get started or look at a demo setup
+                {$t("dashboard.onboarding.intro")}
               </p>
               <div>
-                <p class="is-size-4">I want to get started</p>
+                <p class="is-size-4">{$t("dashboard.onboarding.getStarted")}</p>
                 <ol class="ml-5 mt-2 mb-4">
                   <li>
-                    Go to <a href="/more/config">configuration</a> page and set your regional profile,
-                    default currency and locale.
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html $t("dashboard.onboarding.stepConfig", {
+                      link: `<a href="/more/config">${$t("dashboard.onboarding.configurationLink")}</a>`
+                    })}
                   </li>
                   <li>
-                    Go to <a href="/ledger/editor">editor</a> page and start adding transactions to your
-                    journal.
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html $t("dashboard.onboarding.stepEditor", {
+                      link: `<a href="/ledger/editor">${$t("dashboard.onboarding.editorLink")}</a>`
+                    })}
                   </li>
                 </ol>
-                <p class="is-size-4">I want to view a Demo</p>
+                <p class="is-size-4">{$t("dashboard.onboarding.viewDemo")}</p>
                 <p class="ml-3"></p>
                 <ol class="ml-5 mt-2 mb-4">
                   <li>
-                    Click the button below to load a demo setup. This will load a demo journal and
-                    starter config matching your current regional profile.
+                    {$t("dashboard.onboarding.demoIntro")}
                   </li>
                   <li>
-                    Once you are done playing around, you can go to <a href="/ledger/editor"
-                      >editor</a
-                    > page and select all the content and delete them.
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html $t("dashboard.onboarding.demoCleanup", {
+                      link: `<a href="/ledger/editor">${$t("dashboard.onboarding.editorLink")}</a>`
+                    })}
                   </li>
                   <li>
-                    Go to <a href="/more/config">configuration</a> page and click the reset to defaults
-                    button.
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html $t("dashboard.onboarding.demoReset", {
+                      link: `<a href="/more/config">${$t("dashboard.onboarding.configurationLink")}</a>`
+                    })}
                   </li>
                 </ol>
 
                 <button type="button" onclick={(_e) => initDemo()} class="button is-link">
-                  Setup Demo
+                  {$t("dashboard.onboarding.setupDemo")}
                 </button>
               </div>
             </div>
@@ -194,7 +201,9 @@
             <div class="tile is-child">
               <div class="content">
                 <p class="subtitle">
-                  <a class="secondary-link has-text-grey" href="/assets/networth">Assets</a>
+                  <a class="secondary-link has-text-grey" href="/assets/networth"
+                    >{$t("nav.assets")}</a
+                  >
                 </p>
                 <div class="content">
                   <div>
@@ -202,14 +211,14 @@
                       <nav class="level grid-2">
                         <LevelItem
                           narrow
-                          title="Net worth"
+                          title={$t("dashboard.netWorth")}
                           color={COLORS.primary}
                           value={formatCurrencyWithSymbol(networth.balanceAmount)}
                         />
 
                         <LevelItem
                           narrow
-                          title="Net Investment"
+                          title={$t("dashboard.netInvestment")}
                           color={COLORS.secondary}
                           value={formatCurrencyWithSymbol(networth.netInvestmentAmount)}
                         />
@@ -217,7 +226,7 @@
                       <nav class="level grid-2">
                         <LevelItem
                           narrow
-                          title="Gain / Loss"
+                          title={$t("dashboard.gainLoss")}
                           color={networth.gainAmount >= 0 ? COLORS.gainText : COLORS.lossText}
                           value={formatCurrencyWithSymbol(networth.gainAmount)}
                         />
@@ -237,7 +246,7 @@
                 <div class="content">
                   <p class="subtitle">
                     <a class="secondary-link has-text-grey" href="/assets/balance"
-                      >Checking Balance</a
+                      >{$t("dashboard.checkingBalance")}</a
                     >
                   </p>
                   <div class="content">
@@ -257,11 +266,14 @@
           <div class="tile is-parent">
             <article class="tile is-child min-w-0">
               <p class="subtitle">
-                <a class="secondary-link has-text-grey" href="/cash_flow/monthly">Cash Flow</a>
+                <a class="secondary-link has-text-grey" href="/cash_flow/monthly"
+                  >{$t("nav.cashFlow")}</a
+                >
               </p>
               <div class="content box px-2 pb-0">
                 <ZeroState item={cashFlows}>
-                  <strong>Oops!</strong> You have not made any transactions in the last 3 months.
+                  <strong>{$t("common.oops")}</strong>
+                  {$t("dashboard.cashFlowEmpty")}
                 </ZeroState>
 
                 <LegendCard legends={cashflowLegends} clazz="mb-2 overflow-x-auto" />
@@ -280,7 +292,9 @@
               <div class="tile is-child">
                 <div class="content">
                   <p class="subtitle">
-                    <a class="secondary-link has-text-grey" href="/expense/budget">Budget</a>
+                    <a class="secondary-link has-text-grey" href="/expense/budget"
+                      >{$t("nav.budget")}</a
+                    >
                   </p>
                   <div class="content">
                     <div>
@@ -299,7 +313,7 @@
                 <div class="content">
                   <p class="subtitle">
                     <a class="secondary-link has-text-grey" href="/expense/budget"
-                      >Prognose Monatsende</a
+                      >{$t("dashboard.projectedMonthEnd")}</a
                     >
                   </p>
                   <div class="content box px-3 py-2">
@@ -308,7 +322,9 @@
                     >
                     {#if currentExpensePace.overBudget != null}
                       <span class="tag is-danger is-light ml-2"
-                        >über Budget {formatCurrencyWithSymbol(currentExpensePace.overBudget)}</span
+                        >{$t("dashboard.overBudget", {
+                          amount: formatCurrencyWithSymbol(currentExpensePace.overBudget)
+                        })}</span
                       >
                     {/if}
                   </div>
@@ -322,7 +338,9 @@
                 <article class="tile is-child">
                   <div class="content">
                     <p class="subtitle">
-                      <a class="secondary-link has-text-grey" href="/more/goals">Goals</a>
+                      <a class="secondary-link has-text-grey" href="/more/goals"
+                        >{$t("nav.goals")}</a
+                      >
                     </p>
                     <div class="content">
                       {#each goalSummaries as goal}
@@ -340,7 +358,9 @@
             <article class="tile is-child">
               <p class="subtitle is-flex is-justify-content-space-between is-align-items-end">
                 <span
-                  ><a class="secondary-link has-text-grey" href="/expense/monthly">Expenses</a>
+                  ><a class="secondary-link has-text-grey" href="/expense/monthly"
+                    >{$t("nav.expenses")}</a
+                  >
                   <span class="is-size-5 has-text-weight-bold px-2" style="color: {COLORS.expenses}"
                     >{formatCurrency(totalExpense)}</span
                   ></span
@@ -349,7 +369,8 @@
               </p>
               <div class="content box px-3">
                 <ZeroState item={selectedExpenses}>
-                  <strong>Hurray!</strong> You have no expenses this month.
+                  <strong>{$t("common.hurray")}</strong>
+                  {$t("dashboard.expensesEmpty")}
                 </ZeroState>
                 <svg id="d3-current-month-breakdown" width="100%" />
               </div>
@@ -362,7 +383,7 @@
                   <div class="content">
                     <p class="subtitle">
                       <a class="secondary-link has-text-grey" href="/cash_flow/recurring"
-                        >Recurring</a
+                        >{$t("nav.recurring")}</a
                       >
                     </p>
                     <div class="content box">
@@ -387,7 +408,7 @@
                   <div class="content">
                     <p class="subtitle">
                       <a class="secondary-link has-text-grey" href="/ledger/transaction"
-                        >Recent Transactions</a
+                        >{$t("dashboard.recentTransactions")}</a
                       >
                     </p>
                     <div>

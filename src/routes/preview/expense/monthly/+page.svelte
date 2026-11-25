@@ -24,6 +24,7 @@
     normalizeExpenseDetailScope,
     ROOT_EXPENSE_SCOPE
   } from "$lib/expense";
+  import { t } from "$lib/i18n";
 
   let detailScope = writable(ROOT_EXPENSE_SCOPE);
   let timelineGroup = writable<string | null>(null);
@@ -83,12 +84,18 @@
         savingRate = "";
         netIncome = "";
       } else {
-        netIncome = formatCurrency(sum(incomes, -1) - sum(taxes)) + " net income";
-        taxRate = formatPercentage(sum(taxes) / sum(incomes, -1)) + " on income";
-        expenseRate =
-          formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes))) + " of net income";
-        savingRate =
-          formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes))) + " of net income";
+        netIncome = $t("expense.netIncome", {
+          amount: formatCurrency(sum(incomes, -1) - sum(taxes))
+        });
+        taxRate = $t("expense.taxRateMonthly", {
+          percentage: formatPercentage(sum(taxes) / sum(incomes, -1))
+        });
+        expenseRate = $t("expense.ofNetIncome", {
+          percentage: formatPercentage(sum(expenses) / (sum(incomes, -1) - sum(taxes)))
+        });
+        savingRate = $t("expense.ofNetIncome", {
+          percentage: formatPercentage(sum(investments) / (sum(incomes, -1) - sum(taxes)))
+        });
       }
 
       renderer(expenses, $detailScope);
@@ -143,14 +150,14 @@
               <nav class="level grid-2">
                 <LevelItem
                   narrow
-                  title="Gross Income"
+                  title={$t("expense.grossIncome")}
                   value={income}
                   color={COLORS.gainText}
                   subtitle={netIncome}
                 />
                 <LevelItem
                   narrow
-                  title="Tax"
+                  title={$t("expense.tax")}
                   value={tax}
                   subtitle={taxRate}
                   color={COLORS.lossText}
@@ -163,7 +170,7 @@
               <nav class="level grid-2">
                 <LevelItem
                   narrow
-                  title="Net Investment"
+                  title={$t("expense.netInvestment")}
                   value={saving}
                   subtitle={savingRate}
                   color={COLORS.secondary}
@@ -171,7 +178,7 @@
 
                 <LevelItem
                   narrow
-                  title="Expenses"
+                  title={$t("expense.expenses")}
                   value={expense}
                   color={COLORS.lossText}
                   subtitle={expenseRate}
@@ -180,7 +187,10 @@
             </div>
           </div>
           <div class="column is-full">
-            <nav class="breadcrumb has-chevron-separator mb-2 is-small" aria-label="expense scope">
+            <nav
+              class="breadcrumb has-chevron-separator mb-2 is-small"
+              aria-label={$t("expense.scopeLabel")}
+            >
               <ul>
                 {#each breadcrumbs as crumb}
                   <li>
@@ -229,16 +239,21 @@
                 <button
                   type="button"
                   class="button is-ghost is-small current-month-breakdown-reset"
-                  onclick={() => detailScope.set(ROOT_EXPENSE_SCOPE)}>← Alle Kategorien</button
+                  onclick={() => detailScope.set(ROOT_EXPENSE_SCOPE)}
+                  >{$t("expense.resetScope")}</button
                 >
               {/if}
               <ZeroState item={current_month_expenses}>
                 {#if monthHasExpenses && $detailScope !== ROOT_EXPENSE_SCOPE}
-                  <strong>No expenses for {detailScopeLabel}</strong> in {dayjs($month).format(
-                    "MMM YYYY"
-                  )}.
+                  <strong
+                    >{$t("expense.noExpensesForScope", {
+                      scope: detailScopeLabel,
+                      month: dayjs($month).format("MMM YYYY")
+                    })}</strong
+                  >
                 {:else}
-                  <strong>Hurray!</strong> You have no expenses this month.
+                  <strong>{$t("common.hurray")}</strong>
+                  {$t("expense.noExpensesThisMonth")}
                 {/if}
               </ZeroState>
               <svg id="d3-current-month-breakdown" width="100%" />
@@ -247,17 +262,18 @@
           <div class="column is-full">
             <div class="box">
               <ZeroState item={expenses}>
-                <strong>Oops!</strong> You have no expenses.
+                <strong>{$t("common.oops")}</strong>
+                {$t("expense.noExpenses")}
               </ZeroState>
               <div class="px-4 pb-1 is-size-7 has-text-grey">
-                Trend filter only affects this 12-month chart.
+                {$t("expense.trendFilterHint")}
               </div>
               <LegendCard {legends} clazz="ml-4 overflow-x-auto" />
               <svg id="d3-monthly-expense-timeline" width="100%" height="400" />
             </div>
           </div>
         </div>
-        <BoxLabel text="Monthly Expenses" />
+        <BoxLabel text={$t("expense.monthlyExpenses")} />
       </div>
     </div>
   </div>

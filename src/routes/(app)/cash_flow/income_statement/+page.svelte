@@ -13,6 +13,7 @@
   import { setAllowedDateRange, year } from "../../../../store";
   import ZeroState from "$lib/components/ZeroState.svelte";
   import { iconify } from "$lib/icon";
+  import { t } from "$lib/i18n";
 
   let isEmpty = $state(false);
 
@@ -91,49 +92,49 @@
     accountGroups.push({
       key: "income",
       accounts: uniqueAccounts(_.values(yearly), "income"),
-      label: "Income",
+      label: $t("cashflow.group.income"),
       multiplier: -1
     });
 
     accountGroups.push({
       key: "tax",
       accounts: uniqueAccounts(_.values(yearly), "tax"),
-      label: "Tax",
+      label: $t("cashflow.group.tax"),
       multiplier: -1
     });
 
     accountGroups.push({
       key: "interest",
       accounts: uniqueAccounts(_.values(yearly), "interest"),
-      label: "Interest",
+      label: $t("cashflow.group.interest"),
       multiplier: -1
     });
 
     accountGroups.push({
       key: "pnl",
       accounts: uniqueAccounts(_.values(yearly), "pnl"),
-      label: "Gain / Loss",
+      label: $t("cashflow.group.pnl"),
       multiplier: 1
     });
 
     accountGroups.push({
       key: "equity",
       accounts: uniqueAccounts(_.values(yearly), "equity"),
-      label: "Equity",
+      label: $t("cashflow.group.equity"),
       multiplier: -1
     });
 
     accountGroups.push({
       key: "liabilities",
       accounts: uniqueAccounts(_.values(yearly), "liabilities"),
-      label: "Liabilities",
+      label: $t("cashflow.group.liabilities"),
       multiplier: -1
     });
 
     accountGroups.push({
       key: "expenses",
       accounts: uniqueAccounts(_.values(yearly), "expenses"),
-      label: "Expenses",
+      label: $t("cashflow.group.expenses"),
       multiplier: -1
     });
   });
@@ -150,27 +151,27 @@
             class="box py-2 my-0 overflow-x-auto"
             tabindex="0"
             role="region"
-            aria-label="Income statement summary"
+            aria-label={$t("cashflow.incomeStatementSummaryLabel")}
           >
             <div class="is-flex mr-2 is-align-items-baseline" style="min-width: fit-content">
               <div class="ml-3 custom-icon is-size-5 whitespace-nowrap">
                 {$year}
               </div>
               <div class="ml-3 whitespace-nowrap">
-                <span class="mr-1 is-size-7 has-text-grey">Start</span>
+                <span class="mr-1 is-size-7 has-text-grey">{$t("cashflow.start")}</span>
                 <span class="has-text-weight-bold"
                   >{formatCurrency(incomeStatement.startingBalance)}</span
                 >
               </div>
               <div class="ml-3 whitespace-nowrap">
-                <span class="mr-1 is-size-7 has-text-grey">End</span>
+                <span class="mr-1 is-size-7 has-text-grey">{$t("cashflow.end")}</span>
                 <span class="has-text-weight-bold"
                   >{formatCurrency(incomeStatement.endingBalance)}</span
                 >
               </div>
 
               <div class="ml-3 whitespace-nowrap">
-                <span class="mr-1 is-size-7 has-text-grey">change</span>
+                <span class="mr-1 is-size-7 has-text-grey">{$t("cashflow.changeLower")}</span>
                 <span class="has-text-weight-bold {changeClass(diff)}">{formatCurrency(diff)}</span>
                 <span class="mr-1 is-size-7 has-text-weight-bold {changeClass(diff)}"
                   >{formatPercentage(diffPercent, 2)}</span
@@ -187,10 +188,11 @@
           class="box overflow-x-auto"
           tabindex="0"
           role="region"
-          aria-label="Income statement chart"
+          aria-label={$t("cashflow.incomeStatementChartLabel")}
         >
           <ZeroState item={!isEmpty}
-            ><strong>Oops!</strong> You have not made any transactions for the selected year.</ZeroState
+            ><strong>{$t("common.oops")}</strong>
+            {$t("cashflow.emptyYearText")}</ZeroState
           >
 
           <svg class:is-not-visible={isEmpty} bind:this={svg}></svg>
@@ -210,14 +212,14 @@
           class="box pt-0 overflow-x-auto max-h-screen max-w-fit"
           tabindex="0"
           role="region"
-          aria-label="Income statement table"
+          aria-label={$t("cashflow.incomeStatementTableLabel")}
         >
           <table
             class="table is-narrow is-hoverable is-light-border has-sticky-header has-sticky-column"
           >
             <thead>
               <tr>
-                <th class="py-2">Account</th>
+                <th class="py-2">{$t("cashflow.account")}</th>
                 {#each years as y}
                   <th class="py-2 has-text-right">{y}</th>
                 {/each}
@@ -255,7 +257,7 @@
               {/each}
 
               <tr class="has-text-weight-bold">
-                <th>Change</th>
+                <th>{$t("cashflow.change")}</th>
                 {#each years as y}
                   {#if yearly[y]}
                     {@const diff = yearly[y].endingBalance - yearly[y].startingBalance}
@@ -269,7 +271,7 @@
                 {/each}
               </tr>
               <tr class="has-text-weight-bold">
-                <th>End Balance</th>
+                <th>{$t("cashflow.endBalance")}</th>
                 {#each years as y}
                   <td class="has-text-right">
                     {#if yearly[y]}
@@ -279,7 +281,7 @@
                 {/each}
               </tr>
               <tr class="has-text-weight-bold">
-                <th>Start Balance</th>
+                <th>{$t("cashflow.startBalance")}</th>
                 {#each years as y}
                   <td class="has-text-right">
                     {#if yearly[y]}

@@ -19,6 +19,7 @@
   import type { Dayjs } from "dayjs";
   import RecurringDay from "$lib/components/RecurringDay.svelte";
   import dayjs from "dayjs";
+  import { t } from "$lib/i18n";
 
   let isEmpty = $state(false);
   let transactionSequences = $state<TransactionSequence[]>([]);
@@ -78,8 +79,11 @@
     <div class="columns mt-4">
       <div class="column is-12">
         <ZeroState item={!isEmpty}>
-          <strong>Oops!</strong> You haven't configured any recurring transactions yet. Checkout the
-          <a href={helpUrl("recurring")}>docs</a> page to get started.
+          <strong>{$t("common.oops")}</strong>
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          {@html $t("cashflow.recurringEmpty", {
+            link: `<a href="${helpUrl("recurring")}">${$t("common.docs")}</a>`
+          })}
         </ZeroState>
         {#each transactionSequencesDelayed as ts}
           <RecurringCard {ts} schedule={nextUnpaidSchedule(ts)} />
