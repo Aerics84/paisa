@@ -1,5 +1,6 @@
 <script lang="ts">
   import { sync } from "$lib/sync";
+  import { t } from "$lib/i18n";
   import { authStatus, isMobile, logout, supportsPortfolioAnalysis } from "$lib/utils";
   import { startPriceUpdate } from "$lib/price_update";
   import { refresh } from "../../store";
@@ -38,7 +39,12 @@
 
 <div class="dropdown ml-2 is-hoverable {isMobile() ? 'is-left' : 'is-right'}">
   <div class="dropdown-trigger dropdown-icon">
-    <button class="button is-large" aria-haspopup="true" aria-label="Open actions" type="button">
+    <button
+      class="button is-large"
+      aria-haspopup="true"
+      aria-label={$t("actions.open")}
+      type="button"
+    >
       <span class="icon">
         <i class="fas fa-ellipsis-vertical"></i>
       </span>
@@ -54,7 +60,7 @@
         <span class="icon is-small">
           <i class="fa-regular fa-file-lines"></i>
         </span>
-        <span>Sync Journal</span>
+        <span>{$t("actions.syncJournal")}</span>
       </button>
       <button
         onclick={() => startPriceUpdate(true)}
@@ -64,7 +70,7 @@
         <span class="icon is-small">
           <i class="fas fa-dollar-sign"></i>
         </span>
-        <span>Update Prices</span>
+        <span>{$t("actions.updatePrices")}</span>
       </button>
       {#if supportsPortfolioAnalysis(USER_CONFIG)}
         <button
@@ -75,7 +81,7 @@
           <span class="icon is-small">
             <i class="fas fa-layer-group"></i>
           </span>
-          <span>Update Mutual Fund Portfolios</span>
+          <span>{$t("actions.updatePortfolios")}</span>
         </button>
       {/if}
       <hr class="dropdown-divider" />
@@ -85,7 +91,7 @@
           <span class="ml-0 icon is-small">
             <i class="fas {$obscure ? 'fa-eye-slash' : 'fa-eye'}"></i>
           </span>
-          <span>{$obscure ? "Show" : "Hide"} numbers</span>
+          <span>{$obscure ? $t("actions.showNumbers") : $t("actions.hideNumbers")}</span>
         </label>
       </div>
       {#if showLogout}
@@ -98,7 +104,7 @@
           <span class="icon is-small">
             <i class="fas fa-arrow-right-from-bracket"></i>
           </span>
-          <span>Logout</span>
+          <span>{$t("actions.logout")}</span>
         </button>
       {/if}
     </div>

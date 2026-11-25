@@ -30,6 +30,7 @@
   import MonthPicker from "./MonthPicker.svelte";
   import Logo from "./Logo.svelte";
   import InputRange from "./InputRange.svelte";
+  import { t } from "$lib/i18n";
   import {
     normalizeNavigationPath,
     resolveBreadcrumbTrail,
@@ -73,193 +74,235 @@
       .join("");
   });
 
-  const recurringIcons = [
-    { icon: "fa-circle-check", color: "var(--app-positive)", label: "Cleared" },
-    { icon: "fa-circle-check", color: "var(--app-warning)", label: "Cleared late" },
-    { icon: "fa-exclamation-triangle", color: "var(--app-danger)", label: "Past due" },
-    { icon: "fa-circle-check", color: "var(--app-text-subtle)", label: "Upcoming" }
-  ];
+  const recurringIcons = $derived([
+    { icon: "fa-circle-check", color: "var(--app-positive)", label: $t("nav.recurring.cleared") },
+    {
+      icon: "fa-circle-check",
+      color: "var(--app-warning)",
+      label: $t("nav.recurring.clearedLate")
+    },
+    {
+      icon: "fa-exclamation-triangle",
+      color: "var(--app-danger)",
+      label: $t("nav.recurring.pastDue")
+    },
+    {
+      icon: "fa-circle-check",
+      color: "var(--app-text-subtle)",
+      label: $t("nav.recurring.upcoming")
+    }
+  ]);
 
   type Link = NavigationLink;
 
-  const links: Link[] = [
-    { label: "Overview", href: "/", icon: "fa-house", sidebarHref: "/" },
-    {
-      label: "Accounts",
-      href: "/assets",
-      icon: "fa-wallet",
-      sidebarHref: "/assets/balance",
-      children: [
-        { label: "Balance", href: "/balance" },
-        { label: "Networth", href: "/networth", dateRangeSelector: true },
-        { label: "Investment", href: "/investment" },
-        { label: "Gain", href: "/gain" },
-        { label: "Allocation", href: "/allocation", help: "allocation-targets" },
-        { label: "Analysis", href: "/analysis", help: "analysis" }
-      ]
-    },
-    {
-      label: "Transactions",
-      href: "/ledger",
-      icon: "fa-arrow-right-arrow-left",
-      sidebarHref: "/ledger/transaction",
-      children: [
-        { label: "Import", href: "/import", help: "import" },
-        { label: "Editor", href: "/editor", help: "editor", disablePreload: true },
-        { label: "Transactions", href: "/transaction", help: "bulk-edit" },
-        { label: "Postings", href: "/posting" },
-        { label: "Price", href: "/price" }
-      ]
-    },
-    {
-      label: "Budgets",
-      href: "/expense",
-      icon: "fa-lightbulb",
-      sidebarHref: "/expense/budget",
-      children: [
-        { label: "Monthly", href: "/monthly", monthPicker: true, dateRangeSelector: true },
-        { label: "Yearly", href: "/yearly", financialYearPicker: true },
-        { label: "Budget", href: "/budget", help: "budget", monthPicker: true }
-      ]
-    },
-    {
-      label: "Investments",
-      href: "/assets",
-      icon: "fa-chart-column",
-      sidebarHref: "/assets/investment",
-      children: [
-        { label: "Balance", href: "/balance" },
-        { label: "Networth", href: "/networth", dateRangeSelector: true },
-        { label: "Investment", href: "/investment" },
-        { label: "Gain", href: "/gain" },
-        { label: "Allocation", href: "/allocation", help: "allocation-targets" },
-        { label: "Analysis", href: "/analysis", help: "analysis" }
-      ]
-    },
-    { label: "Goals", href: "/more/goals", icon: "fa-compass", sidebarHref: "/more/goals" },
-    {
-      label: "Insights",
-      href: "/assets/analysis",
-      icon: "fa-clipboard-list",
-      sidebarHref: "/assets/analysis"
-    },
-    {
-      label: "Reports",
-      href: "/cash_flow",
-      icon: "fa-rectangle-list",
-      sidebarHref: "/cash_flow/income_statement",
-      children: [
-        { label: "Income Statement", href: "/income_statement", financialYearPicker: true },
-        { label: "Monthly", href: "/monthly", dateRangeSelector: true },
-        { label: "Yearly", href: "/yearly", financialYearPicker: true, maxDepthSelector: true },
-        {
-          label: "Recurring",
-          href: "/recurring",
-          help: "recurring",
-          monthPicker: true,
-          recurringIcons: true
-        }
-      ]
-    },
-    {
-      label: "Expenses",
-      href: "/expense",
-      icon: "fa-chart-pie",
-      sidebarHref: "/expense/monthly",
-      sidebarHidden: true,
-      children: [
-        { label: "Monthly", href: "/monthly", monthPicker: true, dateRangeSelector: true },
-        { label: "Yearly", href: "/yearly", financialYearPicker: true },
-        { label: "Budget", href: "/budget", help: "budget", monthPicker: true }
-      ]
-    },
-    {
-      label: "Liabilities",
-      href: "/liabilities",
-      icon: "fa-scale-balanced",
-      sidebarHref: "/liabilities/balance",
-      sidebarHidden: true,
-      children: [
-        { label: "Balance", href: "/balance" },
-        { label: "Credit Cards", href: "/credit_cards", help: "credit-cards" },
-        { label: "Repayment", href: "/repayment" },
-        { label: "Interest", href: "/interest" }
-      ]
-    },
-    {
-      label: "Income",
-      href: "/income",
-      icon: "fa-sack-dollar",
-      sidebarHref: "/income",
-      sidebarHidden: true
-    },
-    {
-      label: "More",
-      href: "/more",
-      icon: "fa-sliders",
-      sidebarHref: "/more/config",
-      sidebarHidden: true,
-      children: [
-        { label: "Configuration", href: "/config", help: "config" },
-        { label: "Sheets", href: "/sheets", help: "sheets", disablePreload: true },
-        { label: "Goals", href: "/goals", help: "goals" },
-        { label: "Doctor", href: "/doctor" },
-        { label: "Backup", href: "/backup" },
-        { label: "Logs", href: "/logs" }
-      ]
-    }
-  ];
+  function buildLinks(): Link[] {
+    const links: Link[] = [
+      { label: $t("nav.overview"), href: "/", icon: "fa-house", sidebarHref: "/" },
+      {
+        label: $t("nav.accounts"),
+        href: "/assets",
+        icon: "fa-wallet",
+        sidebarHref: "/assets/balance",
+        children: [
+          { label: $t("nav.balance"), href: "/balance" },
+          { label: $t("nav.networth"), href: "/networth", dateRangeSelector: true },
+          { label: $t("nav.investment"), href: "/investment" },
+          { label: $t("nav.gain"), href: "/gain" },
+          { label: $t("nav.allocation"), href: "/allocation", help: "allocation-targets" },
+          { label: $t("nav.analysis"), href: "/analysis", help: "analysis" }
+        ]
+      },
+      {
+        label: $t("nav.transactions"),
+        href: "/ledger",
+        icon: "fa-arrow-right-arrow-left",
+        sidebarHref: "/ledger/transaction",
+        children: [
+          { label: $t("nav.import"), href: "/import", help: "import" },
+          { label: $t("nav.editor"), href: "/editor", help: "editor", disablePreload: true },
+          { label: $t("nav.transactions"), href: "/transaction", help: "bulk-edit" },
+          { label: $t("nav.postings"), href: "/posting" },
+          { label: $t("nav.price"), href: "/price" }
+        ]
+      },
+      {
+        label: $t("nav.budgets"),
+        href: "/expense",
+        icon: "fa-lightbulb",
+        sidebarHref: "/expense/budget",
+        children: [
+          {
+            label: $t("nav.monthly"),
+            href: "/monthly",
+            monthPicker: true,
+            dateRangeSelector: true
+          },
+          { label: $t("nav.yearly"), href: "/yearly", financialYearPicker: true },
+          { label: $t("nav.budget"), href: "/budget", help: "budget", monthPicker: true }
+        ]
+      },
+      {
+        label: $t("nav.investments"),
+        href: "/assets",
+        icon: "fa-chart-column",
+        sidebarHref: "/assets/investment",
+        children: [
+          { label: $t("nav.balance"), href: "/balance" },
+          { label: $t("nav.networth"), href: "/networth", dateRangeSelector: true },
+          { label: $t("nav.investment"), href: "/investment" },
+          { label: $t("nav.gain"), href: "/gain" },
+          { label: $t("nav.allocation"), href: "/allocation", help: "allocation-targets" },
+          { label: $t("nav.analysis"), href: "/analysis", help: "analysis" }
+        ]
+      },
+      {
+        label: $t("nav.goals"),
+        href: "/more/goals",
+        icon: "fa-compass",
+        sidebarHref: "/more/goals"
+      },
+      {
+        label: $t("nav.insights"),
+        href: "/assets/analysis",
+        icon: "fa-clipboard-list",
+        sidebarHref: "/assets/analysis"
+      },
+      {
+        label: $t("nav.reports"),
+        href: "/cash_flow",
+        icon: "fa-rectangle-list",
+        sidebarHref: "/cash_flow/income_statement",
+        children: [
+          {
+            label: $t("nav.incomeStatement"),
+            href: "/income_statement",
+            financialYearPicker: true
+          },
+          { label: $t("nav.monthly"), href: "/monthly", dateRangeSelector: true },
+          {
+            label: $t("nav.yearly"),
+            href: "/yearly",
+            financialYearPicker: true,
+            maxDepthSelector: true
+          },
+          {
+            label: $t("nav.recurring"),
+            href: "/recurring",
+            help: "recurring",
+            monthPicker: true,
+            recurringIcons: true
+          }
+        ]
+      },
+      {
+        label: $t("nav.expenses"),
+        href: "/expense",
+        icon: "fa-chart-pie",
+        sidebarHref: "/expense/monthly",
+        sidebarHidden: true,
+        children: [
+          {
+            label: $t("nav.monthly"),
+            href: "/monthly",
+            monthPicker: true,
+            dateRangeSelector: true
+          },
+          { label: $t("nav.yearly"), href: "/yearly", financialYearPicker: true },
+          { label: $t("nav.budget"), href: "/budget", help: "budget", monthPicker: true }
+        ]
+      },
+      {
+        label: $t("nav.liabilities"),
+        href: "/liabilities",
+        icon: "fa-scale-balanced",
+        sidebarHref: "/liabilities/balance",
+        sidebarHidden: true,
+        children: [
+          { label: $t("nav.balance"), href: "/balance" },
+          { label: $t("nav.creditCards"), href: "/credit_cards", help: "credit-cards" },
+          { label: $t("nav.repayment"), href: "/repayment" },
+          { label: $t("nav.interest"), href: "/interest" }
+        ]
+      },
+      {
+        label: $t("nav.income"),
+        href: "/income",
+        icon: "fa-sack-dollar",
+        sidebarHref: "/income",
+        sidebarHidden: true
+      },
+      {
+        label: $t("nav.more"),
+        href: "/more",
+        icon: "fa-sliders",
+        sidebarHref: "/more/config",
+        sidebarHidden: true,
+        children: [
+          { label: $t("nav.configuration"), href: "/config", help: "config" },
+          { label: $t("nav.sheets"), href: "/sheets", help: "sheets", disablePreload: true },
+          { label: $t("nav.goals"), href: "/goals", help: "goals" },
+          { label: $t("nav.doctor"), href: "/doctor" },
+          { label: $t("nav.backup"), href: "/backup" },
+          { label: $t("nav.logs"), href: "/logs" }
+        ]
+      }
+    ];
 
-  const tax: Link = {
-    label: "Tax",
-    href: "/tax",
-    icon: "fa-receipt",
-    help: "tax",
-    children: []
-  };
+    const tax: Link = {
+      label: $t("nav.tax"),
+      href: "/tax",
+      icon: "fa-receipt",
+      help: "tax",
+      children: []
+    };
+
+    if (supportsIndiaTaxFeatures(USER_CONFIG)) {
+      tax.children.push(
+        { label: $t("nav.harvest"), href: "/harvest", help: "tax-harvesting" },
+        { label: $t("nav.capitalGains"), href: "/capital_gains", help: "capital-gains" }
+      );
+    }
+
+    if (supportsGermanyTaxFeatures(USER_CONFIG)) {
+      tax.children.push(
+        { label: $t("nav.overview"), href: "/overview", help: "tax" },
+        { label: $t("nav.capitalIncome"), href: "/capital_income", help: "tax" }
+      );
+    }
+
+    if (supportsScheduleAL(USER_CONFIG)) {
+      tax.children.push({
+        label: $t("nav.scheduleAL"),
+        href: "/schedule_al",
+        help: "schedule-al",
+        financialYearPicker: true
+      });
+    }
+
+    if (supportsTaxFeatures(USER_CONFIG) && tax.children.length > 0) {
+      tax.sidebarHref = "/tax" + tax.children[0].href;
+      links.splice(links.length - 1, 0, tax);
+    }
+
+    if (!supportsPortfolioAnalysis(USER_CONFIG)) {
+      for (const link of links) {
+        if (link.children) {
+          link.children = link.children.filter((child) => child.href !== "/analysis");
+        }
+      }
+      _.remove(links, (link) => link.href === "/assets/analysis");
+    }
+
+    _.last(links).children.push({ label: $t("nav.about"), href: "/about" });
+
+    return links;
+  }
+
+  let links: Link[] = $derived(buildLinks());
 
   function withPrefix(path: string) {
     return path === "/" ? prefix : `${prefix}${path}`;
   }
-
-  if (supportsIndiaTaxFeatures(USER_CONFIG)) {
-    tax.children.push(
-      { label: "Harvest", href: "/harvest", help: "tax-harvesting" },
-      { label: "Capital Gains", href: "/capital_gains", help: "capital-gains" }
-    );
-  }
-
-  if (supportsGermanyTaxFeatures(USER_CONFIG)) {
-    tax.children.push(
-      { label: "Overview", href: "/overview", help: "tax" },
-      { label: "Capital Income", href: "/capital_income", help: "tax" }
-    );
-  }
-
-  if (supportsScheduleAL(USER_CONFIG)) {
-    tax.children.push({
-      label: "Schedule AL",
-      href: "/schedule_al",
-      help: "schedule-al",
-      financialYearPicker: true
-    });
-  }
-
-  if (supportsTaxFeatures(USER_CONFIG) && tax.children.length > 0) {
-    tax.sidebarHref = "/tax" + tax.children[0].href;
-    links.splice(links.length - 1, 0, tax);
-  }
-
-  if (!supportsPortfolioAnalysis(USER_CONFIG)) {
-    for (const link of links) {
-      if (link.children) {
-        link.children = link.children.filter((child) => child.href !== "/analysis");
-      }
-    }
-    _.remove(links, (link) => link.href === "/assets/analysis");
-  }
-
-  _.last(links).children.push({ label: "About", href: "/about" });
 
   let currentPath = $state(normalizeNavigationPath(page.url.pathname || ""));
   afterNavigate((navigation) => {
@@ -274,20 +317,24 @@
   let isOverview = $derived(normalizedPath === "/");
 
   let contextTitle = $derived(
-    selectedSubSubLink?.label || selectedSubLink?.label || selectedLink?.label || "Overview"
+    selectedSubSubLink?.label || selectedSubLink?.label || selectedLink?.label || $t("nav.overview")
   );
   let currentHour = $derived(now().hour());
   let greeting = $derived(
-    currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening"
+    currentHour < 12
+      ? $t("nav.goodMorning")
+      : currentHour < 18
+        ? $t("nav.goodAfternoon")
+        : $t("nav.goodEvening")
   );
   let contextSubtitle = $derived(
     isOverview
       ? sidebarIdentity
         ? `${greeting}, ${sidebarIdentity}`
-        : "Live preview dashboard"
+        : $t("nav.livePreviewDashboard")
       : selectedLink && selectedSubLink
         ? `${selectedLink.label} - ${selectedSubLink.label}`
-        : "Track your finances with a calmer workspace."
+        : $t("nav.previewSubtitle")
   );
   let showHelp = $derived(selectedSubLink?.help || selectedLink?.help);
   let showOverviewMonth = $derived(isOverview);
@@ -336,15 +383,15 @@
   <div class="paisa-shell-sidebar__utility">
     <a class="paisa-shell-sidebar__link" href={withPrefix("/more/config")}>
       <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-gear"></i></span>
-      <span>Settings</span>
+      <span>{$t("nav.settings")}</span>
     </a>
     <a class="paisa-shell-sidebar__link" href="/" data-no-preview-prefix="true">
       <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-arrow-left"></i></span>
-      <span>Back to Classic</span>
+      <span>{$t("nav.backToClassic")}</span>
     </a>
     <a class="paisa-shell-sidebar__link" href="https://paisa.fyi" target="_blank" rel="noreferrer">
       <span class="paisa-shell-sidebar__icon icon"><i class="fas fa-circle-question"></i></span>
-      <span>Help</span>
+      <span>{$t("nav.help")}</span>
     </a>
   </div>
 
@@ -366,7 +413,7 @@
         <a
           href={helpUrl(selectedSubLink?.help || selectedLink?.help)}
           class="icon has-text-grey"
-          aria-label="Open help"
+          aria-label={$t("nav.openHelp")}
         >
           <i class="fas fa-circle-question"></i>
         </a>
@@ -383,7 +430,7 @@
       {#if readonly}
         <span
           class="tag is-danger is-light invertable"
-          data-tippy-content="<p>Paisa is in readonly mode</p>">readonly</span
+          data-tippy-content={`<p>${$t("nav.readonlyTooltip")}</p>`}>{$t("nav.readonly")}</span
         >
       {/if}
       <ThemeSwitcher />
@@ -413,7 +460,11 @@
         {#if selectedSubLink?.maxDepthSelector && ($cashflowExpenseDepthAllowed.max > 1 || $cashflowIncomeDepthAllowed.max > 1)}
           <div class="dropdown is-right is-hoverable">
             <div class="dropdown-trigger">
-              <button class="button is-small" aria-haspopup="true" aria-label="Open depth filters">
+              <button
+                class="button is-small"
+                aria-haspopup="true"
+                aria-label={$t("nav.openDepthFilters")}
+              >
                 <span class="icon is-small">
                   <i class="fas fa-sliders"></i>
                 </span>
@@ -422,12 +473,12 @@
             <div class="dropdown-menu" role="menu">
               <div class="dropdown-content px-2 py-2">
                 <InputRange
-                  label="Expenses"
+                  label={$t("nav.expenses")}
                   bind:value={$cashflowExpenseDepth}
                   allowed={$cashflowExpenseDepthAllowed}
                 />
                 <InputRange
-                  label="Income"
+                  label={$t("nav.income")}
                   bind:value={$cashflowIncomeDepth}
                   allowed={$cashflowIncomeDepthAllowed}
                 />

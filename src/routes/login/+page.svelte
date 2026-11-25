@@ -1,13 +1,27 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
   import Logo from "$lib/components/Logo.svelte";
-  import { login } from "$lib/utils";
+  import { setLocale, t } from "$lib/i18n";
+  import { authStatus, login } from "$lib/utils";
   import _ from "lodash";
   let username = $state("");
   let password = $state("");
 
   let invalid = $state(false);
   let invalidErrorMessage = $state("");
+
+  onMount(async () => {
+    try {
+      const status = await authStatus();
+      if (status.locale) {
+        setLocale(status.locale);
+      }
+    } catch {
+      // The login form stays usable in the fallback locale when status is
+      // unavailable.
+    }
+  });
 
   let loginDisabled = $derived(_.isEmpty(username) || _.isEmpty(password));
 
@@ -19,7 +33,8 @@
     if (success) {
       goto("/");
     } else if (error) {
-      invalidErrorMessage = error;
+      invalidErrorMessage =
+        error === "Invalid username or password" ? $t("login.invalidCredentials") : error;
     }
   }
 </script>
@@ -43,7 +58,7 @@
               }}
             >
               <div class="field">
-                <label for="login-username" class="label">Username</label>
+                <label for="login-username" class="label">{$t("login.username")}</label>
                 <div class="control">
                   <input
                     id="login-username"
@@ -56,7 +71,7 @@
               </div>
 
               <div class="field">
-                <label for="login-password" class="label">Password</label>
+                <label for="login-password" class="label">{$t("login.password")}</label>
                 <div class="control">
                   <input
                     id="login-password"
@@ -73,7 +88,9 @@
 
               <div class="field is-grouped is-grouped-right">
                 <div class="control">
-                  <button class="button is-link" disabled={loginDisabled}>Login</button>
+                  <button class="button is-link" disabled={loginDisabled}
+                    >{$t("login.submit")}</button
+                  >
                 </div>
               </div>
             </form>

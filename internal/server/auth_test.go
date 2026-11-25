@@ -174,6 +174,14 @@ func TestStatusReportsDisabledAuthWithoutUsers(t *testing.T) {
 	assert.Equal(t, false, body["auth_enabled"])
 	assert.Equal(t, false, body["authenticated"])
 	assert.Equal(t, "", body["username"])
+	assert.Equal(t, "en-IN", body["locale"])
+}
+
+func TestStatusReportsConfiguredLocale(t *testing.T) {
+	router := testRouter(t, legacyAccountConfig("secret", false)+"locale: de-DE\n")
+
+	body := decodeBody(t, getWithCookie(router, "/api/auth/status", nil))
+	assert.Equal(t, "de-DE", body["locale"])
 }
 
 func TestLoginRateLimitsRepeatedFailures(t *testing.T) {

@@ -34,7 +34,7 @@ test("depth range renders in the navbar dropdown", async ({ page }) => {
   await page.goto("/cash_flow/yearly");
   await page.waitForLoadState("networkidle");
 
-  const trigger = page.getByRole("button", { name: "Configure depth" });
+  const trigger = page.getByRole("button", { name: "Tiefe konfigurieren" });
   await expect(trigger).toBeVisible();
   await page.locator(".dropdown.is-hoverable").filter({ has: trigger }).hover();
   await expect(page.locator(".range").first()).toBeVisible();

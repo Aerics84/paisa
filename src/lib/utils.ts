@@ -397,6 +397,7 @@ export async function authStatus(): Promise<{
   auth_enabled: boolean;
   authenticated: boolean;
   username: string;
+  locale: string;
 }> {
   return await ajax("/api/auth/status");
 }

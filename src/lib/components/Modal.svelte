@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
+
   interface Props {
     active?: boolean;
     width?: string;
@@ -37,7 +39,7 @@
     class="modal-background"
     role="button"
     tabindex="0"
-    aria-label="Close modal"
+    aria-label={$t("dialog.closeModal")}
     onclick={(e) => close(e)}
     onkeydown={(e) => (e.key === "Enter" || e.key === " ") && close(e)}
   ></div>

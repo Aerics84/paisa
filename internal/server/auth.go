@@ -153,6 +153,7 @@ func HandleAuthStatus(deps Deps) gin.HandlerFunc {
 			"auth_enabled":  len(cfg.UserAccounts) > 0,
 			"authenticated": authenticated,
 			"username":      username,
+			"locale":        cfg.Locale,
 		})
 	}
 }

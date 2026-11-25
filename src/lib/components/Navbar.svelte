@@ -30,6 +30,7 @@
   import MonthPicker from "./MonthPicker.svelte";
   import Logo from "./Logo.svelte";
   import InputRange from "./InputRange.svelte";
+  import { t } from "$lib/i18n";
   import {
     breadcrumbItems,
     normalizeNavigationPath,
@@ -63,143 +64,158 @@
     }
   });
 
-  const RecurringIcons = [
-    { icon: "fa-circle-check", color: "success", label: "Cleared" },
-    { icon: "fa-circle-check", color: "warning-dark", label: "Cleared late" },
-    { icon: "fa-exclamation-triangle", color: "danger", label: "Past due" },
-    { icon: "fa-circle-check", color: "grey", label: "Upcoming" }
-  ];
+  const RecurringIcons = $derived([
+    { icon: "fa-circle-check", color: "success", label: $t("nav.recurring.cleared") },
+    { icon: "fa-circle-check", color: "warning-dark", label: $t("nav.recurring.clearedLate") },
+    { icon: "fa-exclamation-triangle", color: "danger", label: $t("nav.recurring.pastDue") },
+    { icon: "fa-circle-check", color: "grey", label: $t("nav.recurring.upcoming") }
+  ]);
 
   type Link = NavigationLink;
 
-  const links: Link[] = [
-    { label: "Dashboard", href: "/", hide: true },
-    {
-      label: "Cash Flow",
-      href: "/cash_flow",
-      children: [
-        { label: "Income Statement", href: "/income_statement", financialYearPicker: true },
-        { label: "Monthly", href: "/monthly", dateRangeSelector: true },
-        {
-          label: "Yearly",
-          href: "/yearly",
-          financialYearPicker: true,
-          maxDepthSelector: true
-        },
-        {
-          label: "Recurring",
-          href: "/recurring",
-          help: "recurring",
-          monthPicker: true,
-          recurringIcons: true
-        }
-      ]
-    },
-    {
-      label: "Expenses",
-      href: "/expense",
-      children: [
-        { label: "Monthly", href: "/monthly", monthPicker: true, dateRangeSelector: true },
-        { label: "Yearly", href: "/yearly", financialYearPicker: true },
-        { label: "Budget", href: "/budget", help: "budget", monthPicker: true }
-      ]
-    },
-    {
-      label: "Assets",
-      href: "/assets",
-      children: [
-        { label: "Balance", href: "/balance" },
-        {
-          label: "Networth",
-          href: "/networth",
-          dateRangeSelector: true,
-          currencySelector: true
-        },
-        { label: "Investment", href: "/investment" },
-        { label: "Gain", href: "/gain", currencySelector: true },
-        { label: "Allocation", href: "/allocation", help: "allocation-targets" },
-        { label: "Analysis", href: "/analysis", tag: "alpha", help: "analysis" }
-      ]
-    },
-    {
-      label: "Liabilities",
-      href: "/liabilities",
-      children: [
-        { label: "Balance", href: "/balance" },
-        { label: "Credit Cards", href: "/credit_cards", help: "credit-cards" },
-        { label: "Repayment", href: "/repayment" },
-        { label: "Interest", href: "/interest" }
-      ]
-    },
-    { label: "Income", href: "/income" },
-    {
-      label: "Ledger",
-      href: "/ledger",
-      children: [
-        { label: "Import", href: "/import", help: "import" },
-        { label: "Editor", href: "/editor", help: "editor", disablePreload: true },
-        { label: "Transactions", href: "/transaction", help: "bulk-edit" },
-        { label: "Postings", href: "/posting" },
-        { label: "Price", href: "/price" }
-      ]
-    },
-    {
-      label: "More",
-      href: "/more",
-      children: [
-        { label: "Configuration", href: "/config", help: "config" },
-        { label: "Sheets", href: "/sheets", help: "sheets", disablePreload: true },
-        { label: "Goals", href: "/goals", help: "goals" },
-        { label: "Doctor", href: "/doctor" },
-        { label: "Backup", href: "/backup" },
-        { label: "Logs", href: "/logs" }
-      ]
+  function buildLinks(): Link[] {
+    const links: Link[] = [
+      { label: $t("nav.dashboard"), href: "/", hide: true },
+      {
+        label: $t("nav.cashFlow"),
+        href: "/cash_flow",
+        children: [
+          {
+            label: $t("nav.incomeStatement"),
+            href: "/income_statement",
+            financialYearPicker: true
+          },
+          { label: $t("nav.monthly"), href: "/monthly", dateRangeSelector: true },
+          {
+            label: $t("nav.yearly"),
+            href: "/yearly",
+            financialYearPicker: true,
+            maxDepthSelector: true
+          },
+          {
+            label: $t("nav.recurring"),
+            href: "/recurring",
+            help: "recurring",
+            monthPicker: true,
+            recurringIcons: true
+          }
+        ]
+      },
+      {
+        label: $t("nav.expenses"),
+        href: "/expense",
+        children: [
+          {
+            label: $t("nav.monthly"),
+            href: "/monthly",
+            monthPicker: true,
+            dateRangeSelector: true
+          },
+          { label: $t("nav.yearly"), href: "/yearly", financialYearPicker: true },
+          { label: $t("nav.budget"), href: "/budget", help: "budget", monthPicker: true }
+        ]
+      },
+      {
+        label: $t("nav.assets"),
+        href: "/assets",
+        children: [
+          { label: $t("nav.balance"), href: "/balance" },
+          {
+            label: $t("nav.networth"),
+            href: "/networth",
+            dateRangeSelector: true,
+            currencySelector: true
+          },
+          { label: $t("nav.investment"), href: "/investment" },
+          { label: $t("nav.gain"), href: "/gain", currencySelector: true },
+          { label: $t("nav.allocation"), href: "/allocation", help: "allocation-targets" },
+          { label: $t("nav.analysis"), href: "/analysis", tag: "alpha", help: "analysis" }
+        ]
+      },
+      {
+        label: $t("nav.liabilities"),
+        href: "/liabilities",
+        children: [
+          { label: $t("nav.balance"), href: "/balance" },
+          { label: $t("nav.creditCards"), href: "/credit_cards", help: "credit-cards" },
+          { label: $t("nav.repayment"), href: "/repayment" },
+          { label: $t("nav.interest"), href: "/interest" }
+        ]
+      },
+      { label: $t("nav.income"), href: "/income" },
+      {
+        label: $t("nav.ledger"),
+        href: "/ledger",
+        children: [
+          { label: $t("nav.import"), href: "/import", help: "import" },
+          { label: $t("nav.editor"), href: "/editor", help: "editor", disablePreload: true },
+          { label: $t("nav.transactions"), href: "/transaction", help: "bulk-edit" },
+          { label: $t("nav.postings"), href: "/posting" },
+          { label: $t("nav.price"), href: "/price" }
+        ]
+      },
+      {
+        label: $t("nav.more"),
+        href: "/more",
+        children: [
+          { label: $t("nav.configuration"), href: "/config", help: "config" },
+          { label: $t("nav.sheets"), href: "/sheets", help: "sheets", disablePreload: true },
+          { label: $t("nav.goals"), href: "/goals", help: "goals" },
+          { label: $t("nav.doctor"), href: "/doctor" },
+          { label: $t("nav.backup"), href: "/backup" },
+          { label: $t("nav.logs"), href: "/logs" }
+        ]
+      }
+    ];
+
+    const tax: Link = {
+      label: $t("nav.tax"),
+      href: "/tax",
+      help: "tax",
+      children: []
+    };
+
+    if (supportsIndiaTaxFeatures(USER_CONFIG)) {
+      tax.children.push(
+        { label: $t("nav.harvest"), href: "/harvest", help: "tax-harvesting" },
+        { label: $t("nav.capitalGains"), href: "/capital_gains", help: "capital-gains" }
+      );
     }
-  ];
 
-  const tax: Link = {
-    label: "Tax",
-    href: "/tax",
-    help: "tax",
-    children: []
-  };
-
-  if (supportsIndiaTaxFeatures(USER_CONFIG)) {
-    tax.children.push(
-      { label: "Harvest", href: "/harvest", help: "tax-harvesting" },
-      { label: "Capital Gains", href: "/capital_gains", help: "capital-gains" }
-    );
-  }
-
-  if (supportsGermanyTaxFeatures(USER_CONFIG)) {
-    tax.children.push(
-      { label: "Overview", href: "/overview", help: "tax" },
-      { label: "Capital Income", href: "/capital_income", help: "tax" }
-    );
-  }
-
-  if (supportsScheduleAL(USER_CONFIG)) {
-    tax.children.push({
-      label: "Schedule AL",
-      href: "/schedule_al",
-      help: "schedule-al",
-      financialYearPicker: true
-    });
-  }
-
-  if (supportsTaxFeatures(USER_CONFIG)) {
-    links.splice(links.length - 1, 0, tax);
-  }
-
-  if (!supportsPortfolioAnalysis(USER_CONFIG)) {
-    const assets = _.find(links, (link) => link.href === "/assets");
-    if (assets) {
-      assets.children = assets.children.filter((child) => child.href !== "/analysis");
+    if (supportsGermanyTaxFeatures(USER_CONFIG)) {
+      tax.children.push(
+        { label: $t("nav.overview"), href: "/overview", help: "tax" },
+        { label: $t("nav.capitalIncome"), href: "/capital_income", help: "tax" }
+      );
     }
+
+    if (supportsScheduleAL(USER_CONFIG)) {
+      tax.children.push({
+        label: $t("nav.scheduleAL"),
+        href: "/schedule_al",
+        help: "schedule-al",
+        financialYearPicker: true
+      });
+    }
+
+    if (supportsTaxFeatures(USER_CONFIG)) {
+      links.splice(links.length - 1, 0, tax);
+    }
+
+    if (!supportsPortfolioAnalysis(USER_CONFIG)) {
+      const assets = _.find(links, (link) => link.href === "/assets");
+      if (assets) {
+        assets.children = assets.children.filter((child) => child.href !== "/analysis");
+      }
+    }
+
+    const about = { label: $t("nav.about"), href: "/about" };
+    _.last(links).children.push(about);
+
+    return links;
   }
 
-  const about = { label: "About", href: "/about" };
-  _.last(links).children.push(about);
+  let links: Link[] = $derived(buildLinks());
 
   let openMobileDropdown: string | null = $state(null);
 
@@ -223,7 +239,7 @@
   });
 </script>
 
-<nav class="navbar px-2 is-transparent" aria-label="main navigation">
+<nav class="navbar px-2 is-transparent" aria-label={$t("nav.mainNavigation")}>
   <div class="navbar-brand">
     <a
       href="/"
@@ -246,7 +262,7 @@
         event.preventDefault();
         isBurger = !isBurger;
       }}
-      aria-label="menu"
+      aria-label={$t("nav.menu")}
       aria-expanded={isBurger === true}
       data-target="navbarBasicExample"
     >
@@ -259,10 +275,10 @@
       {#if readonly}
         <span
           class="tag is-rounded is-danger is-light invertable"
-          data-tippy-content="<p>Paisa is in readonly mode</p>">readonly</span
+          data-tippy-content={`<p>${$t("nav.readonlyTooltip")}</p>`}>{$t("nav.readonly")}</span
         >
       {/if}
-      <a href="/preview" class="button is-small is-light">Preview</a>
+      <a href="/preview" class="button is-small is-light">{$t("nav.preview")}</a>
       <ThemeSwitcher />
       <Actions />
     </div>
@@ -353,13 +369,14 @@
             <p class="control">
               <span
                 class="mt-1 tag is-rounded is-danger is-light invertable"
-                data-tippy-content="<p>Paisa is in readonly mode</p>">readonly</span
+                data-tippy-content={`<p>${$t("nav.readonlyTooltip")}</p>`}
+                >{$t("nav.readonly")}</span
               >
             </p>
           {/if}
 
           <p class="control">
-            <a href="/preview" class="button is-small is-light">Open Preview</a>
+            <a href="/preview" class="button is-small is-light">{$t("nav.openPreview")}</a>
           </p>
           <p class="control">
             <ThemeSwitcher />
@@ -378,7 +395,7 @@
     <nav
       style="margin-left: 0.73rem;"
       class="breadcrumb has-chevron-separator mb-0 is-small app-breadcrumb"
-      aria-label="breadcrumbs"
+      aria-label={$t("nav.breadcrumbs")}
     >
       <ul>
         {#each breadcrumb as item}
@@ -410,7 +427,11 @@
     {#if selectedSubLink?.maxDepthSelector && ($cashflowExpenseDepthAllowed.max > 1 || $cashflowIncomeDepthAllowed.max > 1)}
       <div class="dropdown is-right is-hoverable">
         <div class="dropdown-trigger">
-          <button class="button is-small" aria-haspopup="true" aria-label="Configure depth">
+          <button
+            class="button is-small"
+            aria-haspopup="true"
+            aria-label={$t("nav.configureDepth")}
+          >
             <span class="icon is-small">
               <i class="fas fa-sliders" aria-hidden="true"></i>
             </span>
@@ -419,12 +440,12 @@
         <div class="dropdown-menu" role="menu">
           <div class="dropdown-content px-2 py-2">
             <InputRange
-              label="Expenses"
+              label={$t("nav.expenses")}
               bind:value={$cashflowExpenseDepth}
               allowed={$cashflowExpenseDepthAllowed}
             />
             <InputRange
-              label="Income"
+              label={$t("nav.income")}
               bind:value={$cashflowIncomeDepth}
               allowed={$cashflowIncomeDepthAllowed}
             />
@@ -450,7 +471,7 @@
     {#if selectedSubSubLink?.financialYearPicker || selectedSubLink?.financialYearPicker || selectedLink?.financialYearPicker}
       <div class="has-text-centered">
         <div class="select is-small">
-          <select bind:value={$year} aria-label="Financial year">
+          <select bind:value={$year} aria-label={$t("nav.financialYear")}>
             {#each years as fy}
               <option>{fy}</option>
             {/each}

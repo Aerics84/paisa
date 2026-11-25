@@ -14,6 +14,13 @@ test("dashboard renders with the germany-eu fixture", async ({ page }) => {
   await expect(page.getByTestId("dashboard-page")).toBeVisible();
 });
 
+test("login page uses the configured locale", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.getByLabel("Benutzername")).toBeVisible();
+  await expect(page.getByLabel("Passwort")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+});
+
 test("config page loads without client errors", async ({ page }) => {
   const errors = collectBrowserErrors(page);
 
