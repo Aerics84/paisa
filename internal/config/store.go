@@ -111,8 +111,12 @@ func (s *Store) Get() Config {
 }
 
 // Update applies mutate to a clone of the current configuration, validates
-// the result, writes it to disk and swaps the snapshot atomically. On any
-// error the previous snapshot is kept.
+// the result, writes it to disk atomically and swaps the snapshot atomically.
+// On any error the previous snapshot is kept.
+//
+// A successful login that upgrades a legacy password hash persists the whole
+// configuration through this path, so paisa.yaml is rewritten without
+// preserving comments.
 func (s *Store) Update(mutate func(*Config) error) error {
 	s.updateMu.Lock()
 	defer s.updateMu.Unlock()
@@ -149,7 +153,7 @@ func (s *Store) Update(mutate func(*Config) error) error {
 		return err
 	}
 
-	if err := os.WriteFile(path, content, 0644); err != nil {
+	if err := writeFileAtomic(path, content, 0o644); err != nil {
 		return err
 	}
 
@@ -350,17 +354,46 @@ func (s *Store) MarkInitialized() {
 	s.onboarding = false
 }
 
-// saveContent validates content, installs it as the current snapshot and
-// writes it to the bound path as one serialized operation.
+// saveContent validates content and writes it to the bound path before
+// publishing it as the current snapshot. A validation or write failure leaves
+// both the in-memory snapshot and the file untouched, so a crash or a failed
+// write can never leave memory and disk disagreeing.
 func (s *Store) saveContent(content []byte) error {
 	s.updateMu.Lock()
 	defer s.updateMu.Unlock()
 
-	if err := s.loadLocked(content, ""); err != nil {
+	cfg, location, err := parseConfig(content)
+	if err != nil {
 		return err
 	}
 
-	return s.writeSnapshotLocked()
+	s.mu.RLock()
+	path := s.configPath
+	s.mu.RUnlock()
+
+	if path == "" {
+		return errors.New("configuration path is not set")
+	}
+
+	// The store has always persisted the normalized snapshot rather than the
+	// raw request bytes, which drops comments; keep that behavior.
+	persisted, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := writeFileAtomic(path, persisted, 0o644); err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.config = cfg
+	s.location = location
+	s.initialized = true
+
+	return nil
 }
 
 // writeSnapshotLocked writes the current snapshot to the configured path. The
@@ -380,7 +413,62 @@ func (s *Store) writeSnapshotLocked() error {
 		return err
 	}
 
-	return os.WriteFile(path, content, 0644)
+	return writeFileAtomic(path, content, 0o644)
+}
+
+// writeFileAtomic writes content to a temporary file next to path and renames
+// it into place. The rename replaces the target atomically on supported
+// filesystems, so readers see either the old or the new file, never a partial
+// one. An existing file's permission bits are preserved.
+func writeFileAtomic(path string, content []byte, defaultMode os.FileMode) error {
+	dir := filepath.Dir(path)
+	mode := defaultMode
+
+	info, err := os.Stat(path)
+	switch {
+	case err == nil:
+		mode = info.Mode().Perm()
+	case !os.IsNotExist(err):
+		return err
+	}
+
+	temp, err := os.CreateTemp(dir, "."+filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary config file: %w", err)
+	}
+	tempPath := temp.Name()
+
+	cleanup := func() {
+		_ = temp.Close()
+		_ = os.Remove(tempPath)
+	}
+
+	if err := temp.Chmod(mode); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to set config file permissions: %w", err)
+	}
+
+	if _, err := temp.Write(content); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to write temporary config file: %w", err)
+	}
+
+	if err := temp.Sync(); err != nil {
+		cleanup()
+		return fmt.Errorf("failed to sync temporary config file: %w", err)
+	}
+
+	if err := temp.Close(); err != nil {
+		_ = os.Remove(tempPath)
+		return fmt.Errorf("failed to close temporary config file: %w", err)
+	}
+
+	if err := os.Rename(tempPath, path); err != nil {
+		_ = os.Remove(tempPath)
+		return fmt.Errorf("failed to replace config file: %w", err)
+	}
+
+	return nil
 }
 
 // parseConfig turns raw YAML into a validated, defaulted configuration.

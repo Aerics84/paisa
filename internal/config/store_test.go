@@ -199,6 +199,34 @@ func TestStoreSaveWritesSnapshot(t *testing.T) {
 	assert.Contains(t, string(content), "journal_path: saved.ledger")
 }
 
+func TestStoreSaveValidationFailureKeepsSnapshotAndFile(t *testing.T) {
+	store, path := newStoreWithFile(t)
+	require.NoError(t, os.WriteFile(path, []byte("journal_path: main.ledger\ndb_path: paisa.db\n"), 0o644))
+
+	require.Error(t, store.Save([]byte("journal_path: other.ledger\ndb_path: paisa.db\nledger_cli: not-a-ledger\n")))
+
+	assert.Equal(t, "main.ledger", store.Get().JournalPath)
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "journal_path: main.ledger")
+	assert.NotContains(t, string(content), "other.ledger")
+}
+
+func TestStoreSaveWriteFailureKeepsSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	// The parent directory does not exist, so the atomic temp file cannot be
+	// created and the save must fail without publishing the new snapshot.
+	path := filepath.Join(dir, "missing", "paisa.yaml")
+	store := NewStore()
+	require.NoError(t, store.Load([]byte(storeMinimalConfig), path))
+
+	require.Error(t, store.Save([]byte("journal_path: saved.ledger\ndb_path: paisa.db\n")))
+
+	assert.Equal(t, "main.ledger", store.Get().JournalPath)
+	_, err := os.Stat(path)
+	assert.ErrorIs(t, err, os.ErrNotExist)
+}
+
 func TestStoreTaxHelpersUseOwnSnapshot(t *testing.T) {
 	indian := NewStore()
 	require.NoError(t, indian.Load([]byte("journal_path: main.ledger\ndb_path: paisa.db\ntax_regime: india\ntax_deductions:\n  accounts:\n    - account: Expenses:Health\n      category: health\n"), ""))
