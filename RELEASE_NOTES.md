@@ -33,7 +33,8 @@ styles, so review the upgrade notes before deploying.
 #### Upgrade notes
 
 - Sessions live in memory, so a restart invalidates them; log in again after
-  upgrading.
+  upgrading. Changing the user-account list or a password also revokes all live
+  sessions.
 - Legacy `sha256:` password hashes are upgraded to Argon2id on the next
   successful login when the configuration is writable. A rollback to 0.8.6.6
   cannot verify Argon2id hashes, so restore the configuration backup or
@@ -42,6 +43,10 @@ styles, so review the upgrade notes before deploying.
   `germany-eu` defaults apply only to new installations and the onboarding
   flow. `germany-eu` covers Germany and EU-oriented defaults; it is not a full
   DACH profile.
+- `paisa init` no longer truncates an existing non-empty journal; move or rename
+  it before regenerating demo data. Docker/LAN first runs need loopback access
+  or the explicit `PAISA_ALLOW_REMOTE_ONBOARDING=1` opt-in; see the installation
+  guide.
 - Custom CSS that targets daisyUI `du-*` classes must be adjusted, because
   those classes no longer exist.
 - When rolling back, clear the PWA cache and unregister the service worker so
