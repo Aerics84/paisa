@@ -97,6 +97,8 @@ export const de: Record<EnMessageKey, string> = {
   "login.username": "Benutzername",
   "login.password": "Passwort",
   "login.submit": "Anmelden",
+  "login.tooManyAttempts": "Zu viele Anmeldeversuche. Bitte später erneut versuchen.",
+  "login.invalidRequest": "Ungültige Anfrage",
   "login.invalidCredentials": "Benutzername oder Passwort ist ungültig",
 
   "common.cancel": "Abbrechen",

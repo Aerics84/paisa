@@ -95,6 +95,8 @@ export const en = {
   "login.password": "Password",
   "login.submit": "Sign in",
   "login.invalidCredentials": "Invalid username or password",
+  "login.tooManyAttempts": "Too many login attempts. Try again later.",
+  "login.invalidRequest": "Invalid request",
 
   "common.cancel": "Cancel",
   "common.save": "Save",

@@ -25,6 +25,19 @@
 
   let loginDisabled = $derived(_.isEmpty(username) || _.isEmpty(password));
 
+  function localizedLoginError(error: string): string {
+    switch (error) {
+      case "Invalid username or password":
+        return $t("login.invalidCredentials");
+      case "Too many login attempts. Try again later.":
+        return $t("login.tooManyAttempts");
+      case "invalid request":
+        return $t("login.invalidRequest");
+      default:
+        return error;
+    }
+  }
+
   async function tryLogin() {
     if (loginDisabled) return;
 
@@ -33,8 +46,7 @@
     if (success) {
       goto("/");
     } else if (error) {
-      invalidErrorMessage =
-        error === "Invalid username or password" ? $t("login.invalidCredentials") : error;
+      invalidErrorMessage = localizedLoginError(error);
     }
   }
 </script>
