@@ -9,3 +9,11 @@ Dockerfile
 fly.toml
 .dockerignore
 .gitignore
+
+.git
+.cache
+.svelte-kit
+web/static
+test-results
+playwright-report
+coverage
