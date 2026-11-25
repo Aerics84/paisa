@@ -48,7 +48,8 @@ styles, so review the upgrade notes before deploying.
   the browser does not keep serving the 0.8.6.7 shell.
 
 Known limitation: some copy in the advanced editor and statement-import modals
-is still English.
+is still English. Read-only mode is enforced by the API, but the UI still
+displays write controls.
 
 ### 0.8.6.6 (2026-11-23)
 
