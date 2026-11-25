@@ -149,7 +149,7 @@ func buildBudget(date time.Time, account string, balance decimal.Decimal, foreca
 	if past {
 		available = decimal.Zero
 	}
-	if store.Get().Budget.Rollover == config.Yes {
+	if store.BudgetRollover() == config.Yes {
 		rollover = balance
 		available = balance.Add(forecast.Sub(actual))
 	}

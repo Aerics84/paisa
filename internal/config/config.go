@@ -541,7 +541,7 @@ func EnsureLogFilePath() (string, error) {
 }
 
 func DefaultCurrency() string {
-	return defaultStore.Get().DefaultCurrency
+	return defaultStore.DefaultCurrency()
 }
 
 func FinancialYearStartingMonth() time.Month {

@@ -175,6 +175,23 @@ func (s *Store) FinancialYearStartingMonth() time.Month {
 	return s.config.FinancialYearStartingMonth
 }
 
+// DefaultCurrency returns the configured default currency without cloning the
+// whole configuration.
+func (s *Store) DefaultCurrency() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.config.DefaultCurrency
+}
+
+// BudgetRollover reports whether unused budget carries over to the next month.
+func (s *Store) BudgetRollover() BoolType {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.config.Budget.Rollover
+}
+
 // Path returns the absolute path of the loaded configuration file.
 func (s *Store) Path() string {
 	s.mu.RLock()
