@@ -37,6 +37,35 @@ func TestDeleteRemovesSession(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestDeleteByUsernameRemovesOnlyThatUsersSessions(t *testing.T) {
+	store := NewStore(time.Hour)
+	alice, _ := store.Create("alice")
+	carol, _ := store.Create("alice")
+	bob, _ := store.Create("bob")
+
+	store.DeleteByUsername("alice")
+
+	_, aliceOK := store.Lookup(alice)
+	_, carolOK := store.Lookup(carol)
+	_, bobOK := store.Lookup(bob)
+	require.False(t, aliceOK)
+	require.False(t, carolOK)
+	require.True(t, bobOK)
+}
+
+func TestClearRemovesEverySession(t *testing.T) {
+	store := NewStore(time.Hour)
+	alice, _ := store.Create("alice")
+	bob, _ := store.Create("bob")
+
+	store.Clear()
+
+	_, aliceOK := store.Lookup(alice)
+	_, bobOK := store.Lookup(bob)
+	require.False(t, aliceOK)
+	require.False(t, bobOK)
+}
+
 func TestUnknownTokenIsRejected(t *testing.T) {
 	store := NewStore(time.Hour)
 	_, ok := store.Lookup("not-a-token")

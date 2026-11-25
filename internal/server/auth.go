@@ -144,8 +144,14 @@ func HandleAuthStatus(deps Deps) gin.HandlerFunc {
 		username := ""
 		if token, err := c.Cookie(sessionCookieName); err == nil && token != "" {
 			if session, ok := deps.Auth.Lookup(token); ok {
-				authenticated = true
-				username = session.Username
+				// A session must not outlive the account it was issued for,
+				// even if the config save that removed it is bypassed.
+				if _, found := findUserAccount(cfg.UserAccounts, session.Username); found {
+					authenticated = true
+					username = session.Username
+				} else {
+					deps.Auth.Delete(token)
+				}
 			}
 		}
 
@@ -216,6 +222,23 @@ func findUserAccount(accounts []config.UserAccount, username string) (config.Use
 	}
 
 	return config.UserAccount{}, false
+}
+
+// userAccountsChanged reports whether accounts differ in membership or
+// password. Reordering alone does not invalidate sessions.
+func userAccountsChanged(before, after []config.UserAccount) bool {
+	if len(before) != len(after) {
+		return true
+	}
+
+	for _, old := range before {
+		next, found := findUserAccount(after, old.Username)
+		if !found || next.Password != old.Password {
+			return true
+		}
+	}
+
+	return false
 }
 
 func newSessionCookie(token string, maxAge int, request *http.Request) *http.Cookie {
@@ -329,9 +352,13 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 
 		if token, err := c.Cookie(sessionCookieName); err == nil && token != "" {
 			if session, ok := deps.Auth.Lookup(token); ok {
-				c.Set(authUsernameKey, session.Username)
-				c.Next()
-				return
+				if _, found := findUserAccount(cfg.UserAccounts, session.Username); found {
+					c.Set(authUsernameKey, session.Username)
+					c.Next()
+					return
+				}
+				// The account was removed since the session was issued.
+				deps.Auth.Delete(token)
 			}
 		}
 
@@ -344,6 +371,7 @@ func TokenAuthMiddleware(deps Deps) gin.HandlerFunc {
 			return
 		}
 
+		// Only failed authentication consumes the limiter budget.
 		rateLimiter.RateLimitCtx(c.Request.Context(), rateLimitKey(c), 1)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 	}

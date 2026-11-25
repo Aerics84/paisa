@@ -69,6 +69,27 @@ func (s *Store) Delete(token string) {
 	delete(s.sessions, token)
 }
 
+// DeleteByUsername removes every session belonging to username.
+func (s *Store) DeleteByUsername(username string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for token, session := range s.sessions {
+		if session.Username == username {
+			delete(s.sessions, token)
+		}
+	}
+}
+
+// Clear removes every session. It is used when the set of accounts or a
+// password changes so that no previously issued cookie survives the change.
+func (s *Store) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.sessions = make(map[string]Session)
+}
+
 // DeleteExpired removes every session that has expired at now.
 func (s *Store) DeleteExpired(now time.Time) {
 	s.mu.Lock()

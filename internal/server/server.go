@@ -143,10 +143,18 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 			return
 		}
 
+		oldAccounts := deps.Config.Get().UserAccounts
+
 		err = deps.Config.Save(body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
 			return
+		}
+
+		// Changing the accounts or a password must not leave live sessions
+		// authorized. Unrelated config edits keep the current sessions.
+		if userAccountsChanged(oldAccounts, deps.Config.Get().UserAccounts) {
+			deps.Auth.Clear()
 		}
 
 		manager.Wake()

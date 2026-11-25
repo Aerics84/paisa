@@ -71,6 +71,26 @@ user_accounts:
 `, hash)
 }
 
+func legacyAccountConfigFor(username string, password string) string {
+	return fmt.Sprintf(`journal_path: main.ledger
+db_path: paisa.db
+user_accounts:
+  - username: %s
+    password: "sha256:%s"
+`, username, utils.Sha256(utils.Sha256(password)))
+}
+
+func twoLegacyAccountConfigs(firstUser, firstPassword, secondUser, secondPassword string) string {
+	return fmt.Sprintf(`journal_path: main.ledger
+db_path: paisa.db
+user_accounts:
+  - username: %s
+    password: "sha256:%s"
+  - username: %s
+    password: "sha256:%s"
+`, firstUser, utils.Sha256(utils.Sha256(firstPassword)), secondUser, utils.Sha256(utils.Sha256(secondPassword)))
+}
+
 const noAccountConfig = `journal_path: main.ledger
 db_path: paisa.db
 `
@@ -476,4 +496,62 @@ func TestHashEndpointIsRateLimited(t *testing.T) {
 	rec = postJSON(t, router, "/api/auth/hash", `{"password":"longenough"}`, nil)
 	assert.Equal(t, http.StatusTooManyRequests, rec.Code)
 	assert.Contains(t, strings.ToLower(string(rec.Body.Bytes())), "too many hash requests")
+}
+
+func TestConfigSaveRemovingUserRevokesSession(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "paisa.yaml")
+	router, _ := testRouterWithPath(t, twoLegacyAccountConfigs("alice", "secret", "bob", "bobpass"), path)
+	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
+	require.Equal(t, http.StatusOK, getWithCookie(router, "/api/version", cookie).Code)
+
+	// Removing alice leaves bob, so authentication stays enabled and the old
+	// cookie must be rejected rather than quietly falling back to open access.
+	rec := postJSON(t, router, "/api/config", legacyAccountConfigFor("bob", "bobpass"), func(req *http.Request) {
+		req.AddCookie(cookie)
+	})
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	assert.Equal(t, http.StatusUnauthorized, getWithCookie(router, "/api/version", cookie).Code)
+}
+
+func TestConfigSaveChangingPasswordRevokesSession(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "paisa.yaml")
+	router, _ := testRouterWithPath(t, legacyAccountConfig("secret", false), path)
+	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
+	require.Equal(t, http.StatusOK, getWithCookie(router, "/api/version", cookie).Code)
+
+	rec := postJSON(t, router, "/api/config", argon2AccountConfig(t, "changed"), func(req *http.Request) {
+		req.AddCookie(cookie)
+	})
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	assert.Equal(t, http.StatusUnauthorized, getWithCookie(router, "/api/version", cookie).Code)
+}
+
+func TestUnrelatedConfigSaveKeepsSession(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "paisa.yaml")
+	accountConfig := argon2AccountConfig(t, "secret")
+	router, _ := testRouterWithPath(t, accountConfig, path)
+	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
+
+	rec := postJSON(t, router, "/api/config", accountConfig+"locale: de-DE\n", func(req *http.Request) {
+		req.AddCookie(cookie)
+	})
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	assert.Equal(t, http.StatusOK, getWithCookie(router, "/api/version", cookie).Code)
+}
+
+func TestAuthStatusRejectsSessionForRemovedUser(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "paisa.yaml")
+	router, store := testRouterWithPath(t, twoLegacyAccountConfigs("alice", "secret", "bob", "bobpass"), path)
+	cookie := requireSessionCookie(t, doLogin(t, router, "alice", "secret"))
+
+	// Simulate an account removal that did not go through the config handler,
+	// so only the per-request account check can catch it.
+	require.NoError(t, store.Load([]byte(legacyAccountConfigFor("bob", "bobpass")), path))
+
+	body := decodeBody(t, getWithCookie(router, "/api/auth/status", cookie))
+	assert.Equal(t, false, body["authenticated"])
+	assert.Equal(t, "", body["username"])
 }

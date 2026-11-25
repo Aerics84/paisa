@@ -7,9 +7,9 @@ description: "How to secure Paisa by adding user account"
 You can setup username and password to make sure only you can access
 the application. Go to `Configuration` page and expand the `User
 Accounts` section. You can click the :fontawesome-solid-circle-plus:
-icon to add a new username and password. Once you save the
-configuration, you will get logged out if you had not logged in
-earlier via another account.
+icon to add a new username and password. Saving a changed set of accounts or a
+new password logs out every session, so you must sign in again; unrelated
+configuration edits leave sessions untouched.
 
 Authentication controls access through Paisa's UI and API. It does not
 encrypt the ledger or database files; anyone with filesystem access can
@@ -49,6 +49,12 @@ Sessions exist only inside the running Paisa process. Restarting the server
 invalidates every session, and multiple Paisa instances do not share sessions.
 There is no session database; for a single local instance this is an accepted
 trade-off.
+
+Saving a configuration that adds or removes a user account, or that changes a
+password, revokes every existing session, including sessions for accounts that
+were not modified. Other configuration edits keep current sessions. A request
+whose cookie names an account that no longer exists is treated as
+unauthenticated even if the session was not revoked.
 
 The authentication endpoints are:
 
