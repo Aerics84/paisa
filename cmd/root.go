@@ -127,11 +127,24 @@ func InitConfig() {
 	} else if utils.FileExists(xdgDocumentPath) {
 		config.LoadConfigFile(xdgDocumentPath)
 	} else {
-		err := os.MkdirAll(xdgDocumentDir, 0755)
-		if err != nil {
+		if err := createFirstRunConfig(xdgDocumentDir, xdgDocumentPath); err != nil {
 			log.Fatal(err)
 		}
-		generator.MinimalConfig(xdgDocumentDir)
-		config.LoadConfigFile(xdgDocumentPath)
 	}
+}
+
+// createFirstRunConfig generates the minimal configuration for a new
+// installation and marks it as auto-created so onboarding can offer a profile
+// choice. MarkAutoCreated must run after LoadConfigFile because loading a
+// config sets initialized to true.
+func createFirstRunConfig(xdgDocumentDir string, xdgDocumentPath string) error {
+	if err := os.MkdirAll(xdgDocumentDir, 0755); err != nil {
+		return err
+	}
+
+	generator.MinimalConfigForProfile(xdgDocumentDir, config.RegionalProfileGermanyEU)
+	config.LoadConfigFile(xdgDocumentPath)
+	config.DefaultStore().MarkAutoCreated()
+
+	return nil
 }

@@ -11,6 +11,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMinimalConfigDefaultsToGermany(t *testing.T) {
+	dir := t.TempDir()
+
+	MinimalConfig(dir)
+
+	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(configContent), "regional_profile: germany-eu")
+}
+
+func TestMinimalConfigForProfileIndiaWritesIndia(t *testing.T) {
+	dir := t.TempDir()
+
+	MinimalConfigForProfile(dir, config.RegionalProfileIndia)
+
+	configContent, err := os.ReadFile(filepath.Join(dir, "paisa.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(configContent), "regional_profile: india")
+}
+
 func TestMinimalConfigForGermanyEUWritesRegionalProfile(t *testing.T) {
 	dir := t.TempDir()
 

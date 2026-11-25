@@ -39,7 +39,7 @@ type GeneratorState struct {
 var pricesTree map[string]*btree.BTree
 
 func MinimalConfig(cwd string) {
-	MinimalConfigForProfile(cwd, config.RegionalProfileIndia)
+	MinimalConfigForProfile(cwd, config.RegionalProfileGermanyEU)
 }
 
 func MinimalConfigForProfile(cwd string, profile config.RegionalProfileType) {

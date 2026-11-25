@@ -44,8 +44,9 @@ describe("expense breakdown labels", () => {
   test("formats the amount and percentage for a breakdown row", () => {
     const label = formatBreakdownLabel(50, 100);
 
-    expect(label).toContain("50.00");
-    expect(label.trimEnd().endsWith("50.00%")).toBe(true);
+    // New installations default to the germany-eu profile (de-DE formatting).
+    expect(label).toContain("50,00");
+    expect(label.trimEnd().endsWith("50,00%")).toBe(true);
   });
 
   test("keeps the minimum label width for short labels", () => {

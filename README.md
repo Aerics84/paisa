@@ -86,11 +86,13 @@ npm run build
 go build
 
 mkdir ~/Documents/paisa && cd ~/Documents/paisa
-/path/to/paisa init --regional-profile germany-eu
+/path/to/paisa init
 /path/to/paisa serve
 ```
 
-`paisa init --regional-profile germany-eu` creates an EUR starter journal and configuration. Use `--regional-profile india` for the upstream default.
+`paisa init` creates an EUR starter journal and configuration using the `germany-eu` profile, and new first-run configurations use the same profile. Pass `--regional-profile india` for the upstream India setup. The `germany-eu` profile targets Germany and EU-oriented defaults; it is not a full DACH profile, because Austria and Switzerland have their own tax and social-insurance rules and will need dedicated profiles.
+
+Existing configurations are never changed implicitly: a configuration without `regional_profile` keeps its previous India-compatible defaults.
 
 This fork publishes prebuilt binaries from **0.8.6** onwards on the [releases page](https://github.com/Aerics84/paisa/releases); older releases are built from source. The binaries from [upstream releases](https://github.com/ananthakumaran/paisa/releases) are upstream builds and do not contain the fork features described above.
 

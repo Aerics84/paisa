@@ -83,6 +83,82 @@ week_starting_day: 0
 	assert.EqualValues(t, 0, cfg.WeekStartingDay)
 }
 
+func TestExistingIndiaConfigStaysIndia(t *testing.T) {
+	err := LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+regional_profile: india
+`), "")
+	require.NoError(t, err)
+
+	cfg := GetConfig()
+	assert.Equal(t, "INR", cfg.DefaultCurrency)
+	assert.Equal(t, TaxRegimeIndia, cfg.TaxRegime)
+	assert.Equal(t, "en-IN", cfg.Locale)
+	assert.EqualValues(t, 4, cfg.FinancialYearStartingMonth)
+	assert.EqualValues(t, 0, cfg.WeekStartingDay)
+}
+
+func TestExistingConfigWithoutRegionalProfileStaysUnchanged(t *testing.T) {
+	err := LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+`), "")
+	require.NoError(t, err)
+
+	cfg := GetConfig()
+	assert.Equal(t, RegionalProfileIndia, cfg.RegionalProfile)
+	assert.Equal(t, "INR", cfg.DefaultCurrency)
+	assert.Equal(t, TaxRegimeIndia, cfg.TaxRegime)
+	assert.Equal(t, "en-IN", cfg.Locale)
+	assert.Equal(t, 0, cfg.DisplayPrecision)
+	assert.Equal(t, "", cfg.TimeZone)
+	assert.EqualValues(t, 4, cfg.FinancialYearStartingMonth)
+	assert.EqualValues(t, 0, cfg.WeekStartingDay)
+}
+
+func TestExistingEURConfigWithoutProfileStaysUnchanged(t *testing.T) {
+	err := LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+default_currency: EUR
+tax_regime: germany
+locale: de-DE
+display_precision: 2
+time_zone: Europe/Berlin
+financial_year_starting_month: 1
+week_starting_day: 1
+`), "")
+	require.NoError(t, err)
+
+	cfg := GetConfig()
+	assert.Equal(t, RegionalProfileIndia, cfg.RegionalProfile)
+	assert.Equal(t, "EUR", cfg.DefaultCurrency)
+	assert.Equal(t, TaxRegimeGermany, cfg.TaxRegime)
+	assert.Equal(t, "de-DE", cfg.Locale)
+	assert.Equal(t, 2, cfg.DisplayPrecision)
+	assert.Equal(t, "Europe/Berlin", cfg.TimeZone)
+	assert.EqualValues(t, 1, cfg.FinancialYearStartingMonth)
+	assert.EqualValues(t, 1, cfg.WeekStartingDay)
+}
+
+func TestGermanyEUProfileWithEnglishLocaleKeepsGermanTax(t *testing.T) {
+	err := LoadConfig([]byte(`
+journal_path: main.ledger
+db_path: paisa.db
+regional_profile: germany-eu
+locale: en
+`), "")
+	require.NoError(t, err)
+
+	cfg := GetConfig()
+	assert.Equal(t, "en", cfg.Locale)
+	assert.Equal(t, "EUR", cfg.DefaultCurrency)
+	assert.Equal(t, TaxRegimeGermany, cfg.TaxRegime)
+	assert.True(t, SupportsGermanyTaxFeatures())
+	assert.False(t, SupportsIndiaTaxFeatures())
+}
+
 func TestIndiaTaxRegimeSupportsCurrentTaxFeatures(t *testing.T) {
 	err := LoadConfig([]byte(`
 journal_path: main.ledger

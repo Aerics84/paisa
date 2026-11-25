@@ -118,24 +118,24 @@ export type { EditorFileInput, FileError as LedgerFileError, LedgerFile } from "
 export type { SheetFile } from "./api/sheets";
 
 const DEFAULT_USER_CONFIG: UserConfig = {
-  regional_profile: "india",
-  tax_regime: "india",
+  regional_profile: "germany-eu",
+  tax_regime: "germany",
   germany_tax: {
     annual_allowance: 1000,
     capital_income_tax_rate: 0.25,
     solidarity_surcharge_rate: 0.055,
     church_tax_rate: 0
   },
-  default_currency: "",
+  default_currency: "EUR",
   readonly: false,
-  locale: "en",
-  time_zone: "",
+  locale: "de-DE",
+  time_zone: "Europe/Berlin",
   journal_path: "",
   display_precision: 2,
   db_path: "",
   financial_year_starting_month: 1,
   amount_alignment_column: 52,
-  week_starting_day: 0,
+  week_starting_day: 1,
   goals: {},
   accounts: []
 };

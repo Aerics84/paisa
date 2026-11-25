@@ -15,10 +15,13 @@ below
 1. `paisa/paisa.yaml` file inside User Documents folder.
 
 If it can't find the configuration file, it will create a default
-configuration file named `paisa/paisa.yaml` inside User Documents folder. The
-default configuration is India-oriented. You can keep that profile, or
-switch to a regional profile such as Germany/EU and then fine tune the
-individual fields if needed.
+configuration file named `paisa/paisa.yaml` inside User Documents folder using
+the `germany-eu` profile, which applies Germany/EU defaults (EUR, `de-DE`,
+`Europe/Berlin`, German tax regime and a calendar year). Use
+`paisa init --regional-profile india` for the upstream India setup, or fine tune
+the individual fields afterwards. Existing configuration files are never
+migrated implicitly: a configuration without `regional_profile` keeps the
+India-compatible defaults.
 
 ### Accounts
 
@@ -54,12 +57,19 @@ sheets_directory: sheets
 # OPTIONAL, DEFAULT: ledger, ENUM: ledger, hledger, beancount
 ledger_cli: ledger
 
-# Optional regional profile. This applies sensible defaults for
-# currency, locale, calendar, and tax regime when those fields are not
-# explicitly set.
+# Optional regional profile. New installations use germany-eu by default;
+# an existing configuration that omits this key keeps the India-compatible
+# defaults. The profile applies sensible defaults for currency, locale,
+# calendar, and tax regime when those fields are not explicitly set.
 #
-# OPTIONAL, DEFAULT: india, ENUM: india, germany-eu
-regional_profile: india
+# germany-eu targets Germany and EU-oriented defaults. It is not a full DACH
+# profile: Austria and Switzerland have their own tax and social-insurance
+# rules and will need dedicated profiles.
+#
+# OPTIONAL, DEFAULT for new installations: germany-eu; when omitted from an
+# existing configuration, India-compatible defaults apply.
+# ENUM: india, germany-eu
+regional_profile: germany-eu
 
 # Tax regime controls tax-specific UI and calculations. This is
 # independent of the default currency.
@@ -102,8 +112,9 @@ display_precision: 0
 amount_alignment_column: 52
 
 # The locale used to format numbers and parse amounts in import templates.
-# The list of locales supported
-# depends on your browser. It's known to work well with en-US and en-IN.
+# A bare language code such as en or de selects the UI language; regional
+# variants such as en-US, en-IN and de-DE also select regional number
+# formatting. The list of locales supported depends on your browser.
 #
 # OPTIONAL, DEFAULT: en-IN
 locale: en-IN

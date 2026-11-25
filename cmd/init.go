@@ -30,6 +30,6 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	initCmd.Flags().StringVar(&initRegionalProfile, "regional-profile", string(config.RegionalProfileIndia), "Regional profile for generated starter content")
+	initCmd.Flags().StringVar(&initRegionalProfile, "regional-profile", string(config.RegionalProfileGermanyEU), "Regional profile for generated starter content")
 	rootCmd.AddCommand(initCmd)
 }
