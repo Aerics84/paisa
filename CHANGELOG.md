@@ -35,9 +35,10 @@ styles, so review the upgrade notes before deploying.
 - Sessions live in memory, so a restart invalidates them; log in again after
   upgrading.
 - Legacy `sha256:` password hashes are upgraded to Argon2id on the next
-  successful login. A rollback to 0.8.6.6 cannot verify Argon2id hashes, so
-  restore the configuration backup or recreate the account.
-- Existing configurations keep their previous defaults. The DACH-first
+  successful login when the configuration is writable. A rollback to 0.8.6.6
+  cannot verify Argon2id hashes, so restore the configuration backup or
+  recreate the account.
+- Existing configurations keep their previous defaults. The Germany/EU-first
   `germany-eu` defaults apply only to new installations and the onboarding
   flow. `germany-eu` covers Germany and EU-oriented defaults; it is not a full
   DACH profile.

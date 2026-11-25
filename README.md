@@ -49,7 +49,7 @@ Both screenshots are taken from this fork with the `germany-eu` starter profile.
 - **Import:** CSV, XLSX and PDF statements, password-protected files, reusable templates, CAMT.053, MT940 and broker exports.
 - **Tax:** Germany capital income reporting and annual tax overview; India tax harvesting, capital gains and Schedule AL.
 - **Editing:** built-in journal editor with format/save shortcuts, bulk edit, and account renaming across the journal.
-- **Localization:** German and English UI driven by `config.locale`, with DACH-first onboarding for new installations while existing configurations keep their defaults.
+- **Localization:** German and English UI driven by `config.locale`, with Germany/EU-first onboarding for new installations while existing configurations keep their defaults.
 - **Installable app:** PWA manifest and installable app shell with an offline fallback for navigations; API responses are never cached.
 - **Hardened access:** Argon2id password hashing with transparent `sha256:` upgrades, in-memory sessions in `HttpOnly` cookies, CSRF and origin checks, security headers, and per-IP login throttling.
 - **Access:** web UI, desktop app, optional user accounts, and read-only mode for demos.

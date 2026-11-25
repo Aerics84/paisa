@@ -4,44 +4,48 @@ the GitHub release body. Keep the heading and bullets in sync with the matching
 CHANGELOG section.
 -->
 
-### 0.8.6.6 (2026-11-23)
+### 0.8.6.7 (2026-11-25)
 
-Automatic background price updates and the follow-up hardening.
+Hardening release for the frontend, authentication, data layer, localisation
+and delivery. It changes defaults for new installations and removes the daisyUI
+styles, so review the upgrade notes before deploying.
 
-- Run price updates automatically Monday to Friday at 22:30 in the configured
-  time zone, with catch-up on server start and when the UI opens. The schedule
-  is configurable through the new `price_update` block; readonly deployments
-  and installations without provider-backed commodities are unaffected.
-- Keep the UI responsive during updates: the server runs one background job at
-  a time, exposes its status and job ID, and the web UI only shows a short
-  toast while it watches the job. "Update Prices" now performs a full refresh
-  in the background.
-- Fetch only a seven-day overlap for incremental runs, validate every provider
-  response before writing, merge by date so partial responses never delete
-  history, batch large inserts, and load up to four commodities in parallel.
-- Support time-windowed fetches for Yahoo, currency, EU metal and Alpha Vantage
-  providers; other providers keep their full-history fallback.
-- Persist the last attempt, success, partial success and failure in a
-  versioned state file, let `paisa update` share that state, and report price
-  failures with a non-zero exit code.
-- Keep the configuration editor usable when `price_update` is unset and make
-  invalid schedule values fall back with a single warning instead of blocking
-  startup.
-- Keep the UI usable when a background price refresh finishes while a page is
-  still loading, and clear the global loading indicator after failed requests
-  instead of leaving the logo spinner on screen.
-- Embed IANA timezone data so named time zones load even when the operating
-  system or container has no timezone database.
-- Parse quoted commodity names with spaces and punctuation in Ledger and
-  hledger price output, so funds such as
-  `"AXIS SMALL CAP FUND - DIRECT PLAN"` keep their names during price sync.
-- Reject Yahoo price responses whose timestamp and close arrays differ in
-  length instead of panicking; cached prices and the remaining commodities
-  continue to sync.
-- Generate imported ledger entries with `YYYY-MM-DD` dates and quoted
-  payees and consolidated descriptions, so spaces and punctuation cannot
-  corrupt the journal.
-- Support Beancount 3 through `bean-query`: read source locations from
-  `ANY_META('filename')`/`ANY_META('lineno')`, skip generated padding
-  postings, and import prices from the `#prices` table. Beancount 2 keeps
-  using the `prices` table.
+- Run the full frontend test suite in CI with a coverage gate, and run an
+  accessibility gate that fails on new violations instead of suppressing them.
+- Hash passwords with salted Argon2id while still verifying legacy `sha256:`
+  hashes. Issue in-memory sessions through an `HttpOnly`, `SameSite=Strict`
+  cookie, add CSRF origin checks, CSP and security headers, and throttle failed
+  logins per client IP.
+- Generate the TypeScript API wire types from the Go response structs, so the
+  frontend no longer maintains duplicate hand-written contracts.
+- Finish the Svelte 5 runes migration across routes and components, remove
+  daisyUI, and enforce JavaScript and CSS asset budgets.
+- Add versioned SQLite migrations with WAL-safe backups, and move configuration
+  access behind a race-safe store shared by the server and CLI.
+- Provide a German and English UI that follows `config.locale`, default new
+  installations to the `germany-eu` profile, and add first-run onboarding with
+  a choice between the German/EU and India setups.
+- Ship an installable PWA app shell with an offline shell for navigations. API
+  responses are never cached.
+- Correct the reference documentation for first-run defaults, authentication
+  and the scope of the regional profiles.
+
+#### Upgrade notes
+
+- Sessions live in memory, so a restart invalidates them; log in again after
+  upgrading.
+- Legacy `sha256:` password hashes are upgraded to Argon2id on the next
+  successful login when the configuration is writable. A rollback to 0.8.6.6
+  cannot verify Argon2id hashes, so restore the configuration backup or
+  recreate the account.
+- Existing configurations keep their previous defaults. The Germany/EU-first
+  `germany-eu` defaults apply only to new installations and the onboarding
+  flow. `germany-eu` covers Germany and EU-oriented defaults; it is not a full
+  DACH profile.
+- Custom CSS that targets daisyUI `du-*` classes must be adjusted, because
+  those classes no longer exist.
+- When rolling back, clear the PWA cache and unregister the service worker so
+  the browser does not keep serving the 0.8.6.7 shell.
+
+Known limitation: some copy in the advanced editor and statement-import modals
+is still English.

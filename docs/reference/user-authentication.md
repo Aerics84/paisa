@@ -82,7 +82,10 @@ either header, such as CLI clients, are allowed.
 
 Every response, including API responses, carries a Content-Security-Policy that
 allows only same-origin scripts plus the hashes of Paisa's inline bootstrap
-scripts, and forbids framing (`frame-ancestors 'none'`). Paisa also sends
+scripts, and forbids framing (`frame-ancestors 'none'`). If the inline-script
+hash extraction fails during startup, the server falls back to
+`'unsafe-inline'` for that build and logs the fallback instead of shipping a
+broken UI. Paisa also sends
 `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
 `Referrer-Policy: no-referrer` and a `Permissions-Policy` that disables camera,
 microphone and geolocation. These headers are set by the server and are not
