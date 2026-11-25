@@ -35,7 +35,9 @@ test("CSV statement is staged, committed and visible in the ledger", async ({ pa
   await expect(page.getByTestId("import-page")).toBeVisible();
 
   await page.getByRole("link", { name: /Statement Staging|Kontoauszüge vorbereiten/ }).click();
-  await expect(page.getByRole("heading", { name: "Staged Transactions" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Staged Transactions|Vorbereitete Buchungen/ })
+  ).toBeVisible();
 
   const dropzone = page.locator('input[type=file][accept*=".ofx"]');
   await dropzone.setInputFiles(join(import.meta.dirname, "fixtures", "sample.csv"));
@@ -50,13 +52,17 @@ test("CSV statement is staged, committed and visible in the ledger", async ({ pa
   await debitAccounts.nth(0).fill("Expenses:Food");
   await debitAccounts.nth(1).fill("Expenses:Leisure");
 
-  const commit = page.getByRole("button", { name: /Commit 2 Transactions/ });
+  const commit = page.getByRole("button", {
+    name: /Commit 2 transactions|2 Buchungen übernehmen/
+  });
   await expect(commit).toBeEnabled();
   await commit.click();
 
-  await expect(page.getByText(/Successfully appended 2 transactions/)).toBeVisible({
-    timeout: 20_000
-  });
+  await expect(
+    page.getByText(
+      /Successfully appended 2 transactions|2 Buchungen erfolgreich an den Ledger angehängt/
+    )
+  ).toBeVisible({ timeout: 20_000 });
 
   const journal = join(server.dir, "main.ledger");
   const content = readFileSync(journal, "utf8");

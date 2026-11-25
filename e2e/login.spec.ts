@@ -59,10 +59,12 @@ test("a password typed in the config form is stored as argon2id", async ({ page 
   if ((await accountsToggle.getAttribute("aria-expanded")) !== "true") {
     await accountsToggle.click();
   }
-  await page.getByRole("button", { name: "Add User Accounts" }).click();
+  await page
+    .getByRole("button", { name: /Add User Accounts|User Accounts hinzufügen/ })
+    .click();
 
   const userAccounts = page
-    .locator('button[aria-label="Add User Accounts"]')
+    .locator('button[aria-label="Add User Accounts"], button[aria-label="User Accounts hinzufügen"]')
     .locator(
       'xpath=ancestor::div[contains(@class,"config-header")]/following-sibling::div[contains(@class,"config-body")]'
     );

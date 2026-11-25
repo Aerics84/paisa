@@ -23,7 +23,7 @@ test("recurring radial progress renders on the dashboard", async ({ page }) => {
   expect(value).not.toBe("");
   expect(Number(value)).toBeGreaterThanOrEqual(0);
   await expect(ring).toHaveAttribute("aria-valuenow", /\d+(\.\d+)?/);
-  await expect(ring).toHaveAttribute("aria-valuetext", /due/);
+  await expect(ring).toHaveAttribute("aria-valuetext", /due|fällig/);
 
   expect(errors).toEqual([]);
 });
