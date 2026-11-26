@@ -32,6 +32,8 @@ styles, so review the upgrade notes before deploying.
 - Allow the browser-side Handlebars compiler under the Content-Security-Policy.
   Without this exception the template editor could not compile, the import
   preview stayed empty, and imports silently wrote nothing.
+- Keep hledger syncs working for journals with cost-basis lot prices by
+  ignoring hledger's synthetic lot-annotated price directives.
 
 #### Upgrade notes
 

@@ -65,6 +65,16 @@ func TestParseHLegerPrices(t *testing.T) {
 	assert.Len(t, parsedPrices, 0)
 }
 
+func TestParseHLedgerPricesSkipsLotPrices(t *testing.T) {
+	output := "P 2021-04-14 \"US19260Q1076\" 305.04 EUR\n" +
+		"P 2021-11-05 EUR 0.003 \"US19260Q1076\" {305,04 EUR}\n" +
+		"P 2021-11-06 EUR 0.003 \"US19260Q1076\" [2021-04-14]\n"
+	parsedPrices, err := parseHLedgerPrices(output, "EUR")
+	require.NoError(t, err)
+	require.Len(t, parsedPrices, 1)
+	assertPriceEqual(t, parsedPrices[0], "2021/04/14", "US19260Q1076", 305.04)
+}
+
 func TestParsePricesCommodityNames(t *testing.T) {
 	parsers := []struct {
 		name   string

@@ -580,7 +580,15 @@ func parseHLedgerPrices(output string, defaultCurrency string) ([]price.Price, e
 	matches := re.FindAllStringSubmatch(output, -1)
 
 	for _, match := range matches {
-		target, value, err := parseAmount(match[3])
+		amount := strings.TrimSpace(match[3])
+		// hledger emits synthetic cost-basis prices for sales as lot amounts,
+		// e.g. `P 2021-11-05 EUR 0.003 "US..." {305,04 EUR}`. They describe a
+		// lot rather than a market price and must not abort the sync.
+		if strings.ContainsAny(amount, "{[") {
+			log.Debugf("Skipping hledger lot price: %s", amount)
+			continue
+		}
+		target, value, err := parseAmount(amount)
 		if err != nil {
 			return nil, err
 		}
