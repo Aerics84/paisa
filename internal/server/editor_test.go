@@ -75,6 +75,29 @@ func TestEditorRejectsTraversal(t *testing.T) {
 	}
 }
 
+func TestSortLedgerFilesPutsMainJournalFirst(t *testing.T) {
+	files := []LedgerFile{
+		{Name: "commodities.ledger"},
+		{Name: "depots/ing.ledger"},
+		{Name: "main.ledger"},
+		{Name: "aaa.ledger"},
+	}
+
+	sortLedgerFiles(files, "main.ledger")
+
+	names := make([]string, 0, len(files))
+	for _, file := range files {
+		names = append(names, file.Name)
+	}
+	require.Equal(t, []string{"main.ledger", "aaa.ledger", "commodities.ledger", "depots/ing.ledger"}, names)
+
+	// A missing main journal must not disturb the deterministic order.
+	files = []LedgerFile{{Name: "b.ledger"}, {Name: "a.ledger"}}
+	sortLedgerFiles(files, "missing.ledger")
+	require.Equal(t, "a.ledger", files[0].Name)
+	require.Equal(t, "b.ledger", files[1].Name)
+}
+
 func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
 	base := t.TempDir()
 	store := configureEditor(t, base, false)

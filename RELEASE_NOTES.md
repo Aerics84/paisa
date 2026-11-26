@@ -34,6 +34,8 @@ styles, so review the upgrade notes before deploying.
   preview stayed empty, and imports silently wrote nothing.
 - Keep hledger syncs working for journals with cost-basis lot prices by
   ignoring hledger's synthetic lot-annotated price directives.
+- Open the configured journal file by default in the Ledger editor instead of
+  whichever file sorts first (for example an included commodities file).
 
 #### Upgrade notes
 

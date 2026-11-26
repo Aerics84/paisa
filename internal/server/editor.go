@@ -43,12 +43,29 @@ func GetFiles(deps Deps) EditorFilesResponse {
 		files = append(files, *readLedgerFileWithVersions(dir, path))
 	}
 
+	// The configured journal file is the entry point for the editor. Keep it
+	// first so the slug-less /ledger/editor redirect opens main.ledger instead
+	// of whichever file happens to sort first (for example commodities.ledger).
+	sortLedgerFiles(files, filepath.ToSlash(filepath.Base(path)))
+
 	return EditorFilesResponse{
 		Files:       files,
 		Accounts:    nonNilSlice(accounts),
 		Payees:      nonNilSlice(payees),
 		Commodities: nonNilSlice(commodities),
 	}
+}
+
+func sortLedgerFiles(files []LedgerFile, mainName string) {
+	sort.SliceStable(files, func(i, j int) bool {
+		if files[i].Name == mainName {
+			return true
+		}
+		if files[j].Name == mainName {
+			return false
+		}
+		return files[i].Name < files[j].Name
+	})
 }
 
 func GetFile(file LedgerFile, store *config.Store) EditorFileResponse {
