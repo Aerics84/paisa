@@ -29,7 +29,7 @@ func TestSecurityHeaders(t *testing.T) {
 	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
 	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "default-src 'self'")
 	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "frame-ancestors 'none'")
-	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "script-src 'self' 'sha256-")
+	require.Contains(t, rec.Header().Get("Content-Security-Policy"), "script-src 'self' 'unsafe-eval' 'sha256-")
 
 	// The HTML document (NoRoute serves the embedded index) must carry the same
 	// policy so its inline bootstrap script is explicitly allowed.
@@ -39,12 +39,12 @@ func TestSecurityHeaders(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, indexRec.Code)
 	require.Equal(t, rec.Header().Get("Content-Security-Policy"), indexRec.Header().Get("Content-Security-Policy"))
-	require.Contains(t, indexRec.Header().Get("Content-Security-Policy"), "script-src 'self' 'sha256-")
+	require.Contains(t, indexRec.Header().Get("Content-Security-Policy"), "script-src 'self' 'unsafe-eval' 'sha256-")
 }
 
 func TestBuildCSPIncludesScriptHash(t *testing.T) {
 	require.Equal(t,
-		"default-src 'self'; script-src 'self' 'sha256-abc123'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+		"default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-abc123'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 		BuildCSP([]string{"abc123"}),
 	)
 
@@ -54,11 +54,20 @@ func TestBuildCSPIncludesScriptHash(t *testing.T) {
 	require.Contains(t, csp, "form-action 'self'")
 
 	fallback := BuildCSP(nil)
-	require.Contains(t, fallback, "script-src 'self' 'unsafe-inline'")
+	require.Contains(t, fallback, "script-src 'self' 'unsafe-eval' 'unsafe-inline'")
 	require.NotContains(t, fallback, "sha256-")
 
 	// An empty list behaves like the no-hash fallback.
 	require.Equal(t, fallback, BuildCSP([]string{}))
+}
+
+func TestBuildCSPAllowsHandlebarsTemplateCompilation(t *testing.T) {
+	// The import page compiles user-authored Handlebars templates with
+	// new Function. Without 'unsafe-eval' the template editor cannot compile,
+	// the preview stays empty, and the import silently does nothing.
+	csp := BuildCSP([]string{"abc123"})
+	require.Contains(t, csp, "script-src 'self' 'unsafe-eval'")
+	require.NotContains(t, csp, "script-src 'self' 'unsafe-eval' 'unsafe-inline'")
 }
 
 func TestExtractInlineScriptHash(t *testing.T) {
@@ -91,6 +100,6 @@ func TestExtractInlineScriptHashesMultiple(t *testing.T) {
 	csp := BuildCSP(hashes)
 	require.Contains(t, csp, "'sha256-"+sha256Base64(first)+"'")
 	require.Contains(t, csp, "'sha256-"+sha256Base64(second)+"'")
-	require.NotContains(t, csp, "script-src 'self' 'unsafe-inline'")
-	require.True(t, strings.Contains(csp, "script-src 'self' 'sha256-"+sha256Base64(first)+"' 'sha256-"+sha256Base64(second)+"'"))
+	require.NotContains(t, csp, "script-src 'self' 'unsafe-eval' 'unsafe-inline'")
+	require.True(t, strings.Contains(csp, "script-src 'self' 'unsafe-eval' 'sha256-"+sha256Base64(first)+"' 'sha256-"+sha256Base64(second)+"'"))
 }

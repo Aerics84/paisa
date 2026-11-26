@@ -88,7 +88,11 @@ either header, such as CLI clients, are allowed.
 
 Every response, including API responses, carries a Content-Security-Policy that
 allows only same-origin scripts plus the hashes of Paisa's inline bootstrap
-scripts, and forbids framing (`frame-ancestors 'none'`). If the inline-script
+scripts, and forbids framing (`frame-ancestors 'none'`). `'unsafe-eval'` is
+allowed because the user-authored Handlebars templates on the import page are
+compiled in the browser with `new Function`; removing it silently disables the
+import preview. Inline scripts remain limited to the hashed bootstrap script.
+If the inline-script
 hash extraction fails during startup, the server falls back to
 `'unsafe-inline'` for that build and logs the fallback instead of shipping a
 broken UI. Paisa also sends

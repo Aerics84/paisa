@@ -14,7 +14,13 @@ import (
 // cspTemplate is the Content-Security-Policy sent with every response. The
 // single %s is the script-src directive value, which is either the hashes of
 // the inline bootstrap scripts or the 'unsafe-inline' fallback.
-const cspTemplate = "default-src 'self'; script-src 'self' %s; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+//
+// 'unsafe-eval' is required by the user-authored Handlebars templates used by
+// the import page: Handlebars compiles them in the browser with new Function.
+// Without it the template editor cannot compile and the import preview stays
+// empty with only a console error. The rest of the policy still blocks inline
+// scripts (apart from the hashed bootstrap), external scripts and framing.
+const cspTemplate = "default-src 'self'; script-src 'self' 'unsafe-eval' %s; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 var (
 	scriptTagPattern = regexp.MustCompile(`(?is)<script\b([^>]*)>(.*?)</script\s*>`)

@@ -36,7 +36,8 @@ function lint(editor: EditorView): Diagnostic[] {
     const compiled = Handlebars.compile(doc.toString(), { noEscape: true });
     editorState.update((current) => _.assign({}, current, { template: compiled }));
   } catch (e) {
-    const lines = e.message.split("\n");
+    const message = e instanceof Error ? e.message : String(e);
+    const lines = message.split("\n");
     const match = lines[0].match(/Parse error on line (\d+):/);
     if (match != null) {
       const line = doc.line(parseInt(match[1], 10));
@@ -49,6 +50,10 @@ function lint(editor: EditorView): Diagnostic[] {
         }
       ];
     }
+    // Compilation errors that are not parse errors (for example a CSP that
+    // blocks new Function) must be visible instead of leaving an empty
+    // preview behind.
+    return [{ message, severity: "error", from: 0, to: doc.length }];
   }
   return [];
 }

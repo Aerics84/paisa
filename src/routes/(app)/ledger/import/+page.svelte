@@ -169,7 +169,8 @@
           lastData = data;
           lastOptions = _.clone(options);
         } catch (e) {
-          console.log(e);
+          console.error(e);
+          parseErrorMessage = e instanceof Error ? e.message : String(e);
         }
       }
     }

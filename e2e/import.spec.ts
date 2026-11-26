@@ -77,3 +77,43 @@ test("CSV statement is staged, committed and visible in the ledger", async ({ pa
   await expect(page.getByText(/Coffee Shop/).first()).toBeVisible();
   await expect(page.getByText(/Book Store/).first()).toBeVisible();
 });
+
+test("template import preview renders under the production CSP", async ({ page, request }) => {
+  // Regression for 0.8.6.7: the template editor compiles user-authored
+  // Handlebars with new Function. A CSP without 'unsafe-eval' makes the
+  // compilation fail silently (only a console error), leaving the preview empty
+  // and the save button disabled.
+  const template = [
+    '{{#if (isDate ROW.A "YYYY-MM-DD")}}{{date ROW.A "YYYY-MM-DD"}} * {{ROW.B}}',
+    "    Assets:Checking:ING  {{amount ROW.C}} EUR",
+    "    Expenses:Unknown",
+    "{{/if}}"
+  ].join("\n");
+  const upsert = await request.post(`${server.url}/api/templates/upsert`, {
+    data: { name: "E2E CSV", content: template }
+  });
+  expect(upsert.ok()).toBeTruthy();
+
+  const cspErrors: string[] = [];
+  page.on("console", (message) => {
+    const text = message.text();
+    if (/Content Security Policy|EvalError/.test(text)) {
+      cspErrors.push(text);
+    }
+  });
+
+  await page.goto(`${server.url}/ledger/import`);
+  await expect(page.getByTestId("import-page")).toBeVisible();
+  await expect(page.locator(".svelte-select")).toContainText("E2E CSV");
+
+  await page
+    .getByTestId("file-dropzone")
+    .locator('input[type="file"]')
+    .setInputFiles(join(import.meta.dirname, "fixtures", "sample.csv"));
+
+  const preview = page.locator(".preview-editor .cm-content");
+  await expect(preview).toContainText("Coffee Shop", { timeout: 15_000 });
+  await expect(preview).toContainText("Book Store");
+  await expect(preview).toContainText("2022/03/01");
+  expect(cspErrors).toEqual([]);
+});

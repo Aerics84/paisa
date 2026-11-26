@@ -29,6 +29,9 @@ styles, so review the upgrade notes before deploying.
   responses are never cached.
 - Correct the reference documentation for first-run defaults, authentication
   and the scope of the regional profiles.
+- Allow the browser-side Handlebars compiler under the Content-Security-Policy.
+  Without this exception the template editor could not compile, the import
+  preview stayed empty, and imports silently wrote nothing.
 
 #### Upgrade notes
 
