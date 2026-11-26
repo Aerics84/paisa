@@ -527,6 +527,11 @@ func BuildWithManager(deps Deps, enableCompression bool, manager *pricesync.Mana
 	})
 
 	router.NoRoute(func(c *gin.Context) {
+		if c.Request.URL.Path == "/api" || strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "not found"})
+			return
+		}
+
 		// SvelteKit writes non-hashed assets (manifest, service worker, icons) to
 		// the root of web/static. Serve those before falling back to the SPA shell.
 		requestPath := strings.TrimPrefix(c.Request.URL.Path, "/")

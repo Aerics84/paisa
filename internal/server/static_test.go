@@ -31,6 +31,16 @@ func getStatic(t *testing.T, router *gin.Engine, target string) *httptest.Respon
 	return response
 }
 
+func TestUnknownAPIRouteReturnsJSON404(t *testing.T) {
+	router := staticRouter(t)
+
+	response := getStatic(t, router, "/api/does-not-exist")
+	require.Equal(t, http.StatusNotFound, response.Code)
+	assert.Contains(t, response.Header().Get("Content-Type"), "application/json")
+	assert.Contains(t, response.Body.String(), `"error":"not found"`)
+	assert.NotEqual(t, web.Index, response.Body.String())
+}
+
 func TestStaticRootServing(t *testing.T) {
 	router := staticRouter(t)
 
