@@ -81,7 +81,13 @@ func init() {
 				Level:       WARN,
 				Summary:     "Asset Accounts missing from Allocation Target",
 				Description: "Asset accounts are not part of any allocation target."},
-			Predicate: ruleAllocationTargetMissingAssetAccounts}}
+			Predicate: ruleAllocationTargetMissingAssetAccounts},
+		{
+			Issue: Issue{
+				Level:       WARN,
+				Summary:     "Commodity Format Missing",
+				Description: "A commodity quantity has more than five decimal places, but there is no commodity format directive. Ledger can read the decimal comma as a thousands separator and silently store a wrong quantity."},
+			Predicate: ruleCommodityFormatMissing}}
 }
 
 func GetDiagnosis(deps Deps) gin.H {

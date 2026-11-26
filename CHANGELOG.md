@@ -36,6 +36,9 @@ styles, so review the upgrade notes before deploying.
   ignoring hledger's synthetic lot-annotated price directives.
 - Open the configured journal file by default in the Ledger editor instead of
   whichever file sorts first (for example an included commodities file).
+- Warn in Diagnosis when a quoted commodity is used with more than five decimal
+  places but has no commodity format directive, which Ledger can misread as a
+  thousands separator.
 
 #### Upgrade notes
 
