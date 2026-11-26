@@ -34,6 +34,9 @@ export function resolveLocale(configLocale: string): Locale {
 export function setLocale(value: string): Locale {
   const next = resolveLocale(value);
   locale.set(next);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = next;
+  }
   return next;
 }
 

@@ -460,9 +460,6 @@ function normalize(value: number) {
 export function applyLocale(configLocale: string): Locale {
   const active = setLocale(configLocale);
   dayjs.locale(active);
-  if (typeof document !== "undefined") {
-    document.documentElement.lang = active;
-  }
   return active;
 }
 

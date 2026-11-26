@@ -32,6 +32,13 @@ describe("locale resolution from config", () => {
     expect(resolveLocale("")).toBe("en");
   });
 
+  test("setLocale keeps the document language in sync", () => {
+    setLocale("de-DE");
+    expect(document.documentElement.lang).toBe("de");
+    setLocale("en-IN");
+    expect(document.documentElement.lang).toBe("en");
+  });
+
   test("germany tax profile with english locale stays english", () => {
     const config = { regional_profile: "germany-eu", tax_regime: "germany", locale: "en" };
     expect(resolveLocale(config.locale)).toBe("en");
