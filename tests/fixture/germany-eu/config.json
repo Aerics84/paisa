@@ -682,8 +682,8 @@
         "type": "string"
       },
       "locale": {
-        "description": "The locale used to format numbers. The list of locales supported depends on your browser. It's known to work well with en-US and en-IN.",
-        "pattern": "^[a-z]{2}-[A-Z]{2}$",
+        "description": "The locale used to format numbers. A bare language code such as en or de is accepted; regional variants such as en-US, en-IN and de-DE select regional number formatting. The list of locales supported depends on your browser.",
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
         "type": "string"
       },
       "networth_currencies": {
@@ -1541,7 +1541,7 @@
           "properties": {
             "password": {
               "description": "Password for the account",
-              "pattern": "^sha256:[A-Fa-f0-9]{64}$",
+              "pattern": "^(sha256:[A-Fa-f0-9]{64}|argon2id\\$v=19\\$m=65536,t=3,p=2\\$[A-Za-z0-9+/=]+\\$[A-Za-z0-9+/=]+)$",
               "type": "string",
               "ui:order": 2,
               "ui:widget": "password"
