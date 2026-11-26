@@ -869,6 +869,7 @@ export const de: Record<EnMessageKey, string> = {
   "error.closingMayHelp": "Das Schließen und erneute Öffnen der App kann helfen.",
 
   "ledger.loadingEditor": "Editor wird geladen…",
+  "ledger.editorOutput": "Ausgabe des Editors",
   "ledger.unsavedTitle": "Ungespeicherte Änderungen",
   "ledger.unsavedDescription":
     "Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?",

@@ -426,7 +426,13 @@
       </div>
       <div class="column is-3-widescreen is-4-fullhd is-hidden-touch is-hidden-desktop-only">
         {#if !_.isEmpty($editorState.output)}
-          <pre class="box px-3 full-height">{$editorState.output}</pre>
+          <!-- WCAG 2.1.1: scrollable output needs keyboard access. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <pre
+            class="box px-3 full-height"
+            tabindex="0"
+            role="region"
+            aria-label={$t("ledger.editorOutput")}>{$editorState.output}</pre>
         {/if}
       </div>
     </div>

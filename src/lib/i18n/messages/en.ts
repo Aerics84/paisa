@@ -847,6 +847,7 @@ export const en = {
   "error.closingMayHelp": "Closing and reopening the app may help.",
 
   "ledger.loadingEditor": "Loading editor…",
+  "ledger.editorOutput": "Editor output",
   "ledger.unsavedTitle": "Unsaved changes",
   "ledger.unsavedDescription": "You have unsaved changes. Are you sure you want to leave?",
   "ledger.leave": "Leave",
