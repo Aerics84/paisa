@@ -98,6 +98,19 @@ func TestSortLedgerFilesPutsMainJournalFirst(t *testing.T) {
 	require.Equal(t, "b.ledger", files[1].Name)
 }
 
+func TestGetFilesPutsConfiguredJournalFirst(t *testing.T) {
+	root := t.TempDir()
+	writeEditorFile(t, filepath.Join(root, "main.ledger"), "")
+	writeEditorFile(t, filepath.Join(root, "aaa.ledger"), "")
+	writeEditorFile(t, filepath.Join(root, "zzz", "old.ledger"), "")
+
+	store := configureEditor(t, root, false)
+	response := GetFiles(Deps{DB: openTestDB(t), Config: store})
+
+	require.NotEmpty(t, response.Files)
+	require.Equal(t, "main.ledger", response.Files[0].Name)
+}
+
 func TestSaveFileRejectsMismatchedExtension(t *testing.T) {
 	base := t.TempDir()
 	store := configureEditor(t, base, false)

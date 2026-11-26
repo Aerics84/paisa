@@ -39,14 +39,16 @@ func GetFiles(deps Deps) EditorFilesResponse {
 	dir := filepath.Dir(path)
 	paths, _ := doublestar.FilepathGlob(dir + "/**/*" + filepath.Ext(path))
 
-	for _, path = range paths {
-		files = append(files, *readLedgerFileWithVersions(dir, path))
-	}
-
 	// The configured journal file is the entry point for the editor. Keep it
 	// first so the slug-less /ledger/editor redirect opens main.ledger instead
 	// of whichever file happens to sort first (for example commodities.ledger).
-	sortLedgerFiles(files, filepath.ToSlash(filepath.Base(path)))
+	// Do not reuse `path` as the loop variable: it is needed after the loop.
+	mainName := filepath.ToSlash(filepath.Base(path))
+	for _, journalPath := range paths {
+		files = append(files, *readLedgerFileWithVersions(dir, journalPath))
+	}
+
+	sortLedgerFiles(files, mainName)
 
 	return EditorFilesResponse{
 		Files:       files,
