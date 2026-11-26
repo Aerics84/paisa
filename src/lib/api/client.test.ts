@@ -42,6 +42,17 @@ test("reviveDates converts only date-like keys", () => {
   expect(body.note).toBe("2026-11-22T12:00:00Z");
 });
 
+test("reviveDates keeps the time of day for log records", () => {
+  const value = "2026-11-26T17:22:06Z";
+  const body = reviveDates({ time: value, date: value }) as unknown as {
+    time: dayjs.Dayjs;
+    date: dayjs.Dayjs;
+  };
+  expect(body.time.format("YYYY-MM-DD HH:mm:ss")).toBe(dayjs(value).format("YYYY-MM-DD HH:mm:ss"));
+  // Ordinary date keys stay date-only so timezone offsets cannot shift the day.
+  expect(body.date.format("HH:mm:ss")).toBe("00:00:00");
+});
+
 test("ajax keeps legacy behaviour: 400 body is returned and dates are revived", async () => {
   globalThis.fetch = mock(
     async () =>

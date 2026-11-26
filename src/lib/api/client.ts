@@ -7,6 +7,9 @@ export type RequestOptions = RequestInit & {
 };
 
 const DATE_KEY_PATTERN = /Date|date|time|now/;
+// Log records are the one place where the time of day matters. Their `time`
+// key must keep the full timestamp instead of being collapsed to a date.
+const TIMESTAMP_KEY_PATTERN = /^time$/i;
 const DATE_VALUE_PATTERN =
   /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$/;
 
@@ -18,6 +21,11 @@ const DATE_VALUE_PATTERN =
  */
 export function parseDate(value: string): dayjs.Dayjs {
   return dayjs(value.slice(0, 10));
+}
+
+/** Parses a full API timestamp, preserving the time of day (used by logs). */
+export function parseTimestamp(value: string): dayjs.Dayjs {
+  return dayjs(value);
 }
 
 /**
@@ -43,7 +51,7 @@ export function reviveDates<T>(value: T): T {
         DATE_KEY_PATTERN.test(key) &&
         DATE_VALUE_PATTERN.test(nested)
       ) {
-        result[key] = parseDate(nested);
+        result[key] = TIMESTAMP_KEY_PATTERN.test(key) ? parseTimestamp(nested) : parseDate(nested);
       } else {
         result[key] = reviveDates(nested);
       }
