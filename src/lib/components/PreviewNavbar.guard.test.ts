@@ -32,5 +32,6 @@ describe("preview responsive shell", () => {
     expect(app).toContain(".paisa-shell-sidebar--open");
     expect(app).toContain(".paisa-shell-backdrop");
     expect(app).toContain("prefers-reduced-motion: reduce");
+    expect(app).toMatch(/transition:\s*transform 0\.22s ease,\s*visibility 0s linear 0\.22s/);
   });
 });

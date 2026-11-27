@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import Modal from "./Modal.svelte";
   import { t } from "$lib/i18n";
+  import { nextFocusIndex } from "$lib/focus_trap";
   import {
     PREVIEW_PRESETS,
     PREVIEW_WIDGETS,
@@ -48,9 +49,37 @@
   function toggleWidget(id: (typeof PREVIEW_WIDGETS)[number]["id"], checked: boolean) {
     onchange(setWidgetVisible(layout, id, checked));
   }
+
+  function handleDialogKeydown(event: KeyboardEvent) {
+    if (event.key !== "Tab" || !dialogElement) return;
+
+    const focusable = Array.from(
+      dialogElement.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    if (focusable.length === 0) return;
+
+    event.preventDefault();
+    const next = nextFocusIndex(
+      focusable.indexOf(document.activeElement as HTMLElement),
+      focusable.length,
+      event.shiftKey
+    );
+    focusable[next]?.focus();
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (!open) return;
+    if (event.key === "Escape") {
+      open = false;
+      return;
+    }
+    handleDialogKeydown(event);
+  }
 </script>
 
-<svelte:window onkeydown={(event) => open && event.key === "Escape" && (open = false)} />
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <Modal
   bind:active={open}

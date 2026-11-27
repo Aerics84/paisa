@@ -81,6 +81,34 @@ test("customize dialog exposes its actions inside the dialog", async ({ page }) 
   await expect(dialog.getByTestId("preview-settings-reset")).toBeVisible();
 });
 
+test("customize dialog keeps keyboard focus inside", async ({ page }) => {
+  await page.goto("/preview");
+  await page.getByTestId("preview-customize").click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+
+  for (let index = 0; index < 16; index += 1) {
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)
+    ).toBe(true);
+  }
+
+  for (let index = 0; index < 16; index += 1) {
+    await page.keyboard.press("Shift+Tab");
+    expect(
+      await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)
+    ).toBe(true);
+  }
+});
+
+test("customize dialog passes serious a11y checks", async ({ page }) => {
+  await page.goto("/preview");
+  await page.getByTestId("preview-customize").click();
+  await expect(page.getByTestId("preview-settings")).toBeVisible();
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
 test("growing the viewport closes the drawer and frees the page", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/preview");
@@ -115,6 +143,42 @@ test.describe("mobile drawer", () => {
     ).toBe(true);
 
     await page.keyboard.press("Escape");
+    await expect(nav).not.toHaveClass(/paisa-shell-sidebar--open/);
+    expect(await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))).toBe(
+      "preview-nav-toggle"
+    );
+    expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
+  });
+
+  test("cycles Tab and Shift+Tab inside the drawer", async ({ page }) => {
+    await page.goto("/preview");
+    await page.getByTestId("preview-nav-toggle").click();
+    const nav = page.locator("#preview-navigation");
+    await expect(nav).toHaveClass(/paisa-shell-sidebar--open/);
+
+    for (let index = 0; index < 25; index += 1) {
+      await page.keyboard.press("Tab");
+      expect(
+        await page.evaluate(() => document.activeElement?.closest("#preview-navigation") !== null)
+      ).toBe(true);
+    }
+
+    for (let index = 0; index < 25; index += 1) {
+      await page.keyboard.press("Shift+Tab");
+      expect(
+        await page.evaluate(() => document.activeElement?.closest("#preview-navigation") !== null)
+      ).toBe(true);
+    }
+  });
+
+  test("closes on backdrop click and restores focus", async ({ page }) => {
+    await page.goto("/preview");
+    const toggle = page.getByTestId("preview-nav-toggle");
+    await toggle.click();
+    const nav = page.locator("#preview-navigation");
+    await expect(nav).toHaveClass(/paisa-shell-sidebar--open/);
+
+    await page.locator(".paisa-shell-backdrop").click({ position: { x: 380, y: 700 } });
     await expect(nav).not.toHaveClass(/paisa-shell-sidebar--open/);
     expect(await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))).toBe(
       "preview-nav-toggle"

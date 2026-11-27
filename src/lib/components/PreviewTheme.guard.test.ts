@@ -71,6 +71,11 @@ describe("preview theme contrast", () => {
   test("topbar text follows the theme", () => {
     const app = src("app.scss");
     expect(app).toMatch(/\.paisa-topbar__title\s*\{[^}]*color:\s*var\(--app-text\)/s);
-    expect(app).toMatch(/\.paisa-topbar__subtitle\s*\{[^}]*color:\s*var\(--app-text-muted\)/s);
+    expect(app).toMatch(
+      /\.paisa-topbar__subtitle\s*\{[^}]*color:\s*var\(--dashboard-text-muted\)/s
+    );
+    expect(app).toMatch(
+      /\.paisa-topbar--overview \.paisa-topbar__subtitle\s*\{[^}]*color:\s*var\(--dashboard-text-muted\)/s
+    );
   });
 });

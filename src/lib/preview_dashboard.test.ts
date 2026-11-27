@@ -25,8 +25,7 @@ function memoryStorage() {
   };
 }
 
-const transaction = (id: string, date: string) =>
-  ({ id, date: dayjs(date) }) as Transaction;
+const transaction = (id: string, date: string) => ({ id, date: dayjs(date) }) as Transaction;
 
 describe("preview dashboard layout", () => {
   test("default shows every widget", () => {
@@ -70,6 +69,16 @@ describe("preview dashboard layout", () => {
     expect(next.visible.support).toBe(false);
     expect(next.visible.monthlyReview).toBe(true);
     expect("nope" in next.visible).toBe(false);
+  });
+
+  test("custom keeps its preset and fills missing ids from overview", () => {
+    const next = normalizeLayout({ preset: "custom", visible: { support: true } });
+    expect(next.preset).toBe("custom");
+    expect(next.visible.support).toBe(true);
+    expect(next.visible.hero).toBe(true);
+    expect(next.visible.monthlyReview).toBe(true);
+    expect(next.visible.insights).toBe(true);
+    expect(next.visible.recentTransactions).toBe(true);
   });
 
   test("invalid values fall back to overview", () => {
@@ -121,5 +130,13 @@ describe("preview dashboard layout", () => {
     );
     expect(result.map((item) => item.id)).toEqual(["b", "c", "a", "bad"]);
     expect(latestTransactions([], 3)).toEqual([]);
+  });
+
+  test("transactions on the same date are ordered by ascending id", () => {
+    const result = latestTransactions(
+      [transaction("b", "2026-11-03"), transaction("a", "2026-11-03")],
+      6
+    );
+    expect(result.map((item) => item.id)).toEqual(["a", "b"]);
   });
 });
