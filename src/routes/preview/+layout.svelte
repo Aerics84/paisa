@@ -1,6 +1,6 @@
 <script lang="ts">
   import { afterNavigate, beforeNavigate } from "$app/navigation";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { followCursor, delegate, hideAll } from "tippy.js";
   import _ from "lodash";
   import Spinner from "$lib/components/Spinner.svelte";
@@ -25,6 +25,22 @@
     if (typeof document !== "undefined") {
       document.body.style.overflow = "";
     }
+  });
+
+  onMount(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const query = window.matchMedia("(max-width: 1087px)");
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) {
+        sidebarOpen = false;
+      }
+    };
+
+    query.addEventListener("change", handleBreakpointChange);
+    return () => query.removeEventListener("change", handleBreakpointChange);
   });
 
   function setupTippy() {

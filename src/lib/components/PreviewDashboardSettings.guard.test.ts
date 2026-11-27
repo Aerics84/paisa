@@ -8,7 +8,7 @@ describe("preview dashboard settings", () => {
   test("dialog is labelled, keyboard closable and preset driven", () => {
     const source = read("PreviewDashboardSettings.svelte");
     expect(source).toContain('role="dialog"');
-    expect(source).toContain('aria-modal="true"');
+    expect(source).toContain('ariaModal="true"');
     expect(source).toContain('$t("dashboard.customizeTitle")');
     expect(source).toContain('$t("dashboard.resetDefault")');
     expect(source).toContain('event.key === "Escape"');

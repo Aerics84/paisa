@@ -71,6 +71,31 @@ test.describe("recent transactions", () => {
   });
 });
 
+test("customize dialog exposes its actions inside the dialog", async ({ page }) => {
+  await page.goto("/preview");
+  await page.getByTestId("preview-customize").click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByTestId("preview-settings-done")).toBeVisible();
+  await expect(dialog.getByTestId("preview-settings-reset")).toBeVisible();
+});
+
+test("growing the viewport closes the drawer and frees the page", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/preview");
+  await page.getByTestId("preview-nav-toggle").click();
+  const content = page.locator(".paisa-shell-content");
+  await expect(content).toHaveAttribute("inert", "");
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(content).not.toHaveAttribute("inert", "");
+  expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
+
+  await page.getByTestId("preview-customize").click();
+  await expect(page.getByTestId("preview-settings")).toBeVisible();
+});
+
 test.describe("mobile drawer", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

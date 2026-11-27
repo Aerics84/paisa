@@ -55,29 +55,21 @@
 <Modal
   bind:active={open}
   width="min(760px, 95vw)"
+  role="dialog"
+  ariaModal="true"
   ariaLabel={$t("dashboard.customizeTitle")}
   bind:dialogElement
 >
   <svelte:fragment slot="head" let:close>
     <div class="is-flex is-align-items-center is-justify-content-space-between" style="width: 100%">
       <h3 class="modal-card-title">{$t("dashboard.customizeTitle")}</h3>
-      <button
-        class="delete"
-        type="button"
-        aria-label={$t("dialog.closeModal")}
-        onclick={close}
+      <button class="delete" type="button" aria-label={$t("dialog.closeModal")} onclick={close}
       ></button>
     </div>
   </svelte:fragment>
 
   <svelte:fragment slot="body">
-    <div
-      data-testid="preview-settings"
-      role="dialog"
-      aria-modal="true"
-      aria-label={$t("dashboard.customizeTitle")}
-      class="paisa-dashboard-settings"
-    >
+    <div data-testid="preview-settings" class="paisa-dashboard-settings">
       <p class="paisa-dashboard-settings__subtitle">{$t("dashboard.customizeSubtitle")}</p>
 
       <div class="paisa-dashboard-settings__group">
