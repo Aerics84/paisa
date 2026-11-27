@@ -6,7 +6,7 @@ document the upstream releases this fork builds on; the short-lived
 
 ### 0.8.7 (2026-11-27)
 
-Preview dashboard release.
+Preview dashboard and upstream hardening release.
 
 - Add curated dashboard presets (`Overview`, `Cash flow`, `Investor`, `Minimal`) and per-section visibility, stored locally in the browser.
 - Add a Recent Transactions section that links back into the preview ledger.
@@ -15,6 +15,11 @@ Preview dashboard release.
 - Keep keyboard focus inside the Customize dialog and close the mobile drawer automatically when the viewport grows, so the page never stays inert or scroll-locked.
 - Use the higher-contrast dashboard token for the preview topbar subtitle and animate the drawer out with reduced-motion support.
 - Translate all new dashboard and navigation labels into German and English.
+- Bind `paisa serve` to `127.0.0.1` by default; the container images keep listening on all interfaces with an explicit `--host 0.0.0.0`.
+- Add a system theme mode (`system`, `light`, `dark`) that follows OS changes only in system mode and applies the theme before first paint.
+- Add the `expandEscapes` import template helper for flattening multiline CSV descriptions.
+- Keep the networth chart working when the selected date range has no data.
+- Fail `npm run lint` on warnings, clean up the remaining unused imports and catch bindings, and run lint in CI.
 
 ### 0.8.6.7 (2026-11-25)
 
