@@ -139,7 +139,7 @@ export function moveToLine(editor: EditorView, lineNumber: number, cursor = fals
     if (cursor) {
       editor.dispatch({ selection: { anchor: line.from, head: line.from } });
     }
-  } catch (_e) {
+  } catch {
     // ignore invalid line number
   }
 }
@@ -166,7 +166,7 @@ export function focus(editor: EditorView, retry = 5) {
         () => {
           try {
             focus(editor, retry - 1);
-          } catch (e) {
+          } catch {
             // ignore
           }
         },

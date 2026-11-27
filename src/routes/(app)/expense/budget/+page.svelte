@@ -1,14 +1,7 @@
 <script lang="ts">
   import BudgetCard from "$lib/components/BudgetCard.svelte";
   import { getBudget } from "$lib/api/cashflow";
-  import {
-    formatCurrency,
-    type AccountBudget,
-    type Budget,
-    helpUrl,
-    now,
-    isMobile
-  } from "$lib/utils";
+  import { formatCurrency, type Budget, helpUrl, now, isMobile } from "$lib/utils";
   import _ from "lodash";
   import { onMount } from "svelte";
   import { month, setAllowedDateRange } from "../../../../store";

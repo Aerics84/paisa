@@ -46,6 +46,7 @@ jobs:
           npm ci
           npm run check:format:changed
           npm run check
+          npm run lint
           node ./scripts/gofmt-changed.mjs
           npm run test:imports
           npm run test:investment

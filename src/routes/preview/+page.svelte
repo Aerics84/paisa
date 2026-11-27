@@ -134,7 +134,7 @@
       }
       monthlyReview = response;
       monthlyReviewError = false;
-    } catch (_error) {
+    } catch {
       if (request === monthlyReviewRequest) {
         monthlyReview = null;
         monthlyReviewError = true;
@@ -233,7 +233,7 @@
       networthTimeline = networthResponse.networthTimeline;
       liabilityBreakdowns = liabilitiesResponse.liability_breakdowns;
       loadError = false;
-    } catch (_error) {
+    } catch {
       loadError = true;
     }
   });

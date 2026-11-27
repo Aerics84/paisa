@@ -66,10 +66,11 @@ export default [
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-unused-vars": [
-        "warn",
+        "error",
         {
           argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_"
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_"
         }
       ],
       "@typescript-eslint/no-unused-expressions": "off",

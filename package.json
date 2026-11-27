@@ -39,7 +39,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "gen:api": "go tool tygo generate && prettier --write \"src/lib/api/*.gen.ts\"",
     "check:api": "go tool tygo generate && prettier --write \"src/lib/api/*.gen.ts\" && git diff --exit-code -- src/lib/api",
-    "lint": "npm run check:format:all && eslint .",
+    "lint": "npm run check:format:all && eslint . --max-warnings 0",
     "format": "npm run format:all"
   },
   "dependencies": {

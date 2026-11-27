@@ -1,14 +1,7 @@
 <script lang="ts">
   import { accountColorStyle } from "$lib/colors";
   import { iconText } from "$lib/icon";
-  import {
-    formatCurrency,
-    postingUrl,
-    restName,
-    type Posting,
-    type Transaction,
-    firstName
-  } from "$lib/utils";
+  import { formatCurrency, postingUrl, restName, type Transaction, firstName } from "$lib/utils";
   import PostingStatus from "./PostingStatus.svelte";
   import TransactionNote from "./TransactionNote.svelte";
 

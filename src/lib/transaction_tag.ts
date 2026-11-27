@@ -37,7 +37,7 @@ class SchedulePreview extends WidgetType {
       if (_.isEmpty(schedules)) {
         text = "Invalid";
       }
-    } catch (e) {
+    } catch {
       text = "Invalid";
     }
     const wrapper = document.createElement("span");

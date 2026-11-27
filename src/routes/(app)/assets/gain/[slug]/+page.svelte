@@ -5,9 +5,7 @@
   import {
     formatCurrency,
     formatFloat,
-    type Posting,
     type AccountGain,
-    type Networth,
     type PortfolioAggregate,
     type AssetBreakdown,
     formatPercentage,

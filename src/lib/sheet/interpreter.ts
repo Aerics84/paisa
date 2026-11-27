@@ -449,7 +449,7 @@ class SheetAST extends AST {
     for (const node of nodes) {
       try {
         this.lines.push(new LineAST(node, state));
-      } catch (e) {
+      } catch {
         break;
       }
     }

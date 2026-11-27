@@ -109,7 +109,7 @@ function enrich(ts: TransactionSequenceInput): TransactionSequence {
     } else {
       periodAvailable = false;
     }
-  } catch (e) {
+  } catch {
     periodAvailable = false;
   }
 
