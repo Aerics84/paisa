@@ -160,6 +160,7 @@ export const en = {
   "dashboard.cashFlowEmpty": "You have not made any transactions in the last 3 months.",
   "dashboard.expensesEmpty": "You have no expenses this month.",
   "dashboard.recentTransactions": "Recent Transactions",
+  "dashboard.viewAllTransactions": "View all",
   "dashboard.presets": "Presets",
   "dashboard.customize": "Customize",
   "dashboard.customizeTitle": "Customize dashboard",

@@ -46,7 +46,14 @@
   import { dateMax, dateMin, month, refresh } from "../../store";
   import { t } from "$lib/i18n";
   import PreviewDashboardSettings from "$lib/components/PreviewDashboardSettings.svelte";
-  import { loadLayout, saveLayout, type PreviewDashboardLayout } from "$lib/preview_dashboard";
+  import PreviewRecentTransactions from "$lib/components/PreviewRecentTransactions.svelte";
+  import {
+    latestTransactions,
+    loadLayout,
+    saveLayout,
+    type PreviewDashboardLayout
+  } from "$lib/preview_dashboard";
+  import type { Transaction } from "$lib/api/ledger";
 
   // The app is client-only (ssr = false), so a synchronous read avoids a layout flash.
   let dashboardLayout = $state<PreviewDashboardLayout>(loadLayout());
@@ -84,6 +91,7 @@
   let availableMonthRange = $state<{ from: dayjs.Dayjs; to: dayjs.Dayjs } | null>(null);
   let goalSummaries = $state<GoalSummary[]>([]);
   let transactionSequences = $state<TransactionSequence[]>([]);
+  let transactions = $state<Transaction[]>([]);
   let budgetsByMonth = $state<Record<string, Budget>>({});
   let liabilityBreakdowns = $state<Record<string, LiabilityBreakdown>>({});
   let networthOverview = $state<Networth>();
@@ -216,6 +224,7 @@
         sortTrantionSequence(enrichTrantionSequence(dashboard.transactionSequences)),
         12
       );
+      transactions = latestTransactions(dashboard.transactions || [], 6);
       checkingBalances = dashboard.checkingBalances.asset_breakdowns;
       checkingBalanceTimeline = dashboard.checkingBalanceTimeline || [];
       availableMonthRange = dashboard.availableMonthRange || null;
@@ -609,7 +618,8 @@
       !_.isEmpty(budgetsByMonth) ||
       !_.isEmpty(liabilityBreakdowns) ||
       networthTimeline.length > 0 ||
-      currentNetworthValue !== 0
+      currentNetworthValue !== 0 ||
+      transactions.length > 0
   );
   let isEmpty = $derived(loadError || !hasDashboardData);
 </script>
@@ -1285,6 +1295,10 @@
             </div>
           </div>
         </div>
+      {/if}
+
+      {#if dashboardLayout.visible.recentTransactions && transactions.length > 0}
+        <PreviewRecentTransactions {transactions} />
       {/if}
 
       <div class="paisa-dashboard__section paisa-dashboard__footer">

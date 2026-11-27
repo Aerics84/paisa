@@ -164,6 +164,7 @@ export const de: Record<EnMessageKey, string> = {
   "dashboard.cashFlowEmpty": "Du hast in den letzten 3 Monaten keine Buchungen erstellt.",
   "dashboard.expensesEmpty": "Du hast diesen Monat keine Ausgaben.",
   "dashboard.recentTransactions": "Letzte Buchungen",
+  "dashboard.viewAllTransactions": "Alle anzeigen",
   "dashboard.presets": "Vorlagen",
   "dashboard.customize": "Anpassen",
   "dashboard.customizeTitle": "Übersicht anpassen",
