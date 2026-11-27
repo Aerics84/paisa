@@ -14,12 +14,12 @@ preview navigation.
 Use the gear button in the dashboard toolbar to open **Customize**. Pick one of the curated presets
 to set which sections are visible:
 
-| Preset | Visible sections |
-| --- | --- |
-| Overview | Net worth, monthly review, insights and goals, support, recent transactions |
-| Cash flow | Net worth, monthly review, support, recent transactions |
-| Investor | Net worth, monthly review, insights and goals |
-| Minimal | Net worth, monthly review |
+| Preset    | Visible sections                                                            |
+| --------- | --------------------------------------------------------------------------- |
+| Overview  | Net worth, monthly review, insights and goals, support, recent transactions |
+| Cash flow | Net worth, monthly review, support, recent transactions                     |
+| Investor  | Net worth, monthly review, insights and goals                               |
+| Minimal   | Net worth, monthly review                                                   |
 
 The dashboard footer is always visible.
 

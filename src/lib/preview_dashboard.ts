@@ -2,11 +2,7 @@ import type { Transaction } from "./api/ledger";
 import type { MessageKey } from "./i18n";
 
 export type PreviewWidgetId =
-  | "hero"
-  | "monthlyReview"
-  | "insights"
-  | "support"
-  | "recentTransactions";
+  "hero" | "monthlyReview" | "insights" | "support" | "recentTransactions";
 
 export type PreviewPresetId = "overview" | "cashflow" | "investor" | "minimal";
 
