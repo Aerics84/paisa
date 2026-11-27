@@ -104,6 +104,11 @@ export function renderNetworth(
   element: Element,
   options: { currencySymbol?: string } = {}
 ): { destroy: () => void; legends: Legend[] } {
+  if (points.length === 0) {
+    d3.select(element).selectAll("*").remove();
+    return { destroy: () => {}, legends: [] };
+  }
+
   // The user's locale (e.g. lakh / crore grouping) applies to the default
   // currency only.
   const symbol = options.currencySymbol || "";

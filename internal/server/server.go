@@ -562,11 +562,12 @@ func Listen(deps Deps, host string, port int) {
 	router := BuildWithManager(deps, true, manager)
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 
-	displayHost := host
-	if displayHost == "" {
-		displayHost = "localhost"
+	switch host {
+	case "", "0.0.0.0", "::":
+		log.Infof("Listening on all interfaces (%s)", address)
+	default:
+		log.Infof("Listening on http://%s", address)
 	}
-	log.Infof("Listening on http://%s", net.JoinHostPort(displayHost, strconv.Itoa(port)))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

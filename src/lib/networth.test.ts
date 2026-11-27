@@ -1,5 +1,6 @@
+import "../happydom";
 import { describe, expect, test } from "bun:test";
-import { hasNetworthKpiData } from "./networth";
+import { hasNetworthKpiData, renderNetworth } from "./networth";
 import type { CurrencyNetworth, Networth } from "./utils";
 
 function point(): Networth {
@@ -35,5 +36,21 @@ describe("hasNetworthKpiData", () => {
 
   test("keeps the default currency behaviour when nothing is selected", () => {
     expect(hasNetworthKpiData(undefined, [])).toBe(true);
+  });
+});
+
+describe("renderNetworth", () => {
+  test("renders nothing for an empty timeline", () => {
+    const host = document.createElement("div");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    host.appendChild(svg);
+    document.body.appendChild(host);
+
+    const result = renderNetworth([], svg);
+    expect(result.legends).toEqual([]);
+    expect(svg.childNodes.length).toBe(0);
+
+    result.destroy();
+    host.remove();
   });
 });

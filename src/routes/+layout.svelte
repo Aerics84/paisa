@@ -6,6 +6,8 @@
   import { getOnboardingStatus, type OnboardingStatus } from "$lib/api/onboarding";
   import { t } from "$lib/i18n";
   import { registerServiceWorker } from "$lib/pwa";
+  import { initializeTheme } from "$lib/theme";
+  import { theme } from "../store";
 
   let { children } = $props();
   let status = $state<OnboardingStatus | null>(null);
@@ -15,8 +17,7 @@
     status?.needed === true && status.can_setup === false && page.url.pathname === "/"
   );
 
-  onMount(async () => {
-    registerServiceWorker();
+  async function loadOnboarding() {
     try {
       status = await getOnboardingStatus();
       if (status.needed && status.can_setup && page.url.pathname !== "/onboarding") {
@@ -26,6 +27,14 @@
       // Onboarding is optional for the layout: a failed status request must not
       // break the app, the login redirect or the read-only view.
     }
+  }
+
+  onMount(() => {
+    registerServiceWorker();
+    const disposeTheme = initializeTheme(theme.set);
+    void loadOnboarding();
+
+    return disposeTheme;
   });
 </script>
 

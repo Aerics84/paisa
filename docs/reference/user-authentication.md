@@ -122,7 +122,9 @@ Argon2id, the old `X-Auth` value no longer authenticates.
     attack can be performed to obtain the data including your password and
     session token.
 
-`paisa serve` has no TLS listener; it only serves plain HTTP. Expose it through
+`paisa serve` has no TLS listener; it only serves plain HTTP. It binds to
+`127.0.0.1` by default. If the reverse proxy runs on another host, start Paisa
+with `--host 0.0.0.0` and restrict that port to the proxy. Expose it through
 a reverse proxy that terminates HTTPS and forwards requests to Paisa. Start
 Paisa with `--secure-cookies` or set `PAISA_SECURE_COOKIES=true`: this is the
 supported way to mark the session cookie `Secure` even though the proxied

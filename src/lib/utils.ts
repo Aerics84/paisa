@@ -12,6 +12,7 @@ import { iconGlyph, preloadConfiguredIconFonts } from "./icon";
 import { resolveLocale, setLocale, type Locale } from "./i18n";
 import { parseDate, rawRequest, reviveDates, type RequestOptions } from "./api/client";
 import type { BalancedPosting, Posting, Transaction } from "./api/ledger";
+import { getColorPreference } from "./theme";
 import type {
   AccountGain,
   Aggregate,
@@ -42,6 +43,8 @@ import type {
   Node,
   TransactionSequenceInput
 } from "./api/cashflow";
+
+export { getColorPreference, setColorPreference } from "./theme";
 
 export type { BalancedPosting, Posting, Transaction };
 export type {
@@ -848,22 +851,8 @@ export function postingUrl(posting: Posting) {
   }`;
 }
 
-const storageKey = "theme-preference";
-
-export function getColorPreference() {
-  if (localStorage.getItem(storageKey)) {
-    return localStorage.getItem(storageKey);
-  } else {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-}
-
 export function darkLightColor(dark: string, light: string) {
   return getColorPreference() == "dark" ? dark : light;
-}
-
-export function setColorPreference(theme: string) {
-  localStorage.setItem(storageKey, theme);
 }
 
 export function isZero(n: number) {

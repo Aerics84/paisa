@@ -9,4 +9,4 @@ RUN apk --no-cache add python3 py3-pip \
 
 WORKDIR /root/
 
-CMD ["paisa", "serve"]
+CMD ["paisa", "serve", "--host", "0.0.0.0"]

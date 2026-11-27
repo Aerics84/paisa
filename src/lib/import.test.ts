@@ -167,6 +167,11 @@ describe("broker csv normalization", () => {
 });
 
 describe("template helpers", () => {
+  test("expandEscapes decodes supported escapes once and preserves unknown ones", () => {
+    expect(helpers.expandEscapes(String.raw`a\n\r\tb\\n\qc`)).toBe("a\n\r\tb\\n\\qc");
+    expect(helpers.expandEscapes("plain text")).toBe("plain text");
+  });
+
   test("acronym", () => {
     expect(helpers.acronym("Foo Bar baz")).toBe("FBB");
     expect(helpers.acronym("foo   the bar")).toBe("FB");

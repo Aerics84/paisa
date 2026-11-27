@@ -132,6 +132,11 @@ related files in a folder named `paisa` which will be located in your
 Go to [http://localhost:7500](http://localhost:7500). Read the [tutorial](./tutorial.md) to learn
 more.
 
+`paisa serve` binds to `127.0.0.1` by default. To reach Paisa from another
+machine, start it with `--host 0.0.0.0` and restrict access with authentication,
+a firewall or a reverse proxy. The container images already pass
+`--host 0.0.0.0` for you.
+
 ## Docker
 
 Paisa CLI is available on GitHub Container Registry as `ghcr.io/aerics84/paisa`.

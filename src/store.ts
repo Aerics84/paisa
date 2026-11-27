@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { dateBounds } from "$lib/date_range";
 import type { AccountTfIdf, LedgerFileError, SheetFileError, SheetLineResult } from "$lib/utils";
 import { askConfirm } from "$lib/confirm";
+import { getColorPreference } from "$lib/theme";
 import _ from "lodash";
 
 export function now() {
@@ -77,7 +78,7 @@ export const dateRange = derived(
   }
 );
 
-export const theme = writable("light");
+export const theme = writable(getColorPreference());
 
 export const loading = writable(false);
 

@@ -1049,6 +1049,11 @@ export const en = {
   "more.sheets.createFirst": "Create your first sheet",
   "more.sheets.filenameHelp": "Filename without any extension",
 
+  "theme.system": "System",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.switchTo": "Switch theme: {mode}",
+
   "pwa.updateAvailable": "A new version of Paisa is available.",
   "pwa.reload": "Reload"
 } satisfies Record<string, string>;

@@ -1076,6 +1076,11 @@ export const de: Record<EnMessageKey, string> = {
   "more.sheets.createFirst": "Erstelle dein erstes Blatt",
   "more.sheets.filenameHelp": "Dateiname ohne Erweiterung",
 
+  "theme.system": "System",
+  "theme.light": "Hell",
+  "theme.dark": "Dunkel",
+  "theme.switchTo": "Design wechseln: {mode}",
+
   "pwa.updateAvailable": "Eine neue Version von Paisa ist verfügbar.",
   "pwa.reload": "Neu laden"
 };
