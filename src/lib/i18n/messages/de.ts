@@ -165,6 +165,12 @@ export const de: Record<EnMessageKey, string> = {
   "dashboard.expensesEmpty": "Du hast diesen Monat keine Ausgaben.",
   "dashboard.recentTransactions": "Letzte Buchungen",
   "dashboard.presets": "Vorlagen",
+  "dashboard.customize": "Anpassen",
+  "dashboard.customizeTitle": "Übersicht anpassen",
+  "dashboard.customizeSubtitle":
+    "Wähle eine Vorlage oder blende einzelne Bereiche ein. Deine Auswahl wird in diesem Browser gespeichert.",
+  "dashboard.resetDefault": "Auf Standard zurücksetzen",
+  "dashboard.done": "Fertig",
   "dashboard.preset.overview": "Überblick",
   "dashboard.preset.overview.description": "Alle Bereiche",
   "dashboard.preset.cashflow": "Cashflow",

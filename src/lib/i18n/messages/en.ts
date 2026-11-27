@@ -161,6 +161,12 @@ export const en = {
   "dashboard.expensesEmpty": "You have no expenses this month.",
   "dashboard.recentTransactions": "Recent Transactions",
   "dashboard.presets": "Presets",
+  "dashboard.customize": "Customize",
+  "dashboard.customizeTitle": "Customize dashboard",
+  "dashboard.customizeSubtitle":
+    "Choose a preset or toggle individual sections. Your choice is stored in this browser.",
+  "dashboard.resetDefault": "Reset to default",
+  "dashboard.done": "Done",
   "dashboard.preset.overview": "Overview",
   "dashboard.preset.overview.description": "All sections",
   "dashboard.preset.cashflow": "Cash flow",

@@ -9,6 +9,81 @@
   }
 }
 
+.paisa-dashboard__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.9rem;
+}
+
+.paisa-dashboard-settings {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.paisa-dashboard-settings__subtitle {
+  margin: 0;
+  color: var(--dashboard-text-muted);
+}
+
+.paisa-dashboard-settings__group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.paisa-dashboard-settings__heading {
+  color: var(--dashboard-text-strong);
+  font-weight: 600;
+}
+
+.paisa-dashboard-settings__presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.6rem;
+}
+
+.paisa-dashboard-settings__preset {
+  height: auto;
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  white-space: normal;
+}
+
+.paisa-dashboard-settings__preset span {
+  color: var(--dashboard-text-muted);
+  font-size: 0.78rem;
+}
+
+.paisa-dashboard-settings__preset.is-active {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+  color: var(--app-text);
+}
+
+.paisa-dashboard-settings__widgets {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.paisa-dashboard-settings__widget {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.75rem;
+}
+
+.paisa-dashboard-settings__widget span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.paisa-dashboard-settings__widget small {
+  color: var(--dashboard-text-muted);
+}
+
 .paisa-empty-state {
   padding: 2.4rem;
   border-radius: 1.5rem;

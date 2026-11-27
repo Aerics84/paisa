@@ -45,6 +45,18 @@
   } from "$lib/utils";
   import { dateMax, dateMin, month, refresh } from "../../store";
   import { t } from "$lib/i18n";
+  import PreviewDashboardSettings from "$lib/components/PreviewDashboardSettings.svelte";
+  import { loadLayout, saveLayout, type PreviewDashboardLayout } from "$lib/preview_dashboard";
+
+  // The app is client-only (ssr = false), so a synchronous read avoids a layout flash.
+  let dashboardLayout = $state<PreviewDashboardLayout>(loadLayout());
+  let showDashboardSettings = $state(false);
+  let customizeButtonEl = $state<HTMLButtonElement | null>(null);
+
+  function updateDashboardLayout(next: PreviewDashboardLayout) {
+    dashboardLayout = next;
+    saveLayout(next);
+  }
 
   type CheckingBalancePoint = {
     month: string;
@@ -655,602 +667,625 @@
   </section>
 {:else}
   <section class="section pt-0 px-0">
-    <div class="paisa-dashboard">
-      <div class="paisa-dashboard__section paisa-dashboard__hero">
-        <div class="paisa-dashboard__hero-top">
-          <div class="paisa-dashboard__hero-summary">
-            <div>
-              <div class="paisa-dashboard__label">{$t("dashboard.totalNetWorth")}</div>
-              <div class="paisa-dashboard__amount">
-                {formatCurrencyWithSymbol(currentNetworthValue)}
+    <div class="paisa-dashboard__toolbar">
+      <button
+        bind:this={customizeButtonEl}
+        class="button is-small is-light"
+        type="button"
+        data-testid="preview-customize"
+        onclick={() => (showDashboardSettings = true)}
+      >
+        <span class="icon is-small"><i class="fas fa-gear"></i></span>
+        <span>{$t("dashboard.customize")}</span>
+      </button>
+    </div>
+    <div class="paisa-dashboard" data-testid="preview-dashboard">
+      {#if dashboardLayout.visible.hero}
+        <div
+          class="paisa-dashboard__section paisa-dashboard__hero"
+          data-testid="preview-section-hero"
+        >
+          <div class="paisa-dashboard__hero-top">
+            <div class="paisa-dashboard__hero-summary">
+              <div>
+                <div class="paisa-dashboard__label">{$t("dashboard.totalNetWorth")}</div>
+                <div class="paisa-dashboard__amount">
+                  {formatCurrencyWithSymbol(currentNetworthValue)}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="paisa-dashboard__trend-group">
-            <div class="paisa-spark-card paisa-spark-card--hero">
-              <div class="paisa-spark-card__meta">
-                <div>
-                  <span>{$t("dashboard.netWorth")}</span>
-                  <strong>{formatCurrencyWithSymbol(currentNetworthValue)}</strong>
-                </div>
-                <div class="paisa-spark-card__change">
-                  {#if networthHasHistory}
-                    {$t("dashboard.months", { count: networthHistoryMonths })}
-                  {:else}
-                    {$t("common.needMoreHistory")}
-                  {/if}
-                </div>
-              </div>
-              {#if networthTrendState === "ready"}
-                <div class="paisa-spark-card__chart">
-                  <div class="paisa-spark-card__y-axis">
-                    {#each networthValueTicks as tick}
-                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
-                    {/each}
+            <div class="paisa-dashboard__trend-group">
+              <div class="paisa-spark-card paisa-spark-card--hero">
+                <div class="paisa-spark-card__meta">
+                  <div>
+                    <span>{$t("dashboard.netWorth")}</span>
+                    <strong>{formatCurrencyWithSymbol(currentNetworthValue)}</strong>
                   </div>
-                  <div class="paisa-spark-card__plot">
-                    <svg
-                      viewBox={`0 0 420 ${heroChartHeight}`}
-                      class="paisa-sparkline paisa-sparkline--hero"
-                    >
-                      {#each networthValueTicks as tick}
-                        <line
-                          x1="0"
-                          y1={tick.y}
-                          x2="420"
-                          y2={tick.y}
-                          class="paisa-sparkline__grid"
-                        />
-                      {/each}
-                      <path
-                        d={pathForValues(
-                          networthSeries,
-                          networthMin,
-                          networthMax,
-                          420,
-                          heroChartHeight
-                        )}
-                        class="is-equity"
-                        vector-effect="non-scaling-stroke"
-                      />
-                    </svg>
-                    <div class="paisa-spark-card__x-axis">
-                      {#each networthDateTicks as label}
-                        <span>{label}</span>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {:else}
-                <div class="paisa-spark-card__empty">
-                  {$t("dashboard.networthTrendInsufficient")}
-                </div>
-              {/if}
-            </div>
-
-            <div class="paisa-spark-card paisa-spark-card--hero">
-              <div class="paisa-spark-card__meta">
-                <div>
-                  <span>{$t("dashboard.checking")}</span>
-                  <strong>{formatCurrencyWithSymbol(checkingTotal)}</strong>
-                </div>
-                <div class="paisa-spark-card__change">
-                  {#if checkingHasHistory}
-                    {$t("dashboard.accounts", { count: checkingAccounts.length })}
-                  {:else}
-                    {$t("common.needMoreHistory")}
-                  {/if}
-                </div>
-              </div>
-              {#if checkingState === "ready"}
-                <div class="paisa-spark-card__chart">
-                  <div class="paisa-spark-card__y-axis">
-                    {#each checkingValueTicks as tick}
-                      <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
-                    {/each}
-                  </div>
-                  <div class="paisa-spark-card__plot">
-                    <svg
-                      viewBox={`0 0 420 ${heroChartHeight}`}
-                      class="paisa-sparkline paisa-sparkline--hero"
-                    >
-                      {#each checkingValueTicks as tick}
-                        <line
-                          x1="0"
-                          y1={tick.y}
-                          x2="420"
-                          y2={tick.y}
-                          class="paisa-sparkline__grid"
-                        />
-                      {/each}
-                      {#each checkingAccountSeries as series}
-                        <path
-                          d={pathForValues(
-                            series.values,
-                            checkingMin,
-                            checkingMax,
-                            420,
-                            heroChartHeight
-                          )}
-                          style={`stroke: ${series.color}`}
-                          vector-effect="non-scaling-stroke"
-                        />
-                      {/each}
-                    </svg>
-                    <div class="paisa-spark-card__x-axis">
-                      {#each checkingDateTicks as label}
-                        <span>{label}</span>
-                      {/each}
-                    </div>
-                    {#if checkingAccountSeries.length > 1}
-                      <div class="paisa-spark-card__legend">
-                        {#each checkingAccountSeries as series}
-                          <span><i style={`background: ${series.color}`}></i>{series.label}</span>
-                        {/each}
-                      </div>
+                  <div class="paisa-spark-card__change">
+                    {#if networthHasHistory}
+                      {$t("dashboard.months", { count: networthHistoryMonths })}
+                    {:else}
+                      {$t("common.needMoreHistory")}
                     {/if}
                   </div>
                 </div>
-              {:else}
-                <div class="paisa-spark-card__empty">
-                  {$t("dashboard.checkingTrendInsufficient")}
-                </div>
-              {/if}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="paisa-dashboard__section">
-        <div class="paisa-review">
-          <div class="paisa-review__header">
-            <div>
-              <div class="paisa-zone__title">{$t("dashboard.monthlyReview")}</div>
-              <div class="paisa-zone__subtle">
-                {selectedMonthLabel}{activeMonthlyReview && !activeMonthlyReview.period_complete
-                  ? ` · ${$t("dashboard.inProgress")}`
-                  : ""}
-              </div>
-            </div>
-            {#if activeMonthlyReview}
-              <div class="paisa-review__status">
-                {activeMonthlyReview.period_complete
-                  ? $t("dashboard.periodComplete")
-                  : $t("dashboard.monthToDate")}
-              </div>
-            {/if}
-          </div>
-
-          {#if reviewLoading}
-            <div class="paisa-zone__empty">
-              <strong>{$t("dashboard.loadingMonth", { month: selectedMonthLabel })}</strong>
-            </div>
-          {:else if monthlyReviewError}
-            <div class="paisa-zone__empty">
-              <strong>{$t("dashboard.reviewLoadError")}</strong>
-              <p>{$t("dashboard.reviewLoadErrorHint")}</p>
-            </div>
-          {:else if !activeMonthlyReview}
-            <div class="paisa-zone__empty">
-              <strong>{$t("dashboard.reviewUnavailable")}</strong>
-            </div>
-          {:else}
-            {#if reviewHasActivity}
-              <div class="paisa-review__metrics">
-                <div class="paisa-review__metric">
-                  <span>{$t("dashboard.netIncomeAfterTax")}</span>
-                  <strong
-                    >{formatCurrencyWithSymbol(activeMonthlyReview.net_income_after_tax)}</strong
-                  >
-                  <small>
-                    {activeMonthlyReview.has_income_postings
-                      ? $t("dashboard.taxAmount", {
-                          amount: formatCurrencyWithSymbol(activeMonthlyReview.net_tax)
-                        })
-                      : $t("dashboard.noRecordedIncome")}
-                  </small>
-                </div>
-                <div class="paisa-review__metric">
-                  <span>{$t("dashboard.surplusDeficit")}</span>
-                  {#if reviewSurplusState === "ready"}
-                    <strong class:is-negative={activeMonthlyReview.surplus < 0}
-                      >{formatCurrencyWithSymbol(activeMonthlyReview.surplus)}</strong
-                    >
-                    <small>{$t("dashboard.netIncomeMinusExpenses")}</small>
-                  {:else}
-                    <strong class="is-muted">{$t("common.notAvailable")}</strong>
-                    <small>
-                      {reviewSurplusState === "income-missing"
-                        ? $t("dashboard.noIncomeThisMonth")
-                        : reviewSurplusState === "expense-missing"
-                          ? $t("dashboard.noExpensesThisMonth")
-                          : $t("dashboard.noIncomeOrExpensesThisMonth")}
-                    </small>
-                  {/if}
-                </div>
-                <div class="paisa-review__metric">
-                  <span>{$t("dashboard.netExpense")}</span>
-                  <strong
-                    >{activeMonthlyReview.has_expense_postings
-                      ? formatCurrencyWithSymbol(activeMonthlyReview.net_expense)
-                      : $t("common.notAvailable")}</strong
-                  >
-                  <small
-                    >{activeMonthlyReview.has_expense_postings
-                      ? $t("dashboard.excludesTax")
-                      : $t("dashboard.noRecordedExpenses")}</small
-                  >
-                </div>
-              </div>
-
-              <div class="paisa-review__trend">
-                <div class="paisa-zone__subtle">{$t("dashboard.netIncomeLastThreeMonths")}</div>
-                <div class="paisa-review__trend-values">
-                  {#each reviewTrend as point, index}
-                    {@const previous = index > 0 ? reviewTrend[index - 1] : null}
-                    <div class="paisa-review__trend-point" class:is-mtd={point.isMonthToDate}>
-                      <span>{dayjs(point.month + "-01").format("MMM YYYY")}</span>
-                      <strong
-                        >{point.value != null
-                          ? formatCurrencyWithSymbol(point.value)
-                          : $t("common.notAvailable")}</strong
-                      >
-                      {#if point.isMonthToDate}
-                        <small>{$t("dashboard.monthToDate")}</small>
-                      {:else if point.value != null && previous?.value != null}
-                        <small
-                          class:is-positive={point.value >= previous.value}
-                          class:is-negative={point.value < previous.value}
-                        >
-                          {point.value >= previous.value ? "↑" : "↓"}
-                          {formatCurrencyWithSymbol(Math.abs(point.value - previous.value))}
-                        </small>
-                      {:else}
-                        <small>{$t("dashboard.noComparableMonth")}</small>
-                      {/if}
+                {#if networthTrendState === "ready"}
+                  <div class="paisa-spark-card__chart">
+                    <div class="paisa-spark-card__y-axis">
+                      {#each networthValueTicks as tick}
+                        <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
+                      {/each}
                     </div>
-                  {/each}
-                </div>
-              </div>
-
-              <div class="paisa-review__flow">
-                <div class="paisa-review__performance-header">
-                  <div class="paisa-zone__subtle">{$t("dashboard.postedMoneyFlow")}</div>
-                  <a href="/cash_flow/yearly" class="secondary-link paisa-link-with-arrow"
-                    >{$t("dashboard.openYearlyFlow")} <i class="fas fa-arrow-right"></i></a
-                  >
-                </div>
-                {#if sankeyEmpty}
-                  <div class="paisa-zone__empty">
-                    <strong>{$t("dashboard.noPostedFlows")}</strong>
-                    <p>{$t("dashboard.noPostingsToConnect")}</p>
+                    <div class="paisa-spark-card__plot">
+                      <svg
+                        viewBox={`0 0 420 ${heroChartHeight}`}
+                        class="paisa-sparkline paisa-sparkline--hero"
+                      >
+                        {#each networthValueTicks as tick}
+                          <line
+                            x1="0"
+                            y1={tick.y}
+                            x2="420"
+                            y2={tick.y}
+                            class="paisa-sparkline__grid"
+                          />
+                        {/each}
+                        <path
+                          d={pathForValues(
+                            networthSeries,
+                            networthMin,
+                            networthMax,
+                            420,
+                            heroChartHeight
+                          )}
+                          class="is-equity"
+                          vector-effect="non-scaling-stroke"
+                        />
+                      </svg>
+                      <div class="paisa-spark-card__x-axis">
+                        {#each networthDateTicks as label}
+                          <span>{label}</span>
+                        {/each}
+                      </div>
+                    </div>
                   </div>
                 {:else}
-                  <div class="paisa-review__flow-canvas">
-                    <svg
-                      id="d3-expense-flow"
-                      height={flowChartHeight}
-                      use:flowCanvas={activeMonthlyReview}
-                    ></svg>
-                  </div>
-                {/if}
-              </div>
-            {:else}
-              <div class="paisa-review__no-activity">
-                <strong>{$t("dashboard.noRecordedActivity")}</strong>
-                <p>
-                  {$t("dashboard.noPostingsForMonth", { month: selectedMonthLabel })}
-                </p>
-              </div>
-            {/if}
-
-            <div class="paisa-review__performance">
-              <div class="paisa-review__performance-header">
-                <div class="paisa-zone__subtle">{$t("nav.investments")}</div>
-                {#if reviewPerformance.asOf}
-                  <div class="paisa-zone__subtle">
-                    {$t("dashboard.pricesAsOf", {
-                      date: dayjs(reviewPerformance.asOf).format("MMM D, YYYY")
-                    })}
+                  <div class="paisa-spark-card__empty">
+                    {$t("dashboard.networthTrendInsufficient")}
                   </div>
                 {/if}
               </div>
 
-              <div class="paisa-review__investment-drivers">
-                <div>
-                  <span>{$t("dashboard.netContributions")}</span><strong
-                    >{formatCurrencyWithSymbol(
-                      activeMonthlyReview.investment_contributions
-                    )}</strong
-                  ><small>{$t("dashboard.nonCheckingAssets")}</small>
+              <div class="paisa-spark-card paisa-spark-card--hero">
+                <div class="paisa-spark-card__meta">
+                  <div>
+                    <span>{$t("dashboard.checking")}</span>
+                    <strong>{formatCurrencyWithSymbol(checkingTotal)}</strong>
+                  </div>
+                  <div class="paisa-spark-card__change">
+                    {#if checkingHasHistory}
+                      {$t("dashboard.accounts", { count: checkingAccounts.length })}
+                    {:else}
+                      {$t("common.needMoreHistory")}
+                    {/if}
+                  </div>
                 </div>
-                <div>
-                  <span>{$t("dashboard.marketMovement")}</span><strong
-                    >{activeMonthlyReview.performance_state === "ready"
-                      ? formatCurrencyWithSymbol(activeMonthlyReview.investment_market_movement)
-                      : $t("common.notAvailable")}</strong
-                  ><small>{$t("dashboard.rankedPositions")}</small>
-                </div>
-                <div>
-                  <span>{$t("dashboard.dividends")}</span><strong
-                    >{formatCurrencyWithSymbol(activeMonthlyReview.dividend_income)}</strong
-                  ><small>{$t("dashboard.totalReturnComponent")}</small>
+                {#if checkingState === "ready"}
+                  <div class="paisa-spark-card__chart">
+                    <div class="paisa-spark-card__y-axis">
+                      {#each checkingValueTicks as tick}
+                        <span style={`top: calc(${tick.top}% - 0.55rem);`}>{tick.label}</span>
+                      {/each}
+                    </div>
+                    <div class="paisa-spark-card__plot">
+                      <svg
+                        viewBox={`0 0 420 ${heroChartHeight}`}
+                        class="paisa-sparkline paisa-sparkline--hero"
+                      >
+                        {#each checkingValueTicks as tick}
+                          <line
+                            x1="0"
+                            y1={tick.y}
+                            x2="420"
+                            y2={tick.y}
+                            class="paisa-sparkline__grid"
+                          />
+                        {/each}
+                        {#each checkingAccountSeries as series}
+                          <path
+                            d={pathForValues(
+                              series.values,
+                              checkingMin,
+                              checkingMax,
+                              420,
+                              heroChartHeight
+                            )}
+                            style={`stroke: ${series.color}`}
+                            vector-effect="non-scaling-stroke"
+                          />
+                        {/each}
+                      </svg>
+                      <div class="paisa-spark-card__x-axis">
+                        {#each checkingDateTicks as label}
+                          <span>{label}</span>
+                        {/each}
+                      </div>
+                      {#if checkingAccountSeries.length > 1}
+                        <div class="paisa-spark-card__legend">
+                          {#each checkingAccountSeries as series}
+                            <span><i style={`background: ${series.color}`}></i>{series.label}</span>
+                          {/each}
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+                {:else}
+                  <div class="paisa-spark-card__empty">
+                    {$t("dashboard.checkingTrendInsufficient")}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          </div>
+        </div>
+      {/if}
+
+      {#if dashboardLayout.visible.monthlyReview}
+        <div class="paisa-dashboard__section" data-testid="preview-section-monthly-review">
+          <div class="paisa-review">
+            <div class="paisa-review__header">
+              <div>
+                <div class="paisa-zone__title">{$t("dashboard.monthlyReview")}</div>
+                <div class="paisa-zone__subtle">
+                  {selectedMonthLabel}{activeMonthlyReview && !activeMonthlyReview.period_complete
+                    ? ` · ${$t("dashboard.inProgress")}`
+                    : ""}
                 </div>
               </div>
-
-              {#if activeMonthlyReview.performance_state === "ready" && reviewPerformance.best.length}
-                <div class="paisa-review__performers">
-                  <div class="paisa-review__performer-group">
-                    <div class="paisa-zone__subtle">{$t("dashboard.best")}</div>
-                    {#each reviewPerformance.best as performer}
-                      <div class="paisa-review__performer">
-                        <span>{positionLabel(performer.account)}</span>
-                        <strong
-                          class:is-positive={performer.total_return_percent >= 0}
-                          class:is-negative={performer.total_return_percent < 0}
-                        >
-                          {formatPercentage(performer.total_return_percent / 100, 2)}
-                        </strong>
-                        {#if performer.dividend_income}
-                          <small
-                            >{$t("dashboard.dividendsAmount", {
-                              amount: formatCurrencyWithSymbol(performer.dividend_income)
-                            })}</small
-                          >
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                  <div class="paisa-review__performer-group">
-                    <div class="paisa-zone__subtle">{$t("dashboard.weakest")}</div>
-                    {#each reviewPerformance.weakest as performer}
-                      <div class="paisa-review__performer">
-                        <span>{positionLabel(performer.account)}</span>
-                        <strong
-                          class:is-positive={performer.total_return_percent >= 0}
-                          class:is-negative={performer.total_return_percent < 0}
-                        >
-                          {formatPercentage(performer.total_return_percent / 100, 2)}
-                        </strong>
-                        {#if performer.dividend_income}
-                          <small
-                            >{$t("dashboard.dividendsAmount", {
-                              amount: formatCurrencyWithSymbol(performer.dividend_income)
-                            })}</small
-                          >
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {:else}
-                <div class="paisa-zone__empty">
-                  <strong
-                    >{$t("dashboard.investmentPerformanceUnavailable", {
-                      month: selectedMonthLabel
-                    })}</strong
-                  >
-                  <p>
-                    {$t("dashboard.insufficientPrices")}
-                  </p>
+              {#if activeMonthlyReview}
+                <div class="paisa-review__status">
+                  {activeMonthlyReview.period_complete
+                    ? $t("dashboard.periodComplete")
+                    : $t("dashboard.monthToDate")}
                 </div>
               {/if}
             </div>
-          {/if}
-        </div>
-      </div>
-
-      <div class="paisa-dashboard__section">
-        <div class="paisa-dashboard__band paisa-dashboard__band--review">
-          <div class="paisa-zone paisa-zone--insights">
-            <DashboardSectionHeader title={$t("nav.insights")} subtle={selectedMonthLabel}>
-              {#snippet right()}
-                <a href="/expense/monthly" class="secondary-link paisa-link-with-arrow"
-                  >{$t("dashboard.viewAllInsights")} <i class="fas fa-arrow-right"></i></a
-                >
-              {/snippet}
-            </DashboardSectionHeader>
 
             {#if reviewLoading}
               <div class="paisa-zone__empty">
                 <strong>{$t("dashboard.loadingMonth", { month: selectedMonthLabel })}</strong>
               </div>
-            {:else}
-              <div class="paisa-insights">
-                {#each insights as insight}
-                  <article class={"paisa-insight paisa-insight--" + insight.tone}>
-                    <div class="paisa-insight__icon">
-                      <span class="icon">
-                        <i
-                          class={"fas " +
-                            (insight.tone === "positive"
-                              ? "fa-arrow-trend-up"
-                              : insight.tone === "warning"
-                                ? "fa-triangle-exclamation"
-                                : insight.tone === "negative"
-                                  ? "fa-arrow-trend-down"
-                                  : "fa-circle-info")}
-                        ></i>
-                      </span>
-                    </div>
-                    <div class="paisa-insight__copy">
-                      <div class="paisa-insight__title">{insight.title}</div>
-                      <div class="paisa-insight__text">{insight.description}</div>
-                      <div class="paisa-insight__delta">{insight.deltaLabel}</div>
-                    </div>
-                  </article>
-                {/each}
+            {:else if monthlyReviewError}
+              <div class="paisa-zone__empty">
+                <strong>{$t("dashboard.reviewLoadError")}</strong>
+                <p>{$t("dashboard.reviewLoadErrorHint")}</p>
               </div>
-            {/if}
-          </div>
+            {:else if !activeMonthlyReview}
+              <div class="paisa-zone__empty">
+                <strong>{$t("dashboard.reviewUnavailable")}</strong>
+              </div>
+            {:else}
+              {#if reviewHasActivity}
+                <div class="paisa-review__metrics">
+                  <div class="paisa-review__metric">
+                    <span>{$t("dashboard.netIncomeAfterTax")}</span>
+                    <strong
+                      >{formatCurrencyWithSymbol(activeMonthlyReview.net_income_after_tax)}</strong
+                    >
+                    <small>
+                      {activeMonthlyReview.has_income_postings
+                        ? $t("dashboard.taxAmount", {
+                            amount: formatCurrencyWithSymbol(activeMonthlyReview.net_tax)
+                          })
+                        : $t("dashboard.noRecordedIncome")}
+                    </small>
+                  </div>
+                  <div class="paisa-review__metric">
+                    <span>{$t("dashboard.surplusDeficit")}</span>
+                    {#if reviewSurplusState === "ready"}
+                      <strong class:is-negative={activeMonthlyReview.surplus < 0}
+                        >{formatCurrencyWithSymbol(activeMonthlyReview.surplus)}</strong
+                      >
+                      <small>{$t("dashboard.netIncomeMinusExpenses")}</small>
+                    {:else}
+                      <strong class="is-muted">{$t("common.notAvailable")}</strong>
+                      <small>
+                        {reviewSurplusState === "income-missing"
+                          ? $t("dashboard.noIncomeThisMonth")
+                          : reviewSurplusState === "expense-missing"
+                            ? $t("dashboard.noExpensesThisMonth")
+                            : $t("dashboard.noIncomeOrExpensesThisMonth")}
+                      </small>
+                    {/if}
+                  </div>
+                  <div class="paisa-review__metric">
+                    <span>{$t("dashboard.netExpense")}</span>
+                    <strong
+                      >{activeMonthlyReview.has_expense_postings
+                        ? formatCurrencyWithSymbol(activeMonthlyReview.net_expense)
+                        : $t("common.notAvailable")}</strong
+                    >
+                    <small
+                      >{activeMonthlyReview.has_expense_postings
+                        ? $t("dashboard.excludesTax")
+                        : $t("dashboard.noRecordedExpenses")}</small
+                    >
+                  </div>
+                </div>
 
-          <div class="paisa-zone paisa-zone--goals">
-            <DashboardSectionHeader
-              title={$t("dashboard.goalProgress")}
-              subtle={$t("dashboard.currentStatus")}
-            >
-              {#snippet right()}
-                <a href="/more/goals" class="secondary-link paisa-link-with-arrow"
-                  >{$t("dashboard.viewAllGoals")} <i class="fas fa-arrow-right"></i></a
-                >
-              {/snippet}
-            </DashboardSectionHeader>
-            {#if goalState === "ready"}
-              <div class="paisa-mini-list">
-                {#each goalProgress as goal, index}
-                  <div class="paisa-mini-list__goal">
-                    <div class="is-flex is-justify-content-space-between">
-                      <span>{goal.name}</span>
-                      <strong>{goal.percent}%</strong>
+                <div class="paisa-review__trend">
+                  <div class="paisa-zone__subtle">{$t("dashboard.netIncomeLastThreeMonths")}</div>
+                  <div class="paisa-review__trend-values">
+                    {#each reviewTrend as point, index}
+                      {@const previous = index > 0 ? reviewTrend[index - 1] : null}
+                      <div class="paisa-review__trend-point" class:is-mtd={point.isMonthToDate}>
+                        <span>{dayjs(point.month + "-01").format("MMM YYYY")}</span>
+                        <strong
+                          >{point.value != null
+                            ? formatCurrencyWithSymbol(point.value)
+                            : $t("common.notAvailable")}</strong
+                        >
+                        {#if point.isMonthToDate}
+                          <small>{$t("dashboard.monthToDate")}</small>
+                        {:else if point.value != null && previous?.value != null}
+                          <small
+                            class:is-positive={point.value >= previous.value}
+                            class:is-negative={point.value < previous.value}
+                          >
+                            {point.value >= previous.value ? "↑" : "↓"}
+                            {formatCurrencyWithSymbol(Math.abs(point.value - previous.value))}
+                          </small>
+                        {:else}
+                          <small>{$t("dashboard.noComparableMonth")}</small>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+
+                <div class="paisa-review__flow">
+                  <div class="paisa-review__performance-header">
+                    <div class="paisa-zone__subtle">{$t("dashboard.postedMoneyFlow")}</div>
+                    <a href="/cash_flow/yearly" class="secondary-link paisa-link-with-arrow"
+                      >{$t("dashboard.openYearlyFlow")} <i class="fas fa-arrow-right"></i></a
+                    >
+                  </div>
+                  {#if sankeyEmpty}
+                    <div class="paisa-zone__empty">
+                      <strong>{$t("dashboard.noPostedFlows")}</strong>
+                      <p>{$t("dashboard.noPostingsToConnect")}</p>
                     </div>
-                    <div class="paisa-mini-list__track">
-                      <div
-                        class="paisa-mini-list__fill positive"
-                        style={`width: ${Math.min(goal.percent, 100)}%; background: ${categoryColor(
-                          goal.name,
-                          index
-                        )};`}
-                      ></div>
+                  {:else}
+                    <div class="paisa-review__flow-canvas">
+                      <svg
+                        id="d3-expense-flow"
+                        height={flowChartHeight}
+                        use:flowCanvas={activeMonthlyReview}
+                      ></svg>
+                    </div>
+                  {/if}
+                </div>
+              {:else}
+                <div class="paisa-review__no-activity">
+                  <strong>{$t("dashboard.noRecordedActivity")}</strong>
+                  <p>
+                    {$t("dashboard.noPostingsForMonth", { month: selectedMonthLabel })}
+                  </p>
+                </div>
+              {/if}
+
+              <div class="paisa-review__performance">
+                <div class="paisa-review__performance-header">
+                  <div class="paisa-zone__subtle">{$t("nav.investments")}</div>
+                  {#if reviewPerformance.asOf}
+                    <div class="paisa-zone__subtle">
+                      {$t("dashboard.pricesAsOf", {
+                        date: dayjs(reviewPerformance.asOf).format("MMM D, YYYY")
+                      })}
+                    </div>
+                  {/if}
+                </div>
+
+                <div class="paisa-review__investment-drivers">
+                  <div>
+                    <span>{$t("dashboard.netContributions")}</span><strong
+                      >{formatCurrencyWithSymbol(
+                        activeMonthlyReview.investment_contributions
+                      )}</strong
+                    ><small>{$t("dashboard.nonCheckingAssets")}</small>
+                  </div>
+                  <div>
+                    <span>{$t("dashboard.marketMovement")}</span><strong
+                      >{activeMonthlyReview.performance_state === "ready"
+                        ? formatCurrencyWithSymbol(activeMonthlyReview.investment_market_movement)
+                        : $t("common.notAvailable")}</strong
+                    ><small>{$t("dashboard.rankedPositions")}</small>
+                  </div>
+                  <div>
+                    <span>{$t("dashboard.dividends")}</span><strong
+                      >{formatCurrencyWithSymbol(activeMonthlyReview.dividend_income)}</strong
+                    ><small>{$t("dashboard.totalReturnComponent")}</small>
+                  </div>
+                </div>
+
+                {#if activeMonthlyReview.performance_state === "ready" && reviewPerformance.best.length}
+                  <div class="paisa-review__performers">
+                    <div class="paisa-review__performer-group">
+                      <div class="paisa-zone__subtle">{$t("dashboard.best")}</div>
+                      {#each reviewPerformance.best as performer}
+                        <div class="paisa-review__performer">
+                          <span>{positionLabel(performer.account)}</span>
+                          <strong
+                            class:is-positive={performer.total_return_percent >= 0}
+                            class:is-negative={performer.total_return_percent < 0}
+                          >
+                            {formatPercentage(performer.total_return_percent / 100, 2)}
+                          </strong>
+                          {#if performer.dividend_income}
+                            <small
+                              >{$t("dashboard.dividendsAmount", {
+                                amount: formatCurrencyWithSymbol(performer.dividend_income)
+                              })}</small
+                            >
+                          {/if}
+                        </div>
+                      {/each}
+                    </div>
+                    <div class="paisa-review__performer-group">
+                      <div class="paisa-zone__subtle">{$t("dashboard.weakest")}</div>
+                      {#each reviewPerformance.weakest as performer}
+                        <div class="paisa-review__performer">
+                          <span>{positionLabel(performer.account)}</span>
+                          <strong
+                            class:is-positive={performer.total_return_percent >= 0}
+                            class:is-negative={performer.total_return_percent < 0}
+                          >
+                            {formatPercentage(performer.total_return_percent / 100, 2)}
+                          </strong>
+                          {#if performer.dividend_income}
+                            <small
+                              >{$t("dashboard.dividendsAmount", {
+                                amount: formatCurrencyWithSymbol(performer.dividend_income)
+                              })}</small
+                            >
+                          {/if}
+                        </div>
+                      {/each}
                     </div>
                   </div>
-                {/each}
-              </div>
-            {:else if goalState === "not-configured"}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.noGoalsConfigured")}</strong>
-                <p>{$t("dashboard.createGoals")}</p>
-              </div>
-            {:else}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.goalProgressNotReady")}</strong>
-                <p>{$t("dashboard.goalNeedsData")}</p>
+                {:else}
+                  <div class="paisa-zone__empty">
+                    <strong
+                      >{$t("dashboard.investmentPerformanceUnavailable", {
+                        month: selectedMonthLabel
+                      })}</strong
+                    >
+                    <p>
+                      {$t("dashboard.insufficientPrices")}
+                    </p>
+                  </div>
+                {/if}
               </div>
             {/if}
           </div>
         </div>
-      </div>
+      {/if}
 
-      <div class="paisa-dashboard__section">
-        <div class="paisa-dashboard__band paisa-dashboard__band--support paisa-surface-split">
-          <div class="paisa-support">
-            <div class="paisa-support__header">
-              <div class="paisa-zone__title">{$t("dashboard.cashReserve")}</div>
-              <div class="paisa-zone__subtle">{$t("dashboard.current")}</div>
-            </div>
-            <div class="paisa-support__value">{formatCurrencyWithSymbol(checkingTotal)}</div>
-            {#if reserveState === "ready"}
-              <div class="paisa-support__text">
-                {$t("dashboard.reserveMonths", {
-                  count: reserveMonths,
-                  value: formatFloat(reserveMonths)
-                })}
-              </div>
-              <div class="paisa-progress">
-                <div
-                  class="paisa-progress__fill"
-                  style={`width: ${Math.min((reserveMonths / 9) * 100, 100)}%`}
-                ></div>
-              </div>
-              <div class="paisa-progress__ticks">
-                <span>0</span>
-                <span>{$t("dashboard.months3")}</span>
-                <span>{$t("dashboard.months6")}</span>
-                <span>{$t("dashboard.months9plus")}</span>
-              </div>
-            {:else}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.needExpenseHistory")}</strong>
-                <p>{$t("dashboard.needExpenseHistoryHint")}</p>
-              </div>
-            {/if}
-          </div>
+      {#if dashboardLayout.visible.insights}
+        <div class="paisa-dashboard__section" data-testid="preview-section-insights">
+          <div class="paisa-dashboard__band paisa-dashboard__band--review">
+            <div class="paisa-zone paisa-zone--insights">
+              <DashboardSectionHeader title={$t("nav.insights")} subtle={selectedMonthLabel}>
+                {#snippet right()}
+                  <a href="/expense/monthly" class="secondary-link paisa-link-with-arrow"
+                    >{$t("dashboard.viewAllInsights")} <i class="fas fa-arrow-right"></i></a
+                  >
+                {/snippet}
+              </DashboardSectionHeader>
 
-          <div class="paisa-support">
-            <div class="paisa-support__header">
-              <div class="paisa-zone__title">{$t("dashboard.budgetPressure")}</div>
-              <div class="paisa-zone__subtle">{selectedMonthLabel}</div>
+              {#if reviewLoading}
+                <div class="paisa-zone__empty">
+                  <strong>{$t("dashboard.loadingMonth", { month: selectedMonthLabel })}</strong>
+                </div>
+              {:else}
+                <div class="paisa-insights">
+                  {#each insights as insight}
+                    <article class={"paisa-insight paisa-insight--" + insight.tone}>
+                      <div class="paisa-insight__icon">
+                        <span class="icon">
+                          <i
+                            class={"fas " +
+                              (insight.tone === "positive"
+                                ? "fa-arrow-trend-up"
+                                : insight.tone === "warning"
+                                  ? "fa-triangle-exclamation"
+                                  : insight.tone === "negative"
+                                    ? "fa-arrow-trend-down"
+                                    : "fa-circle-info")}
+                          ></i>
+                        </span>
+                      </div>
+                      <div class="paisa-insight__copy">
+                        <div class="paisa-insight__title">{insight.title}</div>
+                        <div class="paisa-insight__text">{insight.description}</div>
+                        <div class="paisa-insight__delta">{insight.deltaLabel}</div>
+                      </div>
+                    </article>
+                  {/each}
+                </div>
+              {/if}
             </div>
-            {#if budgetState === "ready"}
-              <div class="paisa-mini-list">
-                {#each budgetPressure as budget}
-                  <div class="paisa-mini-list__row">
-                    <span class="paisa-mini-list__label">
-                      <span class="icon" style={`color: ${budget.color};`}>
-                        <i class={"fas " + budget.icon}></i>
-                      </span>
-                      <span>{budget.label}</span>
-                    </span>
-                    <div class="paisa-mini-list__meter">
+
+            <div class="paisa-zone paisa-zone--goals">
+              <DashboardSectionHeader
+                title={$t("dashboard.goalProgress")}
+                subtle={$t("dashboard.currentStatus")}
+              >
+                {#snippet right()}
+                  <a href="/more/goals" class="secondary-link paisa-link-with-arrow"
+                    >{$t("dashboard.viewAllGoals")} <i class="fas fa-arrow-right"></i></a
+                  >
+                {/snippet}
+              </DashboardSectionHeader>
+              {#if goalState === "ready"}
+                <div class="paisa-mini-list">
+                  {#each goalProgress as goal, index}
+                    <div class="paisa-mini-list__goal">
+                      <div class="is-flex is-justify-content-space-between">
+                        <span>{goal.name}</span>
+                        <strong>{goal.percent}%</strong>
+                      </div>
                       <div class="paisa-mini-list__track">
                         <div
-                          class={"paisa-mini-list__fill " + budget.tone}
-                          style={`width: ${Math.min(budget.percent, 100)}%`}
+                          class="paisa-mini-list__fill positive"
+                          style={`width: ${Math.min(goal.percent, 100)}%; background: ${categoryColor(
+                            goal.name,
+                            index
+                          )};`}
                         ></div>
                       </div>
-                      <strong>{budget.percent}%</strong>
-                      {#if budget.warning}
-                        <span class="paisa-mini-list__alert">!</span>
-                      {/if}
                     </div>
-                  </div>
-                {/each}
-              </div>
-              <a href="/expense/budget" class="secondary-link paisa-mini-list__link"
-                >{$t("dashboard.viewAllBudgets")}</a
-              >
-            {:else if budgetState === "not-configured"}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.noBudgetConfigured")}</strong>
-                <p>{$t("dashboard.createBudgetLines")}</p>
-                <a
-                  href="/expense/budget"
-                  class="secondary-link paisa-mini-list__link paisa-zone__empty-link"
-                  >{$t("dashboard.setUpBudget")}</a
-                >
-              </div>
-            {:else}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.noBudgetData", { month: selectedMonthLabel })}</strong>
-                <p>{$t("dashboard.budgetPressureHint")}</p>
-              </div>
-            {/if}
-          </div>
-
-          <div class="paisa-support">
-            <div class="paisa-support__header">
-              <div class="paisa-zone__title">{$t("dashboard.recurringOutlook")}</div>
-              <div class="paisa-zone__subtle">{$t("dashboard.next7Days")}</div>
+                  {/each}
+                </div>
+              {:else if goalState === "not-configured"}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.noGoalsConfigured")}</strong>
+                  <p>{$t("dashboard.createGoals")}</p>
+                </div>
+              {:else}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.goalProgressNotReady")}</strong>
+                  <p>{$t("dashboard.goalNeedsData")}</p>
+                </div>
+              {/if}
             </div>
-            {#if recurringState === "ready"}
-              <div class="paisa-mini-list">
-                {#each recurringOutlook as recurring}
-                  <div class="paisa-mini-list__row paisa-mini-list__row--recurring">
-                    <span class="is-flex is-align-items-center" style="gap: 0.55rem;">
-                      <span class={"icon paisa-recurring-icon " + recurring.icon.color}>
-                        <i class={"fas " + recurring.icon.icon}></i>
-                      </span>
-                      <span>{recurring.label}</span>
-                    </span>
-                    <div class="is-flex is-align-items-center" style="gap: 0.85rem;">
-                      <strong>{formatCurrencyWithSymbol(recurring.amount)}</strong>
-                      <span class="paisa-zone__subtle">{recurring.date.format("MMM D")}</span>
-                    </div>
-                  </div>
-                {/each}
-              </div>
-              <a href="/cash_flow/recurring" class="secondary-link paisa-mini-list__link"
-                >{$t("dashboard.viewAllRecurring")}</a
-              >
-            {:else}
-              <div class="paisa-support__empty">
-                <strong>{$t("dashboard.noRecurringOutlook")}</strong>
-                <p>{$t("dashboard.recurringHint")}</p>
-              </div>
-            {/if}
           </div>
         </div>
-      </div>
+      {/if}
+
+      {#if dashboardLayout.visible.support}
+        <div class="paisa-dashboard__section" data-testid="preview-section-support">
+          <div class="paisa-dashboard__band paisa-dashboard__band--support paisa-surface-split">
+            <div class="paisa-support">
+              <div class="paisa-support__header">
+                <div class="paisa-zone__title">{$t("dashboard.cashReserve")}</div>
+                <div class="paisa-zone__subtle">{$t("dashboard.current")}</div>
+              </div>
+              <div class="paisa-support__value">{formatCurrencyWithSymbol(checkingTotal)}</div>
+              {#if reserveState === "ready"}
+                <div class="paisa-support__text">
+                  {$t("dashboard.reserveMonths", {
+                    count: reserveMonths,
+                    value: formatFloat(reserveMonths)
+                  })}
+                </div>
+                <div class="paisa-progress">
+                  <div
+                    class="paisa-progress__fill"
+                    style={`width: ${Math.min((reserveMonths / 9) * 100, 100)}%`}
+                  ></div>
+                </div>
+                <div class="paisa-progress__ticks">
+                  <span>0</span>
+                  <span>{$t("dashboard.months3")}</span>
+                  <span>{$t("dashboard.months6")}</span>
+                  <span>{$t("dashboard.months9plus")}</span>
+                </div>
+              {:else}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.needExpenseHistory")}</strong>
+                  <p>{$t("dashboard.needExpenseHistoryHint")}</p>
+                </div>
+              {/if}
+            </div>
+
+            <div class="paisa-support">
+              <div class="paisa-support__header">
+                <div class="paisa-zone__title">{$t("dashboard.budgetPressure")}</div>
+                <div class="paisa-zone__subtle">{selectedMonthLabel}</div>
+              </div>
+              {#if budgetState === "ready"}
+                <div class="paisa-mini-list">
+                  {#each budgetPressure as budget}
+                    <div class="paisa-mini-list__row">
+                      <span class="paisa-mini-list__label">
+                        <span class="icon" style={`color: ${budget.color};`}>
+                          <i class={"fas " + budget.icon}></i>
+                        </span>
+                        <span>{budget.label}</span>
+                      </span>
+                      <div class="paisa-mini-list__meter">
+                        <div class="paisa-mini-list__track">
+                          <div
+                            class={"paisa-mini-list__fill " + budget.tone}
+                            style={`width: ${Math.min(budget.percent, 100)}%`}
+                          ></div>
+                        </div>
+                        <strong>{budget.percent}%</strong>
+                        {#if budget.warning}
+                          <span class="paisa-mini-list__alert">!</span>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+                <a href="/expense/budget" class="secondary-link paisa-mini-list__link"
+                  >{$t("dashboard.viewAllBudgets")}</a
+                >
+              {:else if budgetState === "not-configured"}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.noBudgetConfigured")}</strong>
+                  <p>{$t("dashboard.createBudgetLines")}</p>
+                  <a
+                    href="/expense/budget"
+                    class="secondary-link paisa-mini-list__link paisa-zone__empty-link"
+                    >{$t("dashboard.setUpBudget")}</a
+                  >
+                </div>
+              {:else}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.noBudgetData", { month: selectedMonthLabel })}</strong>
+                  <p>{$t("dashboard.budgetPressureHint")}</p>
+                </div>
+              {/if}
+            </div>
+
+            <div class="paisa-support">
+              <div class="paisa-support__header">
+                <div class="paisa-zone__title">{$t("dashboard.recurringOutlook")}</div>
+                <div class="paisa-zone__subtle">{$t("dashboard.next7Days")}</div>
+              </div>
+              {#if recurringState === "ready"}
+                <div class="paisa-mini-list">
+                  {#each recurringOutlook as recurring}
+                    <div class="paisa-mini-list__row paisa-mini-list__row--recurring">
+                      <span class="is-flex is-align-items-center" style="gap: 0.55rem;">
+                        <span class={"icon paisa-recurring-icon " + recurring.icon.color}>
+                          <i class={"fas " + recurring.icon.icon}></i>
+                        </span>
+                        <span>{recurring.label}</span>
+                      </span>
+                      <div class="is-flex is-align-items-center" style="gap: 0.85rem;">
+                        <strong>{formatCurrencyWithSymbol(recurring.amount)}</strong>
+                        <span class="paisa-zone__subtle">{recurring.date.format("MMM D")}</span>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+                <a href="/cash_flow/recurring" class="secondary-link paisa-mini-list__link"
+                  >{$t("dashboard.viewAllRecurring")}</a
+                >
+              {:else}
+                <div class="paisa-support__empty">
+                  <strong>{$t("dashboard.noRecurringOutlook")}</strong>
+                  <p>{$t("dashboard.recurringHint")}</p>
+                </div>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {/if}
 
       <div class="paisa-dashboard__section paisa-dashboard__footer">
         <span>{$t("dashboard.liveSnapshot")}</span>
@@ -1259,3 +1294,10 @@
     </div>
   </section>
 {/if}
+
+<PreviewDashboardSettings
+  bind:open={showDashboardSettings}
+  layout={dashboardLayout}
+  onchange={updateDashboardLayout}
+  returnFocusTo={customizeButtonEl}
+/>
