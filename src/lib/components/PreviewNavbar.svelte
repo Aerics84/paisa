@@ -23,7 +23,7 @@
     supportsIndiaTaxFeatures,
     supportsPortfolioAnalysis
   } from "$lib/utils";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import DateRange from "./DateRange.svelte";
   import ThemeSwitcher from "./ThemeSwitcher.svelte";
@@ -37,6 +37,54 @@
     type NavigationLink
   } from "$lib/navigation";
   import { resolveFinancialYear } from "$lib/financial_year";
+  import { nextFocusIndex } from "$lib/focus_trap";
+
+  interface Props {
+    sidebarOpen?: boolean;
+  }
+
+  let { sidebarOpen = $bindable(false) }: Props = $props();
+  let sidebarEl = $state<HTMLElement | null>(null);
+  let navToggleEl = $state<HTMLButtonElement | null>(null);
+  let previousFocus = $state<HTMLElement | null>(null);
+
+  async function openSidebar() {
+    previousFocus = document.activeElement as HTMLElement | null;
+    sidebarOpen = true;
+    await tick();
+    sidebarEl?.querySelector<HTMLElement>("a, button")?.focus();
+  }
+
+  function closeSidebar(restoreFocus = true) {
+    sidebarOpen = false;
+    if (restoreFocus) (previousFocus ?? navToggleEl)?.focus();
+  }
+
+  function handleSidebarKeydown(event: KeyboardEvent) {
+    if (event.key !== "Tab" || !sidebarEl) return;
+    const focusable = Array.from(
+      sidebarEl.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    if (focusable.length === 0) return;
+    event.preventDefault();
+    const next = nextFocusIndex(
+      focusable.indexOf(document.activeElement as HTMLElement),
+      focusable.length,
+      event.shiftKey
+    );
+    focusable[next]?.focus();
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (!sidebarOpen) return;
+    if (event.key === "Escape") {
+      closeSidebar();
+      return;
+    }
+    handleSidebarKeydown(event);
+  }
 
   const prefix = "/preview";
   const readonly = USER_CONFIG.readonly;
@@ -307,6 +355,7 @@
   let currentPath = $state(normalizeNavigationPath(page.url.pathname || ""));
   afterNavigate((navigation) => {
     currentPath = normalizeNavigationPath(navigation.to?.url.pathname || currentPath);
+    sidebarOpen = false;
   });
 
   let trail = $derived(resolveBreadcrumbTrail(currentPath, links, prefix));
@@ -352,7 +401,16 @@
   );
 </script>
 
-<aside class="paisa-shell-sidebar">
+<svelte:window onkeydown={handleWindowKeydown} />
+
+<aside
+  id="preview-navigation"
+  bind:this={sidebarEl}
+  class="paisa-shell-sidebar"
+  class:paisa-shell-sidebar--open={sidebarOpen}
+  aria-label={$t("nav.previewNavigation")}
+  tabindex="-1"
+>
   <a href={prefix} class="paisa-shell-sidebar__brand">
     {#if $obscure}
       <span class="icon is-medium">
@@ -405,9 +463,30 @@
   {/if}
 </aside>
 
+{#if sidebarOpen}
+  <button
+    class="paisa-shell-backdrop"
+    type="button"
+    aria-label={$t("nav.closeNavigation")}
+    onclick={() => closeSidebar()}
+  ></button>
+{/if}
+
 <div class="paisa-topbar" class:paisa-topbar--overview={isOverview}>
   <div class="paisa-topbar__context" class:paisa-topbar__context--overview={isOverview}>
     <div class="paisa-topbar__title-row">
+      <button
+        bind:this={navToggleEl}
+        class="paisa-topbar__nav-toggle"
+        type="button"
+        aria-label={sidebarOpen ? $t("nav.closeNavigation") : $t("nav.openNavigation")}
+        aria-controls="preview-navigation"
+        aria-expanded={sidebarOpen}
+        data-testid="preview-nav-toggle"
+        onclick={() => (sidebarOpen ? closeSidebar() : openSidebar())}
+      >
+        <span class="icon"><i class="fas fa-bars"></i></span>
+      </button>
       <h1 class="paisa-topbar__title">{contextTitle}</h1>
       {#if !isOverview && showHelp}
         <a

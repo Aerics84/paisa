@@ -1,5 +1,6 @@
 <script lang="ts">
   import { afterNavigate, beforeNavigate } from "$app/navigation";
+  import { onDestroy } from "svelte";
   import { followCursor, delegate, hideAll } from "tippy.js";
   import _ from "lodash";
   import Spinner from "$lib/components/Spinner.svelte";
@@ -7,9 +8,24 @@
   import GlobalConfirmDialog from "$lib/components/GlobalConfirmDialog.svelte";
   import { willClearTippy, willRefresh } from "../../store";
 
+  let { children } = $props();
+
   function clearTippy() {
     hideAll();
   }
+
+  let sidebarOpen = $state(false);
+
+  $effect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+  });
+
+  onDestroy(() => {
+    if (typeof document !== "undefined") {
+      document.body.style.overflow = "";
+    }
+  });
 
   function setupTippy() {
     delegate("body", {
@@ -78,11 +94,11 @@
 
 {#key $willRefresh}
   <div class="paisa-app-frame">
-    <PreviewNavbar />
+    <PreviewNavbar bind:sidebarOpen />
 
-    <div class="paisa-shell-content">
+    <div class="paisa-shell-content" inert={sidebarOpen}>
       <Spinner>
-        <slot />
+        {@render children()}
       </Spinner>
     </div>
   </div>
