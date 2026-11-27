@@ -164,6 +164,27 @@ export const de: Record<EnMessageKey, string> = {
   "dashboard.cashFlowEmpty": "Du hast in den letzten 3 Monaten keine Buchungen erstellt.",
   "dashboard.expensesEmpty": "Du hast diesen Monat keine Ausgaben.",
   "dashboard.recentTransactions": "Letzte Buchungen",
+  "dashboard.presets": "Vorlagen",
+  "dashboard.preset.overview": "Überblick",
+  "dashboard.preset.overview.description": "Alle Bereiche",
+  "dashboard.preset.cashflow": "Cashflow",
+  "dashboard.preset.cashflow.description": "Liquidität und laufende Finanzen",
+  "dashboard.preset.investor": "Investor",
+  "dashboard.preset.investor.description": "Vermögensentwicklung und Investments",
+  "dashboard.preset.minimal": "Minimal",
+  "dashboard.preset.minimal.description": "Nur die wichtigsten Kennzahlen",
+  "dashboard.widget.hero": "Vermögens-Hero",
+  "dashboard.widget.hero.description": "Gesamtvermögen und 12-Monats-Trends.",
+  "dashboard.widget.monthlyReview": "Monatsrückblick",
+  "dashboard.widget.monthlyReview.description":
+    "Einnahmen, Überschuss, Geldfluss und Investment-Entwicklung.",
+  "dashboard.widget.insights": "Einblicke und Ziele",
+  "dashboard.widget.insights.description":
+    "Größte Ausgabengruppe, Performance und Zielfortschritt.",
+  "dashboard.widget.support": "Cash-Reserve, Budget und Wiederkehrendes",
+  "dashboard.widget.support.description": "Ergänzende Signale für den ausgewählten Monat.",
+  "dashboard.widget.recentTransactions": "Letzte Buchungen",
+  "dashboard.widget.recentTransactions.description": "Die neuesten Buchungen aus deinem Ledger.",
   "dashboard.preview.serverErrorTitle":
     "Starte den lokalen Paisa-Server, um die Übersicht in der Vorschau zu sehen.",
   "dashboard.preview.firstJournalTitle":
