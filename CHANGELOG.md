@@ -4,6 +4,16 @@ Releases from 0.8 onwards are fork releases. The 0.7.x sections below
 document the upstream releases this fork builds on; the short-lived
 0.7.5–0.7.6.1 fork bumps are folded into 0.8.
 
+### 0.8.7 (2026-11-27)
+
+Preview dashboard release.
+
+- Add curated dashboard presets (`Overview`, `Cash flow`, `Investor`, `Minimal`) and per-section visibility, stored locally in the browser.
+- Add a Recent Transactions section that links back into the preview ledger.
+- Make the preview readable in the light theme, including secondary text and chart axes, and add contrast and Axe checks.
+- Turn the preview sidebar into an accessible mobile drawer with focus management, `inert` background, scroll lock and reduced-motion support.
+- Translate all new dashboard and navigation labels into German and English.
+
 ### 0.8.6.7 (2026-11-25)
 
 Hardening release for the frontend, authentication, data layer, localisation
