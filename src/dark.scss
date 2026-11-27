@@ -58,6 +58,13 @@ html[data-theme="dark"] {
     --app-danger-soft: rgba(255, 107, 107, 0.16);
     --app-shadow-soft: 0 18px 40px rgba(3, 8, 16, 0.24);
     --app-grid-line: rgba(148, 163, 184, 0.055);
+    --dashboard-text-strong: #f8fbff;
+    --dashboard-text-bright: #e4eefb;
+    --dashboard-text-soft: #d5e1f1;
+    --dashboard-text-muted: #b9cade;
+    --dashboard-text-subtle: #95a8c2;
+    --dashboard-warning-strong: #fbbf24;
+    --dashboard-danger-strong: #fb7185;
   }
 
   @import "./app.scss";

@@ -4,6 +4,18 @@ the GitHub release body. Keep the heading and bullets in sync with the matching
 CHANGELOG section.
 -->
 
+### 0.8.7 (2026-11-27)
+
+Preview dashboard release.
+
+- Add curated dashboard presets (`Overview`, `Cash flow`, `Investor`, `Minimal`) and per-section visibility, stored locally in the browser.
+- Add a Recent Transactions section that links back into the preview ledger.
+- Make the preview readable in the light theme, including secondary text and chart axes, and add contrast and Axe checks.
+- Turn the preview sidebar into an accessible mobile drawer with focus management, `inert` background, scroll lock and reduced-motion support.
+- Keep keyboard focus inside the Customize dialog and close the mobile drawer automatically when the viewport grows, so the page never stays inert or scroll-locked.
+- Use the higher-contrast dashboard token for the preview topbar subtitle and animate the drawer out with reduced-motion support.
+- Translate all new dashboard and navigation labels into German and English.
+
 ### 0.8.6.7 (2026-11-25)
 
 Hardening release for the frontend, authentication, data layer, localisation

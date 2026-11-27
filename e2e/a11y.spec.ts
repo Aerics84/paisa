@@ -30,7 +30,9 @@ const A11Y_ROUTES = [
   "/ledger/editor",
   "/more/config",
   "/more/goals",
-  "/more/sheets"
+  "/more/sheets",
+  "/preview",
+  "/preview/cash_flow/monthly"
 ];
 
 for (const path of A11Y_ROUTES) {

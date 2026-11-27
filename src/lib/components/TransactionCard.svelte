@@ -14,9 +14,10 @@
 
   interface Props {
     t: Transaction;
+    linkPrefix?: string;
   }
 
-  let { t }: Props = $props();
+  let { t, linkPrefix = "" }: Props = $props();
 
   let posting = $derived(t.postings[0]);
 </script>
@@ -26,7 +27,7 @@
     <div class="has-text-grey is-size-7 truncate">
       <PostingStatus {posting} />
       <TransactionNote transaction={t} />
-      <a class="secondary-link" href={postingUrl(posting)}>{posting.payee}</a>
+      <a class="secondary-link" href={linkPrefix + postingUrl(posting)}>{posting.payee}</a>
     </div>
     <div class="has-text-grey min-w-[110px] has-text-right">
       <span class="icon is-small has-text-grey-light">

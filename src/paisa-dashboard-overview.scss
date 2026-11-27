@@ -1,3 +1,95 @@
+.paisa-app-frame {
+  .axis text {
+    fill: var(--dashboard-text-muted);
+  }
+
+  .axis path.domain,
+  .axis line {
+    stroke: var(--app-border-strong);
+  }
+}
+
+.paisa-recent-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+}
+
+.paisa-dashboard__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.9rem;
+}
+
+.paisa-dashboard-settings {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.paisa-dashboard-settings__subtitle {
+  margin: 0;
+  color: var(--dashboard-text-muted);
+}
+
+.paisa-dashboard-settings__group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.paisa-dashboard-settings__heading {
+  color: var(--dashboard-text-strong);
+  font-weight: 600;
+}
+
+.paisa-dashboard-settings__presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.6rem;
+}
+
+.paisa-dashboard-settings__preset {
+  height: auto;
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  white-space: normal;
+}
+
+.paisa-dashboard-settings__preset span {
+  color: var(--dashboard-text-muted);
+  font-size: 0.78rem;
+}
+
+.paisa-dashboard-settings__preset.is-active {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+  color: var(--app-text);
+}
+
+.paisa-dashboard-settings__widgets {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.paisa-dashboard-settings__widget {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.75rem;
+}
+
+.paisa-dashboard-settings__widget span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.paisa-dashboard-settings__widget small {
+  color: var(--dashboard-text-muted);
+}
+
 .paisa-empty-state {
   padding: 2.4rem;
   border-radius: 1.5rem;
@@ -18,7 +110,7 @@
 
 .paisa-empty-state__copy p,
 .paisa-empty-state__copy li {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
 }
 
 .paisa-empty-state__copy ol {
@@ -116,7 +208,7 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 0.9rem;
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
 }
 
 .paisa-spark-card__meta > div:first-child {
@@ -159,7 +251,7 @@
 
 .paisa-spark-card__y-axis {
   position: relative;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.78rem;
 }
 
@@ -176,7 +268,7 @@
 
 .paisa-spark-card__empty,
 .paisa-stat-strip__empty {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.84rem;
 }
 
@@ -190,7 +282,7 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.35rem;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.78rem;
 }
 
@@ -287,7 +379,7 @@
 
 .paisa-zone__subtle,
 .paisa-dashboard__footer {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.84rem;
 }
 
@@ -355,7 +447,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
 }
 
 .paisa-spending__center strong {
@@ -397,7 +489,7 @@
 .paisa-spending__item-metrics span {
   min-width: 4.3rem;
   text-align: right;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
 }
 
 .paisa-spending__item-metrics span.positive {
@@ -451,7 +543,7 @@
 }
 
 .paisa-insight--neutral .paisa-insight__icon {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
   background: rgba(148, 163, 184, 0.12);
 }
 
@@ -492,13 +584,13 @@
 }
 
 .paisa-driver__label .icon {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
   width: 1.35rem;
 }
 
 .paisa-driver__row span,
 .paisa-driver__impact span {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
 }
 
 .paisa-driver__row strong,
@@ -593,7 +685,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 0.45rem;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.8rem;
 }
 
@@ -774,7 +866,7 @@
 }
 
 .paisa-review__status {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.78rem;
   border: 1px solid var(--app-border);
   border-radius: 999px;
@@ -798,7 +890,7 @@
 
 .paisa-review__metric span {
   font-size: 0.78rem;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -810,11 +902,11 @@
 
 .paisa-review__metric strong.is-muted {
   font-size: 1rem;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
 }
 
 .paisa-review__metric small {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
   font-size: 0.78rem;
 }
 
@@ -857,14 +949,14 @@
 }
 
 .paisa-review__trend-point span {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .paisa-review__trend-point small {
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
   font-size: 0.78rem;
 }
 
@@ -915,7 +1007,7 @@
 
 .paisa-review__performer small {
   grid-column: 1 / -1;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
 }
 
 .paisa-review__no-activity {
@@ -932,7 +1024,7 @@
 
 .paisa-review__no-activity p {
   margin: 0;
-  color: var(--app-text-muted);
+  color: var(--dashboard-text-muted);
 }
 
 @media (max-width: 1087px) {
@@ -953,7 +1045,7 @@
   flex-wrap: wrap;
   gap: 0.35rem 0.85rem;
   margin-top: 0.45rem;
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.72rem;
 }
 
@@ -1016,7 +1108,7 @@
 }
 
 .paisa-review__investment-drivers span {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1028,7 +1120,7 @@
 }
 
 .paisa-review__investment-drivers small {
-  color: var(--app-text-subtle);
+  color: var(--dashboard-text-subtle);
   font-size: 0.7rem;
 }
 
