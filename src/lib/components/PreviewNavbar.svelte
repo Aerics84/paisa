@@ -88,7 +88,7 @@
     },
     {
       icon: "fa-circle-check",
-      color: "var(--app-text-subtle)",
+      color: "var(--dashboard-text-subtle)",
       label: $t("nav.recurring.upcoming")
     }
   ]);
@@ -444,7 +444,7 @@
         {#if selectedSubLink?.recurringIcons}
           <div
             class="is-flex is-align-items-center"
-            style="gap: 0.85rem; color: var(--app-text-muted);"
+            style="gap: 0.85rem; color: var(--dashboard-text-muted);"
           >
             {#each recurringIcons as icon}
               <div class="is-flex is-align-items-center" style="gap: 0.35rem;">

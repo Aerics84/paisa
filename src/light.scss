@@ -36,6 +36,13 @@ $card-header-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
   --app-danger-soft: rgba(220, 38, 38, 0.14);
   --app-shadow-soft: 0 16px 32px rgba(15, 23, 42, 0.06);
   --app-grid-line: rgba(148, 163, 184, 0.12);
+  --dashboard-text-strong: #0f172a;
+  --dashboard-text-bright: #1e293b;
+  --dashboard-text-soft: #334155;
+  --dashboard-text-muted: #52637a;
+  --dashboard-text-subtle: #5f7085;
+  --dashboard-warning-strong: #a94f08;
+  --dashboard-danger-strong: #b91c1c;
 }
 
 @import "./app.scss";
